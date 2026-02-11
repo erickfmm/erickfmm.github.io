@@ -12,6 +12,23 @@
 </head>
 <body>
   <div class="bg-glow"></div>
+  <svg class="icon-sprite" aria-hidden="true" focusable="false">
+    <symbol id="icon-spark" viewBox="0 0 24 24">
+      <path d="M12 2l1.9 4.7L19 8.6l-4.7 1.9L12 16l-1.9-5.5L5 8.6l5.1-1.9L12 2z" />
+    </symbol>
+    <symbol id="icon-rocket" viewBox="0 0 24 24">
+      <path d="M14.5 3.5c3.5 1.1 6 4.3 6 8.1v.9l-4.2.6-2.5 2.5-.6 4.2h-.9c-3.8 0-7-2.5-8.1-6l5.1-5.1 5.2-5.2z" />
+      <path d="M6 18l-2 4 4-2 1.6-3.6L6 18z" />
+    </symbol>
+    <symbol id="icon-brain" viewBox="0 0 24 24">
+      <path d="M9.5 4.2C7.6 4.2 6 5.8 6 7.7v.3c-1.2.6-2 1.9-2 3.3 0 1.7 1 3.1 2.6 3.7.2 2.4 2.2 4.3 4.6 4.3h.6c1 0 1.8-.8 1.8-1.8V6.1c0-1-1-1.9-2.1-1.9z" />
+      <path d="M14.5 4.2c1.9 0 3.5 1.6 3.5 3.5v.3c1.2.6 2 1.9 2 3.3 0 1.7-1 3.1-2.6 3.7-.2 2.4-2.2 4.3-4.6 4.3h-.6c-1 0-1.8-.8-1.8-1.8V6.1c0-1 1-1.9 2.1-1.9z" />
+    </symbol>
+    <symbol id="icon-hub" viewBox="0 0 24 24">
+      <path d="M7 6h10a3 3 0 0 1 0 6H7a3 3 0 0 1 0-6z" />
+      <path d="M7 12h10a3 3 0 0 1 0 6H7a3 3 0 0 1 0-6z" />
+    </symbol>
+  </svg>
   <header class="site-header">
     <div class="container nav">
       <div class="brand">
@@ -55,10 +72,10 @@
             <span>📞 +56 9 618 300 57</span>
           </div>
         </div>
-        <div class="hero-card">
+        <div class="hero-card reveal">
           <img class="profile" src="https://media.licdn.com/dms/image/v2/C4E03AQF18SReVjcewg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1610986432845?e=1772668800&v=beta&t=joXxWCUzNRFKJ-JgGIWrP7JTfSS2rvHn4p5PaNddwkU" alt="Foto de perfil de Erick Francisco Merino Menares" />
           <div class="card-body">
-            <div class="badge">IA Engineer</div>
+            <div class="badge"><svg class="icon"><use href="#icon-brain"></use></svg>IA Engineer</div>
             <h3>Especialización</h3>
             <ul>
               <li>LLM, RAG, BERT, T5</li>
@@ -74,22 +91,34 @@
         </div>
       </div>
       <div class="container stats">
-        <div class="stat">
+        <div class="stat reveal">
           <span class="counter" data-target="28">0</span>
           <small>repos públicos en GitHub</small>
         </div>
-        <div class="stat">
+        <div class="stat reveal">
           <span class="counter" data-target="11">0</span>
           <small>datasets en Hugging Face</small>
         </div>
-        <div class="stat">
+        <div class="stat reveal">
           <span class="counter" data-target="2">0</span>
           <small>modelos publicados</small>
         </div>
-        <div class="stat">
+        <div class="stat reveal">
           <span class="counter" data-target="9">0</span>
           <small>años entre academia y práctica</small>
         </div>
+      </div>
+      <div class="container hype-banner reveal">
+        <div class="hype-content">
+          <span class="hype-pill"><svg class="icon"><use href="#icon-spark"></use></svg>COMING SOON</span>
+          <div>
+            <h3>TORMENTED-BERT-Frankenstein</h3>
+            <p>El próximo salto de la saga Frankenstein: más profundo, más eficiente y con memoria brutal. 🔥</p>
+          </div>
+        </div>
+        <a class="button" href="https://github.com/erickfmm/transformer-encoder-frankestein/tree/main/docs/v2" target="_blank" rel="noreferrer">
+          <svg class="icon"><use href="#icon-rocket"></use></svg>Ver roadmap v2
+        </a>
       </div>
     </section>
 
@@ -100,12 +129,12 @@
           <p>AI Engineer con foco en soluciones educativas, gobierno de datos y sistemas inteligentes listos para producción.</p>
         </div>
         <div class="grid-3">
-          <div class="card">
+          <div class="card reveal">
             <h3>Resumen Profesional</h3>
             <p>Gestión de proyectos de software, análisis y formulación de requerimientos, y pruebas de concepto con modelos de IA.</p>
             <p>Trabajo continuo en investigación aplicada, desarrollo backend y analítica avanzada con Python.</p>
           </div>
-          <div class="card">
+          <div class="card reveal">
             <h3>Habilidades</h3>
             <ul class="tag-list">
               <li>Python (Avanzado)</li>
@@ -127,7 +156,7 @@
               <li>OpenMetaData</li>
             </ul>
           </div>
-          <div class="card">
+          <div class="card reveal">
             <h3>En aprendizaje continuo</h3>
             <ul class="timeline">
               <li><strong>2026</strong> · Procesamiento del Lenguaje Natural Moderno en Python (Udemy)</li>
@@ -147,7 +176,7 @@
           <p>Trayectoria combinando IA, gobierno de datos y educación.</p>
         </div>
         <div class="timeline-grid">
-          <div class="timeline-card">
+          <div class="timeline-card reveal">
             <div class="timeline-header">
               <h3>Ministerio de Educación (MINEDUC)</h3>
               <span>2022 - Presente · Santiago, Chile</span>
@@ -160,7 +189,7 @@
               <li>Pruebas de concepto con IA (LLM, RAG, BERT, T5).</li>
             </ul>
           </div>
-          <div class="timeline-card">
+          <div class="timeline-card reveal">
             <div class="timeline-header">
               <h3>Universidad de Valparaíso</h3>
               <span>2016 - 2018 · Valparaíso, Chile</span>
@@ -171,7 +200,7 @@
               <li>Clasificación de posturas y reconocimiento de quién habla.</li>
             </ul>
           </div>
-          <div class="timeline-card">
+          <div class="timeline-card reveal">
             <div class="timeline-header">
               <h3>Universidad de Valparaíso</h3>
               <span>2017 · Valparaíso, Chile</span>
@@ -181,7 +210,7 @@
               <li>Soporte a labor docente.</li>
             </ul>
           </div>
-          <div class="timeline-card">
+          <div class="timeline-card reveal">
             <div class="timeline-header">
               <h3>Universidad de Valparaíso</h3>
               <span>2018 · Valparaíso, Chile</span>
@@ -192,7 +221,7 @@
               <li>Participación en publicaciones científicas.</li>
             </ul>
           </div>
-          <div class="timeline-card">
+          <div class="timeline-card reveal">
             <div class="timeline-header">
               <h3>AltaVoz</h3>
               <span>2016 · Viña del Mar, Chile</span>
@@ -214,12 +243,12 @@
           <p>Formación académica con foco en Data Science y sistemas de información.</p>
         </div>
         <div class="grid-2">
-          <div class="card">
+          <div class="card reveal">
             <h3>Diploma de Postítulo en Data Science</h3>
             <p><strong>Universidad de Valparaíso</strong> · 2023</p>
             <p>Duración 6 meses. Aprobado con Distinción Máxima (6.1).</p>
           </div>
-          <div class="card">
+          <div class="card reveal">
             <h3>Ingeniería Civil Informática</h3>
             <p><strong>Universidad de Valparaíso</strong> · 2019-04-10</p>
             <p>Mención en Gestión y Diseño de Bases de Datos. Titulado con Distinción Máxima (6.22).</p>
@@ -235,15 +264,25 @@
           <p>Investigación aplicada, herramientas de IA y automatización.</p>
         </div>
         <div class="projects">
-          <article class="project-card">
+          <article class="project-card featured reveal">
             <h3>Transformer Encoder Frankenstein</h3>
             <p>Arquitecturas experimentales de Transformers con MoE, BitNet 1.58 y Titan Memory para NLP en español.</p>
+            <div class="callout">
+              <svg class="icon"><use href="#icon-rocket"></use></svg>
+              <div>
+                <strong>V2 Titan-BERT-Ultra en camino</strong>
+                <p>Revisa el diseño y avances del modelo v2 en el documento oficial.</p>
+              </div>
+            </div>
             <div class="project-tags">
               <span>Python</span><span>LLM</span><span>Research</span>
             </div>
-            <a href="https://github.com/erickfmm/transformer-encoder-frankestein" target="_blank" rel="noreferrer">Ver repositorio</a>
+            <div class="project-links">
+              <a href="https://github.com/erickfmm/transformer-encoder-frankestein" target="_blank" rel="noreferrer">Ver repositorio</a>
+              <a href="https://github.com/erickfmm/transformer-encoder-frankestein/tree/main/docs/v2" target="_blank" rel="noreferrer">Docs v2</a>
+            </div>
           </article>
-          <article class="project-card">
+          <article class="project-card reveal">
             <h3>Awesome NLP / LLM en Español</h3>
             <p>Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM en español.</p>
             <div class="project-tags">
@@ -251,7 +290,7 @@
             </div>
             <a href="https://github.com/erickfmm/Awesome-NLP-LLM-Spanish-Espa-ol" target="_blank" rel="noreferrer">Ver repositorio</a>
           </article>
-          <article class="project-card">
+          <article class="project-card reveal">
             <h3>ANMetaL</h3>
             <p>Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas.</p>
             <div class="project-tags">
@@ -259,7 +298,7 @@
             </div>
             <a href="https://github.com/erickfmm/ANMetaL" target="_blank" rel="noreferrer">Ver repositorio</a>
           </article>
-          <article class="project-card">
+          <article class="project-card reveal">
             <h3>Markdown to Audio</h3>
             <p>Convierte libros en Markdown a audiolibros multicapítulo con motores TTS en español.</p>
             <div class="project-tags">
@@ -267,7 +306,7 @@
             </div>
             <a href="https://github.com/erickfmm/markdown-to-audio" target="_blank" rel="noreferrer">Ver repositorio</a>
           </article>
-          <article class="project-card">
+          <article class="project-card reveal">
             <h3>Translate & Process Datasets</h3>
             <p>Scripts para traducir, filtrar y preparar datasets para su publicación en Hugging Face.</p>
             <div class="project-tags">
@@ -275,7 +314,7 @@
             </div>
             <a href="https://github.com/erickfmm/translate-and-process-datasets" target="_blank" rel="noreferrer">Ver repositorio</a>
           </article>
-          <article class="project-card">
+          <article class="project-card reveal">
             <h3>Autogenerator of PPT</h3>
             <p>Generador automático de presentaciones educativas desde YAML (pptx y PDF).</p>
             <div class="project-tags">
@@ -294,7 +333,7 @@
           <p>Investigación en aprendizaje multimodal, EEG y analítica educativa.</p>
         </div>
         <div class="grid-2">
-          <div class="card">
+          <div class="card reveal">
             <h3>Journals</h3>
             <ul class="timeline">
               <li>Development of a Software that Supports Multimodal Learning Analytics (2018).</li>
@@ -303,7 +342,7 @@
               <li>A new EEG software that supports emotion recognition by using an autonomous approach (2020).</li>
             </ul>
           </div>
-          <div class="card">
+          <div class="card reveal">
             <h3>Conferencias</h3>
             <ul class="timeline">
               <li>Evolução das posturas corporais de estudantes (2018).</li>
@@ -322,20 +361,20 @@
           <p>Datasets en español y modelos publicados en el Hub.</p>
         </div>
         <div class="grid-2">
-          <div class="card">
+          <div class="card reveal">
             <h3>Modelos</h3>
             <ul class="link-list">
-              <li>
-                <a href="https://huggingface.co/erickfmm/ModernBERT-es-Masked" target="_blank" rel="noreferrer">ModernBERT-es-Masked</a>
-                <span>Apache-2.0 · enfoque en masked LM.</span>
-              </li>
               <li>
                 <a href="https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF" target="_blank" rel="noreferrer">Mix TinyLlama 3x1B GGUF</a>
                 <span>Modelo cuantizado GGUF (3B params).</span>
               </li>
+              <li class="coming-soon">
+                <span class="coming-label"><svg class="icon"><use href="#icon-spark"></use></svg>Próximo</span>
+                <span>TORMENTED-BERT-Frankenstein · ultra-research drop</span>
+              </li>
             </ul>
           </div>
-          <div class="card">
+          <div class="card reveal">
             <h3>Datasets</h3>
             <ul class="link-list">
               <li>
@@ -357,9 +396,9 @@
             </ul>
           </div>
         </div>
-        <div class="cta-strip">
+        <div class="cta-strip reveal">
           <p>Explora más colecciones y recursos en mi perfil de Hugging Face.</p>
-          <a class="button" href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">Ver perfil</a>
+          <a class="button" href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer"><svg class="icon"><use href="#icon-hub"></use></svg>Ver perfil</a>
         </div>
       </div>
     </section>
@@ -371,7 +410,7 @@
           <p>¿Tienes un proyecto de IA o datos en mente? Conversemos.</p>
         </div>
         <div class="contact-grid">
-          <div class="card">
+          <div class="card reveal">
             <h3>Conecta conmigo</h3>
             <ul class="contact-list">
               <li><strong>Email:</strong> <a href="mailto:erickfmm@gmail.com">erickfmm@gmail.com</a></li>
@@ -382,7 +421,7 @@
               <li><strong>Hugging Face:</strong> <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">huggingface.co/erickfmm</a></li>
             </ul>
           </div>
-          <div class="card">
+          <div class="card reveal">
             <h3>CV en PDF</h3>
             <p>Descarga la versión completa de mi CV actualizado.</p><br />
             <a class="button" href="https://github.com/erickfmm/cv/blob/master/output/cv_spanish/cv.pdf" target="_blank" rel="noreferrer">Abrir CV</a>
@@ -399,7 +438,6 @@
     </div>
   </footer>
 
-  <script src="functions.js"></script>
   <script src="portfolio.js"></script>
 </body>
 </html>
