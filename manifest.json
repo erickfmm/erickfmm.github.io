@@ -12,9 +12,15 @@
   "scope": "/",
   "icons": [
     {
-      "src": "https://media.licdn.com/dms/image/v2/C4E03AQF18SReVjcewg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1610986432845?e=1772668800&v=beta&t=joXxWCUzNRFKJ-JgGIWrP7JTfSS2rvHn4p5PaNddwkU",
-      "sizes": "200x200",
-      "type": "image/jpeg",
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
