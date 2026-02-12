@@ -1,0 +1,3 @@
+Contact: mailto:erickfmm@gmail.com
+Preferred-Languages: es, en
+Canonical: https://erickfmm.github.io/.well-known/security.txt

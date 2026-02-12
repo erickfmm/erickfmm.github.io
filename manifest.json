@@ -1,0 +1,50 @@
+{
+  "name": "Erick Francisco Merino Menares - AI Engineer Portfolio",
+  "short_name": "erickfmm Portfolio",
+  "description": "Portafolio profesional de Erick Francisco Merino Menares, AI Engineer especializado en desarrollo backend, análisis de datos e inteligencia artificial aplicada a la educación.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e27",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "https://media.licdn.com/dms/image/v2/C4E03AQF18SReVjcewg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1610986432845?e=1772668800&v=beta&t=joXxWCUzNRFKJ-JgGIWrP7JTfSS2rvHn4p5PaNddwkU",
+      "sizes": "200x200",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "education",
+    "business",
+    "productivity",
+    "developer tools"
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Proyectos GitHub",
+      "short_name": "Proyectos",
+      "description": "Ver proyectos principales en GitHub",
+      "url": "/#proyectos"
+    },
+    {
+      "name": "Hugging Face",
+      "short_name": "HF",
+      "description": "Datasets y modelos en Hugging Face",
+      "url": "/#huggingface"
+    },
+    {
+      "name": "Contacto",
+      "short_name": "Contacto",
+      "description": "Información de contacto",
+      "url": "/#contacto"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
