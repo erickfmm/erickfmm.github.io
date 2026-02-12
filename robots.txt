@@ -1,0 +1,62 @@
+# robots.txt para erickfmm.github.io
+# Portafolio de Erick Francisco Merino Menares - AI Engineer
+
+# Permitir acceso a todos los bots
+User-agent: *
+Allow: /
+
+# Bots específicos de IA y búsqueda
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: facebot
+Allow: /
+
+User-agent: ia_archiver
+Allow: /
+
+# Bots de IA (Claude, GPT, etc.)
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Sitemap
+Sitemap: https://erickfmm.github.io/sitemap.xml
+
+# Crawl-delay para evitar sobrecargas
+Crawl-delay: 1

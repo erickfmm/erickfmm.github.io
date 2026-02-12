@@ -1,0 +1,140 @@
+# Erick Francisco Merino Menares - AI Engineer Portfolio
+
+## Descripción
+Portafolio profesional de Erick Francisco Merino Menares, AI Engineer especializado en desarrollo backend, análisis de datos e inteligencia artificial aplicada a la educación.
+
+## Sobre el Profesional
+- **Nombre**: Erick Francisco Merino Menares
+- **Rol**: AI Engineer · Backend · Datos
+- **Ubicación**: Santiago de Chile
+- **Email**: erickfmm@gmail.com
+- **Teléfono**: +56 9 618 300 57
+
+## Especialización
+- Procesamiento del Lenguaje Natural (NLP)
+- Large Language Models (LLM)
+- Retrieval-Augmented Generation (RAG)
+- Modelos BERT y T5
+- Backend Development (Python, Django, FastAPI, Flask)
+- Data Engineering
+- Gobernanza de datos (TOGAF y DAMA)
+
+## Experiencia Actual
+Profesional de Centro de Innovación en el Ministerio de Educación (MINEDUC) de Chile desde 2022, trabajando en:
+- Desarrollo web del sistema de verificación del Estándar de Datos para la Educación
+- Gobernanza de datos para el Sistema de Aseguramiento de la Calidad
+- Pruebas de concepto con IA (LLM, RAG, BERT, T5)
+- Gestión de proyectos tecnológicos
+
+## Educación
+- Diploma de Postítulo en Data Science - Universidad de Valparaíso (2023) - Distinción Máxima
+- Ingeniería Civil Informática - Universidad de Valparaíso (2019) - Distinción Máxima
+- Mención en Gestión y Diseño de Bases de Datos
+
+## Proyectos Destacados
+
+### Transformer Encoder Frankenstein
+Arquitecturas experimentales de Transformers con Mixture of Experts (MoE), BitNet 1.58 y Titan Memory para NLP en español.
+- GitHub: https://github.com/erickfmm/transformer-encoder-frankestein
+- Tecnologías: Python, LLM, Research
+- Estado: En desarrollo v2 (TORMENTED-BERT-Frankenstein)
+
+### Awesome NLP / LLM en Español
+Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM en español.
+- GitHub: https://github.com/erickfmm/Awesome-NLP-LLM-Spanish-Espa-ol
+- Tipo: Curación de recursos para la comunidad
+
+### ANMetaL
+Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas.
+- GitHub: https://github.com/erickfmm/ANMetaL
+- Tecnologías: Python, Optimización, Visualización
+
+### Markdown to Audio
+Convierte libros en Markdown a audiolibros multicapítulo con motores TTS en español.
+- GitHub: https://github.com/erickfmm/markdown-to-audio
+- Tecnologías: Python, TTS, Audio Processing
+
+### Translate & Process Datasets
+Scripts para traducir, filtrar y preparar datasets para su publicación en Hugging Face.
+- GitHub: https://github.com/erickfmm/translate-and-process-datasets
+- Tecnologías: Python, Data Engineering, Hugging Face
+
+### Autogenerator of PPT
+Generador automático de presentaciones educativas desde YAML (pptx y PDF).
+- GitHub: https://github.com/erickfmm/autogenerator-of-ppt
+- Tecnologías: Python, EdTech, Automation
+
+## Hugging Face
+Perfil: https://huggingface.co/erickfmm
+
+### Modelos Publicados
+- Mix TinyLlama 3x1B GGUF (3B params): https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF
+
+### Datasets Publicados (11 datasets)
+- QQP Triplets (ES): 216 filas de triplets de similaridad traducidos al español
+- PAQ Pairs (ES): 6,563 filas de pares pregunta-respuesta traducidos
+- Wiktionary Spanish All Forms: ~760K formas de lematización y morfología
+- Wiktionary Spanish Dictionary: definiciones y significados en español
+- Y más datasets para embeddings y NLP en español
+
+## Stack Tecnológico
+
+### Lenguajes de Programación
+- Python (Avanzado)
+- C# (Básico)
+- JavaScript (Básico)
+
+### Bases de Datos
+- PostgreSQL
+- MongoDB
+- Qdrant (Vector DB)
+
+### Frameworks Backend
+- Django
+- FastAPI
+- Flask
+
+### Machine Learning & AI
+- Scikit-Learn
+- LangChain
+- Transformers (Hugging Face)
+- Sentence-Transformers
+
+### Herramientas
+- Docker
+- Tableau
+- PowerBI
+- OpenMetadata
+
+## Publicaciones Científicas
+
+### Journals
+1. Development of a Software that Supports Multimodal Learning Analytics (2018)
+2. Mathematics Learning through Computational Thinking Activities (2018)
+3. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition (2018)
+4. A new EEG software that supports emotion recognition by using an autonomous approach (2020)
+
+### Conferencias
+1. Evolução das posturas corporais de estudantes (2018)
+2. Using Multimodal Data to Find Patterns in Student Presentations (2019)
+3. Developing a Dashboard to Support the Analysis of Multimodal Educational Data (2018)
+
+## Enlaces
+- Portfolio: https://erickfmm.github.io
+- GitHub: https://github.com/erickfmm (28 repositorios públicos)
+- LinkedIn: https://www.linkedin.com/in/erickfmm/
+- Hugging Face: https://huggingface.co/erickfmm
+- CV en PDF: https://github.com/erickfmm/cv/blob/master/output/cv_spanish/cv.pdf
+
+## Estadísticas
+- 28 repositorios públicos en GitHub
+- 11 datasets en Hugging Face
+- 2 modelos publicados
+- 9 años entre academia y práctica
+
+## Idiomas
+- Español (Nativo)
+- Inglés (Técnico)
+
+## Palabras Clave
+AI Engineer, Inteligencia Artificial, Machine Learning, NLP, Large Language Models, LLM, RAG, BERT, T5, Transformers, Python, Backend Development, Data Engineering, Gobernanza de Datos, Educación, EdTech, Hugging Face, Deep Learning, Data Science, PostgreSQL, MongoDB, Django, FastAPI, LangChain, Chile, Santiago

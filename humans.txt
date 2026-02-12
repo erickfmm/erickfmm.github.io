@@ -1,0 +1,32 @@
+/* TEAM */
+Developer: Erick Francisco Merino Menares
+Site: https://erickfmm.github.io
+Email: erickfmm@gmail.com
+Location: Santiago, Chile
+GitHub: https://github.com/erickfmm
+LinkedIn: https://www.linkedin.com/in/erickfmm/
+Hugging Face: https://huggingface.co/erickfmm
+
+/* THANKS */
+Font: Inter by Rasmus Andersson
+Inspiration: Modern AI/ML portfolio designs
+
+/* SITE */
+Last update: 2026-02-12
+Language: Español / Spanish
+Doctype: HTML5
+IDE: Visual Studio Code
+Technologies: HTML, CSS, JavaScript
+Hosting: GitHub Pages
+Standards: W3C, Schema.org, Open Graph
+
+/* FOCUS */
+Main topics: Artificial Intelligence, Machine Learning, NLP, LLM, Backend Development, Data Engineering, Education Technology
+
+/* PROJECTS */
+Transformer Encoder Frankenstein: Experimental Transformer architectures
+Awesome NLP/LLM Spanish: Curated resources for Spanish NLP
+ANMetaL: Metaheuristics optimization library
+Markdown to Audio: TTS audiobook generator
+Translate & Process Datasets: Dataset preparation tools
+Autogenerator of PPT: Educational presentation automation
