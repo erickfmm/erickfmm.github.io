@@ -33,11 +33,12 @@ Profesional de Centro de Innovación en el Ministerio de Educación (MINEDUC) de
 
 ## Proyectos Destacados
 
-### Transformer Encoder Frankenstein
-Arquitecturas experimentales de Transformers con Mixture of Experts (MoE), BitNet 1.58 y Titan Memory para NLP en español.
+### Frankenstein Transformer (⭐ Proyecto Estrella)
+Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers. Permite configurar y entrenar modelos con Mixture of Experts (MoE), BitNet 1.58, Titan Memory y más mediante archivos de configuración YAML/JSON. Diseñada para facilitar la investigación en NLP.
 - GitHub: https://github.com/erickfmm/transformer-encoder-frankestein
-- Tecnologías: Python, LLM, Research
-- Estado: En desarrollo v2 (TORMENTED-BERT-Frankenstein)
+- Paper oficial: https://jaigp.org/paper/38/markdown
+- Tecnologías: Python, Library, CLI, Config-Driven, Transformers, Research
+- Estado: Activo - Paper publicado en JAIGP.org
 
 ### Awesome NLP / LLM en Español
 Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM en español.
@@ -69,6 +70,7 @@ Perfil: https://huggingface.co/erickfmm
 
 ### Modelos Publicados
 - Mix TinyLlama 3x1B GGUF (3B params): https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF
+- mrbert-es-sbert-ft (En entrenamiento): Finetuning de mRBERT con Sentence Transformers para embeddings en español - https://huggingface.co/erickfmm/mrbert-es-sbert-ft
 
 ### Datasets Publicados (11 datasets)
 - QQP Triplets (ES): 216 filas de triplets de similaridad traducidos al español

@@ -24,7 +24,7 @@ Standards: W3C, Schema.org, Open Graph
 Main topics: Artificial Intelligence, Machine Learning, NLP, LLM, Backend Development, Data Engineering, Education Technology
 
 /* PROJECTS */
-Transformer Encoder Frankenstein: Experimental Transformer architectures
+Frankenstein Transformer: Config-driven training library and CLI for experimental Transformer architectures
 Awesome NLP/LLM Spanish: Curated resources for Spanish NLP
 ANMetaL: Metaheuristics optimization library
 Markdown to Audio: TTS audiobook generator
