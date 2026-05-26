@@ -155,6 +155,13 @@ pre {
 .optimizer-params { margin-top: 8px; }
 .param-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin: 6px 0; }
 .param-group summary { color: var(--text); font-size:13px; cursor:pointer; }
+.list-builder-list { display:flex; flex-direction:column; gap:4px; }
+.list-builder-item {
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  padding:4px 10px; font-size:13px; font-family:var(--font-mono);
+}
+.list-builder-item .btn { padding:2px 6px; font-size:11px; }
 /* responsive */
 @media (max-width: 900px) { .app { flex-direction: column; } .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); } .row { grid-template-columns: 1fr; } }
 </style>
@@ -378,7 +385,18 @@ function renderField(name, fieldSchema, prefix) {
     const itemsSchema = fieldSchema.items || {};
     const enm = itemsSchema.enum;
     const def = examples.length > 0 ? examples[0] : [];
-    if (enm) {
+    if (enm && name === 'layer_pattern') {
+      html += `<div class="list-builder" data-field="${fieldId}">`;
+      html += `<div style="display:flex;gap:4px;margin-bottom:6px">`;
+      html += `<select id="${fieldId}_add_select" style="flex:1">`;
+      enm.forEach(v => html += `<option value="${v}">${v}</option>`);
+      html += `</select>`;
+      html += `<button type="button" class="btn btn-sm" onclick="listBuilderAdd('${fieldId}')">+ Add</button>`;
+      html += `</div>`;
+      html += `<div id="${fieldId}_list" class="list-builder-list"></div>`;
+      html += `<input type="hidden" id="${fieldId}" value='${JSON.stringify(def)}'>`;
+      html += `</div>`;
+    } else if (enm) {
       html += `<div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${t('selectItems')}:</div>`;
       html += `<div id="${fieldId}_container" style="display:flex;flex-wrap:wrap;gap:4px">`;
       enm.forEach(v => {
@@ -443,6 +461,9 @@ function readFieldValue(name, fieldSchema, prefix) {
     return null;
   }
 
+  if (el.type === 'hidden') {
+    try { return JSON.parse(el.value); } catch(e) { return el.value; }
+  }
   if (el.type === 'checkbox') return el.checked;
   if (el.type === 'number') {
     const v = parseFloat(el.value);
@@ -524,6 +545,7 @@ function buildAll() {
   html += `</div>`;
 
   modelSection.innerHTML = html;
+  initListBuilders();
 
   // === Training section ===
   buildTrainingSection();
@@ -766,6 +788,64 @@ function getDefaultForSpecific(suffix) {
     quant_bits: '4', update_k: '100', rho: '0.1', beta2_decay: '-0.8', clip_threshold: '1.0',
     eps1: '1e-30', eps2: '1e-3' };
   return map[suffix] || '0';
+}
+
+// ====== LIST BUILDER (layer_pattern) ======
+function listBuilderRender(fieldId) {
+  const hidden = document.getElementById(fieldId);
+  const list = document.getElementById(fieldId + '_list');
+  if (!hidden || !list) return;
+  const items = JSON.parse(hidden.value || '[]');
+  list.innerHTML = items.map((item, i) => {
+    const upDisabled = i === 0;
+    const dnDisabled = i === items.length - 1;
+    return `<div class="list-builder-item">
+      <span>${item}</span>
+      <div>
+        <button type="button" class="btn btn-sm" onclick="listBuilderMove('${fieldId}',${i},${i-1})" ${upDisabled ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+        <button type="button" class="btn btn-sm" onclick="listBuilderMove('${fieldId}',${i},${i+1})" ${dnDisabled ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+        <button type="button" class="btn btn-sm" style="color:var(--danger)" onclick="listBuilderRemove('${fieldId}',${i})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function listBuilderAdd(fieldId) {
+  const select = document.getElementById(fieldId + '_add_select');
+  const hidden = document.getElementById(fieldId);
+  const items = JSON.parse(hidden.value || '[]');
+  items.push(select.value);
+  hidden.value = JSON.stringify(items);
+  listBuilderRender(fieldId);
+}
+
+function listBuilderRemove(fieldId, index) {
+  const hidden = document.getElementById(fieldId);
+  const items = JSON.parse(hidden.value || '[]');
+  items.splice(index, 1);
+  hidden.value = JSON.stringify(items);
+  listBuilderRender(fieldId);
+}
+
+function listBuilderMove(fieldId, from, to) {
+  const hidden = document.getElementById(fieldId);
+  const items = JSON.parse(hidden.value || '[]');
+  if (to < 0 || to >= items.length) return;
+  const [moved] = items.splice(from, 1);
+  items.splice(to, 0, moved);
+  hidden.value = JSON.stringify(items);
+  listBuilderRender(fieldId);
+}
+
+function initListBuilders() {
+  document.querySelectorAll('.list-builder').forEach(el => {
+    listBuilderRender(el.dataset.field);
+  });
+}
+
+function isListBuilder(fieldId) {
+  const el = document.getElementById(fieldId);
+  return el && el.type === 'hidden' && document.querySelector(`.list-builder[data-field="${fieldId}"]`);
 }
 
 // ====== BUILD CONFIG ======
@@ -1050,9 +1130,14 @@ function applyPreset(name) {
       const el = document.getElementById(id);
       if (!el) continue;
       if (Array.isArray(val)) {
-        // Checkboxes
-        const cbs = document.querySelectorAll(`.array-cb[data-field="${id}"]`);
-        cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
+        if (isListBuilder(id)) {
+          const hidden = document.getElementById(id);
+          hidden.value = JSON.stringify(val);
+          listBuilderRender(id);
+        } else {
+          const cbs = document.querySelectorAll(`.array-cb[data-field="${id}"]`);
+          cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
+        }
       } else if (typeof val === 'boolean') {
         el.checked = val;
       } else {
