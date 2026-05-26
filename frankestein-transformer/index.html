@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Transformer Encoder Frankenstein - Config Builder</title>
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 <style>
 :root {
   --bg: #0d1117;
@@ -73,7 +74,17 @@ h2 { font-size: 16px; color: var(--accent); margin: 20px 0 12px; border-bottom: 
 h3 { font-size: 14px; margin: 16px 0 8px; }
 label { display: block; font-size: 13px; color: var(--text); margin: 10px 0 4px; font-weight: 600; }
 label .req { color: var(--danger); margin-left: 2px; }
-.desc { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.4; white-space: pre-wrap; }
+.desc { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.4; }
+.desc p { margin: 0 0 4px; }
+.desc p:last-child { margin-bottom: 0; }
+.desc code { background: var(--surface); padding: 1px 4px; border-radius: 3px; font-family: var(--font-mono); font-size: 11px; }
+.desc ul, .desc ol { margin: 2px 0; padding-left: 16px; }
+.desc a { color: var(--accent); }
+.desc strong { color: var(--text); }
+.desc pre { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 11px; line-height: 1.4; margin: 4px 0; }
+.desc table { border-collapse: collapse; width: 100%; margin: 4px 0; font-size: 11px; }
+.desc th, .desc td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; }
+.desc th { background: var(--surface); color: var(--accent); font-weight: 600; }
 input, select, textarea {
   width: 100%;
   padding: 8px 10px;
@@ -301,7 +312,8 @@ function getTitle(fieldSchema, fallback) {
 }
 
 function getDesc(fieldSchema) {
-  return getLoc(fieldSchema, 'description', '');
+  const raw = getLoc(fieldSchema, 'description', '');
+  return raw ? marked.parse(raw, { async: false }) : '';
 }
 
 // ====== RENDER HELPERS ======
