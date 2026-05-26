@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer Encoder Frankenstein - Config Builder</title>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --danger: #f85149;
+  --success: #3fb950;
+  --warning: #d2991d;
+  --input-bg: #0d1117;
+  --radius: 6px;
+  --sidebar-w: 260px;
+  --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.sidebar h2 { font-size:14px; color:var(--accent); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+.sidebar select, .sidebar button { width:100%; }
+.main {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+.tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+  transition: .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+h1 { font-size: 22px; margin-bottom: 4px; }
+h2 { font-size: 16px; color: var(--accent); margin: 20px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+h3 { font-size: 14px; margin: 16px 0 8px; }
+label { display: block; font-size: 13px; color: var(--text); margin: 10px 0 4px; font-weight: 600; }
+label .req { color: var(--danger); margin-left: 2px; }
+.desc { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.4; white-space: pre-wrap; }
+input, select, textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font-sans);
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+input[type="checkbox"] { width: auto; margin-right: 6px; accent-color: var(--accent); }
+.checkbox-wrap { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; }
+.checkbox-wrap label { margin:0; }
+.field-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 8px 0 16px;
+  background: var(--surface);
+}
+.field-group summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent);
+}
+.field-group .req-tag {
+  background: var(--danger);
+  color:#fff;
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:3px;
+  margin-left:6px;
+  text-transform:uppercase;
+}
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: .15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); color:#0d1117; border-color: var(--accent); font-weight:600; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.section { margin-bottom: 8px; }
+.warn { color: var(--warning); font-size: 12px; }
+.info { color: var(--text-muted); font-size: 12px; }
+.optimizer-params { margin-top: 8px; }
+.param-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin: 6px 0; }
+.param-group summary { color: var(--text); font-size:13px; cursor:pointer; }
+/* responsive */
+@media (max-width: 900px) { .app { flex-direction: column; } .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); } .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar" id="sidebar">
+  <h2 id="sidebar-lang-title">🌐 Language</h2>
+  <select id="lang-select" onchange="onLangChange()">
+    <option value="en">English</option>
+    <option value="es">Español</option>
+  </select>
+  <h2>⚡ Command</h2>
+  <select id="cmd-select" onchange="updateCmdPreview()">
+    <option value="train">Train — Run main training</option>
+    <option value="deploy">Deploy — Convert to deployment artifacts</option>
+    <option value="quantize">Quantize — Export quantized format</option>
+    <option value="infer">Infer — Run deployed model inference</option>
+    <option value="sbert-train">SBERT Train — Train SBERT model</option>
+    <option value="sbert-infer">SBERT Infer — Run SBERT inference</option>
+  </select>
+  <p id="cmd-info" class="info"></p>
+  <h2>📁 Load Example</h2>
+  <button class="btn btn-sm" onclick="loadExample('mini')">Mini</button>
+  <button class="btn btn-sm" onclick="loadExample('standard')">Standard</button>
+  <button class="btn btn-sm" onclick="loadExample('frankenstein')" style="margin-top:4px">Frankenstein</button>
+  <button class="btn btn-sm" onclick="loadExample('hybrid')" style="margin-top:4px">Hybrid (turbo_muon)</button>
+  <p style="margin-top:12px;font-size:11px;color:var(--text-muted)">
+    schema.yaml must be placed alongside this HTML file on your GitHub Pages repo.
+  </p>
+</div>
+<div class="main">
+  <h1>🤖 Transformer Encoder Frankenstein — Config Builder</h1>
+  <p id="lang-status" class="info" style="margin-bottom: 12px;"></p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('builder')" data-tab="builder">⚙️ Configuration Builder</button>
+    <button class="tab" onclick="switchTab('yaml')" data-tab="yaml">📄 YAML Output</button>
+    <button class="tab" onclick="switchTab('command')" data-tab="command">▶️ Command</button>
+  </div>
+
+  <!-- TAB: BUILDER -->
+  <div class="tab-content active" id="tab-builder">
+    <div id="builder-status" class="info"></div>
+    <div id="model-section"></div>
+    <div id="training-section"></div>
+  </div>
+
+  <!-- TAB: YAML -->
+  <div class="tab-content" id="tab-yaml">
+    <h2>Generated YAML Configuration</h2>
+    <pre id="yaml-output">Fill the Configuration Builder tab first.</pre>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="downloadYaml()">⬇ Download YAML</button>
+      <button class="btn" onclick="copyYaml()">📋 Copy to Clipboard</button>
+    </div>
+  </div>
+
+  <!-- TAB: COMMAND -->
+  <div class="tab-content" id="tab-command">
+    <h2>Generated CLI Command</h2>
+    <pre id="cmd-preview">Fill the Configuration Builder tab first.</pre>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn" onclick="copyCmd()">📋 Copy Command</button>
+    </div>
+    <div style="margin-top:16px">
+      <label>Output Config Path</label>
+      <input type="text" id="output-path" value="./config_generated.yaml" oninput="updateCmdPreview()">
+    </div>
+    <p id="full-cmd-display" class="info" style="margin-top:8px;"></p>
+  </div>
+</div>
+</div>
+
+<script>
+// ====== GLOBALS ======
+let SCHEMA = null;
+let lang = 'en';
+let selectedCmd = 'train';
+let configData = {};
+
+const UI = {
+  required: { en:'Required', es:'Obligatorio' },
+  langTitle: { en:'🌐 Language', es:'🌐 Idioma' },
+  cmdTitle: { en:'⚡ Command', es:'⚡ Comando' },
+  loadExampleTitle: { en:'📁 Load Example', es:'📁 Cargar Ejemplo' },
+  modelConfig: { en:'Model Configuration', es:'Configuración del Modelo' },
+  trainingConfig: { en:'Training Configuration', es:'Configuración de Entrenamiento' },
+  chooseModelType: { en:'Choose Model Type', es:'Elegir Tipo de Modelo' },
+  customModel: { en:'Custom Model', es:'Modelo Personalizado' },
+  baseModel: { en:'Base Model', es:'Modelo Base' },
+  modelParams: { en:'Model Parameters', es:'Parámetros del Modelo' },
+  baseModelConfig: { en:'Base Model Configuration', es:'Configuración de Modelo Base' },
+  tokenizerConfig: { en:'Tokenizer Configuration', es:'Configuración del Tokenizador' },
+  optimizerConfig: { en:'Optimizer Configuration', es:'Configuración del Optimizador' },
+  optimizerParamsInfo: { en:'Parameters are prefixed with optimizer class name (e.g. adamw-lr_embeddings).', es:'Los parámetros llevan prefijo de la clase del optimizador (ej. adamw-lr_embeddings).' },
+  trainingParams: { en:'Training Parameters', es:'Parámetros de Entrenamiento' },
+  generalTraining: { en:'General Training Parameters', es:'Parámetros Generales de Entrenamiento' },
+  datasetParams: { en:'Dataset Parameters', es:'Parámetros de Dataset' },
+  optimizer: { en:'Optimizer', es:'Optimizador' },
+  scheduler: { en:'Scheduler', es:'Scheduler' },
+  gradientSettings: { en:'Gradient Settings', es:'Configuración de Gradientes' },
+  checkpointSettings: { en:'Checkpoint Settings', es:'Configuración de Checkpoints' },
+  loggingSettings: { en:'Logging Settings', es:'Configuración de Logging' },
+  gpuSettings: { en:'GPU Settings', es:'Configuración de GPU' },
+  mixedPrecision: { en:'Mixed Precision', es:'Precisión Mixta' },
+  embeddingsGroup: { en:'Embeddings', es:'Embeddings' },
+  normGroup: { en:'Normalization Layers', es:'Capas de Normalización' },
+  attnGroup: { en:'Attention Layers', es:'Capas de Atención' },
+  otherGroup: { en:'Other Parameters', es:'Otros Parámetros' },
+  selectItems: { en:'Select items', es:'Seleccionar items' },
+};
+
+const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
+
+// ====== INIT ======
+async function init() {
+  try {
+    const resp = await fetch('schema.yaml');
+    const yamlText = await resp.text();
+    SCHEMA = jsyaml.load(yamlText);
+    document.getElementById('builder-status').textContent = '✅ Schema loaded successfully.';
+    document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
+    loadExample('standard');
+    updateCmdPreview();
+  } catch(e) {
+    document.getElementById('builder-status').textContent = '❌ Error loading schema.yaml. Place it next to index.html.';
+    console.error(e);
+  }
+}
+
+function onLangChange() {
+  lang = document.getElementById('lang-select').value;
+  document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
+  if (SCHEMA) buildAll();
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'yaml') updateYamlOutput();
+  if (name === 'command') updateCmdPreview();
+}
+
+// ====== SCHEMA HELPERS ======
+function getLoc(fieldSchema, key, fallback) {
+  const locKey = lang === 'en' ? key : `${key}_es`;
+  return fieldSchema[locKey] || fieldSchema[key] || fallback || '';
+}
+
+function getTitle(fieldSchema, fallback) {
+  return getLoc(fieldSchema, 'title', fallback || '');
+}
+
+function getDesc(fieldSchema) {
+  return getLoc(fieldSchema, 'description', '');
+}
+
+// ====== RENDER HELPERS ======
+function createFieldGroup(label, required, desc, content) {
+  const reqTag = required ? `<span class="req-tag">${t('required')}</span>` : '';
+  return `<details class="field-group" ${required ? 'open':''}>
+    <summary>${label}${reqTag}</summary>
+    ${desc ? `<div class="desc" style="margin-top:8px">${desc}</div>` : ''}
+    ${content}
+  </details>`;
+}
+
+function createLabel(name, title, required) {
+  return `<label>${title}${required ? '<span class="req">*</span>' : ''}</label>`;
+}
+
+function createId(name) {
+  return 'f_' + name.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// ====== FIELD RENDERERS ======
+function renderField(name, fieldSchema, prefix) {
+  const type = fieldSchema.type;
+  const title = getTitle(fieldSchema, name);
+  const desc = getDesc(fieldSchema);
+  const fieldId = createId(prefix ? prefix + '.' + name : name);
+  const examples = fieldSchema.examples || [];
+
+  let html = `<div class="section">`;
+  html += createLabel(name, title, false);
+  if (desc) html += `<div class="desc">${desc}</div>`;
+
+  if (type === 'boolean') {
+    const def = examples[0] !== undefined ? examples[0] : false;
+    html += `<div class="checkbox-wrap">
+      <input type="checkbox" id="${fieldId}" ${def ? 'checked' : ''}>
+      <label for="${fieldId}" style="margin:0">${title}</label>
+    </div>`;
+  } else if (type === 'integer') {
+    const def = examples.length > 0 ? examples[0] : 0;
+    const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
+    const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
+    html += `<input type="number" id="${fieldId}" value="${def}" step="1" ${min} ${max}>`;
+  } else if (type === 'number') {
+    const def = examples.length > 0 ? examples[0] : 0;
+    const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
+    const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
+    html += `<input type="number" id="${fieldId}" value="${def}" step="any" ${min} ${max}>`;
+  } else if (type === 'string') {
+    const enm = fieldSchema.enum;
+    const def = examples.length > 0 ? examples[0] : '';
+    if (enm) {
+      html += `<select id="${fieldId}">`;
+      enm.forEach(v => {
+        html += `<option value="${v}" ${v === def ? 'selected' : ''}>${v}</option>`;
+      });
+      html += `</select>`;
+    } else {
+      html += `<input type="text" id="${fieldId}" value="${def}">`;
+    }
+  } else if (type === 'array') {
+    const itemsSchema = fieldSchema.items || {};
+    const enm = itemsSchema.enum;
+    const def = examples.length > 0 ? examples[0] : [];
+    if (enm) {
+      html += `<div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${t('selectItems')}:</div>`;
+      html += `<div id="${fieldId}_container" style="display:flex;flex-wrap:wrap;gap:4px">`;
+      enm.forEach(v => {
+        const checked = def.includes(v);
+        html += `<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;margin:2px 0;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer">
+          <input type="checkbox" class="array-cb" data-field="${fieldId}" value="${v}" ${checked ? 'checked' : ''}>${v}
+        </label>`;
+      });
+      html += `</div>`;
+    } else {
+      const defStr = Array.isArray(def) ? def.join('\n') : '';
+      html += `<textarea id="${fieldId}" rows="4">${defStr}</textarea>`;
+      html += `<div class="info">One per line</div>`;
+    }
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderObject(name, objSchema, prefix, level) {
+  const props = objSchema.properties || {};
+  const required = objSchema.required || [];
+  const pp = prefix ? prefix + '.' + name : name;
+  let html = '';
+  for (const [propName, propSchema] of Object.entries(props)) {
+    const propTitle = getTitle(propSchema, propName);
+    const propDesc = getDesc(propSchema);
+    const isReq = required.includes(propName);
+    const propType = propSchema.type;
+
+    if (propType === 'object') {
+      html += createFieldGroup(propTitle, isReq, propDesc, renderObject(propName, propSchema, pp, level+1));
+    } else {
+      html += `<div class="section">`;
+      if (isReq) {
+        html += createLabel(propName, propTitle + ' *', true);
+      } else {
+        html += createLabel(propName, propTitle, false);
+      }
+      if (propDesc) html += `<div class="desc">${propDesc}</div>`;
+      html += renderField(propName, propSchema, pp).replace(/<div class="section">/, '').replace(/<\/div>$/, '');
+      html += `</div>`;
+    }
+  }
+  return html;
+}
+
+// ====== VALUE READERS ======
+function readFieldValue(name, fieldSchema, prefix) {
+  const fieldId = createId(prefix ? prefix + '.' + name : name);
+  const type = fieldSchema.type;
+  const el = document.getElementById(fieldId);
+
+  if (!el) {
+    // array with checkboxes
+    if (type === 'array') {
+      const cbs = document.querySelectorAll(`.array-cb[data-field="${fieldId}"]`);
+      const vals = [];
+      cbs.forEach(cb => { if (cb.checked) vals.push(cb.value); });
+      return vals;
+    }
+    return null;
+  }
+
+  if (el.type === 'checkbox') return el.checked;
+  if (el.type === 'number') {
+    const v = parseFloat(el.value);
+    return type === 'integer' ? Math.round(v) : v;
+  }
+  if (el.tagName === 'SELECT') return el.value;
+  if (el.tagName === 'TEXTAREA') {
+    const lines = el.value.split('\n').map(l => l.trim()).filter(l => l);
+    if (type === 'array') return lines;
+    return el.value;
+  }
+  return el.value;
+}
+
+function readObjectValue(name, objSchema, prefix) {
+  const props = objSchema.properties || {};
+  const pp = prefix ? prefix + '.' + name : name;
+  const result = {};
+  for (const [propName, propSchema] of Object.entries(props)) {
+    if (propSchema.type === 'object') {
+      result[propName] = readObjectValue(propName, propSchema, pp);
+    } else {
+      result[propName] = readFieldValue(propName, propSchema, pp);
+    }
+  }
+  return result;
+}
+
+// ====== BUILD ALL ======
+function buildAll() {
+  if (!SCHEMA) return;
+
+  // === Model section ===
+  const props = SCHEMA.properties;
+  const modelSection = document.getElementById('model-section');
+
+  let html = `<h2>${t('modelConfig')}</h2>`;
+  html += `<p>${t('chooseModelType')}:</p>`;
+  html += `<div style="display:flex;gap:12px;margin:8px 0 16px">
+    <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+      <input type="radio" name="model_mode" value="custom" checked onchange="onModelModeChange()"> ${t('customModel')}
+    </label>
+    <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+      <input type="radio" name="model_mode" value="base" onchange="onModelModeChange()"> ${t('baseModel')}
+    </label>
+  </div>`;
+
+  // Custom model
+  html += `<div id="custom-model-div">`;
+  const modelClassSchema = props.model_class;
+  const modelClassTitle = getTitle(modelClassSchema, 'Model Class');
+  const modelClassDesc = getDesc(modelClassSchema);
+  const modelClassEnm = modelClassSchema.enum || [];
+  html += `<div class="section">`;
+  html += createLabel('model_class', modelClassTitle, true);
+  if (modelClassDesc) html += `<div class="desc">${modelClassDesc}</div>`;
+  html += `<select id="${createId('model_class')}">`;
+  modelClassEnm.forEach(v => html += `<option value="${v}">${v}</option>`);
+  html += `</select></div>`;
+
+  const modelSchema = props.model;
+  const modelTitle = getTitle(modelSchema, 'Model');
+  const modelDesc = getDesc(modelSchema);
+  html += createFieldGroup(modelTitle, true, modelDesc, renderObject('model', modelSchema, '', 0));
+  html += `</div>`;
+
+  // Base model
+  html += `<div id="base-model-div" style="display:none">`;
+  const baseModelSchema = props.base_model;
+  html += `<div class="section">`;
+  html += createLabel('base_model', getTitle(baseModelSchema, 'Base Model'), true);
+  html += `<div class="desc">${getDesc(baseModelSchema)}</div>`;
+  html += `<input type="text" id="${createId('base_model')}" value="answerdotai/ModernBERT-base">`;
+  html += `</div>`;
+
+  const tokenizerSchema = props.tokenizer;
+  html += createFieldGroup(getTitle(tokenizerSchema, 'Tokenizer'), false, getDesc(tokenizerSchema),
+    renderObject('tokenizer', tokenizerSchema, '', 0));
+  html += `</div>`;
+
+  modelSection.innerHTML = html;
+
+  // === Training section ===
+  buildTrainingSection();
+}
+
+function buildTrainingSection() {
+  const trainingSchema = SCHEMA.properties.training;
+  const trainingProps = trainingSchema.properties;
+  const trainingSection = document.getElementById('training-section');
+
+  let html = `<h2>${t('trainingConfig')}</h2>`;
+
+  // Task
+  const taskSchema = trainingProps.task;
+  html += `<div class="section">`;
+  html += createLabel('task', getTitle(taskSchema, 'Task'), true);
+  html += `<div class="desc">${getDesc(taskSchema)}</div>`;
+  html += `<select id="${createId('training.task')}">`;
+  (taskSchema.enum || []).forEach(v => html += `<option value="${v}">${v}</option>`);
+  html += `</select></div>`;
+
+  // General training params
+  html += createFieldGroup(t('generalTraining'), false, '', `
+    <div class="row">
+      <div>${createLabel('num_epochs', getTitle(trainingProps.num_epochs, 'Epochs'), false)}
+        <div class="desc">${getDesc(trainingProps.num_epochs)}</div>
+        <input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1">
+      </div>
+      <div>${createLabel('batch_size', getTitle(trainingProps.batch_size, 'Batch Size'), false)}
+        <div class="desc">${getDesc(trainingProps.batch_size)}</div>
+        <input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1">
+      </div>
+    </div>
+    <div class="row">
+      <div>${createLabel('max_length', getTitle(trainingProps.max_length, 'Max Length'), false)}
+        <div class="desc">${getDesc(trainingProps.max_length)}</div>
+        <input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1">
+      </div>
+      <div>${createLabel('mlm_probability', getTitle(trainingProps.mlm_probability, 'MLM Prob'), false)}
+        <div class="desc">${getDesc(trainingProps.mlm_probability)}</div>
+        <input type="number" id="${createId('training.mlm_probability')}" value="0.15" min="0" max="1" step="any">
+      </div>
+    </div>
+  `);
+
+  // Dataset params
+  html += createFieldGroup(t('datasetParams'), false, '', `
+    <div class="row">
+      <div>${createLabel('max_samples', getTitle(trainingProps.max_samples, 'Max Samples'), false)}
+        <div class="desc">${getDesc(trainingProps.max_samples)}</div>
+        <input type="number" id="${createId('training.max_samples')}" value="20000000" min="1" step="1">
+      </div>
+      <div>${createLabel('dataset_batch_size', getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false)}
+        <div class="desc">${getDesc(trainingProps.dataset_batch_size)}</div>
+        <input type="number" id="${createId('training.dataset_batch_size')}" value="25000" min="1" step="1">
+      </div>
+    </div>
+  `);
+
+  // Optimizer
+  const optSchema = trainingProps.optimizer;
+  const optClassSchema = optSchema.properties.optimizer_class;
+  html += createFieldGroup(t('optimizer'), false, '', `
+    <div class="section">
+      ${createLabel('optimizer_class', getTitle(optClassSchema, 'Optimizer Class'), true)}
+      <div class="desc">${getDesc(optClassSchema)}</div>
+      <select id="${createId('training.optimizer.optimizer_class')}" onchange="onOptimizerChange()">
+        ${(optClassSchema.enum || ['adamw']).map(v => `<option value="${v}" ${v==='adamw'?'selected':''}>${v}</option>`).join('')}
+      </select>
+    </div>
+    <div id="optimizer-param-section" class="optimizer-params"></div>
+  `);
+
+  // Scheduler
+  const schedTypeSchema = trainingProps.scheduler_type;
+  html += createFieldGroup(t('scheduler'), false, '', `
+    <div class="row">
+      <div>${createLabel('scheduler_total_steps', getTitle(trainingProps.scheduler_total_steps, 'Total Steps'), false)}
+        <div class="desc">${getDesc(trainingProps.scheduler_total_steps)}</div>
+        <input type="number" id="${createId('training.scheduler_total_steps')}" value="10000" min="1" step="1">
+      </div>
+      <div>${createLabel('scheduler_warmup_ratio', getTitle(trainingProps.scheduler_warmup_ratio, 'Warmup Ratio'), false)}
+        <div class="desc">${getDesc(trainingProps.scheduler_warmup_ratio)}</div>
+        <input type="number" id="${createId('training.scheduler_warmup_ratio')}" value="0.1" min="0" max="1" step="any">
+      </div>
+    </div>
+    <div>${createLabel('scheduler_type', getTitle(schedTypeSchema, 'Scheduler Type'), false)}
+      <div class="desc">${getDesc(schedTypeSchema)}</div>
+      <select id="${createId('training.scheduler_type')}">
+        ${(schedTypeSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('')}
+      </select>
+    </div>
+  `);
+
+  // Gradient settings
+  html += createFieldGroup(t('gradientSettings'), false, '', `
+    <div class="row">
+      <div>${createLabel('gradient_accumulation_steps', getTitle(trainingProps.gradient_accumulation_steps, 'Grad Accum'), false)}
+        <div class="desc">${getDesc(trainingProps.gradient_accumulation_steps)}</div>
+        <input type="number" id="${createId('training.gradient_accumulation_steps')}" value="4" min="1" step="1">
+      </div>
+      <div>${createLabel('grad_clip_max_norm', getTitle(trainingProps.grad_clip_max_norm, 'Grad Clip'), false)}
+        <div class="desc">${getDesc(trainingProps.grad_clip_max_norm)}</div>
+        <input type="number" id="${createId('training.grad_clip_max_norm')}" value="5.0" min="0" step="any">
+      </div>
+    </div>
+  `);
+
+  // Checkpoint settings
+  html += createFieldGroup(t('checkpointSettings'), false, '', `
+    <div class="row">
+      <div>${createLabel('checkpoint_every_n_steps', getTitle(trainingProps.checkpoint_every_n_steps, 'Ckpt Every'), false)}
+        <div class="desc">${getDesc(trainingProps.checkpoint_every_n_steps)}</div>
+        <input type="number" id="${createId('training.checkpoint_every_n_steps')}" value="500" min="1" step="1">
+      </div>
+      <div>${createLabel('max_rolling_checkpoints', getTitle(trainingProps.max_rolling_checkpoints, 'Max Rolling'), false)}
+        <div class="desc">${getDesc(trainingProps.max_rolling_checkpoints)}</div>
+        <input type="number" id="${createId('training.max_rolling_checkpoints')}" value="3" min="1" step="1">
+      </div>
+    </div>
+    <div>${createLabel('num_best_checkpoints', getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false)}
+      <div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>
+      <input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">
+    </div>
+  `);
+
+  // Logging
+  html += createFieldGroup(t('loggingSettings'), false, '', `
+    <div>${createLabel('csv_log_path', getTitle(trainingProps.csv_log_path, 'CSV Log'), false)}
+      <div class="desc">${getDesc(trainingProps.csv_log_path)}</div>
+      <input type="text" id="${createId('training.csv_log_path')}" value="training_metrics.csv">
+    </div>
+    <div class="row">
+      <div class="checkbox-wrap">
+        <input type="checkbox" id="${createId('training.log_gradient_stats')}" checked>
+        <label>${getTitle(trainingProps.log_gradient_stats, 'Log Grad Stats')}</label>
+      </div>
+      <div>${createLabel('gradient_log_interval', getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false)}
+        <input type="number" id="${createId('training.gradient_log_interval')}" value="10" min="1" step="1">
+      </div>
+    </div>
+  `);
+
+  // GPU Settings
+  html += createFieldGroup(t('gpuSettings'), false, '', `
+    <div class="checkbox-wrap">
+      <input type="checkbox" id="${createId('training.gpu_temp_guard_enabled')}" checked>
+      <label>${getTitle(trainingProps.gpu_temp_guard_enabled, 'GPU Temp Guard')}</label>
+    </div>
+    <div class="row">
+      <div>${createLabel('gpu_temp_pause_threshold_c', getTitle(trainingProps.gpu_temp_pause_threshold_c, 'Pause Temp'), false)}
+        <input type="number" id="${createId('training.gpu_temp_pause_threshold_c')}" value="90.0" min="0" step="any">
+      </div>
+      <div>${createLabel('gpu_temp_resume_threshold_c', getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false)}
+        <input type="number" id="${createId('training.gpu_temp_resume_threshold_c')}" value="80.0" min="0" step="any">
+      </div>
+    </div>
+  `);
+
+  // AMP
+  html += `<div class="checkbox-wrap">
+    <input type="checkbox" id="${createId('training.use_amp')}">
+    <label>${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
+  </div>`;
+
+  trainingSection.innerHTML = html;
+  onOptimizerChange();
+}
+
+// ====== OPTIMIZER PARAMS ======
+function onOptimizerChange() {
+  const optEl = document.getElementById(createId('training.optimizer.optimizer_class'));
+  const optClass = optEl ? optEl.value : 'adamw';
+  const container = document.getElementById('optimizer-param-section');
+  if (!container) return;
+
+  const groups = ['embeddings', 'norms', 'ode', 'retnet', 'mamba', 'attention', 'other'];
+  const groupLabels = {
+    embeddings: t('embeddingsGroup'), norms: t('normGroup'),
+    ode: 'ODE', retnet: 'RetNet', mamba: 'Mamba',
+    attention: t('attnGroup'), other: t('otherGroup')
+  };
+  const descRef = getLoc(SCHEMA.properties.training.properties.optimizer.properties.parameters, 'description', '');
+
+  let html = `<div class="info" style="margin:8px 0">${t('optimizerParamsInfo')}</div>`;
+
+  // Optimizer-specific extra params
+  const xRef = SCHEMA.properties.training.properties.optimizer.properties.parameters['x_parameter_reference'];
+  const byOpt = xRef ? xRef.by_optimizer : {};
+  const optInfo = byOpt[optClass] || {};
+  const specificSuffixes = optInfo.specific_global_suffixes || [];
+
+  groups.forEach(group => {
+    html += `<details class="param-group"><summary>${groupLabels[group]}</summary>`;
+    html += `<div class="row">`;
+    const pref = optClass + '-';
+    html += `<div>${createLabel(`${pref}lr_${group}`, 'Learning Rate', false)}
+      <input type="number" id="${createId('training.optimizer.' + pref + 'lr_' + group)}" value="${getDefaultForGroup(group, 'lr')}" step="any">
+    </div>`;
+    html += `<div>${createLabel(`${pref}wd_${group}`, 'Weight Decay', false)}
+      <input type="number" id="${createId('training.optimizer.' + pref + 'wd_' + group)}" value="${getDefaultForGroup(group, 'wd')}" step="any">
+    </div>`;
+    html += `</div><div class="row">`;
+    html += `<div>${createLabel(`${pref}betas_${group}`, 'Betas', false)}
+      <input type="text" id="${createId('training.optimizer.' + pref + 'betas_' + group)}" value="[0.9, 0.95]">
+    </div>`;
+    html += `<div>${createLabel(`${pref}eps_${group}`, 'Epsilon', false)}
+      <input type="number" id="${createId('training.optimizer.' + pref + 'eps_' + group)}" value="1e-8" step="any">
+    </div>`;
+    html += `</div></details>`;
+  });
+
+  // Extra optimizer-specific params
+  if (specificSuffixes.length > 0) {
+    html += `<details class="param-group" open><summary>${optClass} — specific parameters</summary>`;
+    specificSuffixes.forEach(suffix => {
+      const keyId = createId('training.optimizer.' + optClass + '-' + suffix);
+      html += `<div class="row"><div>${createLabel(optClass + '-' + suffix, suffix, false)}
+        <input type="text" id="${keyId}" value="${getDefaultForSpecific(suffix)}">
+      </div></div>`;
+    });
+    html += `</details>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function getDefaultForGroup(group, param) {
+  const defaults = {
+    lr: { embeddings:'1e-6', norms:'5e-6', ode:'1e-7', retnet:'5e-6', mamba:'2e-6', attention:'3e-6', other:'2e-6' },
+    wd: { embeddings:'0.01', norms:'0.001', ode:'0.01', retnet:'0.01', mamba:'0.01', attention:'0.01', other:'0.01' }
+  };
+  return (defaults[param] && defaults[param][group]) ? defaults[param][group] : '0.01';
+}
+
+function getDefaultForSpecific(suffix) {
+  const map = { momentum: '0.95', nesterov: 'true', ns_steps: '4', ns_eps: '1e-7',
+    d_coef: '0.8', cautious_clip: '0.5', gamma: '0.5', rank: '64', update_proj_gap: '1',
+    scale: '1.0', scale_type: 'channel', proj_type: 'std', scale_front: 'false', disable_nl: 'false',
+    quant_bits: '4', update_k: '100', rho: '0.1', beta2_decay: '-0.8', clip_threshold: '1.0',
+    eps1: '1e-30', eps2: '1e-3' };
+  return map[suffix] || '0';
+}
+
+// ====== BUILD CONFIG ======
+function buildConfig() {
+  if (!SCHEMA) return {};
+
+  const trainingProps = SCHEMA.properties.training.properties;
+  const config = {};
+
+  // Model mode
+  const modeEl = document.querySelector('input[name="model_mode"]:checked');
+  const mode = modeEl ? modeEl.value : 'custom';
+
+  if (mode === 'base') {
+    config.base_model = readFieldValue('base_model', SCHEMA.properties.base_model, '');
+    const tokenizerSchema = SCHEMA.properties.tokenizer;
+    config.tokenizer = readObjectValue('tokenizer', tokenizerSchema, '');
+  } else {
+    config.model_class = readFieldValue('model_class', SCHEMA.properties.model_class, '');
+    config.model = readObjectValue('model', SCHEMA.properties.model, '');
+  }
+
+  // Training
+  const training = {};
+  training.task = readFieldValue('task', trainingProps.task, 'training');
+  training.num_epochs = readFieldValue('num_epochs', trainingProps.num_epochs, 'training');
+  training.batch_size = readFieldValue('batch_size', trainingProps.batch_size, 'training');
+  training.max_length = readFieldValue('max_length', trainingProps.max_length, 'training');
+  training.mlm_probability = readFieldValue('mlm_probability', trainingProps.mlm_probability, 'training');
+  training.max_samples = readFieldValue('max_samples', trainingProps.max_samples, 'training');
+  training.dataset_batch_size = readFieldValue('dataset_batch_size', trainingProps.dataset_batch_size, 'training');
+  training.gradient_accumulation_steps = readFieldValue('gradient_accumulation_steps', trainingProps.gradient_accumulation_steps, 'training');
+  training.grad_clip_max_norm = readFieldValue('grad_clip_max_norm', trainingProps.grad_clip_max_norm, 'training');
+  training.checkpoint_every_n_steps = readFieldValue('checkpoint_every_n_steps', trainingProps.checkpoint_every_n_steps, 'training');
+  training.max_rolling_checkpoints = readFieldValue('max_rolling_checkpoints', trainingProps.max_rolling_checkpoints, 'training');
+  training.num_best_checkpoints = readFieldValue('num_best_checkpoints', trainingProps.num_best_checkpoints, 'training');
+  training.scheduler_total_steps = readFieldValue('scheduler_total_steps', trainingProps.scheduler_total_steps, 'training');
+  training.scheduler_warmup_ratio = readFieldValue('scheduler_warmup_ratio', trainingProps.scheduler_warmup_ratio, 'training');
+  training.scheduler_type = readFieldValue('scheduler_type', trainingProps.scheduler_type, 'training');
+  training.csv_log_path = readFieldValue('csv_log_path', trainingProps.csv_log_path, 'training');
+  training.log_gradient_stats = readFieldValue('log_gradient_stats', trainingProps.log_gradient_stats, 'training');
+  training.gradient_log_interval = readFieldValue('gradient_log_interval', trainingProps.gradient_log_interval, 'training');
+  training.use_amp = readFieldValue('use_amp', trainingProps.use_amp, 'training');
+  training.gpu_temp_guard_enabled = readFieldValue('gpu_temp_guard_enabled', trainingProps.gpu_temp_guard_enabled, 'training');
+  training.gpu_temp_pause_threshold_c = readFieldValue('gpu_temp_pause_threshold_c', trainingProps.gpu_temp_pause_threshold_c, 'training');
+  training.gpu_temp_resume_threshold_c = readFieldValue('gpu_temp_resume_threshold_c', trainingProps.gpu_temp_resume_threshold_c, 'training');
+
+  // Optimizer
+  const optClass = readFieldValue('optimizer_class', trainingProps.optimizer.properties.optimizer_class, 'training.optimizer');
+  const optParams = {};
+  const pref = optClass + '-';
+  const groups = ['embeddings', 'norms', 'ode', 'retnet', 'mamba', 'attention', 'other'];
+  const sharedKeys = ['lr', 'wd', 'betas', 'eps'];
+  groups.forEach(g => {
+    sharedKeys.forEach(k => {
+      const id = createId('training.optimizer.' + pref + k + '_' + g);
+      const el = document.getElementById(id);
+      if (el) {
+        let val;
+        if (el.type === 'number') val = parseFloat(el.value);
+        else if (el.tagName === 'SELECT') val = el.value;
+        else val = el.value;
+        // Parse betas as array
+        if (k === 'betas') {
+          try { val = JSON.parse(val); } catch(e) { val = val; }
+        }
+        optParams[pref + k + '_' + g] = val;
+      }
+    });
+  });
+
+  // Optimizer-specific params
+  const xRef = (trainingProps.optimizer.properties.parameters['x_parameter_reference'] || {});
+  const byOpt = xRef.by_optimizer || {};
+  const optInfo = byOpt[optClass] || {};
+  const specificSuffixes = optInfo.specific_global_suffixes || [];
+  specificSuffixes.forEach(suffix => {
+    const id = createId('training.optimizer.' + pref + suffix);
+    const el = document.getElementById(id);
+    if (el) {
+      let val = el.value;
+      if (val === 'true') val = true;
+      else if (val === 'false') val = false;
+      else if (!isNaN(parseFloat(val)) && val.trim() !== '') val = parseFloat(val);
+      optParams[pref + suffix] = val;
+    }
+  });
+
+  training.optimizer = { optimizer_class: optClass, parameters: optParams };
+  config.training = training;
+
+  configData = config;
+  return config;
+}
+
+// ====== YAML GENERATION ======
+function objToYaml(obj, indent) {
+  indent = indent || 0;
+  const pad = '  '.repeat(indent);
+  let out = '';
+  for (const [key, value] of Object.entries(obj)) {
+    out += pad + key + ':';
+    if (value === null || value === undefined) {
+      out += '\n';
+    } else if (typeof value === 'object' && !Array.isArray(value)) {
+      out += '\n' + objToYaml(value, indent + 1);
+    } else if (Array.isArray(value)) {
+      if (value.length === 0) {
+        out += ' []\n';
+      } else {
+        out += '\n';
+        value.forEach(item => { out += pad + '  - ' + formatYamlScalar(item) + '\n'; });
+      }
+    } else {
+      out += ' ' + formatYamlScalar(value) + '\n';
+    }
+  }
+  return out;
+}
+
+function formatYamlScalar(val) {
+  if (typeof val === 'boolean') return val ? 'true' : 'false';
+  if (typeof val === 'number') {
+    if (Number.isInteger(val)) return String(val);
+    // scientific notation for small numbers
+    if (Math.abs(val) < 1e-4 && val !== 0) return val.toExponential(1).replace('+', '');
+    return String(val);
+  }
+  if (typeof val === 'string') {
+    if (/[:\{\}\[\],&\*\?!|>'"%@`#]/.test(val) || val.includes('\n')) {
+      return '"' + val.replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
+    }
+    return val;
+  }
+  return String(val);
+}
+
+function generateYaml() {
+  const config = buildConfig();
+  return objToYaml(config);
+}
+
+function updateYamlOutput() {
+  try {
+    const yaml = generateYaml();
+    document.getElementById('yaml-output').textContent = yaml;
+  } catch(e) {
+    document.getElementById('yaml-output').textContent = 'Error: ' + e.message;
+  }
+}
+
+function downloadYaml() {
+  const yaml = generateYaml();
+  const blob = new Blob([yaml], {type:'text/yaml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'config.yaml'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyYaml() {
+  const yaml = document.getElementById('yaml-output').textContent;
+  navigator.clipboard.writeText(yaml).then(() => alert('YAML copied!')).catch(() => {});
+}
+
+// ====== COMMAND ======
+function updateCmdPreview() {
+  selectedCmd = document.getElementById('cmd-select').value;
+  buildConfig();
+  const outputPath = document.getElementById('output-path').value || './config_generated.yaml';
+  const modelClass = configData.model_class || 'mini';
+  let cmd = 'python -m src.cli ' + selectedCmd;
+  if (['train', 'deploy', 'quantize', 'infer', 'sbert-train', 'sbert-infer'].includes(selectedCmd)) {
+    cmd += ' --config ' + outputPath;
+  }
+  if (selectedCmd === 'train') {
+    cmd += ' --config-name ' + modelClass;
+  }
+  document.getElementById('cmd-preview').textContent = cmd;
+  document.getElementById('full-cmd-display').textContent = 
+    `nohup ${cmd} > ./nohup_web.out 2>&1 &`;
+}
+
+function copyCmd() {
+  const cmd = document.getElementById('cmd-preview').textContent;
+  navigator.clipboard.writeText(cmd).then(() => alert('Command copied!')).catch(() => {});
+}
+
+function onModelModeChange() {
+  const mode = document.querySelector('input[name="model_mode"]:checked').value;
+  document.getElementById('custom-model-div').style.display = mode === 'custom' ? 'block' : 'none';
+  document.getElementById('base-model-div').style.display = mode === 'base' ? 'block' : 'none';
+}
+
+// ====== PRESETS ======
+const PRESETS = {
+  mini: {
+    model_mode: 'custom', model_class: 'mini',
+    model: { vocab_size:50000, hidden_size:128, num_layers:4, num_loops:1, num_heads:1, retention_heads:1,
+      num_experts:2, top_k_experts:1, dropout:0.1, layer_pattern:['standard_attn'], ode_solver:'rk4', ode_steps:2,
+      use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:true, factorized_embedding_dim:16,
+      use_embedding_conv:true, embedding_conv_kernel:32, use_hope:false, use_moe:false, ffn_hidden_size:512,
+      ffn_activation:'gelu' },
+    training: { task:'mlm', batch_size:64, max_length:512, mlm_probability:0.15, max_samples:20000000,
+      dataset_batch_size:25000, gradient_accumulation_steps:2, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
+      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:50, max_rolling_checkpoints:3,
+      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:true, gpu_temp_guard_enabled:true,
+      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:1,
+      optimizer:'lamb' }
+  },
+  standard: {
+    model_mode: 'custom', model_class: 'frankenstein',
+    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:12,
+      num_experts:4, top_k_experts:2, dropout:0.1, layer_pattern:['standard_attn'], ode_solver:'rk4', ode_steps:2,
+      use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false, factorized_embedding_dim:128,
+      use_embedding_conv:false, embedding_conv_kernel:3, use_hope:false, use_moe:false, ffn_hidden_size:3072,
+      ffn_activation:'gelu' },
+    training: { task:'mlm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
+      dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
+      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
+      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:false, gpu_temp_guard_enabled:true,
+      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:10,
+      optimizer:'adamw' }
+  },
+  frankenstein: {
+    model_mode: 'custom', model_class: 'frankenstein',
+    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:12,
+      num_experts:4, top_k_experts:2, dropout:0.1, layer_pattern:['retnet','titan_attn','retnet','mamba','titan_attn','ode'],
+      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false,
+      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:true, use_moe:true,
+      ffn_hidden_size:3072, ffn_activation:'silu' },
+    training: { task:'mlm', batch_size:2, max_length:256, mlm_probability:0.15, max_samples:6000000,
+      dataset_batch_size:15000, gradient_accumulation_steps:12, grad_clip_max_norm:5.0, scheduler_total_steps:12000,
+      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
+      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:false, gpu_temp_guard_enabled:true,
+      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:10,
+      optimizer:'turbo_muon' }
+  },
+  hybrid: {
+    model_mode: 'custom', model_class: 'frankenstein',
+    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:12,
+      num_experts:4, top_k_experts:2, dropout:0.1, layer_pattern:['retnet','titan_attn','mamba','ode'],
+      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false,
+      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:true, use_moe:false,
+      ffn_hidden_size:3072, ffn_activation:'silu' },
+    training: { task:'mlm', batch_size:2, max_length:256, mlm_probability:0.15, max_samples:6000000,
+      dataset_batch_size:15000, gradient_accumulation_steps:12, grad_clip_max_norm:5.0, scheduler_total_steps:12000,
+      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
+      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:false, gpu_temp_guard_enabled:true,
+      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:10,
+      optimizer:'turbo_muon' }
+  }
+};
+
+function loadExample(name) {
+  const preset = PRESETS[name];
+  if (!preset) return;
+  configData = preset;
+  if (SCHEMA) buildAll();
+  // Apply preset values after DOM renders
+  setTimeout(() => applyPreset(name), 100);
+}
+
+function applyPreset(name) {
+  const preset = PRESETS[name];
+  if (!preset) return;
+
+  // Model mode
+  const modeRadio = document.querySelector(`input[name="model_mode"][value="${preset.model_mode}"]`);
+  if (modeRadio) { modeRadio.checked = true; onModelModeChange(); }
+
+  // Model class
+  if (preset.model_class) {
+    const el = document.getElementById(createId('model_class'));
+    if (el && preset.model_class) el.value = preset.model_class;
+  }
+
+  // Model fields
+  if (preset.model) {
+    for (const [key, val] of Object.entries(preset.model)) {
+      const id = createId('model.' + key);
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (Array.isArray(val)) {
+        // Checkboxes
+        const cbs = document.querySelectorAll(`.array-cb[data-field="${id}"]`);
+        cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
+      } else if (typeof val === 'boolean') {
+        el.checked = val;
+      } else {
+        el.value = val;
+      }
+    }
+  }
+
+  // Training fields
+  if (preset.training) {
+    for (const [key, val] of Object.entries(preset.training)) {
+      if (key === 'optimizer') {
+        const optEl = document.getElementById(createId('training.optimizer.optimizer_class'));
+        if (optEl) { optEl.value = val; onOptimizerChange(); }
+      } else {
+        const id = createId('training.' + key);
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (typeof val === 'boolean') el.checked = val;
+        else el.value = val;
+      }
+    }
+  }
+
+  updateYamlOutput();
+  updateCmdPreview();
+}
+
+// ====== START ======
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
