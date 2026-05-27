@@ -1,0 +1,35 @@
+base_model: BSC-LT/MrBERT-es
+training:
+  task: sbert
+  switch_on_thermal: true
+  gpu_temp_guard_enabled: true
+  gpu_temp_resume_threshold_c: 75
+  gpu_temp_pause_threshold_c: 85
+  gpu_temp_critical_threshold_c: 88
+  gpu_temp_poll_interval_seconds: 30
+  telemetry_log_interval: 1
+  sbert:
+    dataset_name: "erickfmm/agentlans__multilingual-sentences__paired_10_sts"
+    dataset_type: paired_similarity
+    columns:
+      sentence1: sentence1
+      sentence2: sentence2
+      similarity: similarity
+    output_dir: "./output/sbert_modernbert"
+    batch_size: 512
+    gradient_accumulation_steps: 1
+    max_grad_norm: 2.0
+    epochs: 10
+    warmup_steps: 250
+    evaluation_steps: 5000
+    checkpoint_save_steps: 1000
+    resume_from_checkpoint: true
+    learning_rate: 1.6e-6
+    max_train_samples: null
+    max_eval_samples: 20000
+    max_seq_length: 8192
+    pooling_mode: mean
+    use_amp: false
+    resample_balanced: false
+    resample_std: 0.3
+    standardize_scores: true
