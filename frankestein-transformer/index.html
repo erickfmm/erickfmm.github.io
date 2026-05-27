@@ -189,8 +189,19 @@ pre {
   <button class="btn btn-sm" onclick="loadExample('standard')">Standard</button>
   <button class="btn btn-sm" onclick="loadExample('frankenstein')" style="margin-top:4px">Frankenstein</button>
   <button class="btn btn-sm" onclick="loadExample('hybrid')" style="margin-top:4px">Hybrid (turbo_muon)</button>
+  <h2 style="margin-top:12px">📂 Load from Repo</h2>
+  <select id="repo-examples-select" style="font-size:11px;height:auto;max-height:150px">
+    <option value="">— loading examples —</option>
+  </select>
+  <button class="btn btn-sm" onclick="loadRepoExample()" style="margin-top:4px">Load Selected</button>
   <p style="margin-top:12px;font-size:11px;color:var(--text-muted)">
     schema.yaml must be placed alongside this HTML file on your GitHub Pages repo.
+  </p>
+  <p style="margin-top:8px;font-size:11px">
+    <a href="https://github.com/erickfmm/frankestein-transformer" target="_blank" style="color:var(--accent);text-decoration:none">
+      <svg style="vertical-align:middle;margin-right:4px" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      View on GitHub →
+    </a>
   </p>
 </div>
 <div class="main">
@@ -231,6 +242,59 @@ pre {
       <label>Output Config Path</label>
       <input type="text" id="output-path" value="./config_generated.yaml" oninput="updateCmdPreview()">
     </div>
+    <details class="field-group" style="margin-top:16px">
+      <summary>Optional CLI Parameters</summary>
+      <div style="margin-top:8px">
+        <label>Device</label>
+        <select id="opt-device" onchange="updateCmdPreview()">
+          <option value="">(default)</option>
+          <option value="--device auto">auto</option>
+          <option value="--device cpu">cpu</option>
+          <option value="--device cuda">cuda</option>
+          <option value="--device mps">mps</option>
+        </select>
+      </div>
+      <div id="opt-train" class="cmd-opt-group" style="display:none">
+        <div class="checkbox-wrap" style="margin-top:8px">
+          <input type="checkbox" id="opt-list-configs" onchange="updateCmdPreview()">
+          <label>--list-configs</label>
+        </div>
+        <div>
+          <label>--config-name</label>
+          <input type="text" id="opt-config-name" oninput="updateCmdPreview()" placeholder="mini">
+        </div>
+      </div>
+      <div id="opt-deploy" class="cmd-opt-group" style="display:none">
+        <div><label>--checkpoint</label><input type="text" id="opt-deploy-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
+        <div><label>--output</label><input type="text" id="opt-deploy-output" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
+        <div><label>--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--format full">full</option><option value="--format quantized">quantized</option></select></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-validate" onchange="updateCmdPreview()"><label>--validate</label></div>
+      </div>
+      <div id="opt-quantize" class="cmd-opt-group" style="display:none">
+        <div><label>--checkpoint</label><input type="text" id="opt-quant-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
+        <div><label>--output</label><input type="text" id="opt-quant-output" oninput="updateCmdPreview()" placeholder="deployed_model_quantized"></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-quant-validate" onchange="updateCmdPreview()"><label>--validate</label></div>
+      </div>
+      <div id="opt-infer" class="cmd-opt-group" style="display:none">
+        <div><label>--text</label><input type="text" id="opt-infer-text" oninput="updateCmdPreview()" placeholder="Input text"></div>
+        <div><label>--model</label><input type="text" id="opt-infer-model" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
+        <div class="row"><div><label>--input</label><input type="text" id="opt-infer-input" oninput="updateCmdPreview()" placeholder="texts.txt"></div>
+        <div><label>--output</label><input type="text" id="opt-infer-output" oninput="updateCmdPreview()" placeholder="preds.pt"></div></div>
+        <div><label>--batch-size</label><input type="number" id="opt-infer-batch" oninput="updateCmdPreview()" value="" placeholder="8"></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark" onchange="updateCmdPreview()"><label>--benchmark</label></div>
+      </div>
+      <div id="opt-sbert-train" class="cmd-opt-group" style="display:none">
+        <div><label>--output_dir</label><input type="text" id="opt-sbert-train-out" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
+        <div><label>--batch_size</label><input type="number" id="opt-sbert-train-bs" oninput="updateCmdPreview()" value="16"></div>
+        <div><label>--epochs</label><input type="number" id="opt-sbert-train-epochs" oninput="updateCmdPreview()" value="4"></div>
+        <div><label>--pooling_mode</label><select id="opt-sbert-pooling" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--pooling_mode mean">mean</option><option value="--pooling_mode max">max</option><option value="--pooling_mode cls">cls</option></select></div>
+      </div>
+      <div id="opt-sbert-infer" class="cmd-opt-group" style="display:none">
+        <div><label>--model_path</label><input type="text" id="opt-sbert-infer-path" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
+        <div><label>--mode</label><select id="opt-sbert-infer-mode" onchange="updateCmdPreview();updateSbertInferExtra()"><option value="">(default)</option><option value="--mode similarity">similarity</option><option value="--mode search">search</option><option value="--mode cluster">cluster</option><option value="--mode encode">encode</option></select></div>
+        <div id="opt-sbert-infer-extra"></div>
+      </div>
+    </details>
     <p id="full-cmd-display" class="info" style="margin-top:8px;"></p>
   </div>
 </div>
@@ -283,6 +347,7 @@ async function init() {
     const resp = await fetch('schema.yaml');
     const yamlText = await resp.text();
     SCHEMA = jsyaml.load(yamlText);
+    populateRepoExamples();
     document.getElementById('builder-status').textContent = '✅ Schema loaded successfully.';
     document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
     loadExample('standard');
@@ -291,12 +356,6 @@ async function init() {
     document.getElementById('builder-status').textContent = '❌ Error loading schema.yaml. Place it next to index.html.';
     console.error(e);
   }
-}
-
-function onLangChange() {
-  lang = document.getElementById('lang-select').value;
-  document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
-  if (SCHEMA) buildAll();
 }
 
 function switchTab(name) {
@@ -1015,16 +1074,121 @@ function updateCmdPreview() {
   buildConfig();
   const outputPath = document.getElementById('output-path').value || './config_generated.yaml';
   const modelClass = configData.model_class || 'mini';
-  let cmd = 'python -m src.cli ' + selectedCmd;
-  if (['train', 'deploy', 'quantize', 'infer', 'sbert-train', 'sbert-infer'].includes(selectedCmd)) {
-    cmd += ' --config ' + outputPath;
-  }
+
+  // Show/hide command-specific optional groups
+  document.querySelectorAll('.cmd-opt-group').forEach(g => g.style.display = 'none');
+  const optGroup = document.getElementById('opt-' + selectedCmd.replace('sbert-', 'sbert-'));
+  if (optGroup) optGroup.style.display = 'block';
+
+  // Build optional flags
+  let extraFlags = [];
+  const deviceEl = document.getElementById('opt-device');
+  if (deviceEl && deviceEl.value) extraFlags.push(deviceEl.value);
+
   if (selectedCmd === 'train') {
-    cmd += ' --config-name ' + modelClass;
+    const lc = document.getElementById('opt-list-configs');
+    if (lc && lc.checked) extraFlags.push('--list-configs');
+    const cn = document.getElementById('opt-config-name');
+    if (cn && cn.value.trim()) extraFlags.push('--config-name ' + cn.value.trim());
   }
+  if (selectedCmd === 'deploy') {
+    const cp = document.getElementById('opt-deploy-checkpoint');
+    if (cp && cp.value.trim()) extraFlags.push('--checkpoint ' + cp.value.trim());
+    const out = document.getElementById('opt-deploy-output');
+    if (out && out.value.trim()) extraFlags.push('--output ' + out.value.trim());
+    const fmt = document.getElementById('opt-deploy-format');
+    if (fmt && fmt.value) extraFlags.push(fmt.value);
+    const val = document.getElementById('opt-deploy-validate');
+    if (val && val.checked) extraFlags.push('--validate');
+  }
+  if (selectedCmd === 'quantize') {
+    const cp = document.getElementById('opt-quant-checkpoint');
+    if (cp && cp.value.trim()) extraFlags.push('--checkpoint ' + cp.value.trim());
+    const out = document.getElementById('opt-quant-output');
+    if (out && out.value.trim()) extraFlags.push('--output ' + out.value.trim());
+    const val = document.getElementById('opt-quant-validate');
+    if (val && val.checked) extraFlags.push('--validate');
+  }
+  if (selectedCmd === 'infer') {
+    const txt = document.getElementById('opt-infer-text');
+    if (txt && txt.value.trim()) extraFlags.push('--text ' + txt.value.trim());
+    const mdl = document.getElementById('opt-infer-model');
+    if (mdl && mdl.value.trim()) extraFlags.push('--model ' + mdl.value.trim());
+    const inp = document.getElementById('opt-infer-input');
+    if (inp && inp.value.trim()) extraFlags.push('--input ' + inp.value.trim());
+    const oup = document.getElementById('opt-infer-output');
+    if (oup && oup.value.trim()) extraFlags.push('--output ' + oup.value.trim());
+    const bs = document.getElementById('opt-infer-batch');
+    if (bs && bs.value) extraFlags.push('--batch-size ' + bs.value);
+    const bm = document.getElementById('opt-infer-benchmark');
+    if (bm && bm.checked) extraFlags.push('--benchmark');
+  }
+  if (selectedCmd === 'sbert-train') {
+    const out = document.getElementById('opt-sbert-train-out');
+    if (out && out.value.trim()) extraFlags.push('--output_dir ' + out.value.trim());
+    const bs = document.getElementById('opt-sbert-train-bs');
+    if (bs && bs.value) extraFlags.push('--batch_size ' + bs.value);
+    const ep = document.getElementById('opt-sbert-train-epochs');
+    if (ep && ep.value) extraFlags.push('--epochs ' + ep.value);
+    const pm = document.getElementById('opt-sbert-pooling');
+    if (pm && pm.value) extraFlags.push(pm.value);
+  }
+  if (selectedCmd === 'sbert-infer') {
+    const mp = document.getElementById('opt-sbert-infer-path');
+    if (mp && mp.value.trim()) extraFlags.push('--model_path ' + mp.value.trim());
+    const mode = document.getElementById('opt-sbert-infer-mode');
+    if (mode && mode.value) extraFlags.push(mode.value);
+    // sbert-infer extra sub-fields
+    const extraDiv = document.getElementById('opt-sbert-infer-extra');
+    if (extraDiv) {
+      const inputs = extraDiv.querySelectorAll('input, select');
+      inputs.forEach(el => {
+        if (el.value && el.value.trim()) {
+          const label = el.dataset.flag;
+          if (label) extraFlags.push(label + ' ' + el.value.trim());
+        }
+        if (el.type === 'checkbox' && el.checked) {
+          const label = el.dataset.flag;
+          if (label) extraFlags.push(label);
+        }
+      });
+    }
+  }
+
+  let cmd = 'frankestein-transformer ' + selectedCmd;
+  if (['train', 'deploy', 'quantize', 'infer', 'sbert-train', 'sbert-infer'].includes(selectedCmd)) {
+    if (selectedCmd !== 'train' || !extraFlags.some(f => f.startsWith('--config-name') || f === '--list-configs')) {
+      cmd += ' --config ' + outputPath;
+    }
+  }
+  if (extraFlags.length > 0) cmd += ' ' + extraFlags.join(' ');
   document.getElementById('cmd-preview').textContent = cmd;
   document.getElementById('full-cmd-display').textContent = 
     `nohup ${cmd} > ./nohup_web.out 2>&1 &`;
+}
+
+function updateSbertInferExtra() {
+  const modeEl = document.getElementById('opt-sbert-infer-mode');
+  const mode = modeEl ? modeEl.value : '';
+  const container = document.getElementById('opt-sbert-infer-extra');
+  if (!container) return;
+  let html = '';
+  if (mode === '--mode similarity') {
+    html = `<div><label>--sentence1</label><input type="text" data-flag="--sentence1" oninput="updateCmdPreview()"></div>
+            <div><label>--sentence2</label><input type="text" data-flag="--sentence2" oninput="updateCmdPreview()"></div>`;
+  } else if (mode === '--mode search') {
+    html = `<div><label>--query</label><input type="text" data-flag="--query" oninput="updateCmdPreview()"></div>
+            <div><label>--corpus_file</label><input type="text" data-flag="--corpus_file" oninput="updateCmdPreview()" placeholder="corpus.txt"></div>
+            <div><label>--top_k</label><input type="number" data-flag="--top_k" oninput="updateCmdPreview()" value="5"></div>`;
+  } else if (mode === '--mode cluster') {
+    html = `<div><label>--sentences_file</label><input type="text" data-flag="--sentences_file" oninput="updateCmdPreview()" placeholder="sentences.txt"></div>
+            <div><label>--n_clusters</label><input type="number" data-flag="--n_clusters" oninput="updateCmdPreview()" value="5"></div>`;
+  } else if (mode === '--mode encode') {
+    html = `<div><label>--input_file</label><input type="text" data-flag="--input_file" oninput="updateCmdPreview()" placeholder="sentences.txt"></div>
+            <div><label>--output_file</label><input type="text" data-flag="--output_file" oninput="updateCmdPreview()" placeholder="embeddings.npz"></div>`;
+  }
+  container.innerHTML = html;
+  updateCmdPreview();
 }
 
 function copyCmd() {
@@ -1164,8 +1328,196 @@ function applyPreset(name) {
   updateCmdPreview();
 }
 
-// ====== START ======
-document.addEventListener('DOMContentLoaded', init);
+// ====== LOAD FROM REPO EXAMPLES ======
+const REPO_EXAMPLES = [
+  'decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml','decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml',
+  'es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml','es_arch_bitnet_factorized_mars_adamw.yaml',
+  'es_arch_gla_deltanet_lion.yaml','es_arch_hgrn2_fox_gated_softmax_adamw.yaml','es_arch_hybrid_turbo_muon.yaml',
+  'es_arch_mini_cautious_adamw.yaml','es_arch_moe_titan_ademamix.yaml','es_arch_nsa_retnet_radam.yaml',
+  'es_arch_sigmoid_derf_muon.yaml','es_arch_sparse_longformer_adamw.yaml','es_arch_standard_layer_norm_prodigy.yaml',
+  'es_arch_standard_sigmoid_adopt.yaml','es_arch_titan_dynamic_tanh_sgd_momentum.yaml','es_arch_titan_hope_adan.yaml',
+  'es_mlm_albert_sophia.yaml','es_mlm_bertin_apollo.yaml','es_mlm_bertin_lion.yaml','es_mlm_beto_adamw.yaml',
+  'es_mlm_deberta_soap.yaml','es_mlm_distilmbert_lamb.yaml','es_mlm_maria_roberta_adafactor.yaml',
+  'es_mlm_mbert_apollo_mini.yaml','es_mlm_mbert_schedulefree_adamw.yaml','es_mlm_mdeberta_shampoo.yaml',
+  'es_mlm_modernbert_galore_adamw.yaml','es_mlm_modernbert_q_apollo.yaml','es_mlm_xlmr_radam.yaml',
+  'es_sbert_bertin_cls.yaml','es_sbert_beto_mean.yaml','es_sbert_maria_max.yaml','es_sbert_modernbert_mean.yaml',
+  'es_sbert_xlmr_mean.yaml'
+];
+
+function populateRepoExamples() {
+  const sel = document.getElementById('repo-examples-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— select an example —</option>';
+  REPO_EXAMPLES.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f;
+    opt.textContent = f;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadRepoExample() {
+  const sel = document.getElementById('repo-examples-select');
+  const filename = sel ? sel.value : '';
+  if (!filename) return;
+  const url = 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/examples/' + filename;
+  try {
+    const resp = await fetch(url);
+    const yamlText = await resp.text();
+    const config = jsyaml.load(yamlText);
+    if (!config) throw new Error('Empty config');
+    // Populate form from YAML config
+    configData = config;
+    if (SCHEMA) buildAll();
+    setTimeout(() => applyYamlConfig(config), 150);
+  } catch(e) {
+    alert('Failed to load example: ' + e.message);
+    console.error(e);
+  }
+}
+
+function applyYamlConfig(config) {
+  // Set model mode
+  if (config.model_class) {
+    const modeRadio = document.querySelector('input[name="model_mode"][value="custom"]');
+    if (modeRadio) { modeRadio.checked = true; onModelModeChange(); }
+    const mcEl = document.getElementById(createId('model_class'));
+    if (mcEl) mcEl.value = config.model_class;
+  } else if (config.base_model) {
+    const modeRadio = document.querySelector('input[name="model_mode"][value="base"]');
+    if (modeRadio) { modeRadio.checked = true; onModelModeChange(); }
+    const bmEl = document.getElementById(createId('base_model'));
+    if (bmEl) bmEl.value = config.base_model;
+  }
+
+  // Apply model fields
+  if (config.model) {
+    for (const [key, val] of Object.entries(config.model)) {
+      const id = createId('model.' + key);
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (Array.isArray(val)) {
+        if (isListBuilder(id)) {
+          const hidden = document.getElementById(id);
+          hidden.value = JSON.stringify(val);
+          listBuilderRender(id);
+        } else {
+          const cbs = document.querySelectorAll(`.array-cb[data-field="${id}"]`);
+          cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
+        }
+      } else if (typeof val === 'boolean') { el.checked = val; }
+      else { el.value = val; }
+    }
+  }
+
+  // Apply training fields
+  if (config.training) {
+    for (const [key, val] of Object.entries(config.training)) {
+      if (key === 'optimizer') continue;
+      const id = createId('training.' + key);
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (typeof val === 'boolean') el.checked = val;
+      else el.value = val;
+    }
+    if (config.training.optimizer) {
+      const opt = config.training.optimizer;
+      const optClass = opt.optimizer_class || 'adamw';
+      const optEl = document.getElementById(createId('training.optimizer.optimizer_class'));
+      if (optEl) { optEl.value = optClass; onOptimizerChange(); }
+      // Apply optimizer params after optimizer change renders fields
+      if (opt.parameters) {
+        setTimeout(() => {
+          for (const [k, v] of Object.entries(opt.parameters)) {
+            const id = createId('training.optimizer.' + k);
+            const el = document.getElementById(id);
+            if (!el) continue;
+            if (typeof v === 'boolean') el.checked = v;
+            else el.value = v;
+          }
+        }, 50);
+      }
+    }
+  }
+
+  updateYamlOutput();
+  updateCmdPreview();
+}
+
+// ====== REACTIVE LANGUAGE SWITCH ======
+function onLangChange() {
+  // Save all current form values
+  const saved = saveAllFormValues();
+  lang = document.getElementById('lang-select').value;
+  document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
+  document.getElementById('sidebar-lang-title').textContent = UI.langTitle[lang] || UI.langTitle.en;
+  if (SCHEMA) {
+    buildAll();
+    // Restore saved values after rebuild
+    setTimeout(() => restoreAllFormValues(saved), 100);
+  }
+}
+
+function saveAllFormValues() {
+  const store = {};
+  document.querySelectorAll('input:not([type="hidden"]):not([type="radio"]), select, textarea').forEach(el => {
+    if (el.id && !el.id.startsWith('repo-') && !el.id.startsWith('opt-') && !el.id.startsWith('opt_')) {
+      if (el.type === 'checkbox') store[el.id] = el.checked;
+      else if (el.type === 'number') store[el.id] = el.value;
+      else store[el.id] = el.value;
+    }
+  });
+  // Radio buttons
+  const modeRadio = document.querySelector('input[name="model_mode"]:checked');
+  if (modeRadio) store['model_mode'] = modeRadio.value;
+  // array checkboxes
+  document.querySelectorAll('.array-cb').forEach(cb => {
+    if (!store['_array_cb']) store['_array_cb'] = {};
+    store['_array_cb'][cb.dataset.field] = store['_array_cb'][cb.dataset.field] || [];
+    if (cb.checked) store['_array_cb'][cb.dataset.field].push(cb.value);
+  });
+  // list builder hidden fields
+  document.querySelectorAll('.list-builder').forEach(lb => {
+    const hidden = document.getElementById(lb.dataset.field);
+    if (hidden) store[hidden.id] = hidden.value;
+  });
+  return store;
+}
+
+function restoreAllFormValues(saved) {
+  if (!saved) return;
+  document.querySelectorAll('input:not([type="hidden"]):not([type="radio"]), select, textarea').forEach(el => {
+    if (el.id && saved[el.id] !== undefined) {
+      if (el.type === 'checkbox') el.checked = saved[el.id];
+      else el.value = saved[el.id];
+    }
+  });
+  // Radio
+  if (saved['model_mode']) {
+    const r = document.querySelector(`input[name="model_mode"][value="${saved['model_mode']}"]`);
+    if (r) { r.checked = true; onModelModeChange(); }
+  }
+  // array checkboxes
+  if (saved['_array_cb']) {
+    for (const [field, vals] of Object.entries(saved['_array_cb'])) {
+      document.querySelectorAll(`.array-cb[data-field="${field}"]`).forEach(cb => {
+        cb.checked = vals.includes(cb.value);
+      });
+    }
+  }
+  // list builders
+  if (saved) {
+    document.querySelectorAll('.list-builder').forEach(lb => {
+      const hidden = document.getElementById(lb.dataset.field);
+      if (hidden && saved[hidden.id] !== undefined) {
+        hidden.value = saved[hidden.id];
+        listBuilderRender(hidden.id);
+      }
+    });
+  }
+  updateYamlOutput();
+  updateCmdPreview();
+}
 </script>
 </body>
 </html>
