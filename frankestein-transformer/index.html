@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Transformer Encoder Frankenstein - Config Builder</title>
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <style>
 :root {
   --bg: #0d1117;
@@ -343,11 +343,11 @@ const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
 
 // ====== INIT ======
 async function init() {
+  populateRepoExamples();
   try {
     const resp = await fetch('schema.yaml');
     const yamlText = await resp.text();
     SCHEMA = jsyaml.load(yamlText);
-    populateRepoExamples();
     document.getElementById('builder-status').textContent = '✅ Schema loaded successfully.';
     document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
     loadExample('standard');
@@ -379,7 +379,7 @@ function getTitle(fieldSchema, fallback) {
 
 function getDesc(fieldSchema) {
   const raw = getLoc(fieldSchema, 'description', '');
-  return raw ? marked.parse(raw, { async: false }) : '';
+  return raw ? marked.parse(raw) : '';
 }
 
 // ====== RENDER HELPERS ======
