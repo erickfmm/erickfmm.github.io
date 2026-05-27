@@ -6,6 +6,8 @@
 <title>Transformer Encoder Frankenstein - Config Builder</title>
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="ft-diagram.js"></script>
 <style>
 :root {
   --bg: #0d1117;
@@ -204,6 +206,7 @@ pre {
     <button class="tab active" onclick="switchTab('builder')" data-tab="builder">⚙️ Configuration Builder</button>
     <button class="tab" onclick="switchTab('yaml')" data-tab="yaml">📄 YAML Output</button>
     <button class="tab" onclick="switchTab('command')" data-tab="command">▶️ Command</button>
+    <button class="tab" onclick="switchTab('diagram')" data-tab="diagram">🗺️ Diagram</button>
   </div>
 
   <!-- TAB: BUILDER -->
@@ -302,6 +305,23 @@ pre {
     </details>
     <p id="full-cmd-display" class="info" style="margin-top:8px;"></p>
   </div>
+
+  <!-- TAB: DIAGRAM -->
+  <div class="tab-content" id="tab-diagram">
+    <h2>Architecture Diagram</h2>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="renderDiagram()">🔄 Generate</button>
+      <button class="btn" onclick="downloadDiagramPNG()">⬇ PNG</button>
+      <button class="btn" onclick="copyMermaid()">📋 Copy Mermaid</button>
+    </div>
+    <div id="diagram-container" style="margin-top:16px; overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; min-height:200px; max-height:75vh;">
+      <p class="info">Click Generate to render the architecture diagram from current config.</p>
+    </div>
+    <details class="field-group" style="margin-top:16px">
+      <summary>Mermaid Source</summary>
+      <pre id="mermaid-source" style="margin-top:8px"></pre>
+    </details>
+  </div>
 </div>
 </div>
 
@@ -349,6 +369,8 @@ const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
 // ====== INIT ======
 async function init() {
   loadSchema();
+  populateRepoExamples();
+  initMermaid();
 }
 
 async function loadSchema() {
@@ -375,6 +397,7 @@ function switchTab(name) {
   document.getElementById(`tab-${name}`).classList.add('active');
   if (name === 'yaml') updateYamlOutput();
   if (name === 'command') updateCmdPreview();
+  if (name === 'diagram') renderDiagram();
 }
 
 // ====== SCHEMA HELPERS ======
@@ -1576,6 +1599,96 @@ function restoreAllFormValues(saved) {
   }
   updateYamlOutput();
   updateCmdPreview();
+}
+
+// ====== DIAGRAM ======
+var _diagC = 0;
+
+function initMermaid() {
+  if (typeof mermaid === 'undefined') {
+    console.warn('Mermaid not loaded');
+    return;
+  }
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#0d1117',
+      primaryColor: '#4a9eff',
+      primaryTextColor: '#c9d1d9',
+      lineColor: '#30363d'
+    }
+  });
+}
+
+async function renderDiagram() {
+  if (typeof mermaid === 'undefined' || !mermaid.render) {
+    document.getElementById('diagram-container').innerHTML = '<p style="color:var(--danger)">Mermaid library not loaded. Check internet connection.</p>';
+    return;
+  }
+  var config = buildConfig();
+  if (!config || (!config.model && !config.base_model)) {
+    document.getElementById('diagram-container').innerHTML = '<p class="info">Build a config first in the Configuration Builder tab.</p>';
+    return;
+  }
+  var def = FTDiagram.generate(config);
+  document.getElementById('mermaid-source').textContent = def;
+  var container = document.getElementById('diagram-container');
+  container.innerHTML = '<p class="info">Rendering...</p>';
+  try {
+    var id = 'mermaid-diag-' + (_diagC++);
+    var result = await mermaid.render(id, def);
+    container.innerHTML = result.svg;
+    var svg = container.querySelector('svg');
+    if (svg) {
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+    }
+  } catch (e) {
+    container.innerHTML = '<p style="color:var(--danger)">Error rendering diagram: ' + escHtml(e.message) + '</p><pre style="margin-top:8px;color:var(--text-muted);font-size:11px;max-height:200px;overflow:auto">' + escHtml(def) + '</pre>';
+    console.error('Mermaid render error:', e);
+  }
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function downloadDiagramPNG() {
+  var svg = document.querySelector('#diagram-container svg');
+  if (!svg) { alert('Generate diagram first'); return; }
+  var data = new XMLSerializer().serializeToString(svg);
+  var blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var img = new Image();
+  img.onload = function () {
+    var c = document.createElement('canvas');
+    c.width = img.naturalWidth * 2;
+    c.height = img.naturalHeight * 2;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.scale(2, 2);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    c.toBlob(function (b) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = 'architecture_diagram.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, 'image/png');
+  };
+  img.src = url;
+}
+
+function copyMermaid() {
+  var src = document.getElementById('mermaid-source').textContent;
+  navigator.clipboard.writeText(src).then(function () { alert('Mermaid source copied!'); }).catch(function () {});
 }
 
 document.addEventListener('DOMContentLoaded', init);
