@@ -350,8 +350,6 @@ function renderField(name, fieldSchema, prefix) {
   const examples = fieldSchema.examples || [];
 
   let html = `<div class="section">`;
-  html += createLabel(name, title, false);
-  if (desc) html += `<div class="desc">${desc}</div>`;
 
   if (type === 'boolean') {
     const def = examples[0] !== undefined ? examples[0] : false;
