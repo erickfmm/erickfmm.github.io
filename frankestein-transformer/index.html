@@ -184,7 +184,7 @@ pre {
   <button class="btn btn-sm" onclick="loadLocalExample('decoder_llama_like.yaml')" style="margin-top:4px">LLaMA-like</button>
   <button class="btn btn-sm" onclick="loadLocalExample('decoder_retnet_mamba_like.yaml')" style="margin-top:4px">RetNet+Mamba</button>
   <button class="btn btn-sm" onclick="loadLocalExample('decoder_gated_mixed_adamw.yaml')" style="margin-top:4px">Gated Mixed</button>
-  <h2 style="margin-top:12px">📂 Load from Examples</h2>
+  <h2 style="margin-top:12px">📂 Load from Repo</h2>
   <select id="repo-examples-select" style="font-size:11px;height:auto;max-height:150px">
     <option value="">— select an example —</option>
   </select>
@@ -1366,8 +1366,25 @@ function applyPreset(name) {
   updateCmdPreview();
 }
 
-// ====== LOAD FROM LOCAL EXAMPLES ======
-const REPO_EXAMPLES = [
+// ====== LOAD FROM REPO CONFIGS + LOCAL EXAMPLES ======
+const CONFIG_FILES = [
+  { label: 'EmbBERT', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/embbert.yaml' },
+  { label: 'Frankenstein', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/frankenstein.yaml' },
+  { label: 'Frankestein Decoder', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/frankesteindecoder.yaml' },
+  { label: 'Mini', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/mini.yaml' },
+  { label: 'ModernBERT Continual', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/modernbert_continual.yaml' },
+  { label: 'ModernBERT SBERT', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/modernbert_sbert.yaml' },
+  { label: 'ModernBERT SBERT Continual', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/modernbert_sbert_continual.yaml' },
+  { label: 'Standard', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/standard.yaml' },
+  { label: 'Standard HoPE', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/standard_hope.yaml' },
+  { label: 'TinyBERT', url: 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/tinybert.yaml' },
+];
+
+function fmtLabel(filename) {
+  return filename.replace(/_/g, ' ').replace(/\.yaml$/, '');
+}
+
+const EXAMPLE_FILES = [
   'decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml','decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml',
   'es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml','es_arch_bitnet_factorized_mars_adamw.yaml',
   'es_arch_gla_deltanet_lion.yaml','es_arch_hgrn2_fox_gated_softmax_adamw.yaml','es_arch_hybrid_turbo_muon.yaml',
@@ -1386,25 +1403,37 @@ function populateRepoExamples() {
   const sel = document.getElementById('repo-examples-select');
   if (!sel) return;
   sel.innerHTML = '<option value="">— select an example —</option>';
-  REPO_EXAMPLES.forEach(f => {
+
+  const g1 = document.createElement('optgroup');
+  g1.label = '⚙️ Config Presets';
+  CONFIG_FILES.forEach(f => {
     const opt = document.createElement('option');
-    opt.value = f;
-    opt.textContent = f;
-    sel.appendChild(opt);
+    opt.value = f.url;
+    opt.textContent = f.label;
+    g1.appendChild(opt);
   });
+  sel.appendChild(g1);
+
+  const g2 = document.createElement('optgroup');
+  g2.label = '🧩 Architecture Examples';
+  EXAMPLE_FILES.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = '/frankestein-transformer/examples/' + f;
+    opt.textContent = fmtLabel(f);
+    g2.appendChild(opt);
+  });
+  sel.appendChild(g2);
 }
 
 async function loadRepoExample() {
   const sel = document.getElementById('repo-examples-select');
-  const filename = sel ? sel.value : '';
-  if (!filename) return;
-  const url = '/frankestein-transformer/examples/' + filename;
+  const val = sel ? sel.value : '';
+  if (!val) return;
   try {
-    const resp = await fetch(url);
+    const resp = await fetch(val);
     const yamlText = await resp.text();
     const config = jsyaml.load(yamlText);
     if (!config) throw new Error('Empty config');
-    // Populate form from YAML config
     configData = config;
     if (SCHEMA) buildAll();
     setTimeout(() => applyYamlConfig(config), 150);
