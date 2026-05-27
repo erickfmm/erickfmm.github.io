@@ -191,7 +191,7 @@ pre {
   <button class="btn btn-sm" onclick="loadExample('hybrid')" style="margin-top:4px">Hybrid (turbo_muon)</button>
   <h2 style="margin-top:12px">📂 Load from Repo</h2>
   <select id="repo-examples-select" style="font-size:11px;height:auto;max-height:150px">
-    <option value="">— loading examples —</option>
+    <option value="">— select an example —</option>
   </select>
   <button class="btn btn-sm" onclick="loadRepoExample()" style="margin-top:4px">Load Selected</button>
   <p style="margin-top:12px;font-size:11px;color:var(--text-muted)">
@@ -343,17 +343,22 @@ const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
 
 // ====== INIT ======
 async function init() {
-  populateRepoExamples();
+  loadSchema();
+}
+
+async function loadSchema() {
+  const statusEl = document.getElementById('builder-status');
   try {
-    const resp = await fetch('schema.yaml');
+    const resp = await fetch('/frankestein-transformer/schema.yaml');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const yamlText = await resp.text();
     SCHEMA = jsyaml.load(yamlText);
-    document.getElementById('builder-status').textContent = '✅ Schema loaded successfully.';
+    statusEl.textContent = '✅ Schema loaded successfully.';
     document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
     loadExample('standard');
     updateCmdPreview();
   } catch(e) {
-    document.getElementById('builder-status').textContent = '❌ Error loading schema.yaml. Place it next to index.html.';
+    statusEl.textContent = '❌ Error loading /frankestein-transformer/schema.yaml';
     console.error(e);
   }
 }
@@ -1518,6 +1523,8 @@ function restoreAllFormValues(saved) {
   updateYamlOutput();
   updateCmdPreview();
 }
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
