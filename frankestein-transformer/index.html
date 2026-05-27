@@ -174,29 +174,21 @@ pre {
     <option value="en">English</option>
     <option value="es">Español</option>
   </select>
-  <h2>⚡ Command</h2>
-  <select id="cmd-select" onchange="updateCmdPreview()">
-    <option value="train">Train — Run main training</option>
-    <option value="deploy">Deploy — Convert to deployment artifacts</option>
-    <option value="quantize">Quantize — Export quantized format</option>
-    <option value="infer">Infer — Run deployed model inference</option>
-    <option value="sbert-train">SBERT Train — Train SBERT model</option>
-    <option value="sbert-infer">SBERT Infer — Run SBERT inference</option>
-  </select>
-  <p id="cmd-info" class="info"></p>
+
   <h2>📁 Load Example</h2>
   <button class="btn btn-sm" onclick="loadExample('mini')">Mini</button>
   <button class="btn btn-sm" onclick="loadExample('standard')">Standard</button>
   <button class="btn btn-sm" onclick="loadExample('frankenstein')" style="margin-top:4px">Frankenstein</button>
   <button class="btn btn-sm" onclick="loadExample('hybrid')" style="margin-top:4px">Hybrid (turbo_muon)</button>
-  <h2 style="margin-top:12px">📂 Load from Repo</h2>
+  <button class="btn btn-sm" onclick="loadLocalExample('decoder_gpt_like.yaml')" style="margin-top:4px">GPT-like</button>
+  <button class="btn btn-sm" onclick="loadLocalExample('decoder_llama_like.yaml')" style="margin-top:4px">LLaMA-like</button>
+  <button class="btn btn-sm" onclick="loadLocalExample('decoder_retnet_mamba_like.yaml')" style="margin-top:4px">RetNet+Mamba</button>
+  <button class="btn btn-sm" onclick="loadLocalExample('decoder_gated_mixed_adamw.yaml')" style="margin-top:4px">Gated Mixed</button>
+  <h2 style="margin-top:12px">📂 Load from Examples</h2>
   <select id="repo-examples-select" style="font-size:11px;height:auto;max-height:150px">
     <option value="">— select an example —</option>
   </select>
   <button class="btn btn-sm" onclick="loadRepoExample()" style="margin-top:4px">Load Selected</button>
-  <p style="margin-top:12px;font-size:11px;color:var(--text-muted)">
-    schema.yaml must be placed alongside this HTML file on your GitHub Pages repo.
-  </p>
   <p style="margin-top:8px;font-size:11px">
     <a href="https://github.com/erickfmm/frankestein-transformer" target="_blank" style="color:var(--accent);text-decoration:none">
       <svg style="vertical-align:middle;margin-right:4px" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -233,6 +225,19 @@ pre {
 
   <!-- TAB: COMMAND -->
   <div class="tab-content" id="tab-command">
+    <h2>Command</h2>
+    <div class="section">
+      <label>Select Command</label>
+      <select id="cmd-select" onchange="updateCmdPreview()">
+        <option value="train">Train — Run main training</option>
+        <option value="deploy">Deploy — Convert to deployment artifacts</option>
+        <option value="quantize">Quantize — Export quantized format</option>
+        <option value="infer">Infer — Run deployed model inference</option>
+        <option value="sbert-train">SBERT Train — Train SBERT model</option>
+        <option value="sbert-infer">SBERT Infer — Run SBERT inference</option>
+      </select>
+      <p id="cmd-info" class="info"></p>
+    </div>
     <h2>Generated CLI Command</h2>
     <pre id="cmd-preview">Fill the Configuration Builder tab first.</pre>
     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
@@ -1264,6 +1269,34 @@ const PRESETS = {
       num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:false, gpu_temp_guard_enabled:true,
       gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:10,
       optimizer:'turbo_muon' }
+  },
+  gpt_like: {
+    model_mode: 'custom', model_class: 'decoder_gpt_like',
+    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:1,
+      num_experts:1, top_k_experts:1, dropout:0.1, layer_pattern:['standard_attn'],
+      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false,
+      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:false, use_moe:false,
+      ffn_hidden_size:3072, ffn_activation:'gelu' },
+    training: { task:'causal_lm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
+      dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
+      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
+      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:false, gpu_temp_guard_enabled:true,
+      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:10,
+      optimizer:'adamw' }
+  },
+  llama_like: {
+    model_mode: 'custom', model_class: 'decoder_llama_like',
+    model: { vocab_size:50000, hidden_size:4096, num_layers:32, num_loops:1, num_heads:32, retention_heads:1,
+      num_experts:1, top_k_experts:1, dropout:0.0, layer_pattern:['standard_attn'],
+      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'rms_norm', use_factorized_embedding:false,
+      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:false, use_moe:false,
+      ffn_hidden_size:11008, ffn_activation:'silu' },
+    training: { task:'causal_lm', batch_size:2, max_length:2048, mlm_probability:0.15, max_samples:10000000,
+      dataset_batch_size:15000, gradient_accumulation_steps:8, grad_clip_max_norm:5.0, scheduler_total_steps:20000,
+      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
+      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:true, gpu_temp_guard_enabled:true,
+      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:10,
+      optimizer:'adamw' }
   }
 };
 
@@ -1333,7 +1366,7 @@ function applyPreset(name) {
   updateCmdPreview();
 }
 
-// ====== LOAD FROM REPO EXAMPLES ======
+// ====== LOAD FROM LOCAL EXAMPLES ======
 const REPO_EXAMPLES = [
   'decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml','decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml',
   'es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml','es_arch_bitnet_factorized_mars_adamw.yaml',
@@ -1365,13 +1398,29 @@ async function loadRepoExample() {
   const sel = document.getElementById('repo-examples-select');
   const filename = sel ? sel.value : '';
   if (!filename) return;
-  const url = 'https://raw.githubusercontent.com/erickfmm/frankestein-transformer/main/configs/examples/' + filename;
+  const url = '/frankestein-transformer/examples/' + filename;
   try {
     const resp = await fetch(url);
     const yamlText = await resp.text();
     const config = jsyaml.load(yamlText);
     if (!config) throw new Error('Empty config');
     // Populate form from YAML config
+    configData = config;
+    if (SCHEMA) buildAll();
+    setTimeout(() => applyYamlConfig(config), 150);
+  } catch(e) {
+    alert('Failed to load example: ' + e.message);
+    console.error(e);
+  }
+}
+
+async function loadLocalExample(filename) {
+  const url = '/frankestein-transformer/examples/' + filename;
+  try {
+    const resp = await fetch(url);
+    const yamlText = await resp.text();
+    const config = jsyaml.load(yamlText);
+    if (!config) throw new Error('Empty config');
     configData = config;
     if (SCHEMA) buildAll();
     setTimeout(() => applyYamlConfig(config), 150);
