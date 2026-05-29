@@ -89,6 +89,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
   <div class="bg-glow"></div>
   <svg class="icon-sprite" aria-hidden="true" focusable="false">
     <symbol id="icon-spark" viewBox="0 0 24 24">
@@ -113,25 +114,47 @@
         <span class="dot"></span>
         <span>erickfmm</span>
       </div>
-      <nav class="nav-links">
+      <button
+        class="mobile-nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="mobile-nav-panel"
+        aria-label="Abrir menú de navegación"
+      >
+        Menú
+      </button>
+      <nav class="nav-links" aria-label="Navegación principal">
         <a href="#sobre">Sobre mí</a>
         <a href="#experiencia">Experiencia</a>
+        <a href="#educacion">Educación</a>
         <a href="#proyectos">Proyectos</a>
+        <a href="#publicaciones">Publicaciones</a>
         <a href="#huggingface">Hugging Face</a>
         <a href="#contacto">Contacto</a>
       </nav>
       <div class="nav-cta">
-        <a class="button ghost" href="https://github.com/erickfmm" target="_blank" rel="noreferrer">GitHub</a>
-        <a class="button" href="https://github.com/erickfmm/cv/blob/master/output/cv_spanish/cv.pdf" target="_blank" rel="noreferrer">Ver CV</a>
+        <a class="button ghost" href="https://github.com/erickfmm" target="_blank" rel="noreferrer" aria-label="GitHub, abre en una pestaña nueva">GitHub</a>
+        <a class="button" href="https://raw.githubusercontent.com/erickfmm/cv/master/output/cv_spanish/cv.pdf" target="_blank" rel="noreferrer" aria-label="Ver CV en PDF, abre en una pestaña nueva">Ver CV PDF</a>
       </div>
     </div>
+    <nav id="mobile-nav-panel" class="mobile-nav-panel" aria-label="Navegación principal móvil" hidden>
+      <div class="container mobile-nav-links">
+        <a href="#sobre">Sobre mí</a>
+        <a href="#experiencia">Experiencia</a>
+        <a href="#educacion">Educación</a>
+        <a href="#proyectos">Proyectos</a>
+        <a href="#publicaciones">Publicaciones</a>
+        <a href="#huggingface">Hugging Face</a>
+        <a href="#contacto">Contacto</a>
+      </div>
+    </nav>
   </header>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-text">
-          <p class="eyebrow">AI Engineer · Backend · Datos</p>
+          <p class="eyebrow">Ingeniería en IA · Back-end · Datos</p>
           <h1>Erick Francisco Merino Menares</h1>
           <p class="subtitle">Ingeniero Civil Informático</p>
           <p class="headline">Funcionario Innovación Tecnológica en MINEDUC (CIM) | Desarrollo, IA y Educación</p>
@@ -141,29 +164,25 @@
             usando IA y Análisis de Datos con tecnología Python. En constante aprendizaje y con ganas de extender mis capacidades.
           </p>
           <div class="hero-actions">
-            <a class="button" href="#contacto">Hablemos</a>
-            <a class="button ghost" href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer">LinkedIn</a>
+            <a class="button" href="mailto:erickfmm@gmail.com?subject=Consulta%20desde%20portafolio">Escríbeme</a>
+            <a class="button ghost" href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer" aria-label="LinkedIn, abre en una pestaña nueva">LinkedIn</a>
           </div>
-          <div class="hero-meta">
-            <span>📍 PAC, Santiago de Chile</span>
-            <span>✉️ erickfmm@gmail.com</span>
-            <span>📞 +56 9 618 300 57</span>
-          </div>
+          <p class="hero-contact-line">PAC, Santiago de Chile · erickfmm@gmail.com · +56 9 618 300 57</p>
         </div>
         <div class="hero-card reveal">
           <img class="profile" src="/imagen_cara.jfif" alt="Foto de perfil de Erick Francisco Merino Menares" />
           <div class="card-body">
-            <div class="badge"><svg class="icon"><use href="#icon-brain"></use></svg>IA Engineer</div>
+            <div class="badge"><svg class="icon"><use href="#icon-brain"></use></svg>Ingeniería en IA</div>
             <h3>Especialización</h3>
             <ul>
               <li>LLM, RAG, BERT, T5</li>
-              <li>Back-end & Data Engineering</li>
+              <li>Back-end y Data Engineering</li>
               <li>Gobernanza de datos (TOGAF · DAMA)</li>
             </ul>
             <div class="socials">
-              <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer">GitHub</a>
-              <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer">LinkedIn</a>
-              <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">Hugging Face</a>
+              <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer" aria-label="GitHub, abre en una pestaña nueva">GitHub</a>
+              <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer" aria-label="LinkedIn, abre en una pestaña nueva">LinkedIn</a>
+              <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer" aria-label="Hugging Face, abre en una pestaña nueva">Hugging Face</a>
             </div>
           </div>
         </div>
@@ -186,17 +205,17 @@
           <small>años entre academia y práctica</small>
         </div>
       </div>
-      <div class="container hype-banner reveal">
+      <div class="container proof-banner reveal">
         <div class="hype-content">
-          <span class="hype-pill"><svg class="icon"><use href="#icon-spark"></use></svg>PROYECTO ESTRELLA</span>
+          <span class="hype-pill"><svg class="icon"><use href="#icon-spark"></use></svg>ENFOQUE DE TRABAJO</span>
           <div>
-            <h3>Frankenstein Transformer</h3>
-            <p>Librería config-driven para entrenar arquitecturas experimentales de Transformers. CLI potente, configuración flexible, investigación facilitada. 🚀</p>
+            <h3>IA aplicada con foco en educación y producción</h3>
+            <p>Combino investigación, desarrollo back-end y gobierno de datos para construir soluciones útiles, auditables y listas para operación real.</p>
           </div>
         </div>
-        <a class="button ghost" href="frankestein-transformer/index.html" target="_blank" rel="noreferrer">Config Builder</a>
-        <a class="button" href="https://jaigp.org/paper/38" target="_blank" rel="noreferrer">
-          <svg class="icon"><use href="#icon-rocket"></use></svg>Leer paper oficial
+        <a class="button ghost" href="#proyectos">Ver proyectos</a>
+        <a class="button" href="#contacto">
+          <svg class="icon"><use href="#icon-rocket"></use></svg>Ver contacto
         </a>
       </div>
     </section>
@@ -211,7 +230,7 @@
           <div class="card reveal">
             <h3>Resumen Profesional</h3>
             <p>Gestión de proyectos de software, análisis y formulación de requerimientos, y pruebas de concepto con modelos de IA.</p>
-            <p>Trabajo continuo en investigación aplicada, desarrollo backend y analítica avanzada con Python.</p>
+          <p>Trabajo continuo en investigación aplicada, desarrollo back-end y analítica avanzada con Python.</p>
           </div>
           <div class="card reveal">
             <h3>Habilidades</h3>
@@ -496,16 +515,19 @@
             <ul class="contact-list">
               <li><strong>Email:</strong> <a href="mailto:erickfmm@gmail.com">erickfmm@gmail.com</a></li>
               <li><strong>Teléfono:</strong> <a href="tel:+56961830057">+56 9 618 300 57</a></li>
-              <li><strong>Website:</strong> <a href="https://erickfmm.github.io" target="_blank" rel="noreferrer">erickfmm.github.io</a></li>
-              <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer">linkedin.com/in/erickfmm</a></li>
-              <li><strong>GitHub:</strong> <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer">github.com/erickfmm</a></li>
-              <li><strong>Hugging Face:</strong> <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">huggingface.co/erickfmm</a></li>
+               <li><strong>Sitio web:</strong> <a href="https://erickfmm.github.io" rel="noreferrer">erickfmm.github.io</a></li>
+               <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer" aria-label="Perfil de LinkedIn, abre en una pestaña nueva">linkedin.com/in/erickfmm</a></li>
+               <li><strong>GitHub:</strong> <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer" aria-label="Perfil de GitHub, abre en una pestaña nueva">github.com/erickfmm</a></li>
+               <li><strong>Hugging Face:</strong> <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer" aria-label="Perfil de Hugging Face, abre en una pestaña nueva">huggingface.co/erickfmm</a></li>
             </ul>
           </div>
           <div class="card reveal">
-            <h3>CV en PDF</h3>
-            <p>Descarga la versión completa de mi CV actualizado.</p><br />
-            <a class="button" href="https://github.com/erickfmm/cv/blob/master/output/cv_spanish/cv.pdf" target="_blank" rel="noreferrer">Abrir CV</a>
+            <h3>Próximo paso</h3>
+            <p>Si quieres conversar sobre un proyecto, escríbeme por correo o revisa mi CV en PDF.</p><br />
+            <div class="hero-actions">
+              <a class="button" href="mailto:erickfmm@gmail.com?subject=Consulta%20desde%20portafolio">Enviar correo</a>
+              <a class="button ghost" href="https://raw.githubusercontent.com/erickfmm/cv/master/output/cv_spanish/cv.pdf" target="_blank" rel="noreferrer" aria-label="Abrir CV en PDF, abre en una pestaña nueva">Abrir CV PDF</a>
+            </div>
           </div>
         </div>
       </div>

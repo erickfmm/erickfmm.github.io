@@ -33,6 +33,17 @@ body {
   color: var(--text);
   min-height: 100vh;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .app { display: flex; min-height: 100vh; }
 .sidebar {
   width: var(--sidebar-w);
@@ -56,7 +67,7 @@ body {
   overflow-y: auto;
   max-height: 100vh;
 }
-.tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; flex-wrap:wrap; }
 .tab {
   padding: 10px 20px;
   background: none;
@@ -66,11 +77,13 @@ body {
   font-size: 14px;
   border-bottom: 2px solid transparent;
   transition: .15s;
+  min-height: 44px;
 }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+.tab-content[hidden] { display: none !important; }
 h1 { font-size: 22px; margin-bottom: 4px; }
 h2 { font-size: 16px; color: var(--accent); margin: 20px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
 h3 { font-size: 14px; margin: 16px 0 8px; }
@@ -98,9 +111,57 @@ input, select, textarea {
   font-family: var(--font-sans);
 }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+.tab:focus-visible {
+  outline: 3px solid rgba(88, 166, 255, 0.95);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.2);
+}
 input[type="checkbox"] { width: auto; margin-right: 6px; accent-color: var(--accent); }
 .checkbox-wrap { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; }
 .checkbox-wrap label { margin:0; }
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.error-summary,
+.status-banner {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.error-summary {
+  border-color: rgba(248, 81, 73, 0.6);
+  background: rgba(248, 81, 73, 0.12);
+}
+.error-summary:empty,
+.status-banner:empty {
+  display: none;
+}
+.status-banner[data-tone="success"] {
+  border-color: rgba(63, 185, 80, 0.55);
+  background: rgba(63, 185, 80, 0.12);
+}
+.status-banner[data-tone="error"] {
+  border-color: rgba(248, 81, 73, 0.6);
+  background: rgba(248, 81, 73, 0.12);
+}
+.status-banner[data-tone="info"] {
+  border-color: rgba(88, 166, 255, 0.55);
+  background: rgba(88, 166, 255, 0.1);
+}
+.is-invalid {
+  border-color: var(--danger) !important;
+}
+.conditional-field[hidden] {
+  display: none !important;
+}
 .field-group {
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -165,7 +226,15 @@ pre {
 }
 .list-builder-item .btn { padding:2px 6px; font-size:11px; }
 /* responsive */
-@media (max-width: 900px) { .app { flex-direction: column; } .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); } .row { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+  .main { max-height: none; overflow-y: visible; padding: 20px 16px 32px; }
+  .row { grid-template-columns: 1fr; }
+  .tabs { gap: 8px; border-bottom: none; }
+  .tab { flex: 1 1 160px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .tab.active { border-bottom-color: var(--accent); }
+}
 </style>
 </head>
 <body>
@@ -201,23 +270,25 @@ pre {
 <div class="main">
   <h1>🤖 Transformer Encoder Frankenstein — Config Builder</h1>
   <p id="lang-status" class="info" style="margin-bottom: 12px;"></p>
+  <div id="app-feedback" class="status-banner" data-tone="info" aria-live="polite" aria-atomic="true"></div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('builder')" data-tab="builder">⚙️ Configuration Builder</button>
-    <button class="tab" onclick="switchTab('yaml')" data-tab="yaml">📄 YAML Output</button>
-    <button class="tab" onclick="switchTab('command')" data-tab="command">▶️ Command</button>
-    <button class="tab" onclick="switchTab('diagram')" data-tab="diagram">🗺️ Diagram</button>
+  <div class="tabs" role="tablist" aria-label="Builder sections">
+    <button class="tab active" id="tab-button-builder" type="button" role="tab" aria-selected="true" aria-controls="tab-builder" tabindex="0" data-tab="builder">⚙️ Configuration Builder</button>
+    <button class="tab" id="tab-button-yaml" type="button" role="tab" aria-selected="false" aria-controls="tab-yaml" tabindex="-1" data-tab="yaml">📄 YAML Output</button>
+    <button class="tab" id="tab-button-command" type="button" role="tab" aria-selected="false" aria-controls="tab-command" tabindex="-1" data-tab="command">▶️ Command</button>
+    <button class="tab" id="tab-button-diagram" type="button" role="tab" aria-selected="false" aria-controls="tab-diagram" tabindex="-1" data-tab="diagram">🗺️ Diagram</button>
   </div>
 
   <!-- TAB: BUILDER -->
-  <div class="tab-content active" id="tab-builder">
-    <div id="builder-status" class="info"></div>
+  <div class="tab-content active" id="tab-builder" role="tabpanel" aria-labelledby="tab-button-builder">
+    <div id="builder-status" class="info" aria-live="polite"></div>
+    <div id="validation-summary" class="error-summary" role="alert" aria-live="assertive"></div>
     <div id="model-section"></div>
     <div id="training-section"></div>
   </div>
 
   <!-- TAB: YAML -->
-  <div class="tab-content" id="tab-yaml">
+  <div class="tab-content" id="tab-yaml" role="tabpanel" aria-labelledby="tab-button-yaml" hidden>
     <h2>Generated YAML Configuration</h2>
     <pre id="yaml-output">Fill the Configuration Builder tab first.</pre>
     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
@@ -227,10 +298,10 @@ pre {
   </div>
 
   <!-- TAB: COMMAND -->
-  <div class="tab-content" id="tab-command">
+  <div class="tab-content" id="tab-command" role="tabpanel" aria-labelledby="tab-button-command" hidden>
     <h2>Command</h2>
     <div class="section">
-      <label>Select Command</label>
+      <label for="cmd-select">Select Command</label>
       <select id="cmd-select" onchange="updateCmdPreview()">
         <option value="train">Train — Run main training</option>
         <option value="deploy">Deploy — Convert to deployment artifacts</option>
@@ -247,13 +318,13 @@ pre {
       <button class="btn" onclick="copyCmd()">📋 Copy Command</button>
     </div>
     <div style="margin-top:16px">
-      <label>Output Config Path</label>
+      <label for="output-path">Output Config Path</label>
       <input type="text" id="output-path" value="./config_generated.yaml" oninput="updateCmdPreview()">
     </div>
     <details class="field-group" style="margin-top:16px">
       <summary>Optional CLI Parameters</summary>
       <div style="margin-top:8px">
-        <label>Device</label>
+        <label for="opt-device">Device</label>
         <select id="opt-device" onchange="updateCmdPreview()">
           <option value="">(default)</option>
           <option value="--device auto">auto</option>
@@ -265,41 +336,41 @@ pre {
       <div id="opt-train" class="cmd-opt-group" style="display:none">
         <div class="checkbox-wrap" style="margin-top:8px">
           <input type="checkbox" id="opt-list-configs" onchange="updateCmdPreview()">
-          <label>--list-configs</label>
+          <label for="opt-list-configs">--list-configs</label>
         </div>
         <div>
-          <label>--config-name</label>
+          <label for="opt-config-name">--config-name</label>
           <input type="text" id="opt-config-name" oninput="updateCmdPreview()" placeholder="mini">
         </div>
       </div>
       <div id="opt-deploy" class="cmd-opt-group" style="display:none">
-        <div><label>--checkpoint</label><input type="text" id="opt-deploy-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
-        <div><label>--output</label><input type="text" id="opt-deploy-output" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
-        <div><label>--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--format full">full</option><option value="--format quantized">quantized</option></select></div>
-        <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-validate" onchange="updateCmdPreview()"><label>--validate</label></div>
+        <div><label for="opt-deploy-checkpoint">--checkpoint</label><input type="text" id="opt-deploy-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
+        <div><label for="opt-deploy-output">--output</label><input type="text" id="opt-deploy-output" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
+        <div><label for="opt-deploy-format">--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--format full">full</option><option value="--format quantized">quantized</option></select></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-validate" onchange="updateCmdPreview()"><label for="opt-deploy-validate">--validate</label></div>
       </div>
       <div id="opt-quantize" class="cmd-opt-group" style="display:none">
-        <div><label>--checkpoint</label><input type="text" id="opt-quant-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
-        <div><label>--output</label><input type="text" id="opt-quant-output" oninput="updateCmdPreview()" placeholder="deployed_model_quantized"></div>
-        <div class="checkbox-wrap"><input type="checkbox" id="opt-quant-validate" onchange="updateCmdPreview()"><label>--validate</label></div>
+        <div><label for="opt-quant-checkpoint">--checkpoint</label><input type="text" id="opt-quant-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
+        <div><label for="opt-quant-output">--output</label><input type="text" id="opt-quant-output" oninput="updateCmdPreview()" placeholder="deployed_model_quantized"></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-quant-validate" onchange="updateCmdPreview()"><label for="opt-quant-validate">--validate</label></div>
       </div>
       <div id="opt-infer" class="cmd-opt-group" style="display:none">
-        <div><label>--text</label><input type="text" id="opt-infer-text" oninput="updateCmdPreview()" placeholder="Input text"></div>
-        <div><label>--model</label><input type="text" id="opt-infer-model" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
-        <div class="row"><div><label>--input</label><input type="text" id="opt-infer-input" oninput="updateCmdPreview()" placeholder="texts.txt"></div>
-        <div><label>--output</label><input type="text" id="opt-infer-output" oninput="updateCmdPreview()" placeholder="preds.pt"></div></div>
-        <div><label>--batch-size</label><input type="number" id="opt-infer-batch" oninput="updateCmdPreview()" value="" placeholder="8"></div>
-        <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark" onchange="updateCmdPreview()"><label>--benchmark</label></div>
+        <div><label for="opt-infer-text">--text</label><input type="text" id="opt-infer-text" oninput="updateCmdPreview()" placeholder="Input text"></div>
+        <div><label for="opt-infer-model">--model</label><input type="text" id="opt-infer-model" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
+        <div class="row"><div><label for="opt-infer-input">--input</label><input type="text" id="opt-infer-input" oninput="updateCmdPreview()" placeholder="texts.txt"></div>
+        <div><label for="opt-infer-output">--output</label><input type="text" id="opt-infer-output" oninput="updateCmdPreview()" placeholder="preds.pt"></div></div>
+        <div><label for="opt-infer-batch">--batch-size</label><input type="number" id="opt-infer-batch" oninput="updateCmdPreview()" value="" placeholder="8"></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark" onchange="updateCmdPreview()"><label for="opt-infer-benchmark">--benchmark</label></div>
       </div>
       <div id="opt-sbert-train" class="cmd-opt-group" style="display:none">
-        <div><label>--output_dir</label><input type="text" id="opt-sbert-train-out" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
-        <div><label>--batch_size</label><input type="number" id="opt-sbert-train-bs" oninput="updateCmdPreview()" value="16"></div>
-        <div><label>--epochs</label><input type="number" id="opt-sbert-train-epochs" oninput="updateCmdPreview()" value="4"></div>
-        <div><label>--pooling_mode</label><select id="opt-sbert-pooling" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--pooling_mode mean">mean</option><option value="--pooling_mode max">max</option><option value="--pooling_mode cls">cls</option></select></div>
+        <div><label for="opt-sbert-train-out">--output_dir</label><input type="text" id="opt-sbert-train-out" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
+        <div><label for="opt-sbert-train-bs">--batch_size</label><input type="number" id="opt-sbert-train-bs" oninput="updateCmdPreview()" value="16"></div>
+        <div><label for="opt-sbert-train-epochs">--epochs</label><input type="number" id="opt-sbert-train-epochs" oninput="updateCmdPreview()" value="4"></div>
+        <div><label for="opt-sbert-pooling">--pooling_mode</label><select id="opt-sbert-pooling" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--pooling_mode mean">mean</option><option value="--pooling_mode max">max</option><option value="--pooling_mode cls">cls</option></select></div>
       </div>
       <div id="opt-sbert-infer" class="cmd-opt-group" style="display:none">
-        <div><label>--model_path</label><input type="text" id="opt-sbert-infer-path" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
-        <div><label>--mode</label><select id="opt-sbert-infer-mode" onchange="updateCmdPreview();updateSbertInferExtra()"><option value="">(default)</option><option value="--mode similarity">similarity</option><option value="--mode search">search</option><option value="--mode cluster">cluster</option><option value="--mode encode">encode</option></select></div>
+        <div><label for="opt-sbert-infer-path">--model_path</label><input type="text" id="opt-sbert-infer-path" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
+        <div><label for="opt-sbert-infer-mode">--mode</label><select id="opt-sbert-infer-mode" onchange="updateCmdPreview();updateSbertInferExtra()"><option value="">(default)</option><option value="--mode similarity">similarity</option><option value="--mode search">search</option><option value="--mode cluster">cluster</option><option value="--mode encode">encode</option></select></div>
         <div id="opt-sbert-infer-extra"></div>
       </div>
     </details>
@@ -307,7 +378,7 @@ pre {
   </div>
 
   <!-- TAB: DIAGRAM -->
-  <div class="tab-content" id="tab-diagram">
+  <div class="tab-content" id="tab-diagram" role="tabpanel" aria-labelledby="tab-button-diagram" hidden>
     <h2>Architecture Diagram</h2>
     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="renderDiagram()">🔄 Generate</button>
@@ -331,6 +402,7 @@ let SCHEMA = null;
 let lang = 'en';
 let selectedCmd = 'train';
 let configData = {};
+let activeTab = 'builder';
 
 const UI = {
   required: { en:'Required', es:'Obligatorio' },
@@ -362,6 +434,23 @@ const UI = {
   attnGroup: { en:'Attention Layers', es:'Capas de Atención' },
   otherGroup: { en:'Other Parameters', es:'Otros Parámetros' },
   selectItems: { en:'Select items', es:'Seleccionar items' },
+  validationSummaryTitle: { en:'Please fix the following fields:', es:'Corrige los siguientes campos:' },
+  fieldRequiredMessage: { en:'This field is required.', es:'Este campo es obligatorio.' },
+  invalidNumberMessage: { en:'Enter a valid number.', es:'Ingresa un numero valido.' },
+  invalidListMessage: { en:'Enter a valid JSON array like [0.9, 0.95].', es:'Ingresa un arreglo JSON valido como [0.9, 0.95].' },
+  yamlCopied: { en:'YAML copied to clipboard.', es:'YAML copiado al portapapeles.' },
+  commandCopied: { en:'Command copied to clipboard.', es:'Comando copiado al portapapeles.' },
+  mermaidCopied: { en:'Mermaid source copied to clipboard.', es:'Codigo Mermaid copiado al portapapeles.' },
+  schemaLoaded: { en:'Schema loaded successfully.', es:'Schema cargado correctamente.' },
+  schemaLoadError: { en:'Error loading schema file.', es:'Error al cargar el archivo schema.' },
+  exampleLoadError: { en:'Failed to load example.', es:'No se pudo cargar el ejemplo.' },
+  diagramGenerateFirst: { en:'Generate the diagram first.', es:'Genera el diagrama primero.' },
+  diagramRendered: { en:'Diagram rendered successfully.', es:'Diagrama renderizado correctamente.' },
+  configReady: { en:'Configuration updated.', es:'Configuracion actualizada.' },
+  validationBlocked: { en:'Configuration has validation errors.', es:'La configuracion tiene errores de validacion.' },
+  outputBlocked: { en:'Fix validation errors before generating output.', es:'Corrige los errores antes de generar la salida.' },
+  taskFields: { en:'Task-specific settings', es:'Configuracion segun tarea' },
+  gpuFields: { en:'GPU thermal safeguards', es:'Protecciones termicas GPU' },
 };
 
 const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
@@ -380,24 +469,206 @@ async function loadSchema() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const yamlText = await resp.text();
     SCHEMA = jsyaml.load(yamlText);
-    statusEl.textContent = '✅ Schema loaded successfully.';
+    statusEl.textContent = '✅ ' + t('schemaLoaded');
+    setFeedback(t('schemaLoaded'), 'success');
     document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
     loadExample('standard');
     updateCmdPreview();
   } catch(e) {
-    statusEl.textContent = '❌ Error loading /frankestein-transformer/schema.yaml';
+    statusEl.textContent = '❌ ' + t('schemaLoadError');
+    setFeedback(t('schemaLoadError'), 'error', 'assertive');
     console.error(e);
   }
 }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
-  document.getElementById(`tab-${name}`).classList.add('active');
+function switchTab(name, options) {
+  const opts = options || {};
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  const panels = Array.from(document.querySelectorAll('.tab-content'));
+  activeTab = name;
+
+  tabs.forEach(tab => {
+    const isActive = tab.dataset.tab === name;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
+    tab.setAttribute('tabindex', isActive ? '0' : '-1');
+  });
+
+  panels.forEach(panel => {
+    const isActive = panel.id === `tab-${name}`;
+    panel.classList.toggle('active', isActive);
+    panel.hidden = !isActive;
+  });
+
+  if (opts.focusTab) {
+    const activeButton = document.querySelector(`[data-tab="${name}"]`);
+    if (activeButton) activeButton.focus();
+  }
+
   if (name === 'yaml') updateYamlOutput();
   if (name === 'command') updateCmdPreview();
   if (name === 'diagram') renderDiagram();
+}
+
+function initTabs() {
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    tab.addEventListener('keydown', (event) => {
+      const currentIndex = tabs.indexOf(tab);
+      let nextIndex = null;
+      if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+      if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+      if (event.key === 'Home') nextIndex = 0;
+      if (event.key === 'End') nextIndex = tabs.length - 1;
+      if (nextIndex === null) return;
+      event.preventDefault();
+      switchTab(tabs[nextIndex].dataset.tab, { focusTab: true });
+    });
+  });
+}
+
+function setFeedback(message, tone, liveMode) {
+  const feedback = document.getElementById('app-feedback');
+  if (!feedback) return;
+  feedback.dataset.tone = tone || 'info';
+  feedback.setAttribute('aria-live', liveMode === 'assertive' ? 'assertive' : 'polite');
+  feedback.textContent = message || '';
+}
+
+function getFieldLabelText(element) {
+  if (!element) return 'Field';
+  const byFor = element.id ? document.querySelector(`label[for="${element.id}"]`) : null;
+  if (byFor) return byFor.textContent.replace('*', '').trim();
+  const wrapped = element.closest('label');
+  if (wrapped) return wrapped.textContent.replace('*', '').trim();
+  return element.name || element.id || 'Field';
+}
+
+function clearFieldError(element) {
+  if (!element) return;
+  element.classList.remove('is-invalid');
+  element.removeAttribute('aria-invalid');
+  const describedBy = element.getAttribute('aria-describedby') || '';
+  const tokens = describedBy.split(/\s+/).filter(Boolean).filter(token => !token.endsWith('__error'));
+  if (tokens.length) element.setAttribute('aria-describedby', tokens.join(' '));
+  else element.removeAttribute('aria-describedby');
+  const existing = document.getElementById(`${element.id}__error`);
+  if (existing) existing.remove();
+}
+
+function setFieldError(element, message) {
+  if (!element || !element.id) return;
+  clearFieldError(element);
+  element.classList.add('is-invalid');
+  element.setAttribute('aria-invalid', 'true');
+  const error = document.createElement('div');
+  error.id = `${element.id}__error`;
+  error.className = 'field-error';
+  error.textContent = message;
+  const desc = element.getAttribute('aria-describedby');
+  element.setAttribute('aria-describedby', [desc, error.id].filter(Boolean).join(' '));
+  element.insertAdjacentElement('afterend', error);
+}
+
+function clearValidationState() {
+  document.querySelectorAll('.is-invalid').forEach(el => clearFieldError(el));
+  const summary = document.getElementById('validation-summary');
+  if (summary) summary.innerHTML = '';
+}
+
+function shellQuote(value) {
+  return `'${String(value).replace(/'/g, `'"'"'`)}'`;
+}
+
+function addFlag(extraFlags, flag, rawValue, options) {
+  const opts = options || {};
+  if (rawValue === undefined || rawValue === null) return;
+  const value = String(rawValue).trim();
+  if (!value) return;
+  extraFlags.push(`${flag} ${opts.quote === false ? value : shellQuote(value)}`);
+}
+
+function isMissingValue(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'number') return Number.isNaN(value);
+  return false;
+}
+
+function validateBuilder() {
+  if (!SCHEMA) {
+    return { valid: false, errors: [] };
+  }
+
+  clearValidationState();
+
+  const errors = [];
+  const addError = (element, message) => {
+    if (element) setFieldError(element, message);
+    errors.push({ id: element && element.id ? element.id : '', label: getFieldLabelText(element), message });
+  };
+
+  const modeEl = document.querySelector('input[name="model_mode"]:checked');
+  const mode = modeEl ? modeEl.value : 'custom';
+
+  if (mode === 'custom') {
+    const modelClassEl = document.getElementById(createId('model_class'));
+    if (!modelClassEl || !modelClassEl.value.trim()) addError(modelClassEl, t('fieldRequiredMessage'));
+  } else {
+    const baseModelEl = document.getElementById(createId('base_model'));
+    if (!baseModelEl || !baseModelEl.value.trim()) addError(baseModelEl, t('fieldRequiredMessage'));
+  }
+
+  const requiredFields = [
+    createId('training.task'),
+    createId('training.num_epochs'),
+    createId('training.batch_size'),
+    createId('training.max_length'),
+    createId('training.optimizer.optimizer_class')
+  ];
+
+  requiredFields.forEach((fieldId) => {
+    const element = document.getElementById(fieldId);
+    if (!element) return;
+    const value = element.type === 'checkbox' ? element.checked : element.value;
+    if (isMissingValue(value)) addError(element, t('fieldRequiredMessage'));
+  });
+
+  document.querySelectorAll('input[type="number"]').forEach((element) => {
+    if (element.value.trim() === '') {
+      if (requiredFields.includes(element.id)) addError(element, t('fieldRequiredMessage'));
+      return;
+    }
+    if (Number.isNaN(element.valueAsNumber)) addError(element, t('invalidNumberMessage'));
+  });
+
+  document.querySelectorAll('[id*="betas_"]').forEach((element) => {
+    if (!element.value.trim()) return;
+    try {
+      const parsed = JSON.parse(element.value);
+      if (!Array.isArray(parsed)) throw new Error('not-array');
+    } catch (error) {
+      addError(element, t('invalidListMessage'));
+    }
+  });
+
+  const taskEl = document.getElementById(createId('training.task'));
+  if (taskEl && taskEl.value !== 'mlm') {
+    clearFieldError(document.getElementById(createId('training.mlm_probability')));
+  }
+
+  const summary = document.getElementById('validation-summary');
+  if (summary) {
+    if (errors.length) {
+      summary.innerHTML = `<strong>${t('validationSummaryTitle')}</strong><ul>${errors.map(error => `<li><a href="#${error.id}">${escHtml(error.label)}:</a> ${escHtml(error.message)}</li>`).join('')}</ul>`;
+    } else {
+      summary.innerHTML = '';
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 // ====== SCHEMA HELPERS ======
@@ -425,8 +696,8 @@ function createFieldGroup(label, required, desc, content) {
   </details>`;
 }
 
-function createLabel(name, title, required) {
-  return `<label>${title}${required ? '<span class="req">*</span>' : ''}</label>`;
+function createLabel(targetId, title, required) {
+  return `<label for="${targetId}">${title}${required ? '<span class="req">*</span>' : ''}</label>`;
 }
 
 function createId(name) {
@@ -440,6 +711,8 @@ function renderField(name, fieldSchema, prefix) {
   const desc = getDesc(fieldSchema);
   const fieldId = createId(prefix ? prefix + '.' + name : name);
   const examples = fieldSchema.examples || [];
+  const isRequired = Boolean(fieldSchema.__required);
+  const requiredAttr = isRequired ? 'required aria-required="true"' : '';
 
   let html = `<div class="section">`;
 
@@ -453,23 +726,23 @@ function renderField(name, fieldSchema, prefix) {
     const def = examples.length > 0 ? examples[0] : 0;
     const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
     const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
-    html += `<input type="number" id="${fieldId}" value="${def}" step="1" ${min} ${max}>`;
+    html += `<input type="number" id="${fieldId}" value="${def}" step="1" ${min} ${max} ${requiredAttr}>`;
   } else if (type === 'number') {
     const def = examples.length > 0 ? examples[0] : 0;
     const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
     const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
-    html += `<input type="number" id="${fieldId}" value="${def}" step="any" ${min} ${max}>`;
+    html += `<input type="number" id="${fieldId}" value="${def}" step="any" ${min} ${max} ${requiredAttr}>`;
   } else if (type === 'string') {
     const enm = fieldSchema.enum;
     const def = examples.length > 0 ? examples[0] : '';
     if (enm) {
-      html += `<select id="${fieldId}">`;
+      html += `<select id="${fieldId}" ${requiredAttr}>`;
       enm.forEach(v => {
         html += `<option value="${v}" ${v === def ? 'selected' : ''}>${v}</option>`;
       });
       html += `</select>`;
     } else {
-      html += `<input type="text" id="${fieldId}" value="${def}">`;
+      html += `<input type="text" id="${fieldId}" value="${def}" ${requiredAttr}>`;
     }
   } else if (type === 'array') {
     const itemsSchema = fieldSchema.items || {};
@@ -498,7 +771,7 @@ function renderField(name, fieldSchema, prefix) {
       html += `</div>`;
     } else {
       const defStr = Array.isArray(def) ? def.join('\n') : '';
-      html += `<textarea id="${fieldId}" rows="4">${defStr}</textarea>`;
+      html += `<textarea id="${fieldId}" rows="4" ${requiredAttr}>${defStr}</textarea>`;
       html += `<div class="info">One per line</div>`;
     }
   }
@@ -516,15 +789,16 @@ function renderObject(name, objSchema, prefix, level) {
     const propDesc = getDesc(propSchema);
     const isReq = required.includes(propName);
     const propType = propSchema.type;
+    propSchema.__required = isReq;
 
     if (propType === 'object') {
       html += createFieldGroup(propTitle, isReq, propDesc, renderObject(propName, propSchema, pp, level+1));
     } else {
       html += `<div class="section">`;
       if (isReq) {
-        html += createLabel(propName, propTitle + ' *', true);
+        html += createLabel(createId(pp + '.' + propName), propTitle, true);
       } else {
-        html += createLabel(propName, propTitle, false);
+        html += createLabel(createId(pp + '.' + propName), propTitle, false);
       }
       if (propDesc) html += `<div class="desc">${propDesc}</div>`;
       html += renderField(propName, propSchema, pp).replace(/<div class="section">/, '').replace(/<\/div>$/, '');
@@ -608,9 +882,9 @@ function buildAll() {
   const modelClassDesc = getDesc(modelClassSchema);
   const modelClassEnm = modelClassSchema.enum || [];
   html += `<div class="section">`;
-  html += createLabel('model_class', modelClassTitle, true);
+  html += createLabel(createId('model_class'), modelClassTitle, true);
   if (modelClassDesc) html += `<div class="desc">${modelClassDesc}</div>`;
-  html += `<select id="${createId('model_class')}">`;
+  html += `<select id="${createId('model_class')}" required aria-required="true">`;
   modelClassEnm.forEach(v => html += `<option value="${v}">${v}</option>`);
   html += `</select></div>`;
 
@@ -624,9 +898,9 @@ function buildAll() {
   html += `<div id="base-model-div" style="display:none">`;
   const baseModelSchema = props.base_model;
   html += `<div class="section">`;
-  html += createLabel('base_model', getTitle(baseModelSchema, 'Base Model'), true);
+  html += createLabel(createId('base_model'), getTitle(baseModelSchema, 'Base Model'), true);
   html += `<div class="desc">${getDesc(baseModelSchema)}</div>`;
-  html += `<input type="text" id="${createId('base_model')}" value="answerdotai/ModernBERT-base">`;
+  html += `<input type="text" id="${createId('base_model')}" value="answerdotai/ModernBERT-base" required aria-required="true">`;
   html += `</div>`;
 
   const tokenizerSchema = props.tokenizer;
@@ -651,30 +925,30 @@ function buildTrainingSection() {
   // Task
   const taskSchema = trainingProps.task;
   html += `<div class="section">`;
-  html += createLabel('task', getTitle(taskSchema, 'Task'), true);
+  html += createLabel(createId('training.task'), getTitle(taskSchema, 'Task'), true);
   html += `<div class="desc">${getDesc(taskSchema)}</div>`;
-  html += `<select id="${createId('training.task')}">`;
+  html += `<select id="${createId('training.task')}" onchange="onTaskChange()" required aria-required="true">`;
   (taskSchema.enum || []).forEach(v => html += `<option value="${v}">${v}</option>`);
   html += `</select></div>`;
 
   // General training params
   html += createFieldGroup(t('generalTraining'), false, '', `
     <div class="row">
-      <div>${createLabel('num_epochs', getTitle(trainingProps.num_epochs, 'Epochs'), false)}
+      <div>${createLabel(createId('training.num_epochs'), getTitle(trainingProps.num_epochs, 'Epochs'), true)}
         <div class="desc">${getDesc(trainingProps.num_epochs)}</div>
-        <input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1">
+        <input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1" required aria-required="true">
       </div>
-      <div>${createLabel('batch_size', getTitle(trainingProps.batch_size, 'Batch Size'), false)}
+      <div>${createLabel(createId('training.batch_size'), getTitle(trainingProps.batch_size, 'Batch Size'), true)}
         <div class="desc">${getDesc(trainingProps.batch_size)}</div>
-        <input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1">
+        <input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1" required aria-required="true">
       </div>
     </div>
     <div class="row">
-      <div>${createLabel('max_length', getTitle(trainingProps.max_length, 'Max Length'), false)}
+      <div>${createLabel(createId('training.max_length'), getTitle(trainingProps.max_length, 'Max Length'), true)}
         <div class="desc">${getDesc(trainingProps.max_length)}</div>
-        <input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1">
+        <input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1" required aria-required="true">
       </div>
-      <div>${createLabel('mlm_probability', getTitle(trainingProps.mlm_probability, 'MLM Prob'), false)}
+      <div id="mlm-probability-field" class="conditional-field">${createLabel(createId('training.mlm_probability'), getTitle(trainingProps.mlm_probability, 'MLM Prob'), false)}
         <div class="desc">${getDesc(trainingProps.mlm_probability)}</div>
         <input type="number" id="${createId('training.mlm_probability')}" value="0.15" min="0" max="1" step="any">
       </div>
@@ -684,11 +958,11 @@ function buildTrainingSection() {
   // Dataset params
   html += createFieldGroup(t('datasetParams'), false, '', `
     <div class="row">
-      <div>${createLabel('max_samples', getTitle(trainingProps.max_samples, 'Max Samples'), false)}
+      <div>${createLabel(createId('training.max_samples'), getTitle(trainingProps.max_samples, 'Max Samples'), false)}
         <div class="desc">${getDesc(trainingProps.max_samples)}</div>
         <input type="number" id="${createId('training.max_samples')}" value="20000000" min="1" step="1">
       </div>
-      <div>${createLabel('dataset_batch_size', getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false)}
+      <div>${createLabel(createId('training.dataset_batch_size'), getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false)}
         <div class="desc">${getDesc(trainingProps.dataset_batch_size)}</div>
         <input type="number" id="${createId('training.dataset_batch_size')}" value="25000" min="1" step="1">
       </div>
@@ -700,9 +974,9 @@ function buildTrainingSection() {
   const optClassSchema = optSchema.properties.optimizer_class;
   html += createFieldGroup(t('optimizer'), false, '', `
     <div class="section">
-      ${createLabel('optimizer_class', getTitle(optClassSchema, 'Optimizer Class'), true)}
+      ${createLabel(createId('training.optimizer.optimizer_class'), getTitle(optClassSchema, 'Optimizer Class'), true)}
       <div class="desc">${getDesc(optClassSchema)}</div>
-      <select id="${createId('training.optimizer.optimizer_class')}" onchange="onOptimizerChange()">
+      <select id="${createId('training.optimizer.optimizer_class')}" onchange="onOptimizerChange()" required aria-required="true">
         ${(optClassSchema.enum || ['adamw']).map(v => `<option value="${v}" ${v==='adamw'?'selected':''}>${v}</option>`).join('')}
       </select>
     </div>
@@ -713,16 +987,16 @@ function buildTrainingSection() {
   const schedTypeSchema = trainingProps.scheduler_type;
   html += createFieldGroup(t('scheduler'), false, '', `
     <div class="row">
-      <div>${createLabel('scheduler_total_steps', getTitle(trainingProps.scheduler_total_steps, 'Total Steps'), false)}
+      <div>${createLabel(createId('training.scheduler_total_steps'), getTitle(trainingProps.scheduler_total_steps, 'Total Steps'), false)}
         <div class="desc">${getDesc(trainingProps.scheduler_total_steps)}</div>
         <input type="number" id="${createId('training.scheduler_total_steps')}" value="10000" min="1" step="1">
       </div>
-      <div>${createLabel('scheduler_warmup_ratio', getTitle(trainingProps.scheduler_warmup_ratio, 'Warmup Ratio'), false)}
+      <div>${createLabel(createId('training.scheduler_warmup_ratio'), getTitle(trainingProps.scheduler_warmup_ratio, 'Warmup Ratio'), false)}
         <div class="desc">${getDesc(trainingProps.scheduler_warmup_ratio)}</div>
         <input type="number" id="${createId('training.scheduler_warmup_ratio')}" value="0.1" min="0" max="1" step="any">
       </div>
     </div>
-    <div>${createLabel('scheduler_type', getTitle(schedTypeSchema, 'Scheduler Type'), false)}
+    <div>${createLabel(createId('training.scheduler_type'), getTitle(schedTypeSchema, 'Scheduler Type'), false)}
       <div class="desc">${getDesc(schedTypeSchema)}</div>
       <select id="${createId('training.scheduler_type')}">
         ${(schedTypeSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('')}
@@ -733,11 +1007,11 @@ function buildTrainingSection() {
   // Gradient settings
   html += createFieldGroup(t('gradientSettings'), false, '', `
     <div class="row">
-      <div>${createLabel('gradient_accumulation_steps', getTitle(trainingProps.gradient_accumulation_steps, 'Grad Accum'), false)}
+      <div>${createLabel(createId('training.gradient_accumulation_steps'), getTitle(trainingProps.gradient_accumulation_steps, 'Grad Accum'), false)}
         <div class="desc">${getDesc(trainingProps.gradient_accumulation_steps)}</div>
         <input type="number" id="${createId('training.gradient_accumulation_steps')}" value="4" min="1" step="1">
       </div>
-      <div>${createLabel('grad_clip_max_norm', getTitle(trainingProps.grad_clip_max_norm, 'Grad Clip'), false)}
+      <div>${createLabel(createId('training.grad_clip_max_norm'), getTitle(trainingProps.grad_clip_max_norm, 'Grad Clip'), false)}
         <div class="desc">${getDesc(trainingProps.grad_clip_max_norm)}</div>
         <input type="number" id="${createId('training.grad_clip_max_norm')}" value="5.0" min="0" step="any">
       </div>
@@ -747,16 +1021,16 @@ function buildTrainingSection() {
   // Checkpoint settings
   html += createFieldGroup(t('checkpointSettings'), false, '', `
     <div class="row">
-      <div>${createLabel('checkpoint_every_n_steps', getTitle(trainingProps.checkpoint_every_n_steps, 'Ckpt Every'), false)}
+      <div>${createLabel(createId('training.checkpoint_every_n_steps'), getTitle(trainingProps.checkpoint_every_n_steps, 'Ckpt Every'), false)}
         <div class="desc">${getDesc(trainingProps.checkpoint_every_n_steps)}</div>
         <input type="number" id="${createId('training.checkpoint_every_n_steps')}" value="500" min="1" step="1">
       </div>
-      <div>${createLabel('max_rolling_checkpoints', getTitle(trainingProps.max_rolling_checkpoints, 'Max Rolling'), false)}
+      <div>${createLabel(createId('training.max_rolling_checkpoints'), getTitle(trainingProps.max_rolling_checkpoints, 'Max Rolling'), false)}
         <div class="desc">${getDesc(trainingProps.max_rolling_checkpoints)}</div>
         <input type="number" id="${createId('training.max_rolling_checkpoints')}" value="3" min="1" step="1">
       </div>
     </div>
-    <div>${createLabel('num_best_checkpoints', getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false)}
+    <div>${createLabel(createId('training.num_best_checkpoints'), getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false)}
       <div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>
       <input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">
     </div>
@@ -764,45 +1038,46 @@ function buildTrainingSection() {
 
   // Logging
   html += createFieldGroup(t('loggingSettings'), false, '', `
-    <div>${createLabel('csv_log_path', getTitle(trainingProps.csv_log_path, 'CSV Log'), false)}
+    <div>${createLabel(createId('training.csv_log_path'), getTitle(trainingProps.csv_log_path, 'CSV Log'), false)}
       <div class="desc">${getDesc(trainingProps.csv_log_path)}</div>
       <input type="text" id="${createId('training.csv_log_path')}" value="training_metrics.csv">
     </div>
     <div class="row">
       <div class="checkbox-wrap">
         <input type="checkbox" id="${createId('training.log_gradient_stats')}" checked>
-        <label>${getTitle(trainingProps.log_gradient_stats, 'Log Grad Stats')}</label>
+        <label for="${createId('training.log_gradient_stats')}">${getTitle(trainingProps.log_gradient_stats, 'Log Grad Stats')}</label>
       </div>
-      <div>${createLabel('gradient_log_interval', getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false)}
+      <div>${createLabel(createId('training.gradient_log_interval'), getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false)}
         <input type="number" id="${createId('training.gradient_log_interval')}" value="10" min="1" step="1">
       </div>
     </div>
   `);
 
   // GPU Settings
-  html += createFieldGroup(t('gpuSettings'), false, '', `
+  html += createFieldGroup(t('gpuSettings'), false, '', `<div id="gpu-settings-group" class="conditional-field">
     <div class="checkbox-wrap">
       <input type="checkbox" id="${createId('training.gpu_temp_guard_enabled')}" checked>
-      <label>${getTitle(trainingProps.gpu_temp_guard_enabled, 'GPU Temp Guard')}</label>
+      <label for="${createId('training.gpu_temp_guard_enabled')}">${getTitle(trainingProps.gpu_temp_guard_enabled, 'GPU Temp Guard')}</label>
     </div>
     <div class="row">
-      <div>${createLabel('gpu_temp_pause_threshold_c', getTitle(trainingProps.gpu_temp_pause_threshold_c, 'Pause Temp'), false)}
+      <div>${createLabel(createId('training.gpu_temp_pause_threshold_c'), getTitle(trainingProps.gpu_temp_pause_threshold_c, 'Pause Temp'), false)}
         <input type="number" id="${createId('training.gpu_temp_pause_threshold_c')}" value="90.0" min="0" step="any">
       </div>
-      <div>${createLabel('gpu_temp_resume_threshold_c', getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false)}
+      <div>${createLabel(createId('training.gpu_temp_resume_threshold_c'), getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false)}
         <input type="number" id="${createId('training.gpu_temp_resume_threshold_c')}" value="80.0" min="0" step="any">
       </div>
     </div>
-  `);
+  </div>`);
 
   // AMP
   html += `<div class="checkbox-wrap">
     <input type="checkbox" id="${createId('training.use_amp')}">
-    <label>${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
+    <label for="${createId('training.use_amp')}">${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
   </div>`;
 
   trainingSection.innerHTML = html;
   onOptimizerChange();
+  onTaskChange();
 }
 
 // ====== OPTIMIZER PARAMS ======
@@ -832,17 +1107,17 @@ function onOptimizerChange() {
     html += `<details class="param-group"><summary>${groupLabels[group]}</summary>`;
     html += `<div class="row">`;
     const pref = optClass + '-';
-    html += `<div>${createLabel(`${pref}lr_${group}`, 'Learning Rate', false)}
+    html += `<div>${createLabel(createId('training.optimizer.' + pref + 'lr_' + group), 'Learning Rate', false)}
       <input type="number" id="${createId('training.optimizer.' + pref + 'lr_' + group)}" value="${getDefaultForGroup(group, 'lr')}" step="any">
     </div>`;
-    html += `<div>${createLabel(`${pref}wd_${group}`, 'Weight Decay', false)}
+    html += `<div>${createLabel(createId('training.optimizer.' + pref + 'wd_' + group), 'Weight Decay', false)}
       <input type="number" id="${createId('training.optimizer.' + pref + 'wd_' + group)}" value="${getDefaultForGroup(group, 'wd')}" step="any">
     </div>`;
     html += `</div><div class="row">`;
-    html += `<div>${createLabel(`${pref}betas_${group}`, 'Betas', false)}
+    html += `<div>${createLabel(createId('training.optimizer.' + pref + 'betas_' + group), 'Betas', false)}
       <input type="text" id="${createId('training.optimizer.' + pref + 'betas_' + group)}" value="[0.9, 0.95]">
     </div>`;
-    html += `<div>${createLabel(`${pref}eps_${group}`, 'Epsilon', false)}
+    html += `<div>${createLabel(createId('training.optimizer.' + pref + 'eps_' + group), 'Epsilon', false)}
       <input type="number" id="${createId('training.optimizer.' + pref + 'eps_' + group)}" value="1e-8" step="any">
     </div>`;
     html += `</div></details>`;
@@ -853,7 +1128,7 @@ function onOptimizerChange() {
     html += `<details class="param-group" open><summary>${optClass} — specific parameters</summary>`;
     specificSuffixes.forEach(suffix => {
       const keyId = createId('training.optimizer.' + optClass + '-' + suffix);
-      html += `<div class="row"><div>${createLabel(optClass + '-' + suffix, suffix, false)}
+      html += `<div class="row"><div>${createLabel(keyId, suffix, false)}
         <input type="text" id="${keyId}" value="${getDefaultForSpecific(suffix)}">
       </div></div>`;
     });
@@ -861,6 +1136,23 @@ function onOptimizerChange() {
   }
 
   container.innerHTML = html;
+}
+
+function onTaskChange() {
+  const taskEl = document.getElementById(createId('training.task'));
+  const mlmField = document.getElementById('mlm-probability-field');
+  if (!taskEl || !mlmField) return;
+  const isMlm = taskEl.value === 'mlm';
+  mlmField.hidden = !isMlm;
+  const mlmInput = document.getElementById(createId('training.mlm_probability'));
+  if (mlmInput) {
+    if (isMlm) {
+      mlmInput.removeAttribute('disabled');
+    } else {
+      mlmInput.setAttribute('disabled', 'disabled');
+      clearFieldError(mlmInput);
+    }
+  }
 }
 
 function getDefaultForGroup(group, param) {
@@ -942,6 +1234,13 @@ function isListBuilder(fieldId) {
 function buildConfig() {
   if (!SCHEMA) return {};
 
+  const validation = validateBuilder();
+  if (!validation.valid) {
+    configData = {};
+    setFeedback(t('validationBlocked'), 'error', 'assertive');
+    throw new Error(t('outputBlocked'));
+  }
+
   const trainingProps = SCHEMA.properties.training.properties;
   const config = {};
 
@@ -982,6 +1281,10 @@ function buildConfig() {
   training.gpu_temp_guard_enabled = readFieldValue('gpu_temp_guard_enabled', trainingProps.gpu_temp_guard_enabled, 'training');
   training.gpu_temp_pause_threshold_c = readFieldValue('gpu_temp_pause_threshold_c', trainingProps.gpu_temp_pause_threshold_c, 'training');
   training.gpu_temp_resume_threshold_c = readFieldValue('gpu_temp_resume_threshold_c', trainingProps.gpu_temp_resume_threshold_c, 'training');
+
+  if (training.task !== 'mlm') {
+    delete training.mlm_probability;
+  }
 
   // Optimizer
   const optClass = readFieldValue('optimizer_class', trainingProps.optimizer.properties.optimizer_class, 'training.optimizer');
@@ -1028,6 +1331,7 @@ function buildConfig() {
   config.training = training;
 
   configData = config;
+  setFeedback(t('configReady'), 'info');
   return config;
 }
 
@@ -1088,25 +1392,34 @@ function updateYamlOutput() {
 }
 
 function downloadYaml() {
-  const yaml = generateYaml();
-  const blob = new Blob([yaml], {type:'text/yaml'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'config.yaml'; a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const yaml = generateYaml();
+    const blob = new Blob([yaml], {type:'text/yaml'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'config.yaml'; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    document.getElementById('yaml-output').textContent = 'Error: ' + e.message;
+  }
 }
 
 function copyYaml() {
   const yaml = document.getElementById('yaml-output').textContent;
-  navigator.clipboard.writeText(yaml).then(() => alert('YAML copied!')).catch(() => {});
+  navigator.clipboard.writeText(yaml).then(() => setFeedback(t('yamlCopied'), 'success')).catch(() => setFeedback(t('yamlCopied'), 'error', 'assertive'));
 }
 
 // ====== COMMAND ======
 function updateCmdPreview() {
   selectedCmd = document.getElementById('cmd-select').value;
-  buildConfig();
+  try {
+    buildConfig();
+  } catch (error) {
+    document.getElementById('cmd-preview').textContent = 'Error: ' + error.message;
+    document.getElementById('full-cmd-display').textContent = '';
+    return;
+  }
   const outputPath = document.getElementById('output-path').value || './config_generated.yaml';
-  const modelClass = configData.model_class || 'mini';
 
   // Show/hide command-specific optional groups
   document.querySelectorAll('.cmd-opt-group').forEach(g => g.style.display = 'none');
@@ -1122,13 +1435,13 @@ function updateCmdPreview() {
     const lc = document.getElementById('opt-list-configs');
     if (lc && lc.checked) extraFlags.push('--list-configs');
     const cn = document.getElementById('opt-config-name');
-    if (cn && cn.value.trim()) extraFlags.push('--config-name ' + cn.value.trim());
+    if (cn) addFlag(extraFlags, '--config-name', cn.value);
   }
   if (selectedCmd === 'deploy') {
     const cp = document.getElementById('opt-deploy-checkpoint');
-    if (cp && cp.value.trim()) extraFlags.push('--checkpoint ' + cp.value.trim());
+    if (cp) addFlag(extraFlags, '--checkpoint', cp.value);
     const out = document.getElementById('opt-deploy-output');
-    if (out && out.value.trim()) extraFlags.push('--output ' + out.value.trim());
+    if (out) addFlag(extraFlags, '--output', out.value);
     const fmt = document.getElementById('opt-deploy-format');
     if (fmt && fmt.value) extraFlags.push(fmt.value);
     const val = document.getElementById('opt-deploy-validate');
@@ -1136,39 +1449,39 @@ function updateCmdPreview() {
   }
   if (selectedCmd === 'quantize') {
     const cp = document.getElementById('opt-quant-checkpoint');
-    if (cp && cp.value.trim()) extraFlags.push('--checkpoint ' + cp.value.trim());
+    if (cp) addFlag(extraFlags, '--checkpoint', cp.value);
     const out = document.getElementById('opt-quant-output');
-    if (out && out.value.trim()) extraFlags.push('--output ' + out.value.trim());
+    if (out) addFlag(extraFlags, '--output', out.value);
     const val = document.getElementById('opt-quant-validate');
     if (val && val.checked) extraFlags.push('--validate');
   }
   if (selectedCmd === 'infer') {
     const txt = document.getElementById('opt-infer-text');
-    if (txt && txt.value.trim()) extraFlags.push('--text ' + txt.value.trim());
+    if (txt) addFlag(extraFlags, '--text', txt.value);
     const mdl = document.getElementById('opt-infer-model');
-    if (mdl && mdl.value.trim()) extraFlags.push('--model ' + mdl.value.trim());
+    if (mdl) addFlag(extraFlags, '--model', mdl.value);
     const inp = document.getElementById('opt-infer-input');
-    if (inp && inp.value.trim()) extraFlags.push('--input ' + inp.value.trim());
+    if (inp) addFlag(extraFlags, '--input', inp.value);
     const oup = document.getElementById('opt-infer-output');
-    if (oup && oup.value.trim()) extraFlags.push('--output ' + oup.value.trim());
+    if (oup) addFlag(extraFlags, '--output', oup.value);
     const bs = document.getElementById('opt-infer-batch');
-    if (bs && bs.value) extraFlags.push('--batch-size ' + bs.value);
+    if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
     const bm = document.getElementById('opt-infer-benchmark');
     if (bm && bm.checked) extraFlags.push('--benchmark');
   }
   if (selectedCmd === 'sbert-train') {
     const out = document.getElementById('opt-sbert-train-out');
-    if (out && out.value.trim()) extraFlags.push('--output_dir ' + out.value.trim());
+    if (out) addFlag(extraFlags, '--output_dir', out.value);
     const bs = document.getElementById('opt-sbert-train-bs');
-    if (bs && bs.value) extraFlags.push('--batch_size ' + bs.value);
+    if (bs && bs.value) addFlag(extraFlags, '--batch_size', bs.value, { quote: false });
     const ep = document.getElementById('opt-sbert-train-epochs');
-    if (ep && ep.value) extraFlags.push('--epochs ' + ep.value);
+    if (ep && ep.value) addFlag(extraFlags, '--epochs', ep.value, { quote: false });
     const pm = document.getElementById('opt-sbert-pooling');
     if (pm && pm.value) extraFlags.push(pm.value);
   }
   if (selectedCmd === 'sbert-infer') {
     const mp = document.getElementById('opt-sbert-infer-path');
-    if (mp && mp.value.trim()) extraFlags.push('--model_path ' + mp.value.trim());
+    if (mp) addFlag(extraFlags, '--model_path', mp.value);
     const mode = document.getElementById('opt-sbert-infer-mode');
     if (mode && mode.value) extraFlags.push(mode.value);
     // sbert-infer extra sub-fields
@@ -1176,13 +1489,14 @@ function updateCmdPreview() {
     if (extraDiv) {
       const inputs = extraDiv.querySelectorAll('input, select');
       inputs.forEach(el => {
-        if (el.value && el.value.trim()) {
-          const label = el.dataset.flag;
-          if (label) extraFlags.push(label + ' ' + el.value.trim());
-        }
         if (el.type === 'checkbox' && el.checked) {
           const label = el.dataset.flag;
           if (label) extraFlags.push(label);
+          return;
+        }
+        if (el.value && el.value.trim()) {
+          const label = el.dataset.flag;
+          if (label) addFlag(extraFlags, label, el.value, { quote: el.type !== 'number' });
         }
       });
     }
@@ -1191,7 +1505,7 @@ function updateCmdPreview() {
   let cmd = 'frankestein-transformer ' + selectedCmd;
   if (['train', 'deploy', 'quantize', 'infer', 'sbert-train', 'sbert-infer'].includes(selectedCmd)) {
     if (selectedCmd !== 'train' || !extraFlags.some(f => f.startsWith('--config-name') || f === '--list-configs')) {
-      cmd += ' --config ' + outputPath;
+      cmd += ' --config ' + shellQuote(outputPath);
     }
   }
   if (extraFlags.length > 0) cmd += ' ' + extraFlags.join(' ');
@@ -1226,7 +1540,7 @@ function updateSbertInferExtra() {
 
 function copyCmd() {
   const cmd = document.getElementById('cmd-preview').textContent;
-  navigator.clipboard.writeText(cmd).then(() => alert('Command copied!')).catch(() => {});
+  navigator.clipboard.writeText(cmd).then(() => setFeedback(t('commandCopied'), 'success')).catch(() => setFeedback(t('commandCopied'), 'error', 'assertive'));
 }
 
 function onModelModeChange() {
@@ -1437,7 +1751,7 @@ async function loadRepoExample() {
     if (SCHEMA) buildAll();
     setTimeout(() => applyYamlConfig(config), 150);
   } catch(e) {
-    alert('Failed to load example: ' + e.message);
+    setFeedback(`${t('exampleLoadError')} ${e.message}`, 'error', 'assertive');
     console.error(e);
   }
 }
@@ -1453,7 +1767,7 @@ async function loadLocalExample(filename) {
     if (SCHEMA) buildAll();
     setTimeout(() => applyYamlConfig(config), 150);
   } catch(e) {
-    alert('Failed to load example: ' + e.message);
+    setFeedback(`${t('exampleLoadError')} ${e.message}`, 'error', 'assertive');
     console.error(e);
   }
 }
@@ -1528,15 +1842,15 @@ function applyYamlConfig(config) {
 
 // ====== REACTIVE LANGUAGE SWITCH ======
 function onLangChange() {
-  // Save all current form values
+  const activeElementId = document.activeElement && document.activeElement.id ? document.activeElement.id : '';
+  const scrollTop = document.querySelector('.main') ? document.querySelector('.main').scrollTop : 0;
   const saved = saveAllFormValues();
   lang = document.getElementById('lang-select').value;
   document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
   document.getElementById('sidebar-lang-title').textContent = UI.langTitle[lang] || UI.langTitle.en;
   if (SCHEMA) {
     buildAll();
-    // Restore saved values after rebuild
-    setTimeout(() => restoreAllFormValues(saved), 100);
+    setTimeout(() => restoreAllFormValues(saved, { activeElementId, scrollTop }), 100);
   }
 }
 
@@ -1566,7 +1880,7 @@ function saveAllFormValues() {
   return store;
 }
 
-function restoreAllFormValues(saved) {
+function restoreAllFormValues(saved, context) {
   if (!saved) return;
   document.querySelectorAll('input:not([type="hidden"]):not([type="radio"]), select, textarea').forEach(el => {
     if (el.id && saved[el.id] !== undefined) {
@@ -1596,6 +1910,15 @@ function restoreAllFormValues(saved) {
         listBuilderRender(hidden.id);
       }
     });
+  }
+  switchTab(activeTab || 'builder');
+  if (context && context.activeElementId) {
+    const activeElement = document.getElementById(context.activeElementId);
+    if (activeElement) activeElement.focus();
+  }
+  const main = document.querySelector('.main');
+  if (main && context && typeof context.scrollTop === 'number') {
+    main.scrollTop = context.scrollTop;
   }
   updateYamlOutput();
   updateCmdPreview();
@@ -1627,7 +1950,13 @@ async function renderDiagram() {
     document.getElementById('diagram-container').innerHTML = '<p style="color:var(--danger)">Mermaid library not loaded. Check internet connection.</p>';
     return;
   }
-  var config = buildConfig();
+  var config;
+  try {
+    config = buildConfig();
+  } catch (error) {
+    document.getElementById('diagram-container').innerHTML = '<p class="info">' + escHtml(error.message) + '</p>';
+    return;
+  }
   if (!config || (!config.model && !config.base_model)) {
     document.getElementById('diagram-container').innerHTML = '<p class="info">Build a config first in the Configuration Builder tab.</p>';
     return;
@@ -1640,6 +1969,7 @@ async function renderDiagram() {
     var id = 'mermaid-diag-' + (_diagC++);
     var result = await mermaid.render(id, def);
     container.innerHTML = result.svg;
+    setFeedback(t('diagramRendered'), 'success');
     var svg = container.querySelector('svg');
     if (svg) {
       svg.style.maxWidth = '100%';
@@ -1659,7 +1989,7 @@ function escHtml(s) {
 
 function downloadDiagramPNG() {
   var svg = document.querySelector('#diagram-container svg');
-  if (!svg) { alert('Generate diagram first'); return; }
+  if (!svg) { setFeedback(t('diagramGenerateFirst'), 'error', 'assertive'); return; }
   var data = new XMLSerializer().serializeToString(svg);
   var blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
   var url = URL.createObjectURL(blob);
@@ -1688,10 +2018,13 @@ function downloadDiagramPNG() {
 
 function copyMermaid() {
   var src = document.getElementById('mermaid-source').textContent;
-  navigator.clipboard.writeText(src).then(function () { alert('Mermaid source copied!'); }).catch(function () {});
+  navigator.clipboard.writeText(src).then(function () { setFeedback(t('mermaidCopied'), 'success'); }).catch(function () { setFeedback(t('mermaidCopied'), 'error', 'assertive'); });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function () {
+  initTabs();
+  init();
+});
 </script>
 </body>
 </html>
