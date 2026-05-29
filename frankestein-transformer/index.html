@@ -589,6 +589,19 @@ function addFlag(extraFlags, flag, rawValue, options) {
   extraFlags.push(`${flag} ${opts.quote === false ? value : shellQuote(value)}`);
 }
 
+function assignControlValue(element, value) {
+  if (!element) return;
+  if (typeof value === 'boolean') {
+    element.checked = value;
+    return;
+  }
+  if (Array.isArray(value)) {
+    element.value = JSON.stringify(value);
+    return;
+  }
+  element.value = value;
+}
+
 function isMissingValue(value) {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim() === '';
@@ -1678,7 +1691,7 @@ function applyPreset(name) {
       } else if (typeof val === 'boolean') {
         el.checked = val;
       } else {
-        el.value = val;
+        assignControlValue(el, val);
       }
     }
   }
@@ -1693,8 +1706,7 @@ function applyPreset(name) {
         const id = createId('training.' + key);
         const el = document.getElementById(id);
         if (!el) continue;
-        if (typeof val === 'boolean') el.checked = val;
-        else el.value = val;
+        assignControlValue(el, val);
       }
     }
   }
@@ -1802,7 +1814,7 @@ function applyYamlConfig(config) {
           cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
         }
       } else if (typeof val === 'boolean') { el.checked = val; }
-      else { el.value = val; }
+      else { assignControlValue(el, val); }
     }
   }
 
@@ -1813,8 +1825,7 @@ function applyYamlConfig(config) {
       const id = createId('training.' + key);
       const el = document.getElementById(id);
       if (!el) continue;
-      if (typeof val === 'boolean') el.checked = val;
-      else el.value = val;
+      assignControlValue(el, val);
     }
     if (config.training.optimizer) {
       const opt = config.training.optimizer;
@@ -1828,8 +1839,7 @@ function applyYamlConfig(config) {
             const id = createId('training.optimizer.' + k);
             const el = document.getElementById(id);
             if (!el) continue;
-            if (typeof v === 'boolean') el.checked = v;
-            else el.value = v;
+            assignControlValue(el, v);
           }
         }, 50);
       }
