@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transformer Encoder Frankenstein - Config Builder</title>
+<title>Frankestein Transformer - Config Builder</title>
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
@@ -84,6 +84,31 @@ body {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .tab-content[hidden] { display: none !important; }
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.breadcrumbs a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.breadcrumbs .sep {
+  color: var(--text-muted);
+}
 h1 { font-size: 22px; margin-bottom: 4px; }
 h2 { font-size: 16px; color: var(--accent); margin: 20px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
 h3 { font-size: 14px; margin: 16px 0 8px; }
@@ -268,7 +293,14 @@ pre {
   </p>
 </div>
 <div class="main">
-  <h1>🤖 Transformer Encoder Frankenstein — Config Builder</h1>
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Portfolio</a></li>
+      <li class="sep" aria-hidden="true">/</li>
+      <li aria-current="page">Frankestein Transformer</li>
+    </ol>
+  </nav>
+  <h1>🤖 Frankestein Transformer — Config Builder</h1>
   <p id="lang-status" class="info" style="margin-bottom: 12px;"></p>
   <div id="app-feedback" class="status-banner" data-tone="info" aria-live="polite" aria-atomic="true"></div>
 
