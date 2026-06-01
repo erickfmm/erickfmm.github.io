@@ -865,8 +865,23 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
 // =============================================================================
 async function crearObtenerMaestro() {
   await resolverConfiguracionIds(true);
-  const maestroId = CONFIG_IDS.MAESTRO_ID;
-  if (!maestroId) throw new Error("No se encontro MAESTRO_ID en central.");
+  let maestroId = CONFIG_IDS.MAESTRO_ID;
+
+  if (!maestroId) {
+    print('📄 Maestro no encontrado. Creando CIE_Datos_Maestros en central...');
+    const body = JSON.stringify({
+      name: NOMBRE_MAESTRO,
+      mimeType: 'application/vnd.google-apps.spreadsheet',
+      parents: [CONFIG_IDS.FOLDER_ID]
+    });
+    const created = await apiFetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', { method: 'POST', body });
+    maestroId = created.id;
+    CONFIG_IDS.MAESTRO_ID = maestroId;
+    print(`✅ Maestro creado automaticamente: ${maestroId}`);
+    await sleep(API_DELAY_MS);
+    await sincronizarEncabezadosMaestro(maestroId);
+  }
+
   appState.maestroId = maestroId;
   print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
   return maestroId;
