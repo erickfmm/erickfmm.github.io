@@ -333,12 +333,11 @@ pre {
   margin: 0 0 20px;
 }
 .paper-inline-toc h3 { font-size: 14px; color: var(--accent); margin: 0 0 10px; text-transform: uppercase; letter-spacing: .05em; }
-.paper-inline-toc ol { list-style: none; padding: 0; margin: 0; }
+.paper-inline-toc ol { list-style: none; margin: 0; padding-left: 0; }
+.paper-inline-toc ol ol { padding-left: 20px; }
 .paper-inline-toc li { margin: 2px 0; }
 .paper-inline-toc a { color: var(--text-muted); text-decoration: none; font-size: 13px; display: block; padding: 2px 0; transition: .1s; }
 .paper-inline-toc a:hover { color: var(--accent); }
-.paper-inline-toc .toc-l2 { padding-left: 18px; font-size: 12px; }
-.paper-inline-toc .toc-l3 { padding-left: 36px; font-size: 12px; }
 
 .scroll-top-btn {
   position: fixed;
@@ -2308,18 +2307,41 @@ function buildPaperToc() {
   const headings = container.querySelectorAll('h1, h2, h3, h4');
   if (headings.length === 0) return;
 
-  // Inline ToC
+  // Inline ToC — properly nested with section numbering
   const inlineToc = document.getElementById('paper-inline-toc');
   if (inlineToc) {
-    let html = '<h3>📑 Table of Contents</h3><ol>';
-    headings.forEach(h => {
+    let html = '<h3>📑 Table of Contents</h3>';
+    const counters = [0, 0, 0, 0, 0];
+    let prevLevel = 0;
+    headings.forEach((h, idx) => {
       const level = parseInt(h.tagName[1]);
       const text = h.textContent;
       const id = h.id || text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       h.id = id;
-      html += `<li class="toc-l${level}"><a href="#${id}">${text}</a></li>`;
+
+      for (let i = level + 1; i < counters.length; i++) counters[i] = 0;
+      counters[level]++;
+
+      let numStr = '';
+      for (let i = 1; i <= level; i++) {
+        if (counters[i] > 0) numStr += (numStr ? '.' : '') + counters[i];
+      }
+
+      if (idx === 0) {
+        html += '<ol>';
+      } else if (level > prevLevel) {
+        for (let i = prevLevel + 1; i <= level; i++) html += '<ol>';
+      } else if (level < prevLevel) {
+        for (let i = prevLevel; i > level; i--) html += '</li></ol>';
+        html += '</li>';
+      } else {
+        html += '</li>';
+      }
+
+      html += `<li><a href="#${id}">${numStr}. ${text}</a>`;
+      prevLevel = level;
     });
-    html += '</ol>';
+    for (let i = prevLevel; i >= 1; i--) html += '</li></ol>';
     inlineToc.innerHTML = html;
   }
 
