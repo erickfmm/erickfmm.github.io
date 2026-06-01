@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025/Debian) (preloaded format=pdflatex 2026.6.1)  1 JUN 2026 13:06
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025/Debian) (preloaded format=pdflatex 2026.6.1)  1 JUN 2026 13:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**en.tex
-(./en.tex
+**es.tex
+(./es.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
 (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -48,23 +48,28 @@ on input line 2111.
 \bbl@readstream=\read2
 \bbl@dirlevel=\count284
 
-(/usr/share/texlive/texmf-dist/tex/generic/babel/locale/en/babel-english.tex)
-Package babel Info: Importing font and identification data for english
-(babel)             from babel-en.ini. Reported on input line 4330.
+(/usr/share/texlive/texmf-dist/tex/generic/babel/locale/es/babel-spanish.tex)
+Package babel Info: Importing font and identification data for spanish
+(babel)             from babel-es.ini. Reported on input line 4330.
 
-(/usr/share/texlive/texmf-dist/tex/generic/babel-english/english.ldf
-Language: english 2017/06/06 v3.3r English support from the babel system
-Package babel Info: Hyphen rules for 'canadian' set to \l@english
-(babel)             (\language0). Reported on input line 102.
-Package babel Info: Hyphen rules for 'australian' set to \l@ukenglish
-(babel)             (\language64). Reported on input line 105.
-Package babel Info: Hyphen rules for 'newzealand' set to \l@ukenglish
-(babel)             (\language64). Reported on input line 108.
+(/usr/share/texlive/texmf-dist/tex/generic/babel-spanish/spanish.ldf
+Language: spanish.ldf 2021/05/27 v5.0q Spanish support from the babel system
+\es@quottoks=\toks17
+\es@quotdepth=\count285
+Package babel Info: Making " an active character on input line 570.
+Package babel Info: Making . an active character on input line 675.
+Package babel Info: Making < an active character on input line 722.
+Package babel Info: Making > an active character on input line 722.
 ))
+LaTeX Encoding Info:    Redeclaring text command \guillemotleft (encoding OT1) 
+on input line 3.
+LaTeX Encoding Info:    Redeclaring text command \guillemotright (encoding OT1)
+ on input line 3.
+
 (/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty
 Package: inputenc 2024/02/08 v1.3d Input encoding file
-\inpenc@prehook=\toks17
-\inpenc@posthook=\toks18
+\inpenc@prehook=\toks18
+\inpenc@posthook=\toks19
 )
 (/usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
 Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
@@ -79,7 +84,7 @@ Package: amstext 2024/11/17 v2.01 AMS text
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
-\@emptytoks=\toks19
+\@emptytoks=\toks20
 \ex@=\dimen150
 ))
 (/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty
@@ -89,14 +94,14 @@ Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 (/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
-\inf@bad=\count285
+\inf@bad=\count286
 LaTeX Info: Redefining \frac on input line 233.
-\uproot@=\count286
-\leftroot@=\count287
+\uproot@=\count287
+\leftroot@=\count288
 LaTeX Info: Redefining \overline on input line 398.
 LaTeX Info: Redefining \colon on input line 409.
-\classnum@=\count288
-\DOTSCASE@=\count289
+\classnum@=\count289
+\DOTSCASE@=\count290
 LaTeX Info: Redefining \ldots on input line 495.
 LaTeX Info: Redefining \dots on input line 498.
 LaTeX Info: Redefining \cdots on input line 619.
@@ -109,31 +114,31 @@ LaTeX Info: Redefining \Bigg on input line 724.
 \big@size=\dimen152
 LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
-\macc@depth=\count290
+\macc@depth=\count291
 LaTeX Info: Redefining \bmod on input line 904.
 LaTeX Info: Redefining \pmod on input line 909.
 LaTeX Info: Redefining \smash on input line 939.
 LaTeX Info: Redefining \relbar on input line 969.
 LaTeX Info: Redefining \Relbar on input line 970.
-\c@MaxMatrixCols=\count291
+\c@MaxMatrixCols=\count292
 \dotsspace@=\muskip17
-\c@parentequation=\count292
-\dspbrk@lvl=\count293
-\tag@help=\toks20
-\row@=\count294
-\column@=\count295
-\maxfields@=\count296
-\andhelp@=\toks21
+\c@parentequation=\count293
+\dspbrk@lvl=\count294
+\tag@help=\toks21
+\row@=\count295
+\column@=\count296
+\maxfields@=\count297
+\andhelp@=\toks22
 \eqnshift@=\dimen153
 \alignsep@=\dimen154
 \tagshift@=\dimen155
 \tagwidth@=\dimen156
 \totwidth@=\dimen157
 \lineht@=\dimen158
-\@envbody=\toks22
+\@envbody=\toks23
 \multlinegap=\skip52
 \multlinetaggap=\skip53
-\mathdisplay@stack=\toks23
+\mathdisplay@stack=\toks24
 LaTeX Info: Redefining \[ on input line 2950.
 LaTeX Info: Redefining \] on input line 2951.
 )
@@ -160,12 +165,12 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \cmidrulesep=\dimen166
 \cmidrulekern=\dimen167
 \defaultaddspace=\dimen168
-\@cmidla=\count297
-\@cmidlb=\count298
+\@cmidla=\count298
+\@cmidlb=\count299
 \@aboverulesep=\dimen169
 \@belowrulesep=\dimen170
-\@thisruleclass=\count299
-\@lastruleclass=\count300
+\@thisruleclass=\count300
+\@lastruleclass=\count301
 \@thisrulewidth=\dimen171
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/longtable.sty
@@ -174,18 +179,18 @@ Package: longtable 2025-10-13 v4.24 Multi-page Table package (DPC)
 \LTright=\skip55
 \LTpre=\skip56
 \LTpost=\skip57
-\LTchunksize=\count301
+\LTchunksize=\count302
 \LTcapwidth=\dimen172
 \LT@head=\box55
 \LT@firsthead=\box56
 \LT@foot=\box57
 \LT@lastfoot=\box58
 \LT@gbox=\box59
-\LT@cols=\count302
-\LT@rows=\count303
-\c@LT@tables=\count304
-\c@LT@chunks=\count305
-\LT@p@ftn=\toks24
+\LT@cols=\count303
+\LT@rows=\count304
+\c@LT@tables=\count305
+\c@LT@chunks=\count306
+\LT@p@ftn=\toks25
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/tabularx.sty
 Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
@@ -195,7 +200,7 @@ Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
 \col@sep=\dimen173
 \ar@mcellbox=\box60
 \extrarowheight=\dimen174
-\NC@list=\toks25
+\NC@list=\toks26
 \extratabsurround=\skip58
 \backup@length=\skip59
 \ar@cellbox=\box61
@@ -205,15 +210,15 @@ Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
 \TX@old@col=\dimen177
 \TX@target=\dimen178
 \TX@delta=\dimen179
-\TX@cols=\count306
-\TX@ftn=\toks26
+\TX@cols=\count307
+\TX@ftn=\toks27
 )
 (/usr/share/texlive/texmf-dist/tex/latex/natbib/natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip60
 \bibsep=\skip61
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count307
+\c@NAT@ctr=\count308
 )
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2025-07-12 v7.01o Hypertext links for LaTeX
@@ -223,7 +228,7 @@ Package: iftex 2024/12/12 v1.0g TeX engine tests
 )
 (/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
-\KV@toks@=\toks27
+\KV@toks@=\toks28
 )
 (/usr/share/texlive/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
@@ -263,19 +268,19 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 (/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count308
+\c@section@level=\count309
 )
 (/usr/share/texlive/texmf-dist/tex/latex/etoolbox/etoolbox.sty
 Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count309
+\etb@tempcnta=\count310
 )
 (/usr/share/texlive/texmf-dist/tex/generic/stringenc/stringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
 \@linkdim=\dimen180
-\Hy@linkcounter=\count310
-\Hy@pagecounter=\count311
+\Hy@linkcounter=\count311
+\Hy@pagecounter=\count312
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/pd1enc.def
 File: pd1enc.def 2025-07-12 v7.01o Hyperref: PDFDocEncoding definition (HO)
@@ -285,7 +290,7 @@ Now handling font encoding PD1 ...
 (/usr/share/texlive/texmf-dist/tex/generic/intcalc/intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count312
+\Hy@SavedSpaceFactor=\count313
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/puenc.def
 File: puenc.def 2025-07-12 v7.01o Hyperref: PDF Unicode definition (HO)
@@ -299,7 +304,7 @@ Package hyperref Info: Plain pages OFF on input line 4210.
 Package hyperref Info: Backreferencing OFF on input line 4215.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4462.
-\c@Hy@tempcnt=\count313
+\c@Hy@tempcnt=\count314
 
 (/usr/share/texlive/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip18
@@ -315,7 +320,7 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count314
+\Fld@menulength=\count315
 \Field@Width=\dimen182
 \Fld@charsize=\dimen183
 Package hyperref Info: Hyper figures OFF on input line 6078.
@@ -325,16 +330,16 @@ Package hyperref Info: backreferencing OFF on input line 6093.
 Package hyperref Info: Link coloring OFF on input line 6098.
 Package hyperref Info: Link coloring with OCG OFF on input line 6103.
 Package hyperref Info: PDF/A mode OFF on input line 6108.
-\Hy@abspage=\count315
-\c@Item=\count316
-\c@Hfootnote=\count317
+\Hy@abspage=\count316
+\c@Item=\count317
+\c@Hfootnote=\count318
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/hpdftex.def
 File: hpdftex.def 2025-07-12 v7.01o Hyperref driver for pdfTeX
-\Fld@listcount=\count318
-\c@bookmark@seq@number=\count319
+\Fld@listcount=\count319
+\c@bookmark@seq@number=\count320
 
 (/usr/share/texlive/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
 Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
@@ -351,10 +356,10 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 Package: enumitem 2025/02/06 v3.11 Customized lists
 \labelindent=\skip63
 \enit@outerparindent=\dimen184
-\enit@toks=\toks28
+\enit@toks=\toks29
 \enit@inbox=\box62
-\enit@count@id=\count320
-\enitdp@description=\count321
+\enit@count@id=\count321
+\enitdp@description=\count322
 )
 (/usr/share/texlive/texmf-dist/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
@@ -362,17 +367,17 @@ nment
 
 (/usr/share/texlive/texmf-dist/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count322
-\float@exts=\toks29
+\c@float@type=\count323
+\float@exts=\toks30
 \float@box=\box63
-\@float@everytoks=\toks30
+\@float@everytoks=\toks31
 \@floatcapt=\box64
 )
 (/usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty
 Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
 )
-\@float@every@algorithm=\toks31
-\c@algorithm=\count323
+\@float@every@algorithm=\toks32
+\c@algorithm=\count324
 )
 (/usr/share/texlive/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
 Package: algpseudocode 
@@ -381,15 +386,15 @@ Package: algpseudocode
 Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
 
 Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
-\c@ALG@line=\count324
-\c@ALG@rem=\count325
-\c@ALG@nested=\count326
+\c@ALG@line=\count325
+\c@ALG@rem=\count326
+\c@ALG@nested=\count327
 \ALG@tlm=\skip64
 \ALG@thistlm=\skip65
-\c@ALG@Lnr=\count327
-\c@ALG@blocknr=\count328
-\c@ALG@storecount=\count329
-\c@ALG@tmpcounter=\count330
+\c@ALG@Lnr=\count328
+\c@ALG@blocknr=\count329
+\c@ALG@storecount=\count330
+\c@ALG@tmpcounter=\count331
 \ALG@tmplength=\skip66
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
@@ -399,9 +404,9 @@ Package: geometry 2020/01/02 v5.9 Page Geometry
 (/usr/share/texlive/texmf-dist/tex/generic/iftex/ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 )
-\Gm@cnth=\count331
-\Gm@cntv=\count332
-\c@Gm@tempcnt=\count333
+\Gm@cnth=\count332
+\Gm@cntv=\count333
+\c@Gm@tempcnt=\count334
 \Gm@bindingoffset=\dimen185
 \Gm@wd@mp=\dimen186
 \Gm@odd@mp=\dimen187
@@ -410,13 +415,13 @@ Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 \Gm@layoutheight=\dimen190
 \Gm@layouthoffset=\dimen191
 \Gm@layoutvoffset=\dimen192
-\Gm@dimlist=\toks32
+\Gm@dimlist=\toks33
 )
 (/usr/share/texlive/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
 (/usr/share/texlive/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
 (/usr/share/texlive/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/utilities/pgfutil-common.tex
-\pgfutil@everybye=\toks33
+\pgfutil@everybye=\toks34
 \pgfutil@tempdima=\dimen193
 \pgfutil@tempdimb=\dimen194
 )
@@ -455,12 +460,12 @@ File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
 Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
 
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
-\pgfkeys@pathtoks=\toks34
-\pgfkeys@temptoks=\toks35
+\pgfkeys@pathtoks=\toks35
+\pgfkeys@temptoks=\toks36
 
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/utilities/pgfkeyslibraryfiltered
 .code.tex
-\pgfkeys@tmptoks=\toks36
+\pgfkeys@tmptoks=\toks37
 ))
 \pgf@x=\dimen197
 \pgf@y=\dimen198
@@ -474,14 +479,14 @@ Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@yd=\dimen262
 \w@pgf@writea=\write3
 \r@pgf@reada=\read3
-\c@pgf@counta=\count334
-\c@pgf@countb=\count335
-\c@pgf@countc=\count336
-\c@pgf@countd=\count337
-\t@pgf@toka=\toks37
-\t@pgf@tokb=\toks38
-\t@pgf@tokc=\toks39
-\pgf@sys@id@count=\count338
+\c@pgf@counta=\count335
+\c@pgf@countb=\count336
+\c@pgf@countc=\count337
+\c@pgf@countd=\count338
+\t@pgf@toka=\toks38
+\t@pgf@tokb=\toks39
+\t@pgf@tokc=\toks40
+\pgf@sys@id@count=\count339
  (/usr/share/texlive/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg
 File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
 )
@@ -496,8 +501,8 @@ File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftpath.code.
 tex
 File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfsyssoftpath@smallbuffer@items=\count339
-\pgfsyssoftpath@bigbuffer@items=\count340
+\pgfsyssoftpath@smallbuffer@items=\count340
+\pgfsyssoftpath@bigbuffer@items=\count341
 )
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.code.
 tex
@@ -528,11 +533,11 @@ Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
 \pgfmath@dimen=\dimen263
-\pgfmath@count=\count341
+\pgfmath@count=\count342
 \pgfmath@box=\box66
-\pgfmath@toks=\toks40
-\pgfmath@stack@operand=\toks41
-\pgfmath@stack@operation=\toks42
+\pgfmath@toks=\toks41
+\pgfmath@stack@operand=\toks42
+\pgfmath@stack@operation=\toks43
 )
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.tex)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.basic.code
@@ -553,7 +558,7 @@ tex)
 thmetics.code.tex)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.tex)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex
-\c@pgfmathroundto@lastzeros=\count342
+\c@pgfmathroundto@lastzeros=\count343
 ))
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.code.te
@@ -592,7 +597,7 @@ File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgfpic=\box67
 \pgf@hbox=\box68
 \pgf@layerbox@main=\box69
-\pgf@picture@serial@count=\count343
+\pgf@picture@serial@count=\count344
 )
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicstate.c
 ode.tex
@@ -625,8 +630,8 @@ File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.code.tex
 File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \pgf@max=\dimen287
-\pgf@sys@shading@range@num=\count344
-\pgf@shadingcount=\count345
+\pgf@sys@shading@range@num=\count345
+\pgf@shadingcount=\count346
 )
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.code.tex
 File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
@@ -675,8 +680,8 @@ Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
 Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
 \pgffor@iter=\dimen290
 \pgffor@skip=\dimen291
-\pgffor@stack=\toks43
-\pgffor@toks=\toks44
+\pgffor@stack=\toks44
+\pgffor@toks=\toks45
 ))
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.code.tex
 Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
@@ -684,7 +689,7 @@ Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothandlers
 .code.tex
 File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@plot@mark@count=\count346
+\pgf@plot@mark@count=\count347
 \pgfplotmarksize=\dimen292
 )
 \tikz@lastx=\dimen293
@@ -699,18 +704,18 @@ File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 \tikz@figbox@bg=\box73
 \tikz@tempbox=\box74
 \tikz@tempbox@bg=\box75
-\tikztreelevel=\count347
-\tikznumberofchildren=\count348
-\tikznumberofcurrentchild=\count349
-\tikz@fig@count=\count350
+\tikztreelevel=\count348
+\tikznumberofchildren=\count349
+\tikznumberofcurrentchild=\count350
+\tikz@fig@count=\count351
 
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.code.tex
 File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfmatrixcurrentrow=\count351
-\pgfmatrixcurrentcolumn=\count352
-\pgf@matrix@numberofcolumns=\count353
+\pgfmatrixcurrentrow=\count352
+\pgfmatrixcurrentcolumn=\count353
+\pgf@matrix@numberofcolumns=\count354
 )
-\tikz@expandcount=\count354
+\tikz@expandcount=\count355
 
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarytopaths.code.tex
@@ -724,11 +729,11 @@ Package: xkeyval 2025/11/04 v2.10 package option processing (HA)
 
 (/usr/share/texlive/texmf-dist/tex/generic/xkeyval/xkeyval.tex
 (/usr/share/texlive/texmf-dist/tex/generic/xkeyval/xkvutils.tex
-\XKV@toks=\toks45
-\XKV@tempa@toks=\toks46
-\XKV@tempb@toks=\toks47
+\XKV@toks=\toks46
+\XKV@tempa@toks=\toks47
+\XKV@tempb@toks=\toks48
 )
-\XKV@depth=\count355
+\XKV@depth=\count356
 File: xkeyval.tex 2014/12/03 v2.7a key=value parser (HA)
 ))
 (/usr/share/texlive/texmf-dist/tex/latex/adjustbox/adjcalc.sty
@@ -762,12 +767,12 @@ File: tc-pdftex.def 2025/02/26 v2.3 Clipping driver for pdftex
 
 (/usr/share/texlive/texmf-dist/tex/latex/ifoddpage/ifoddpage.sty
 Package: ifoddpage 2022/10/18 v1.2 Conditionals for odd/even page detection
-\c@checkoddpage=\count356
+\c@checkoddpage=\count357
 )
 (/usr/share/texlive/texmf-dist/tex/latex/varwidth/varwidth.sty
 Package: varwidth 2009/03/30 ver 0.92;  Variable-width minipages
 \@vwid@box=\box77
-\sift@deathcycles=\count357
+\sift@deathcycles=\count358
 \@vwid@loff=\dimen313
 \@vwid@roff=\dimen314
 )
@@ -846,10 +851,15 @@ Package hyperref Info: Option `colorlinks' set `true' on input line 24.
 
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count358
+\l__color_backend_stack_int=\count359
 )
-(./en.aux)
-\openout1 = `en.aux'.
+(./es.aux
+LaTeX Info: Redefining \. on input line 15.
+LaTeX Info: Redefining \% on input line 15.
+Package babel Info: 'spanish' activates 'spanish' shorthands.
+(babel)             Reported on input line 15.
+)
+\openout1 = `es.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 42.
 LaTeX Font Info:    ... okay on input line 42.
@@ -869,10 +879,12 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 42.
 LaTeX Font Info:    ... okay on input line 42.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 42.
 LaTeX Font Info:    ... okay on input line 42.
+LaTeX Info: Redefining \. on input line 42.
+LaTeX Info: Redefining \% on input line 42.
 Package hyperref Info: Link coloring ON on input line 42.
- (./en.out) (./en.out)
+ (./es.out) (./es.out)
 \@outlinefile=\write4
-\openout4 = `en.out'.
+\openout4 = `es.out'.
 
 
 *geometry* driver: auto-detecting
@@ -911,17 +923,17 @@ Package hyperref Info: Link coloring ON on input line 42.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count359
+\scratchcounter=\count360
 \scratchdimen=\dimen319
 \scratchbox=\box100
-\nofMPsegments=\count360
-\nofMParguments=\count361
-\everyMPshowfont=\toks48
-\MPscratchCnt=\count362
+\nofMPsegments=\count361
+\nofMParguments=\count362
+\everyMPshowfont=\toks49
+\MPscratchCnt=\count363
 \MPscratchDim=\dimen320
-\MPnumerator=\count363
-\makeMPintoPDFobject=\count364
-\everyMPtoPDFconversion=\toks49
+\MPnumerator=\count364
+\makeMPintoPDFobject=\count365
+\everyMPtoPDFconversion=\toks50
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 
@@ -950,98 +962,137 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 45.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) (./en.toc [1
+) (./es.toc
+LaTeX Info: Redefining \. on input line 1.
+LaTeX Info: Redefining \% on input line 1.
+ [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
-dvips/cm-super/cm-super-t1.enc}] [2] [3] [4])
+dvips/cm-super/cm-super-t1.enc}] [2] [3]
+Overfull \hbox (0.21156pt too wide) detected at line 190
+\T1/cmr/m/n/10.95 D.10. 
+ []
+
+[4])
 \tf@toc=\write5
-\openout5 = `en.toc'.
+\openout5 = `es.toc'.
 
- [5] [6]
-Overfull \hbox (1.36087pt too wide) in paragraph at lines 96--97
-[]\T1/cmr/bx/n/10.95 Optimizer Rout-ing Frame-work\T1/cmr/m/n/10.95 : Pre-fixed
- hy-per-pa-ram-e-ter sys-tem en-abling per-parameter-
+ [5]
+Overfull \hbox (73.37654pt too wide) in paragraph at lines 63--64
+\T1/cmr/m/n/10.95 uni-fi-ca-do y ba-sa-do en con-fi-gu-ra-ción, dis-po-ni-ble e
+n [][]$\T1/cmtt/m/n/10.95 https : / / github . com / erickfmm / frankestein-[]t
+ransformer$[][]\T1/cmr/m/n/10.95 ,
+ []
+
+[6]
+! Undefined control sequence.
+l.83     \uta
+              InformaciÃ³n sobre herramientas en tiempo real y texto de ayud...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (1.50938pt too wide) in paragraph at lines 85--86
+[]\T1/cmr/m/n/10.95 Comandos CLI ge-ne-ra-dos pa-ra en-tre-na-mien-to, des-plie
+-gue, in-fe-ren-cia y flu-jos de tra-ba-jo SBERT 
+ []
+
+[7] [8]
+! Undefined control sequence.
+l.131     \uta
+               Permite la experimentaciÃ³n rÃ¡pida con ajuste guiado de parÃ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+[9] [10]
+Overfull \hbox (47.75682pt too wide) in paragraph at lines 213--214
+\T1/cmr/m/n/10.95 to-ken, co-mo mo-de-la-do de len-gua-je y ge-ne-ra-ción de te
+x-to. Cuan-do \T1/cmtt/m/n/10.95 model_class='frankesteindecoder'\T1/cmr/m/n/10
+.95 ,
  []
 
 
-Overfull \hbox (2.21582pt too wide) in paragraph at lines 96--97
-\T1/cmr/m/n/10.95 variance-reduction meth-ods (MARS, Adan, AdE-MAMix, Cau-tious
- AdamW), memory-efficient
- []
-
-
-Overfull \hbox (16.70454pt too wide) in paragraph at lines 96--97
-\T1/cmr/m/n/10.95 vari-ants (Adafac-tor, Ga-Lore, Lion), schedule-free ap-proac
-hes (Schedule-Free AdamW), curvature-
- []
-
-[7{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] [8] [9]
-Overfull \hbox (0.46404pt too wide) in paragraph at lines 178--179
-[]\T1/cmr/bx/n/10.95 Memory-efficient\T1/cmr/m/n/10.95 : Adafac-tor [[]], Ga-Lo
-re [[]], Lion [[]], and APOLLO [[]] re-duce optimizer-
- []
-
-[10]
-Overfull \hbox (12.75873pt too wide) in paragraph at lines 227--228
-[]\T1/cmr/bx/n/10.95 Longformer \T1/cmr/m/n/10.95 --- in-ter-nal ref-er-ence: \
-T1/cmtt/m/n/10.95 beltagy_longformer_2020 \T1/cmr/m/n/10.95 --- code name: \T1/
-cmtt/m/n/10.95 longformer_attn 
+Overfull \hbox (18.48293pt too wide) in paragraph at lines 222--223
+[]\T1/cmr/bx/n/10.95 Bloque de Pro-fun-di-dad Con-ti-nua es-ti-lo ODE \T1/cmr/m
+/n/10.95 --- re-fe-ren-cia in-ter-na: \T1/cmtt/m/n/10.95 zhang_continuous_2021
  []
 
 [11]
-Overfull \hbox (63.9229pt too wide) in paragraph at lines 235--236
-[]\T1/cmr/bx/n/10.95 Gated DeltaNet \T1/cmr/m/n/10.95 --- in-ter-nal ref-er-enc
-e: \T1/cmtt/m/n/10.95 yang_gated_deltanet_2024 \T1/cmr/m/n/10.95 --- code name:
- \T1/cmtt/m/n/10.95 gated_deltanet_attn 
+Overfull \hbox (42.32089pt too wide) in paragraph at lines 227--228
+[]\T1/cmr/bx/n/10.95 Longformer \T1/cmr/m/n/10.95 --- re-fe-ren-cia in-ter-na: 
+\T1/cmtt/m/n/10.95 beltagy_longformer_2020 \T1/cmr/m/n/10.95 --- nom-bre de có-
+di-go: \T1/cmtt/m/n/10.95 longformer_attn 
  []
 
 
-Overfull \hbox (15.9051pt too wide) in paragraph at lines 243--245
-[]\T1/cmr/m/n/10.95 The \T1/cmtt/m/n/10.95 training.optimizer.optimizer_class \
-T1/cmr/m/n/10.95 sup-ports a broad op-ti-mizer fam-ily: \T1/cmtt/m/n/10.95 sgd_
-momentum\T1/cmr/m/n/10.95 ,
+Overfull \hbox (19.49191pt too wide) in paragraph at lines 229--230
+[]\T1/cmr/bx/n/10.95 Atención Spar-seK \T1/cmr/m/n/10.95 --- re-fe-ren-cia in-t
+er-na: \T1/cmtt/m/n/10.95 lou_sparsek_2024 \T1/cmr/m/n/10.95 --- nom-bre de có-
+di-go: \T1/cmtt/m/n/10.95 sparsek_attn 
  []
 
 
-Underfull \hbox (badness 1242) in paragraph at lines 283--283
-[]\T1/cmr/m/n/10.95 Figure 1: []System ar-chi-tec-ture: con-fig-u-ra-tion flows
- through val-i-da-tion, par-ti-tions into
+Overfull \hbox (7.78215pt too wide) in paragraph at lines 231--232
+[]\T1/cmr/bx/n/10.95 SpargeAttn \T1/cmr/m/n/10.95 --- re-fe-ren-cia in-ter-na: 
+\T1/cmtt/m/n/10.95 zhang_spargeattn_2025 \T1/cmr/m/n/10.95 --- nom-bre de có-di
+-go: \T1/cmtt/m/n/10.95 sparge_attn 
  []
 
 
-Overfull \hbox (67.34677pt too wide) in paragraph at lines 290--291
-\T1/cmr/m/n/10.95 guar-an-tees that un-known keys fail fast in-stead of be-ing 
-silently ig-nored. The \T1/cmtt/m/n/10.95 training.optimizer.parameters
+Overfull \hbox (18.02745pt too wide) in paragraph at lines 243--245
+\T1/cmtt/m/n/10.95 radam\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 adan\T1/cmr/m/n/
+10.95 , \T1/cmtt/m/n/10.95 adopt\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 ademamix
+\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 mars_adamw\T1/cmr/m/n/10.95 , \T1/cmtt/m
+/n/10.95 cautious_adamw\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 lamb\T1/cmr/m/n/1
+0.95 , \T1/cmtt/m/n/10.95 schedulefree_adamw\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10
+.95 shampoo\T1/cmr/m/n/10.95 ,
  []
 
-[12
-pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.291 
-      ]
+
+Overfull \hbox (17.67905pt too wide) in paragraph at lines 290--291
+[]\T1/cmr/m/n/10.95 El es-que-ma es es-tric-to: los ob-je-tos de pri-mer ni-vel
+ y ani-da-dos es-ta-ble-cen \T1/cmtt/m/n/10.95 additionalProperties:
+ []
+
+[12]
+Underfull \hbox (badness 10000) in paragraph at lines 307--308
+\T1/cmr/m/n/10 do \T1/cmtt/m/n/10 model_class='frankesteindecoder'\T1/cmr/m/n/1
+0 ,
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
-[]|\T1/cmr/m/n/10 Ordered block list: legacy (\T1/cmtt/m/n/10 retnet\T1/cmr/m/n
-/10 ,
+[]|\T1/cmr/m/n/10 Lista or-de-na-da de blo-ques: he-
  []
 
 
-Underfull \hbox (badness 7064) in paragraph at lines 317--318
-\T1/cmtt/m/n/10 retnet_attn\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 mamba\T1/cmr/m/n/10
- , \T1/cmtt/m/n/10 ode\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 titan_attn\T1/cmr/m/n/10
- ,
+Underfull \hbox (badness 10000) in paragraph at lines 317--318
+\T1/cmr/m/n/10 re-da-dos (\T1/cmtt/m/n/10 retnet\T1/cmr/m/n/10 , \T1/cmtt/m/n/1
+0 retnet_attn\T1/cmr/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 317--318
+\T1/cmtt/m/n/10 mamba\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 ode\T1/cmr/m/n/10 , \T1/c
+mtt/m/n/10 titan_attn\T1/cmr/m/n/10 ,
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
 \T1/cmtt/m/n/10 standard_attn\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 sigmoid_attn\T1/c
-mr/m/n/10 ),
+mr/m/n/10 ), dis-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
-\T1/cmr/m/n/10 sparse (\T1/cmtt/m/n/10 sparse_transformer_attn\T1/cmr/m/n/10 ,
+\T1/cmr/m/n/10 per-sos (\T1/cmtt/m/n/10 sparse_transformer_attn\T1/cmr/m/n/10 ,
+
  []
 
 
@@ -1053,19 +1104,18 @@ Underfull \hbox (badness 10000) in paragraph at lines 317--318
 
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
 \T1/cmtt/m/n/10 sparsek_attn\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 nsa_attn\T1/cmr/m/
-n/10 ,
+n/10 , \T1/cmtt/m/n/10 sparge_attn\T1/cmr/m/n/10 ,
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
-\T1/cmtt/m/n/10 sparge_attn\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 fasa_attn\T1/cmr/m/
-n/10 ), and
+\T1/cmtt/m/n/10 fasa_attn\T1/cmr/m/n/10 ), y con com-puer-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 317--318
-\T1/cmr/m/n/10 gated (\T1/cmtt/m/n/10 gla_attn\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 
-deltanet_attn\T1/cmr/m/n/10 ,
+\T1/cmr/m/n/10 ta (\T1/cmtt/m/n/10 gla_attn\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 del
+tanet_attn\T1/cmr/m/n/10 ,
  []
 
 
@@ -1074,27 +1124,28 @@ Underfull \hbox (badness 10000) in paragraph at lines 317--318
 T1/cmr/m/n/10 ,
  []
 
-ignored error: Infinite glue shrinkage found in box being split [13]
-Overfull \hbox (15.65057pt too wide) in paragraph at lines 344--345
-\T1/cmr/m/n/10.95 The \T1/cmtt/m/n/10.95 training.task \T1/cmr/m/n/10.95 field 
-de-ter-mines the train-ing ob-jec-tive, work-ing in con-junc-tion with \T1/cmtt
-/m/n/10.95 model.mode
- []
-
-
-Underfull \hbox (badness 7326) in paragraph at lines 386--387
-[]|\T1/cmr/m/n/10 Contains \T1/cmtt/m/n/10 optimizer_class \T1/cmr/m/n/10 and p
-re-fixed
- []
-
-
+ignored error: Infinite glue shrinkage found in box being split [13
+pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.333 \end{longtable}
+                     ] [14]
 Underfull \hbox (badness 10000) in paragraph at lines 389--390
 []|\T1/cmtt/m/n/10 cosine\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 constant\T1/cmr/m/n/1
 0 ,
  []
 
-ignored error: Infinite glue shrinkage found in box being split [14]
-Overfull \hbox (42.64775pt too wide) in paragraph at lines 416--418
+ignored error: Infinite glue shrinkage found in box being split [15]
+Overfull \hbox (27.73691pt too wide) in paragraph at lines 416--418
+[]\T1/cmr/m/n/10.95 Los va-lo-res so-por-ta-dos de \T1/cmtt/m/n/10.95 optimizer
+_class \T1/cmr/m/n/10.95 son: \T1/cmtt/m/n/10.95 sgd_momentum\T1/cmr/m/n/10.95 
+, \T1/cmtt/m/n/10.95 adamw\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 adafactor\T1/c
+mr/m/n/10.95 , \T1/cmtt/m/n/10.95 galore_adamw\T1/cmr/m/n/10.95 ,
+ []
+
+
+Overfull \hbox (40.24205pt too wide) in paragraph at lines 416--418
 \T1/cmtt/m/n/10.95 prodigy\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 lion\T1/cmr/m/
 n/10.95 , \T1/cmtt/m/n/10.95 sophia\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 muon\
 T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 turbo_muon\T1/cmr/m/n/10.95 , \T1/cmtt/m/
@@ -1105,34 +1156,16 @@ utious_adamw\T1/cmr/m/n/10.95 ,
  []
 
 
-Overfull \hbox (10.23428pt too wide) in paragraph at lines 421--422
-[]\T1/cmr/m/n/10.95 LR groups: \T1/cmtt/m/n/10.95 lr_embeddings\T1/cmr/m/n/10.9
-5 , \T1/cmtt/m/n/10.95 lr_norms\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 lr_ode\T1
-/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 lr_retnet\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/1
-0.95 lr_mamba\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 lr_attention\T1/cmr/m/n/10.
-95 , \T1/cmtt/m/n/10.95 lr_other 
+Overfull \hbox (28.07765pt too wide) in paragraph at lines 424--425
+[]\T1/cmr/m/n/10.95 Grupos de ép-si-lon: \T1/cmtt/m/n/10.95 eps_embeddings\T1/c
+mr/m/n/10.95 , \T1/cmtt/m/n/10.95 eps_norms\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.
+95 eps_ode\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 eps_retnet\T1/cmr/m/n/10.95 , 
+\T1/cmtt/m/n/10.95 eps_mamba\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 eps_attentio
+n\T1/cmr/m/n/10.95 ,
  []
 
 
-Overfull \hbox (10.09538pt too wide) in paragraph at lines 422--423
-[]\T1/cmr/m/n/10.95 Weight de-cay groups: \T1/cmtt/m/n/10.95 wd_embeddings\T1/c
-mr/m/n/10.95 , \T1/cmtt/m/n/10.95 wd_norms\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.9
-5 wd_ode\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 wd_retnet\T1/cmr/m/n/10.95 , \T1
-/cmtt/m/n/10.95 wd_mamba\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 wd_attention\T1/
-cmr/m/n/10.95 ,
- []
-
-
-Overfull \hbox (16.73677pt too wide) in paragraph at lines 424--425
-[]\T1/cmr/m/n/10.95 Epsilon groups: \T1/cmtt/m/n/10.95 eps_embeddings\T1/cmr/m/
-n/10.95 , \T1/cmtt/m/n/10.95 eps_norms\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 ep
-s_ode\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 eps_retnet\T1/cmr/m/n/10.95 , \T1/c
-mtt/m/n/10.95 eps_mamba\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 eps_attention\T1/
-cmr/m/n/10.95 ,
- []
-
-[15]
-Overfull \hbox (9.77794pt too wide) in paragraph at lines 438--439
+Overfull \hbox (6.73688pt too wide) in paragraph at lines 438--439
 []\T1/cmtt/m/n/10.95 q_apollo\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 rank\T1/cmr
 /m/n/10.95 , \T1/cmtt/m/n/10.95 update_proj_gap\T1/cmr/m/n/10.95 , \T1/cmtt/m/n
 /10.95 scale\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 scale_type\T1/cmr/m/n/10.95 
@@ -1140,66 +1173,51 @@ Overfull \hbox (9.77794pt too wide) in paragraph at lines 438--439
 t\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 disable_nl\T1/cmr/m/n/10.95 ,
  []
 
-
-Overfull \hbox (10.9599pt too wide) in paragraph at lines 452--454
-\T1/cmr/m/n/10.95 then over-flow guards use \T1/cmtt/m/n/10.95 inf_post_clip_th
-reshold \T1/cmr/m/n/10.95 and retry logic bounded by \T1/cmtt/m/n/10.95 max_nan
-_retries\T1/cmr/m/n/10.95 . 
- []
-
+[16]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 456.
-[16]
-Underfull \hbox (badness 10000) in paragraph at lines 523--524
-[]|\T1/cmr/m/n/8 Normalization-free bounded
+ [17]
+Underfull \hbox (badness 10000) in paragraph at lines 519--519
+[]|\T1/cmr/bx/n/8 Estadísticas
  []
 
 
-Underfull \hbox (badness 6016) in paragraph at lines 523--524
-\T1/cmr/m/n/8 trans-form; drop-in re-place-
+Underfull \hbox (badness 2707) in paragraph at lines 523--524
+\T1/cmr/m/n/8 de nor-ma-li-za-ción; re-em-pla-zo
  []
 
-ignored error: Infinite glue shrinkage found in box being split [17] [18]
-Overfull \hbox (28.50421pt too wide) in paragraph at lines 669--675
-\T1/cmtt/m/n/10.95 gla_attn\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 deltanet_attn
-\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 gated_deltanet_attn\T1/cmr/m/n/10.95 , \
-T1/cmtt/m/n/10.95 hgrn2_attn\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 fox_attn\T1/
-cmr/m/n/10.95 , and \T1/cmtt/m/n/10.95 gated_softmax_attn\T1/cmr/m/n/10.95 . 
- []
-
-[19
+[18] [19
 pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.675 
-      ]
+l.632 \]
+        ]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 699.
- [20
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.737 \paragraph
-                {FASA (\texttt{fasa\_attn}).}]
-Overfull \hbox (1.85968pt too wide) in paragraph at lines 744--744
-[]|\T1/cmr/bx/n/10 Trainable| 
- []
-
-
-Overfull \hbox (4.19794pt too wide) in paragraph at lines 744--744
-[]|\T1/cmr/bx/n/10 Asymptotic
+ [20]
+Overfull \hbox (9.3995pt too wide) in paragraph at lines 744--744
+[]|\T1/cmr/bx/n/10 Entrenable| 
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 744--744
-[]|\T1/cmr/bx/n/10 Primary
+[]|\T1/cmr/bx/n/10 Tendencia
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 744--744
-[]|\T1/cmr/bx/n/10 Current In-te-gra-tion
+[]|\T1/cmr/bx/n/10 Unidad de
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 744--744
+\T1/cmr/bx/n/10 Dis-per-sión
+ []
+
+
+Underfull \hbox (badness 2564) in paragraph at lines 744--744
+[]|\T1/cmr/bx/n/10 Notas de In-te-gra-ción
  []
 
 
@@ -1209,152 +1227,132 @@ Overfull \hbox (17.37065pt too wide) in alignment at lines 742--746
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 747--747
-[]|\T1/cmr/m/n/10 Sparse Trans-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 747--747
 []|\T1/cmr/m/n/10 sub-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 747--747
-[]|\T1/cmr/m/n/10 mask pat-tern
+Underfull \hbox (badness 4205) in paragraph at lines 747--747
+\T1/cmr/m/n/10 zan-ca-da/fijas den-tro del
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 747--747
-[]|\T1/cmr/m/n/10 Factorized strided/fixed
+Underfull \hbox (badness 1412) in paragraph at lines 748--748
+[]|\T1/cmr/m/n/10 lineal en $\OML/cmm/m/it/10 n$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 747--747
-\T1/cmr/m/n/10 masks in-side SDPA
+Underfull \hbox (badness 10000) in paragraph at lines 748--748
+[]|\T1/cmr/m/n/10 ventana des-li-
  []
 
 
-Underfull \hbox (badness 1715) in paragraph at lines 748--748
-[]|\T1/cmr/m/n/10 linear in $\OML/cmm/m/it/10 n$
+Underfull \hbox (badness 10000) in paragraph at lines 749--749
+[]|\T1/cmr/m/n/10 Máscara dis-per-sa alea-
  []
 
 
-Underfull \hbox (badness 2529) in paragraph at lines 748--748
-[]|\T1/cmr/m/n/10 Window mask with op-
- []
-
-
-Underfull \hbox (badness 1874) in paragraph at lines 749--749
-\T1/cmr/m/n/10 dom + global
+Underfull \hbox (badness 6792) in paragraph at lines 749--749
+\T1/cmr/m/n/10 to-ri-za-da más ru-tas lo-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 750--750
-[]|\T1/cmr/m/n/10 linear-like
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 750--750
-\T1/cmr/m/n/10 (se-lected
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 750--750
-[]|\T1/cmr/m/n/10 differentiable
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 750--750
-\T1/cmr/m/n/10 top-$\OML/cmm/m/it/10 k$ \T1/cmr/m/n/10 KV
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 750--750
-[]|\T1/cmr/m/n/10 Learned score net +
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 750--750
-\T1/cmr/m/n/10 SparseK pro-jec-tion +
+[]|\T1/cmr/m/n/10 selección di-fe-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 751--751
-[]|\T1/cmr/m/n/10 reduced-
+[]|\T1/cmr/m/n/10 multi-rama
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 751--751
-[]|\T1/cmr/m/n/10 compressed
+\T1/cmr/m/n/10 con to-kens
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 751--751
-\T1/cmr/m/n/10 blocks + se-
+[]|\T1/cmr/m/n/10 bloques com-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 751--751
-[]|\T1/cmr/m/n/10 Three sparse branches
+\T1/cmr/m/n/10 pri-mi-dos +
  []
 
 
-Underfull \hbox (badness 7832) in paragraph at lines 751--751
-\T1/cmr/m/n/10 gated into one out-put
+Underfull \hbox (badness 10000) in paragraph at lines 751--751
+\T1/cmr/m/n/10 blo-ques se-lec-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 751--751
+\T1/cmr/m/n/10 cio-na-dos +
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 752--752
-[]|\T1/cmr/m/n/10 No
+[]|\T1/cmr/m/n/10 No (sin
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 752--752
-\T1/cmr/m/n/10 (training-
+\T1/cmr/m/n/10 en-tre-na-
  []
 
 
-Underfull \hbox (badness 5446) in paragraph at lines 752--752
-[]|\T1/cmr/m/n/10 Eval-only in this repo;
+Underfull \hbox (badness 10000) in paragraph at lines 752--752
+[]|\T1/cmr/m/n/10 dependiente
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 753--753
-[]|\T1/cmr/m/n/10 No
+Underfull \hbox (badness 10000) in paragraph at lines 752--752
+\T1/cmr/m/n/10 del blo-que
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 753--753
-\T1/cmr/m/n/10 (training-
+Underfull \hbox (badness 10000) in paragraph at lines 752--752
+[]|\T1/cmr/m/n/10 dispersión de
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 753--753
-[]|\T1/cmr/m/n/10 selected-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 753--753
-\T1/cmr/m/n/10 token de-
+Underfull \hbox (badness 10000) in paragraph at lines 752--752
+\T1/cmr/m/n/10 blo-que pre-de-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 753--753
-[]|\T1/cmr/m/n/10 dominant fre-
- []
-
-
-Underfull \hbox (badness 2150) in paragraph at lines 753--753
-\T1/cmr/m/n/10 quency chunks
+[]|\T1/cmr/m/n/10 No (sin
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 753--753
-\T1/cmr/m/n/10 + se-lected
+\T1/cmr/m/n/10 en-tre-na-
  []
 
 
-Underfull \hbox (badness 5446) in paragraph at lines 753--753
-[]|\T1/cmr/m/n/10 Eval-only in this repo;
+Underfull \hbox (badness 10000) in paragraph at lines 753--753
+[]|\T1/cmr/m/n/10 dependiente
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 753--753
+\T1/cmr/m/n/10 del to-ken
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 753--753
+[]|\T1/cmr/m/n/10 fragmentos
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 753--753
+\T1/cmr/m/n/10 de fre-cuen-cia
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 753--753
+\T1/cmr/m/n/10 do-mi-nan-tes +
  []
 
 
@@ -1363,26 +1361,29 @@ Overfull \hbox (17.37065pt too wide) in alignment at lines 746--755
  []
 
 [21
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
+pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.783 \]
-        ]
-Overfull \hbox (6.56615pt too wide) in paragraph at lines 788--789
- []\T1/cmr/bx/n/10.95 DeltaNet (\T1/cmtt/m/n/10.95 deltanet_attn\T1/cmr/bx/n/10
-.95 ).[] \T1/cmr/m/n/10.95 Uses a delta-rule error-correcting write with learne
-d write strength
+l.755 \end{longtable}
+                     ] [22]
+Underfull \hbox (badness 10000) in paragraph at lines 834--834
+[]|\T1/cmr/bx/n/10 Mecanismo
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 834--834
-[]|\T1/cmr/bx/n/10 Softmax
+\T1/cmr/bx/n/10 de Com-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 834--834
-[]|\T1/cmr/bx/n/10 Current In-te-gra-tion
+[]|\T1/cmr/bx/n/10 Ruta
+ []
+
+
+Underfull \hbox (badness 1077) in paragraph at lines 834--834
+[]|\T1/cmr/bx/n/10 Notas de In-te-gra-ción
  []
 
 
@@ -1391,68 +1392,103 @@ Overfull \hbox (14.52519pt too wide) in alignment at lines 832--836
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 837--837
-[]|\T1/cmr/m/n/10 matrix re-
+Underfull \hbox (badness 1442) in paragraph at lines 837--837
+[]|\T1/cmr/m/n/10 estado re-cu-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 837--837
-[]|\T1/cmr/m/n/10 data-
+[]|\T1/cmr/m/n/10 decaimiento
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 837--837
-\T1/cmr/m/n/10 dependent
+\T1/cmr/m/n/10 mul-ti-pli-ca-ti-vo
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 837--837
-\T1/cmr/m/n/10 mul-ti-plica-tive
+\T1/cmr/m/n/10 de-pen-dien-te
  []
 
 
-Underfull \hbox (badness 7504) in paragraph at lines 837--837
-[]|\T1/cmr/m/n/10 No (lin-ear
+Underfull \hbox (badness 10000) in paragraph at lines 837--837
+[]|\T1/cmr/m/n/10 No (re-
  []
 
 
-Underfull \hbox (badness 7722) in paragraph at lines 837--837
-[]|\T1/cmr/m/n/10 Recurrent up-date with
+Underfull \hbox (badness 10000) in paragraph at lines 837--837
+\T1/cmr/m/n/10 cu-rren-te
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 837--837
+[]|\T1/cmr/m/n/10 Actualización re-cu-rren-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 837--837
+\T1/cmr/m/n/10 te con pro-yec-ción de
+ []
+
+
+Underfull \hbox (badness 1442) in paragraph at lines 838--838
+[]|\T1/cmr/m/n/10 estado re-cu-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 838--838
-[]|\T1/cmr/m/n/10 matrix re-
+[]|\T1/cmr/m/n/10 No (re-
  []
 
 
-Underfull \hbox (badness 7504) in paragraph at lines 838--838
-[]|\T1/cmr/m/n/10 No (lin-ear
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 839--839
-[]|\T1/cmr/m/n/10 Gated
+Underfull \hbox (badness 10000) in paragraph at lines 838--838
+\T1/cmr/m/n/10 cu-rren-te
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 839--839
-[]|\T1/cmr/m/n/10 matrix re-
+[]|\T1/cmr/m/n/10 Gated Del-ta-
  []
 
 
-Underfull \hbox (badness 7504) in paragraph at lines 839--839
-[]|\T1/cmr/m/n/10 No (lin-ear
+Underfull \hbox (badness 1442) in paragraph at lines 839--839
+[]|\T1/cmr/m/n/10 estado re-cu-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 839--839
+\T1/cmr/m/n/10 de-cai-mien-to
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 839--839
+\T1/cmr/m/n/10 + es-cri-tu-ra
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 839--839
+[]|\T1/cmr/m/n/10 No (re-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 839--839
+\T1/cmr/m/n/10 cu-rren-te
+ []
+
+
+Underfull \hbox (badness 1442) in paragraph at lines 840--840
+[]|\T1/cmr/m/n/10 estado re-cu-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 840--840
-[]|\T1/cmr/m/n/10 matrix re-
+[]|\T1/cmr/m/n/10 decaimiento
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 840--840
-[]|\T1/cmr/m/n/10 fixed multi-
+\T1/cmr/m/n/10 mul-ti-es-ca-la
  []
 
 
@@ -1461,33 +1497,53 @@ Underfull \hbox (badness 4479) in paragraph at lines 840--840
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 841--841
-[]|\T1/cmr/m/n/10 matrix re-
+Underfull \hbox (badness 1442) in paragraph at lines 841--841
+[]|\T1/cmr/m/n/10 estado re-cu-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 841--841
-[]|\T1/cmr/m/n/10 lower-
+[]|\T1/cmr/m/n/10 No (re-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 841--841
-\T1/cmr/m/n/10 bounded
- []
-
-
-Underfull \hbox (badness 7504) in paragraph at lines 841--841
-[]|\T1/cmr/m/n/10 No (lin-ear
+\T1/cmr/m/n/10 cu-rren-te
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 842--842
-[]|\T1/cmr/m/n/10 logit-space
+[]|\T1/cmr/m/n/10 matriz de
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 842--842
+\T1/cmr/m/n/10 aten-ción
+ []
+
+
+Underfull \hbox (badness 1292) in paragraph at lines 842--842
+\T1/cmr/m/n/10 ol-vi-do en es-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 843--843
-[]|\T1/cmr/m/n/10 post-attention
+[]|\T1/cmr/m/n/10 matriz de
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 843--843
+\T1/cmr/m/n/10 aten-ción
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 843--843
+[]|\T1/cmr/m/n/10 compuerta
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 843--843
+\T1/cmr/m/n/10 sig-moi-de
  []
 
 
@@ -1495,32 +1551,37 @@ Overfull \hbox (14.52519pt too wide) in alignment at lines 836--845
  [] [] [] [] [] [] 
  []
 
-ignored error: Infinite glue shrinkage found in box being split [22]
-Overfull \hbox (9.6149pt too wide) in paragraph at lines 879--880
-\T1/cmr/m/n/10.95 three op-ti-mizer fam-i-lies span-ning six al-go-rith-mic cat
--e-gories: (1) clas-si-cal base-lines (SGD, AdamW),
- []
-
-[23] [24
+ignored error: Infinite glue shrinkage found in box being split [23
+pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
+s been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.845 \end{longtable}
+                     ] [24
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.952 \]
-        
+l.918 \end{figure}
+                  ] [25
 pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.952 \]
+l.939 \]
         ]
+Underfull \hbox (badness 6792) in paragraph at lines 1001--1001
+[]|\T1/cmr/bx/n/10 Ecuación Prin-ci-
+ []
+
+
 Overfull \hbox (16.75157pt too wide) in alignment at lines 999--1003
  [] [] [] [] [] 
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1004--1004
-[]|\T1/cmr/m/n/10 Standard At-
+[]|\T1/cmr/m/n/10 Atención Es-
  []
 
 
@@ -1530,59 +1591,33 @@ Overfull \hbox (6.59851pt too wide) in paragraph at lines 1004--1004
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1005--1006
-[]|\T1/cmr/m/n/10 Element-wise gat-ing; of-ten
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1006--1006
-[]|$\OMS/cmsy/m/n/10 O\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n[]d\OT1/cmr/m/n/10 )$ 
-\T1/cmr/m/n/10 or
- []
-
-
-Underfull \hbox (badness 5548) in paragraph at lines 1006--1007
-[]|\T1/cmr/m/n/10 Parallel/recurrent dual form
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1007--1008
-[]|\T1/cmr/m/n/10 Selective state-space with
+Underfull \hbox (badness 10000) in paragraph at lines 1005--1005
+[]|\T1/cmr/m/n/10 Atención Sig-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1008--1008
-[]|\T1/cmr/m/n/10 ODE-style
+[]|\T1/cmr/m/n/10 Bloque es-ti-lo
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1008--1008
-[]|\T1/cmr/m/n/10 solver-
+Underfull \hbox (badness 2653) in paragraph at lines 1008--1008
+[]|\T1/cmr/m/n/10 depende del
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1008--1008
-[]|\T1/cmr/m/n/10 solver-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1008--1009
-[]|\T1/cmr/m/n/10 Continuous-depth in-ter-pre-ta-
+Underfull \hbox (badness 2653) in paragraph at lines 1008--1008
+[]|\T1/cmr/m/n/10 depende del
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1009--1009
-[]|\T1/cmr/m/n/10 approx.
+[]|\T1/cmr/m/n/10 Memoria Ti-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1009--1009
-[]|\T1/cmr/m/n/10 retrieval-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1009--1010
-[]|\T1/cmr/m/n/10 Test-time mem-ory up-dates
+Underfull \hbox (badness 4792) in paragraph at lines 1009--1009
+[]|\T1/cmr/m/n/10 centrado en
  []
 
 
@@ -1590,13 +1625,18 @@ Overfull \hbox (16.75157pt too wide) in alignment at lines 1003--1011
  [] [] [] [] [] 
  []
 
-ignored error: Infinite glue shrinkage found in box being split [25
+ignored error: Infinite glue shrinkage found in box being split [26
 pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
 s been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
 l.1011 \end{longtable}
                       ]
+Underfull \hbox (badness 10000) in paragraph at lines 1018--1018
+[]|\T1/cmr/bx/n/10 Costo de
+ []
+
+
 Overfull \hbox (11.06111pt too wide) in alignment at lines 1016--1020
  [] [] [] [] [] 
  []
@@ -1607,43 +1647,48 @@ Overfull \hbox (16.20424pt too wide) in paragraph at lines 1021--1021
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1021--1021
-[]|\T1/cmr/m/n/10 Classical first-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1021--1021
-[]|\T1/cmr/m/n/10 Momentum-accelerated base-line
+Underfull \hbox (badness 10000) in paragraph at lines 1022--1022
+[]|\T1/cmr/m/n/10 Adaptativo pri-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1022--1022
-[]|\T1/cmr/m/n/10 Adaptive
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1022--1022
-\T1/cmr/m/n/10 first/second
+\T1/cmr/m/n/10 mer/segundo
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1023--1023
-[]|\T1/cmr/m/n/10 Adaptive
+[]|\T1/cmr/m/n/10 Adaptativo con
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1023--1023
+\T1/cmr/m/n/10 co-rrec-ción de
+ []
+
+
+Underfull \hbox (badness 2790) in paragraph at lines 1023--1023
+[]|\T1/cmr/m/n/10 Rectifica la va-rian-za adap-ta-ti-va
+ []
+
+
+Underfull \hbox (badness 5189) in paragraph at lines 1024--1024
+[]|\T1/cmr/m/n/10 Momento + re-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1024--1024
-[]|\T1/cmr/m/n/10 Momentum +
+[]|\T1/cmr/m/n/10 Actualización adap-ta-ti-va es-ti-lo
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1024--1024
-\T1/cmr/m/n/10 vari-ance re-duc-
+Underfull \hbox (badness 5147) in paragraph at lines 1025--1025
+[]|\T1/cmr/m/n/10 Actualizaciones reor-de-na-das con
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1027--1027
-[]|\T1/cmr/m/n/10 Variance-reduced
+[]|\T1/cmr/m/n/10 Precondicionado
  []
 
 
@@ -1652,18 +1697,13 @@ Underfull \hbox (badness 10000) in paragraph at lines 1028--1028
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1028--1028
-[]|\T1/cmr/m/n/10 Masked mo-men-
+Underfull \hbox (badness 2142) in paragraph at lines 1028--1028
+[]|\T1/cmr/m/n/10 Momento en-mas-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1028--1028
-[]|\T1/cmr/m/n/10 Apply up-dates only on sign-
- []
-
-
-Underfull \hbox (badness 4328) in paragraph at lines 1029--1029
-[]|\T1/cmr/m/n/10 Layer-wise adap-
+Underfull \hbox (badness 6944) in paragraph at lines 1029--1029
+[]|\T1/cmr/m/n/10 Momentos adap-
  []
 
 
@@ -1673,12 +1713,17 @@ Underfull \hbox (badness 10000) in paragraph at lines 1030--1030
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1030--1030
-[]|\T1/cmr/m/n/10 Scheduler-free
+[]|\T1/cmr/m/n/10 Adaptativo sin
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1031--1031
-[]|\T1/cmr/m/n/10 Memory-efficient
+[]|\T1/cmr/m/n/10 Adaptativo efi-
+ []
+
+
+Underfull \hbox (badness 2818) in paragraph at lines 1031--1031
+[]|\T1/cmr/m/n/10 Segundos mo-men-tos fac-to-ri-za-dos
  []
 
 
@@ -1687,8 +1732,13 @@ Underfull \hbox (badness 10000) in paragraph at lines 1032--1032
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1033--1033
-[]|\T1/cmr/m/n/10 Low-rank adap-
+Underfull \hbox (badness 10000) in paragraph at lines 1032--1032
+[]|\T1/cmr/m/n/10 Proyección de
+ []
+
+
+Underfull \hbox (badness 2384) in paragraph at lines 1033--1033
+[]|\T1/cmr/m/n/10 Proyección adap-
  []
 
 
@@ -1697,68 +1747,43 @@ Underfull \hbox (badness 10000) in paragraph at lines 1034--1034
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1034--1034
-[]|\T1/cmr/m/n/10 Rank-1 adap-tive
+Underfull \hbox (badness 2384) in paragraph at lines 1034--1034
+[]|\T1/cmr/m/n/10 Proyección adap-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1035--1035
-[]|\T1/cmr/m/n/10 Quantized low-
+Underfull \hbox (badness 1939) in paragraph at lines 1034--1034
+[]|\T1/cmr/m/n/10 Variante APO-LLO es-ca-la-da por
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1036--1036
-[]|\T1/cmr/m/n/10 Adaptivity-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1036--1036
-\T1/cmr/m/n/10 tunable Adam-
- []
-
-
-Underfull \hbox (badness 4608) in paragraph at lines 1036--1036
-[]|\T1/cmr/m/n/10 Continuously tun-able adap-tiv-ity
+Underfull \hbox (badness 3364) in paragraph at lines 1036--1036
+[]|\T1/cmr/m/n/10 Similar a Adam
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1037--1037
-[]|\T1/cmr/m/n/10 Parameter-free
+[]|\T1/cmr/m/n/10 Adaptación sin
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1039--1039
-[]|\T1/cmr/m/n/10 Approx. second-
+[]|\T1/cmr/m/n/10 Segundo or-den
  []
 
 
-Underfull \hbox (badness 1043) in paragraph at lines 1039--1039
-[]|\T1/cmr/m/n/10 Diagonal Hes-sian pre-con-di-tion-ing
+Underfull \hbox (badness 2197) in paragraph at lines 1039--1039
+[]|\T1/cmr/m/n/10 Precondicionamiento dia-go-nal de
  []
 
 
-Underfull \hbox (badness 4084) in paragraph at lines 1040--1040
-[]|\T1/cmr/m/n/10 Matrix pre-con-di-
- []
-
-
-Underfull \hbox (badness 2556) in paragraph at lines 1041--1041
-[]|\T1/cmr/m/n/10 Adam-like track-ing in pre-con-di-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1042--1042
-[]|\T1/cmr/m/n/10 Orthogonality-
+Underfull \hbox (badness 10000) in paragraph at lines 1040--1040
+[]|\T1/cmr/m/n/10 Precondicionador
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1043--1043
-[]|\T1/cmr/m/n/10 Accelerated or-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1043--1043
-[]|\T1/cmr/m/n/10 Preconditioned Newton-Schulz
+[]|\T1/cmr/m/n/10 Ortogonalización
  []
 
 
@@ -1766,188 +1791,196 @@ Overfull \hbox (11.06111pt too wide) in alignment at lines 1020--1045
  [] [] [] [] [] 
  []
 
-ignored error: Infinite glue shrinkage found in box being split [26] [27]
-Overfull \hbox (15.49152pt too wide) in paragraph at lines 1094--1095
-\T1/cmr/m/n/10.95 ADOPT, AdE-MAMix, MARS, Cau-tious), memory-efficient (Adafac-
-tor, Ga-Lore, Lion, APOLLO,
- []
-
-[28] (./en.bbl [29] [30] [31] [32])
-Overfull \hbox (155.87706pt too wide) in alignment at lines 1137--1141
+ignored error: Infinite glue shrinkage found in box being split [27] [28]
+[29] [30] (./es.bbl [31] [32] [33] [34])
+Overfull \hbox (183.68205pt too wide) in alignment at lines 1136--1140
  [] [] [] [] 
  []
 
 
-Overfull \hbox (155.87706pt too wide) in alignment at lines 1141--1145
+Overfull \hbox (183.68205pt too wide) in alignment at lines 1140--1144
  [] [] [] [] 
  []
 
 
-Overfull \hbox (155.87706pt too wide) in alignment at lines 1145--1148
+Overfull \hbox (183.68205pt too wide) in alignment at lines 1144--1147
  [] [] [] [] 
  []
 
 
-Overfull \hbox (155.87706pt too wide) in alignment at lines 1148--1152
+Overfull \hbox (183.68205pt too wide) in alignment at lines 1147--1151
  [] [] [] [] 
  []
 
 
-Overfull \hbox (155.87706pt too wide) in alignment at lines 1152--1176
+Overfull \hbox (183.68205pt too wide) in alignment at lines 1151--1175
  [] [] [] [] 
  []
 
-[33] [34] [35]
-Overfull \hbox (3.69493pt too wide) in paragraph at lines 1283--1285
-\T1/cmr/m/n/10.95 Adan achieves fast con-ver-gence across di-verse ar-chi-tec-t
-ures (CNNs, GANs, Trans-form-ers) through
- []
+ignored error: Infinite glue shrinkage found in box being split [35] [36]
+[37] [38] [39] [40] [41] [42] [43] [44] [45] [46] [47]
 
-[36] [37] [38] [39] [40] [41] [42] [43] [44] [45] [46] [47]
-Overfull \hbox (1.77904pt too wide) in paragraph at lines 1786--1786
- []\T1/cmr/bx/n/10.95 Sophia (Second-Order Hes-sian In-for-ma-tion with Op-ti-m
-ized Ap-prox-i-ma-tion).[] \T1/cmr/m/n/10.95 Sophia
+LaTeX Warning: Command \' invalid in math mode on input line 1629.
+
+
+LaTeX Warning: Command \' invalid in math mode on input line 1629.
+
+Missing character: There is no á in font cmr10!
+Missing character: There is no é in font cmr10!
+! Missing $ inserted.
+<inserted text> 
+                $
+l.1629 ...ge demostrablemente con regret $O(\sqrt{
+                                                  T})$ para problemas convex...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+Overfull \hbox (717.66162pt too wide) in paragraph at lines 1629--1630
+[]\T1/cmr/m/n/10.95 Anon man-tie-ne tres buf-fers de es-ta-do ($\OML/cmm/m/it/1
+0.95 m$\T1/cmr/m/n/10.95 , $\OML/cmm/m/it/10.95 v$\T1/cmr/m/n/10.95 , fixed_lr$
+\OT1/cmr/m/n/10.95 )\OML/cmm/m/it/10.95 concosto$\T1/cmr/m/n/10.95 O(n)$\OML/cm
+m/m/it/10.95 porpaso; situndoloenlamismaclasedecomplejidadqueAdamWperoconlaflex
+ibilidadadicionaldeadaptividadajustable:LatcnicaIDUconvergedemostrablementeconr
+egret$\T1/cmr/m/n/10.95 O($[]\OT1/cmr/m/n/10.95 )$
  []
 
 [48]
-Underfull \hbox (badness 10000) in paragraph at lines 1873--1873
-[]|\T1/cmr/bx/n/10 Primary
+Overfull \hbox (7.28197pt too wide) in paragraph at lines 1713--1714
+ []\T1/cmr/bx/n/10.95 Shampoo (Pre-con-di-cio-na-mien-to Ma-tri-cial me-dian-te
+ Pro-duc-tos de Kro-nec-ker).[] \T1/cmr/m/n/10.95 Sham-
+ []
+
+[49] [50]
+Overfull \hbox (1.77904pt too wide) in paragraph at lines 1785--1785
+ []\T1/cmr/bx/n/10.95 Sophia (Second-Order Hes-sian In-for-ma-tion with Op-ti-m
+i-zed Ap-pro-xi-ma-tion).[] \T1/cmr/m/n/10.95 Sophia
+ []
+
+[51] [52]
+Underfull \hbox (badness 10000) in paragraph at lines 1872--1872
+[]|\T1/cmr/bx/n/10 Objetivo
+ []
+
+
+Underfull \hbox (badness 5388) in paragraph at lines 1875--1875
+[]|\T1/cmr/m/n/10 SGD, AdamW, RA-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1875--1875
+[]|\T1/cmr/m/n/10 estabilidad
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
-[]|\T1/cmr/m/n/10 Classical base-
+[]|\T1/cmr/m/n/10 Adan, AdE-MA-Mix,
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
-[]|\T1/cmr/m/n/10 SGD, AdamW,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
-\T1/cmr/m/n/10 ref-er-ence
- []
-
-
-Underfull \hbox (badness 4940) in paragraph at lines 1877--1877
-[]|\T1/cmr/m/n/10 Momentum re-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1877--1877
-[]|\T1/cmr/m/n/10 Adan, AdE-MAMix,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1877--1877
 \T1/cmr/m/n/10 MARS, Cau-tious
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1877--1877
-[]|\T1/cmr/m/n/10 faster or
+Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
+[]|\T1/cmr/m/n/10 adaptación
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
+\T1/cmr/m/n/10 de pri-mer
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
+\T1/cmr/m/n/10 or-den más
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1876--1876
+\T1/cmr/m/n/10 rá-pi-da o
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1877--1877
-\T1/cmr/m/n/10 safer first-
+[]|\T1/cmr/m/n/10 Simplificación
  []
 
 
-Underfull \hbox (badness 5417) in paragraph at lines 1877--1877
-\T1/cmr/m/n/10 order adap-
- []
-
-
-Underfull \hbox (badness 1014) in paragraph at lines 1878--1878
+Underfull \hbox (badness 1014) in paragraph at lines 1877--1877
 []|\T1/cmr/m/n/10 LAMB, Schedule-Free
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1878--1878
-[]|\T1/cmr/m/n/10 operational
+Underfull \hbox (badness 10000) in paragraph at lines 1877--1877
+[]|\T1/cmr/m/n/10 robustez
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1877--1877
+\T1/cmr/m/n/10 ope-ra-cio-nal
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1878--1878
-\T1/cmr/m/n/10 ro-bust-ness
+[]|\T1/cmr/m/n/10 Eficiencia de
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1879--1879
-[]|\T1/cmr/m/n/10 Memory-
+Underfull \hbox (badness 10000) in paragraph at lines 1878--1878
+[]|\T1/cmr/m/n/10 Adafactor, Ga-Lo-re,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1879--1879
-[]|\T1/cmr/m/n/10 Adafactor, Ga-Lore,
+Underfull \hbox (badness 3471) in paragraph at lines 1878--1878
+\T1/cmr/m/n/10 APO-LLO, APOLLO-
  []
 
 
-Underfull \hbox (badness 3471) in paragraph at lines 1879--1879
-\T1/cmr/m/n/10 APOLLO, APOLLO-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1879--1879
+Underfull \hbox (badness 10000) in paragraph at lines 1878--1878
 \T1/cmr/m/n/10 Mini, Q-APOLLO,
  []
 
 
+Underfull \hbox (badness 10000) in paragraph at lines 1878--1878
+\T1/cmr/m/n/10 es-ta-do del
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 1879--1879
-[]|\T1/cmr/m/n/10 optimizer-
+[]|\T1/cmr/m/n/10 Consciente de
  []
 
 
-Underfull \hbox (badness 2980) in paragraph at lines 1879--1879
-\T1/cmr/m/n/10 state re-duc-
- []
-
-
-Underfull \hbox (badness 2073) in paragraph at lines 1879--1880
-\T1/cmr/m/n/10 meth-ods re-place dense AdamW
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1880--1880
-[]|\T1/cmr/m/n/10 Curvature-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1880--1880
+Underfull \hbox (badness 10000) in paragraph at lines 1879--1879
 []|\T1/cmr/m/n/10 Shampoo, SOAP,
  []
 
 
-Underfull \hbox (badness 1466) in paragraph at lines 1880--1881
-[]|\T1/cmr/m/n/10 Prefer when richer ge-om-e-try is
+Underfull \hbox (badness 10000) in paragraph at lines 1880--1880
+\T1/cmr/m/n/10 ac-tua-li-za-ción
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1881--1881
-[]|\T1/cmr/m/n/10 Geometry-
+Underfull \hbox (badness 10000) in paragraph at lines 1880--1880
+\T1/cmr/m/n/10 or-to-go-na-li-za-
+ []
+
+ignored error: Infinite glue shrinkage found in box being split [53] [54]
+[55] [56] [57]
+Overfull \hbox (8.2036pt too wide) in paragraph at lines 2046--2046
+[]|\T1/cmr/bx/n/10 Arquitectura| 
  []
 
 
-Overfull \hbox (6.99556pt too wide) in paragraph at lines 1881--1881
-[]|\T1/cmr/m/n/10 orthogonalized
+Underfull \hbox (badness 10000) in paragraph at lines 2049--2049
+[]|$\OML/cmm/m/it/10 O\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n\OT1/cmr/m/n/10 )$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1881--1881
-\T1/cmr/m/n/10 up-date
- []
-
-[49] [50] [51] [52]
-Overfull \hbox (17.41447pt too wide) in paragraph at lines 2013--2014
-[]\T1/cmr/bx/n/10.95 Strengths\T1/cmr/m/n/10.95 : Sig-nif-i-cantly higher ac-cu
--racy on gen-er-a-tion tasks (state-of-the-art BLEU); parameter-
- []
-
-
-Overfull \hbox (6.60677pt too wide) in paragraph at lines 2047--2047
-[]|\T1/cmr/bx/n/10 Architecture| 
+Underfull \hbox (badness 10000) in paragraph at lines 2050--2050
+[]|\T1/cmr/m/n/10 Atención
  []
 
 
@@ -1956,653 +1989,624 @@ Underfull \hbox (badness 10000) in paragraph at lines 2050--2050
  []
 
 
-Underfull \hbox (badness 3354) in paragraph at lines 2050--2051
-[]|\T1/cmr/m/n/10 Perfect ex-pres-sive-ness, full
+Underfull \hbox (badness 7814) in paragraph at lines 2052--2053
+[]|\T1/cmr/m/n/10 Dinámica se-lec-ti-va de-pen-
  []
 
 
-Underfull \hbox (badness 2237) in paragraph at lines 2050--2051
-\T1/cmr/m/n/10 to-ken rout-ing, KV bot-tle-
+Underfull \hbox (badness 10000) in paragraph at lines 2053--2053
+[]|\T1/cmr/m/n/10 Transformer
  []
 
 
-Underfull \hbox (badness 1533) in paragraph at lines 2051--2051
-[]|\T1/cmr/m/n/10 Sigmoid At-
+Underfull \hbox (badness 1515) in paragraph at lines 2054--2055
+\T1/cmr/m/n/10 ex-tre-mo, ac-tua-li-za-cio-nes de
  []
 
+[58] [59] [60] [61] [62]
 
-Underfull \hbox (badness 10000) in paragraph at lines 2051--2051
-[]|$\OML/cmm/m/it/10 O\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n\OT1/cmr/m/n/10 )$
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2051--2052
-[]|\T1/cmr/m/n/10 Element-wise gat-ing,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2051--2052
-\T1/cmr/m/n/10 hardware-efficient, sta-ble
- []
-
-
-Underfull \hbox (badness 5175) in paragraph at lines 2054--2055
-\T1/cmr/m/n/10 ment, weight shar-ing via
- []
-
-
-Underfull \hbox (badness 3907) in paragraph at lines 2055--2056
-[]|\T1/cmr/m/n/10 Test-time mem-ory adap-ta-
- []
-
-
-Underfull \hbox (badness 1509) in paragraph at lines 2055--2056
-\T1/cmr/m/n/10 tion, ex-treme con-text, on-
- []
-
-[53] [54] [55] [56] [57]
-Overfull \hbox (12.00024pt too wide) in paragraph at lines 2255--2256
-[]\T1/cmr/bx/n/10.95 Theoretical ground-ing\T1/cmr/m/n/10.95 : Prov-ably main-t
-ains uni-ver-sal ap-prox-i-ma-tion and Turing-completeness
- []
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2259.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2260.
+(hyperref)                removing `math shift' on input line 2259.
 
+[63] [64] [65]
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2260.
+LaTeX Warning: Command \' invalid in math mode on input line 2439.
 
-[58]
-Overfull \hbox (10.73376pt too wide) in paragraph at lines 2321--2321
-[]\T1/cmr/bx/n/12 NSA (Na-tive Sparse At-ten-tion): Hardware-Aligned Hi-er-ar-c
-hi-cal Branches 
+Missing character: There is no Í in font cmr10!
+[66]
+Overfull \hbox (7.69713pt too wide) in paragraph at lines 2473--2474
+ []\T1/cmr/bx/n/10.95 Etapa 2 --- Fil-tra-do cons-cien-te de soft-max[] \T1/cmr
+/m/n/10.95 : Des-pués de cal-cu-lar $[] \OT1/cmr/m/n/10.95 = [](\OML/cmm/m/it/1
+0.95 Q[]K[]=[]\OT1/cmr/m/n/10.95 )$\T1/cmr/m/n/10.95 ,
  []
 
-[59] [60]
-Overfull \hbox (4.90146pt too wide) in paragraph at lines 2410--2411
- []\T1/cmr/bx/n/10.95 Token im-por-tance pre-dic-tion (TIP) stage[] \T1/cmr/m/n
-/10.95 : Us-ing only dom-i-nant FCs, com-pute lightweight
- []
-
-[61] [62]
-Overfull \hbox (5.46443pt too wide) in paragraph at lines 2531--2531
-[]|\T1/cmr/bx/n/9 Complexity| 
+[67]
+Overfull \hbox (10.49236pt too wide) in paragraph at lines 2530--2530
+[]|\T1/cmr/bx/n/9 Complejidad| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2531--2532
-[]|\T1/cmr/bx/n/9 Primary Con-tri-bu-
+Overfull \hbox (5.34972pt too wide) in paragraph at lines 2530--2530
+[]|\T1/cmr/bx/n/9 Entrenable| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2534--2534
+Underfull \hbox (badness 10000) in paragraph at lines 2533--2533
 []|\T1/cmr/m/n/9 Sparse
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2534--2535
-[]|\T1/cmr/m/n/9 Factorized strided +
+Underfull \hbox (badness 10000) in paragraph at lines 2533--2533
+\T1/cmr/m/n/9 Trans-for-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2535--2535
+Underfull \hbox (badness 4673) in paragraph at lines 2533--2533
+[]|\T1/cmr/m/n/9 Patrón de
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2534--2534
 []|\T1/cmr/m/n/9 Local +
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2536--2536
-[]|\T1/cmr/m/n/9 Graph
+Underfull \hbox (badness 3525) in paragraph at lines 2535--2535
+[]|\T1/cmr/m/n/9 Grafo dis-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2536--2537
-[]|\T1/cmr/m/n/9 Theoretical com-plete-
+Underfull \hbox (badness 1142) in paragraph at lines 2535--2536
+[]|\T1/cmr/m/n/9 Prueba de com-ple-ti-tud
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2536--2536
+[]|\T1/cmr/m/n/9 Tokens
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2537--2537
-[]|\T1/cmr/m/n/9 Top-$\OML/cmm/m/it/9 k$
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2538--2538
 []|$\OML/cmm/m/it/9 O\OT1/cmr/m/n/9 ((\OML/cmm/m/it/9 t=d \OT1/cmr/m/n/9 +
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2538--2538
+Underfull \hbox (badness 10000) in paragraph at lines 2537--2537
 []|\T1/cmr/m/n/9 Multi-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2538--2539
-[]|\T1/cmr/m/n/9 Hardware-aligned 3-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2539--2539
+Underfull \hbox (badness 10000) in paragraph at lines 2538--2538
 []|$\OML/cmm/m/it/9 O\OT1/cmr/m/n/9 (\OML/cmm/m/it/9 tN[] \OT1/cmr/m/n/9 +
  []
 
 
+Overfull \hbox (1.17436pt too wide) in paragraph at lines 2538--2538
+[]|\T1/cmr/m/n/9 Fragmentos
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2538--2539
+[]|\T1/cmr/m/n/9 Conocimiento de fre-
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 2539--2539
-[]|\T1/cmr/m/n/9 Freq
+[]|\T1/cmr/m/n/9 Filtro de
  []
 
-[63]
-Overfull \hbox (14.03166pt too wide) in paragraph at lines 2564--2564
-[]\T1/cmr/bx/n/14.4 Annex D: Gated At-ten-tion Families---Complete Lit-er-a-tur
-e Anal-
- []
-
-[64] [65]
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-[]|\T1/cmr/m/n/10 Sub-quadratic train-ing
+[68] [69] [70]
+Underfull \hbox (badness 10000) in paragraph at lines 2644--2644
+[]|\T1/cmr/m/n/10 Entrenamiento sub-cua-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 Constant-memory in-fer-
+Underfull \hbox (badness 7486) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 drá-ti-co me-dian-te pa-ra-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-[]|\T1/cmr/m/n/10 Requires cus-tom
+Underfull \hbox (badness 4341) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 le-lis-mo por frag-men-tos.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 CUDA/Triton ker-nels;
+Underfull \hbox (badness 4168) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 In-fe-ren-cia con me-mo-ria
  []
 
 
-Underfull \hbox (badness 1014) in paragraph at lines 2645--2645
-[]|\T1/cmr/m/n/10 Extends 2K-token train-
+Underfull \hbox (badness 10000) in paragraph at lines 2644--2644
+[]|\T1/cmr/m/n/10 Requiere ker-nels CU-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 neg-li-gi-ble per-plex-ity
+Underfull \hbox (badness 10000) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 DA/Triton per-so-na-li-za-
  []
 
 
-Underfull \hbox (badness 6641) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 max on retrieval-heavy
+Underfull \hbox (badness 10000) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 dos; no dis-po-ni-ble en
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 bench-marks (needle-in-
+Underfull \hbox (badness 10000) in paragraph at lines 2644--2644
+[]|\T1/cmr/m/n/10 Extiende en-tre-na-mien-to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-[]|\T1/cmr/m/n/10 Per-key-dimension data-
+Underfull \hbox (badness 3260) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 20K to-kens con de-gra-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2645
-[]|\T1/cmr/m/n/10 Gate struc-ture lim-its
+Underfull \hbox (badness 10000) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 da-ción de per-ple-ji-dad
  []
 
 
-Underfull \hbox (badness 4608) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 per-key-value se-lec-tiv-ity;
+Underfull \hbox (badness 3250) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 soft-max en bench-marks
  []
 
 
-Underfull \hbox (badness 6268) in paragraph at lines 2645--2645
-\T1/cmr/m/n/10 no di-rect con-trol over
- []
-
-[66]
-Underfull \hbox (badness 1275) in paragraph at lines 2712--2712
-[]|\T1/cmr/m/n/10 Perfect re-call on Multi-
+Underfull \hbox (badness 1655) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 con mu-cha re-cu-pe-ra-ción
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 (MQAR) bench-mark;
+Underfull \hbox (badness 1661) in paragraph at lines 2644--2644
+[]|\T1/cmr/m/n/10 Decaimiento de-pen-dien-te
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 nat-u-rally fit re-trieval
+Underfull \hbox (badness 2762) in paragraph at lines 2644--2644
+\T1/cmr/m/n/10 por par clave-valor; no
+ []
+
+[71]
+Overfull \hbox (32.11041pt too wide) detected at line 2659
+\OT1/cmr/bx/n/10.95 v[] \OT1/cmr/m/n/10.95 = \OT1/cmr/bx/n/10.95 S[]k[] []\OML/
+cmm/m/it/10.95 ;  \OT1/cmr/bx/n/10.95 v[] \OT1/cmr/m/n/10.95 = \OML/cmm/m/it/10
+.95 ^^L[]\OT1/cmr/bx/n/10.95 v[] \OT1/cmr/m/n/10.95 + (1 \OMS/cmsy/m/n/10.95 ^^
+@ \OML/cmm/m/it/10.95 ^^L[]\OT1/cmr/m/n/10.95 )\OT1/cmr/bx/n/10.95 v[] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-[]|\T1/cmr/m/n/10 Without global for-get-
+Underfull \hbox (badness 10000) in paragraph at lines 2713--2713
+[]|\T1/cmr/m/n/10 Recuperación per-fec-ta
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 over ex-treme se-quence
+Underfull \hbox (badness 10000) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 (Re-cu-pe-ra-ción Aso-cia-ti-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 re-set mech-a-nisms for
+Underfull \hbox (badness 10000) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 va Multi-Consulta); la
  []
 
 
-Underfull \hbox (badness 1584) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 op-ti-miza-tion; clear con-
+Underfull \hbox (badness 2790) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 se-mán-ti-ca de co-rrec-ción
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-[]|\T1/cmr/m/n/10 Requires L2-normalized
+Underfull \hbox (badness 4726) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 lon-gi-tu-des de se-cuen-cia
  []
 
 
-Underfull \hbox (badness 2435) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 keys for nu-mer-i-cal sta-
+Underfull \hbox (badness 2521) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 za-das L2 pa-ra es-ta-bi-li-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 bil-ity; double-width
+Underfull \hbox (badness 10000) in paragraph at lines 2713--2713
+[]|\T1/cmr/m/n/10 La re-pre-sen-ta-ción WY
  []
 
 
-Underfull \hbox (badness 7415) in paragraph at lines 2712--2712
-[]|\T1/cmr/m/n/10 WY rep-re-sen-ta-tion en-
+Underfull \hbox (badness 10000) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 per-mi-te en-tre-na-mien-to
  []
 
 
-Underfull \hbox (badness 1189) in paragraph at lines 2712--2712
-\T1/cmr/m/n/10 ables ef-fi-cient chunk-wise
+Underfull \hbox (badness 10000) in paragraph at lines 2713--2713
+[]|\T1/cmr/m/n/10 Ligeramente más len-to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2712--2712
-[]|\T1/cmr/m/n/10 Slightly slower than
+Underfull \hbox (badness 1430) in paragraph at lines 2713--2713
+\T1/cmr/m/n/10 que Mam-ba2 por to-ken
  []
 
-[67] [68] [69] [70] [71]
-Overfull \hbox (7.61215pt too wide) in paragraph at lines 2938--2938
-[]|\T1/cmr/bx/n/9 Architecture| 
- []
-
-
-Overfull \hbox (4.89163pt too wide) in paragraph at lines 2938--2938
-[]|\T1/cmr/bx/n/9 Publication
+[72] [73] [74] [75] [76]
+Overfull \hbox (9.0854pt too wide) in paragraph at lines 2940--2940
+[]|\T1/cmr/bx/n/9 Arquitectura| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2938--2938
-[]|\T1/cmr/bx/n/9 State
+Underfull \hbox (badness 10000) in paragraph at lines 2940--2940
+[]|\T1/cmr/bx/n/9 Año de
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2938--2938
-\T1/cmr/bx/n/9 Rep-re-sen-
+Underfull \hbox (badness 10000) in paragraph at lines 2940--2940
+\T1/cmr/bx/n/9 Pu-bli-ca-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2938--2938
-[]|\T1/cmr/bx/n/9 Gate
+Overfull \hbox (19.79198pt too wide) in paragraph at lines 2940--2940
+[]|\T1/cmr/bx/n/9 Representación
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2938--2938
-[]|\T1/cmr/bx/n/9 Training
+Underfull \hbox (badness 10000) in paragraph at lines 2940--2940
+[]|\T1/cmr/bx/n/9 Tipo de
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2938--2938
-[]|\T1/cmr/bx/n/9 Inference
+Underfull \hbox (badness 10000) in paragraph at lines 2940--2940
+\T1/cmr/bx/n/9 Com-
  []
 
 
-Underfull \hbox (badness 5771) in paragraph at lines 2941--2941
-[]|\T1/cmr/m/n/9 Matrix (re-
+Overfull \hbox (1.95644pt too wide) in paragraph at lines 2940--2940
+[]|\T1/cmr/bx/n/9 Complejidad
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2941--2941
-[]|\T1/cmr/m/n/9 Diagonal
- []
-
-
-Underfull \hbox (badness 5771) in paragraph at lines 2942--2942
-[]|\T1/cmr/m/n/9 Matrix (re-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2942--2942
-[]|\T1/cmr/m/n/9 Scalar
+Underfull \hbox (badness 10000) in paragraph at lines 2940--2940
+[]|\T1/cmr/bx/n/9 Complejidad
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2943--2943
-[]|\T1/cmr/m/n/9 Gated
+[]|\T1/cmr/m/n/9 Matriz
  []
 
 
-Underfull \hbox (badness 5771) in paragraph at lines 2943--2943
-[]|\T1/cmr/m/n/9 Matrix (re-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2943--2943
-[]|\T1/cmr/m/n/9 Decay +
- []
-
-
-Underfull \hbox (badness 5771) in paragraph at lines 2944--2944
-[]|\T1/cmr/m/n/9 Matrix (re-
+Overfull \hbox (4.44513pt too wide) in paragraph at lines 2943--2943
+[]|\T1/cmr/m/n/9 Decaimiento
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2944--2944
-[]|\T1/cmr/m/n/9 Fixed ex-
+[]|\T1/cmr/m/n/9 Matriz
  []
 
 
-Underfull \hbox (badness 5771) in paragraph at lines 2945--2945
-[]|\T1/cmr/m/n/9 Matrix (re-
+Underfull \hbox (badness 10000) in paragraph at lines 2944--2944
+[]|\T1/cmr/m/n/9 Escritura
+ []
+
+
+Underfull \hbox (badness 7759) in paragraph at lines 2945--2945
+[]|\T1/cmr/m/n/9 Gated Del-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2945--2945
+[]|\T1/cmr/m/n/9 Matriz
+ []
+
+
+Overfull \hbox (4.44513pt too wide) in paragraph at lines 2945--2945
+[]|\T1/cmr/m/n/9 Decaimiento
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2946--2946
+[]|\T1/cmr/m/n/9 Matriz
+ []
+
+
+Overfull \hbox (3.92792pt too wide) in paragraph at lines 2946--2946
+[]|\T1/cmr/m/n/9 Exponencial
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2947--2947
+[]|\T1/cmr/m/n/9 Matriz
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2947--2947
 []|\T1/cmr/m/n/9 Diagonal
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2946--2946
-[]|\T1/cmr/m/n/9 Full at-ten-
+Underfull \hbox (badness 10000) in paragraph at lines 2948--2948
+[]|\T1/cmr/m/n/9 Atención
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2946--2946
-[]|\T1/cmr/m/n/9 Logit-
+Underfull \hbox (badness 10000) in paragraph at lines 2948--2948
+[]|\T1/cmr/m/n/9 Sesgo en
  []
 
 
-Underfull \hbox (badness 1931) in paragraph at lines 2947--2947
+Underfull \hbox (badness 2269) in paragraph at lines 2948--2948
+\T1/cmr/m/n/9 es-pa-cio de
+ []
+
+
+Underfull \hbox (badness 1931) in paragraph at lines 2949--2949
 []|\T1/cmr/m/n/9 Gated Soft-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2947--2947
-[]|\T1/cmr/m/n/9 Full at-ten-
+Underfull \hbox (badness 10000) in paragraph at lines 2949--2949
+[]|\T1/cmr/m/n/9 Atención
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2947--2947
-[]|\T1/cmr/m/n/9 Post-
+Underfull \hbox (badness 10000) in paragraph at lines 2949--2949
+[]|\T1/cmr/m/n/9 Sigmoide
+ []
+
+ignored error: Infinite glue shrinkage found in box being split [77]
+Overfull \hbox (9.0854pt too wide) in paragraph at lines 2959--2959
+[]|\T1/cmr/bx/n/9 Arquitectura| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2947--2947
-\T1/cmr/m/n/9 SDPA
- []
-
-ignored error: Infinite glue shrinkage found in box being split [72]
-Overfull \hbox (7.61215pt too wide) in paragraph at lines 2957--2957
-[]|\T1/cmr/bx/n/9 Architecture| 
+Overfull \hbox (0.5087pt too wide) in paragraph at lines 2959--2959
+[]|\T1/cmr/bx/n/9 Recuperación
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2957--2957
-[]|\T1/cmr/bx/n/9 In-Context
+Overfull \hbox (0.5087pt too wide) in paragraph at lines 2959--2959
+[]|\T1/cmr/bx/n/9 Recuperación
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2957--2957
-[]|\T1/cmr/bx/n/9 Associative
+Overfull \hbox (2.31589pt too wide) in paragraph at lines 2959--2959
+[]|\T1/cmr/bx/n/9 Extrapolación
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2957--2957
-[]|\T1/cmr/bx/n/9 Length Ex-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2957--2958
-[]|\T1/cmr/bx/n/9 Key Ad-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2960--2961
-[]|\T1/cmr/m/n/9 Hardware
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2960--2961
-\T1/cmr/m/n/9 ef-fi-ciency;
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2960--2961
-\T1/cmr/m/n/9 chunk-wise
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2961--2961
-[]|\T1/cmr/m/n/9 Perfect
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2961--2962
-[]|\T1/cmr/m/n/9 Error-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2961--2962
-\T1/cmr/m/n/9 correcting
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2961--2962
-\T1/cmr/m/n/9 se-man-
- []
-
-
-Underfull \hbox (badness 2111) in paragraph at lines 2961--2962
-\T1/cmr/m/n/9 tics; strong
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2962--2962
-[]|\T1/cmr/m/n/9 Gated
+Underfull \hbox (badness 10000) in paragraph at lines 2959--2960
+[]|\T1/cmr/bx/n/9 Ventaja
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2962--2963
-[]|\T1/cmr/m/n/9 Balanced:
+\T1/cmr/m/n/9 hard-wa-re;
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2962--2963
-\T1/cmr/m/n/9 for-get-ting
+\T1/cmr/m/n/9 pa-ra-le-lis-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2962--2963
-\T1/cmr/m/n/9 + tar-geted
+\T1/cmr/m/n/9 mo por
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2963--2963
+[]|\T1/cmr/m/n/9 Perfecta
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2963--2964
-[]|\T1/cmr/m/n/9 Simplicity;
+[]|\T1/cmr/m/n/9 Semántica
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2963--2964
+\T1/cmr/m/n/9 de co-rrec-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2963--2964
+\T1/cmr/m/n/9 ción de
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2963--2964
+\T1/cmr/m/n/9 erro-res; re-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2963--2964
+\T1/cmr/m/n/9 cu-pe-ra-ción
+ []
+
+
+Underfull \hbox (badness 7759) in paragraph at lines 2964--2964
+[]|\T1/cmr/m/n/9 Gated Del-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2964--2965
-[]|\T1/cmr/m/n/9 Multi-scale
+[]|\T1/cmr/m/n/9 Equilibrada:
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2964--2965
+\T1/cmr/m/n/9 ol-vi-do +
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2964--2965
+\T1/cmr/m/n/9 ac-tua-li-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2964--2965
+\T1/cmr/m/n/9 za-cio-nes
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2965--2966
+[]|\T1/cmr/m/n/9 Simplicidad;
+ []
+
+
+Underfull \hbox (badness 7344) in paragraph at lines 2965--2966
+\T1/cmr/m/n/9 no ne-ce-si-ta
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2966--2967
+[]|\T1/cmr/m/n/9 Modelado
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2966--2967
 \T1/cmr/m/n/9 tem-po-ral
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2965--2965
-[]|\T1/cmr/m/n/9 Very strong
+Underfull \hbox (badness 10000) in paragraph at lines 2967--2968
+[]|\T1/cmr/m/n/9 Preserva
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2965--2966
-[]|\T1/cmr/m/n/9 Preserve
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2965--2966
+Underfull \hbox (badness 10000) in paragraph at lines 2967--2968
 \T1/cmr/m/n/9 soft-max;
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2965--2966
-\T1/cmr/m/n/9 min-i-mal
+Underfull \hbox (badness 10000) in paragraph at lines 2967--2968
+\T1/cmr/m/n/9 so-bre-car-ga
  []
 
 
-Underfull \hbox (badness 1931) in paragraph at lines 2966--2966
+Underfull \hbox (badness 1931) in paragraph at lines 2968--2968
 []|\T1/cmr/m/n/9 Gated Soft-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2966--2967
-[]|\T1/cmr/m/n/9 Simplicity;
+Underfull \hbox (badness 10000) in paragraph at lines 2968--2969
+[]|\T1/cmr/m/n/9 Simplicidad;
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2966--2967
-\T1/cmr/m/n/9 no re-place-
+Underfull \hbox (badness 1077) in paragraph at lines 2968--2969
+\T1/cmr/m/n/9 no re-em-pla-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2966--2967
-\T1/cmr/m/n/9 ment of
+Overfull \hbox (3.39494pt too wide) in paragraph at lines 2978--2978
+[]|\T1/cmr/bx/n/9 Arquitectura| 
  []
 
 
-Overfull \hbox (1.92169pt too wide) in paragraph at lines 2976--2976
-[]|\T1/cmr/bx/n/9 Architecture| 
+Underfull \hbox (badness 10000) in paragraph at lines 2978--2978
+[]|\T1/cmr/bx/n/9 Rendimiento
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2976--2976
-[]|\T1/cmr/bx/n/9 Typical
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2976--2976
-[]|\T1/cmr/bx/n/9 Memory per-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2979--2980
-[]|\T1/cmr/m/n/9 Long-context with
- []
-
-
-Underfull \hbox (badness 1817) in paragraph at lines 2980--2981
-[]|\T1/cmr/m/n/9 Retrieval and as-so-cia-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2981--2981
-[]|\T1/cmr/m/n/9 Gated
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2981--2982
-[]|\T1/cmr/m/n/9 Production: Qwen3-
- []
-
-
-Underfull \hbox (badness 7081) in paragraph at lines 2982--2983
-[]|\T1/cmr/m/n/9 Extremely fast in-fer-
+Underfull \hbox (badness 1803) in paragraph at lines 2983--2983
+[]|\T1/cmr/m/n/9 Gated Del-ta-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2983--2984
-[]|\T1/cmr/m/n/9 Multi-scale tem-po-ral
+[]|\T1/cmr/m/n/9 Producción: Qwen3-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2984--2984
-[]|\T1/cmr/m/n/9 Moderate
+Underfull \hbox (badness 10000) in paragraph at lines 2983--2984
+\T1/cmr/m/n/9 Next, ren-di-mien-to
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2984--2985
-[]|\T1/cmr/m/n/9 Length ex-trap-o-la-tion;
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2985--2985
-[]|\T1/cmr/m/n/9 Gated Soft-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2985--2985
-[]|\T1/cmr/m/n/9 High (min-i-mal
+[]|\T1/cmr/m/n/9 Inferencia ex-tre-ma-da-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 2985--2986
-[]|\T1/cmr/m/n/9 Drop-in im-prove-ment
- []
-
-ignored error: Infinite glue shrinkage found in box being split [73]
-Underfull \hbox (badness 1648) in paragraph at lines 3028--3028
-[]|\T1/cmr/bx/n/10 Recommended Ar-
+[]|\T1/cmr/m/n/9 Patrones tem-po-ra-les
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 3028--3028
-\T1/cmr/m/n/10 im-ple-men-ta-tions.
+Underfull \hbox (badness 1803) in paragraph at lines 2986--2986
+[]|\T1/cmr/m/n/9 Moderado (cua-
  []
 
 
-Underfull \hbox (badness 2253) in paragraph at lines 3028--3028
-\T1/cmr/m/n/10 fi-cient mat-muls; lin-
+Underfull \hbox (badness 10000) in paragraph at lines 2987--2987
+[]|\T1/cmr/m/n/9 Gated Soft-
+ []
+
+ignored error: Infinite glue shrinkage found in box being split [78]
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+[]|\T1/cmr/bx/n/10 Arquitecturas Re-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 3028--3028
-[]|\T1/cmr/m/n/10 RetNet, lightweight
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+[]|\T1/cmr/m/n/10 Implementaciones
  []
 
 
-Underfull \hbox (badness 5119) in paragraph at lines 3028--3028
-[]|\T1/cmr/m/n/10 Constant-memory in-
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+\T1/cmr/m/n/10 ma-du-ras de
  []
 
-[74] [75] [76]
-Overfull \hbox (2.0105pt too wide) in paragraph at lines 3144--3145
-[]\T1/cmr/bx/n/10.95 General Ca-pa-bil-i-ties\T1/cmr/m/n/10.95 : The same mech-
-a-nism works for trans-la-tion, sum-ma-riza-tion, question-
+
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+\T1/cmr/m/n/10 soft-max/lineal.
  []
 
-[77] [78] (./en.aux)
+
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+\T1/cmr/m/n/10 GLA/DeltaNet re-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+[]|\T1/cmr/m/n/10 Hardware so-por-ta
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3030--3030
+\T1/cmr/m/n/10 mé-to-dos re-cu-rren-tes
+ []
+
+
+Underfull \hbox (badness 3646) in paragraph at lines 3030--3030
+[]|\T1/cmr/m/n/10 RetNet, Ga-ted Soft-
+ []
+
+[79] [80] [81]
+Overfull \hbox (4.37433pt too wide) in paragraph at lines 3146--3147
+[]\T1/cmr/bx/n/10.95 Capacidades ge-ne-ra-les\T1/cmr/m/n/10.95 : El mis-mo me-c
+a-nis-mo fun-cio-na pa-ra tra-duc-ción, re-su-men, preguntas-
+ []
+
+[82] [83] [84] (./es.aux
+LaTeX Info: Redefining \. on input line 15.
+LaTeX Info: Redefining \% on input line 15.
+)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package rerunfilecheck Info: File `en.out' has not changed.
-(rerunfilecheck)             Checksum: BD073E5D69B96F41689CF78FA09C770B;33633.
+Package rerunfilecheck Info: File `es.out' has not changed.
+(rerunfilecheck)             Checksum: 621280B0CE0F0AC440327A4DE8A279EA;38039.
  ) 
 Here is how much of TeX's memory you used:
- 27883 strings out of 467533
- 517666 string characters out of 5422139
- 961215 words of memory out of 5000000
- 55749 multiletter control sequences out of 15000+600000
- 657170 words of font info for 116 fonts, out of 8000000 for 9000
+ 28307 strings out of 467533
+ 524094 string characters out of 5422139
+ 972793 words of memory out of 5000000
+ 56169 multiletter control sequences out of 15000+600000
+ 656829 words of font info for 115 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 102i,19n,107p,2260b,890s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 102i,19n,107p,2557b,891s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texli
@@ -2637,10 +2641,10 @@ sr/share/texmf/fonts/type1/public/cm-super/sfti1095.pfb></usr/share/texmf/fonts
 /type1/public/cm-super/sftt0800.pfb></usr/share/texmf/fonts/type1/public/cm-sup
 er/sftt1000.pfb></usr/share/texmf/fonts/type1/public/cm-super/sftt1095.pfb></us
 r/share/texmf/fonts/type1/public/cm-super/sftt1200.pfb>
-Output written on en.pdf (78 pages, 1009642 bytes).
+Output written on es.pdf (84 pages, 1033584 bytes).
 PDF statistics:
- 2076 PDF objects out of 2487 (max. 8388607)
- 1896 compressed objects within 19 object streams
- 551 named destinations out of 1000 (max. 500000)
+ 2100 PDF objects out of 2487 (max. 8388607)
+ 1914 compressed objects within 20 object streams
+ 557 named destinations out of 1000 (max. 500000)
  1237 words of extra memory for PDF output out of 10000 (max. 10000000)
 
