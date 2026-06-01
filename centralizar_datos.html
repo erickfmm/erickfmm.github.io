@@ -206,6 +206,7 @@ const outputArea = document.getElementById('output-area');
 const appState = {
   spreadsheetMaestro: null,
   maestroId: null,
+  hojaMaestra: null,
 };
 
 // =============================================================================
@@ -883,18 +884,31 @@ async function crearObtenerMaestro() {
   }
 
   appState.maestroId = maestroId;
+  appState.hojaMaestra = await obtenerNombrePrimeraHoja(maestroId);
   print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
   return maestroId;
 }
 
+  appState.maestroId = maestroId;
+  print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
+  return maestroId;
+}
+
+async function obtenerNombrePrimeraHoja(spreadsheetId) {
+  const data = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`);
+  return data.sheets[0].properties.title;
+}
+
 async function sincronizarEncabezadosMaestro(spreadsheetId) {
-  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1!1:1');
+  const hoja = await obtenerNombrePrimeraHoja(spreadsheetId);
+  const encRange = `${hoja}!1:1`;
+  const allValues = await leerValoresHoja(spreadsheetId, encRange);
   const existing = allValues.length > 0 ? allValues[0] : [];
   const expected = obtenerEncabezadosMaestro();
   if (existing.length >= expected.length) return;
   await apiFetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!1:1?valueInputOption=RAW`,
-    { method: 'PUT', body: JSON.stringify({ range: 'Sheet1!1:1', values: [expected] }) }
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(encRange)}?valueInputOption=RAW`,
+    { method: 'PUT', body: JSON.stringify({ range: encRange, values: [expected] }) }
   );
   await sleep(API_DELAY_MS);
 }
@@ -907,7 +921,8 @@ async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenio, 
 
   if (idxId === null || idxFilaValida === null) return { existe: false, estado: null, fila_num: null, accion: 'procesar_normal' };
 
-  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const hoja = appState.hojaMaestra || 'Sheet1';
+  const allValues = await leerValoresHoja(spreadsheetId, hoja);
   const filasValidas = [];
 
   for (let i = 1; i < allValues.length; i++) {
@@ -936,7 +951,8 @@ async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenio, 
 }
 
 async function agregarDatosAMaestro(spreadsheetId, datosList) {
-  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const hoja = appState.hojaMaestra || 'Sheet1';
+  const allValues = await leerValoresHoja(spreadsheetId, hoja);
   let encabezadosMaestro = allValues.length > 0 ? allValues[0] : [];
   const encabezadosEsperados = obtenerEncabezadosMaestro();
   const columnasCriticas = new Set(['ID_Registro', 'Fila_Valida', 'Estado_Registro']);
@@ -944,7 +960,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
   if (!encabezadosMaestro.length || ![...columnasCriticas].every(c => encabezadosMaestro.includes(c))) {
     await sincronizarEncabezadosMaestro(spreadsheetId);
     await sleep(API_DELAY_MS);
-    const refetched = await leerValoresHoja(spreadsheetId, 'Sheet1!1:1');
+    const refetched = await leerValoresHoja(spreadsheetId, `${hoja}!1:1`);
     encabezadosMaestro = refetched.length > 0 ? refetched[0] : [];
   }
 
@@ -987,7 +1003,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
   if (datosOmitidos.length > 0) print(`   ⏭️ Total omitidos: ${datosOmitidos.length}`);
   if (!datosAProcesar.length) return 0;
 
-  const allRefetched = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const allRefetched = await leerValoresHoja(spreadsheetId, hoja);
   const ultimaFila = allRefetched.length;
   const idBase = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
 
@@ -1030,7 +1046,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
   if (filasNuevas.length > 0) {
     await sleep(API_DELAY_MS);
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${ultimaFila + 1}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hoja)}!A${ultimaFila + 1}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       { method: 'POST', body: JSON.stringify({ values: filasNuevas }) }
     );
     const enviados = datosAProcesar.filter(d => d.esta_enviado).length;
@@ -1044,7 +1060,8 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
 
 async function asegurarUnicidadFilasValidas(spreadsheetId) {
   await sleep(API_DELAY_MS);
-  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const hoja = appState.hojaMaestra || 'Sheet1';
+  const allValues = await leerValoresHoja(spreadsheetId, hoja);
   if (!allValues.length) return { error: false, convenios_unicos: 0, duplicados_corregidos: 0 };
 
   const encabezados = allValues[0];
