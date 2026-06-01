@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="frame-ancestors https://sites.google.com">
+<title>Centralizar Datos CIE</title>
+<style>
+:root {
+  --cie-primary: #1a73e8;
+  --cie-success: #34a853;
+  --cie-warning: #f9ab00;
+  --cie-danger:  #ea4335;
+  --cie-info:    #1967d2;
+  --cie-bg:      #fafbfc;
+  --cie-border:  #e8eaed;
+  --cie-muted:   #6b7280;
+  --cie-text:    #1f2937;
+  --cie-card-radius: 12px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--cie-bg); color: var(--cie-text); }
+#root { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.cie-hbox { display: flex; align-items: center; gap: 8px; flex-flow: row wrap; }
+.cie-vbox { display: flex; flex-direction: column; gap: 8px; }
+.cie-card { border: 1px solid var(--cie-border); border-radius: var(--cie-card-radius); padding: 20px; margin: 8px 0 16px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.cie-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--cie-border); background: #fff; color: var(--cie-text); font-weight: 600; cursor: pointer; }
+.cie-btn:hover:not(:disabled) { background: #f5f5f5; }
+.cie-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cie-btn--primary { background: var(--cie-primary); color: #fff; border-color: var(--cie-primary); }
+.cie-btn--success { background: var(--cie-success); color: #fff; border-color: var(--cie-success); }
+.cie-btn--warning { background: var(--cie-warning); color: #fff; border-color: var(--cie-warning); }
+.cie-btn--info    { background: var(--cie-info);    color: #fff; border-color: var(--cie-info); }
+.cie-btn--danger  { background: var(--cie-danger);  color: #fff; border-color: var(--cie-danger); }
+.cie-input, .cie-select, .cie-textarea { padding: 8px 12px; border: 1px solid var(--cie-border); border-radius: 8px; font: inherit; }
+.cie-input { width: 100%; }
+.cie-input--small { width: 130px; }
+.cie-textarea { width: 100%; min-height: 100px; resize: vertical; }
+.cie-select { width: 600px; max-width: 100%; }
+.cie-status { font-size: 13px; }
+.cie-status--ok    { color: var(--cie-success); }
+.cie-status--warn  { color: var(--cie-warning); }
+.cie-status--err   { color: var(--cie-danger);  }
+.cie-status--off   { color: var(--cie-muted);   }
+.cie-output { margin: 8px 0; font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 13px; }
+.cie-wrap { font-family: 'Segoe UI', 'Noto Sans', sans-serif; color: #1f2937; }
+.cie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 10px 0 14px; }
+.cie-card-inner { background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); border: 1px solid #dbeafe; border-radius: 12px; padding: 10px 12px; }
+.cie-label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.06em; }
+.cie-value { font-size: 14px; font-weight: 600; margin-top: 3px; word-break: break-word; }
+.cie-title { font-size: 16px; font-weight: 700; color: #0f172a; margin: 4px 0 8px; }
+.cie-subtitle { font-size: 13px; font-weight: 700; color: #1d4ed8; margin: 14px 0 6px; }
+.cie-scroll { overflow-x: auto; max-width: 100%; border: 1px solid #dbeafe; border-radius: 10px; background: #fff; }
+.cie-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 12px; }
+.cie-table th { background: #eff6ff; color: #1e3a8a; text-align: left; padding: 8px; border-bottom: 1px solid #bfdbfe; white-space: nowrap; }
+.cie-table td { padding: 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; white-space: normal; }
+.cie-table tbody tr:nth-child(even) { background: #f8fafc; }
+.cie-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.cie-badge--ok   { background: #dcfce7; color: #166534; }
+.cie-badge--warn { background: #fef3c7; color: #92400e; }
+.cie-badge--no   { background: #e5e7eb; color: #374151; }
+.cie-muted { color: #6b7280; }
+.cie-empty { padding: 10px; border: 1px dashed #93c5fd; border-radius: 8px; color: #334155; background: #f8fbff; }
+.cie-link { color: #1d4ed8; text-decoration: none; font-weight: 600; }
+.cie-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="root">
+  <h2>📊 Sistema de Gestión de Informes CIE</h2>
+  <p>Consolidación de informes de regiones</p>
+
+  <section id="login-panel" class="cie-card cie-login">
+    <h3>🔐 Conexión a Google</h3>
+    <p>Conecte su cuenta para acceder a Google Sheets y Drive</p>
+    <div class="cie-hbox">
+      <button id="btn-conectar" class="cie-btn cie-btn--primary">🔌 Conectar</button>
+      <span id="login-status" class="cie-status cie-status--off">⚪ No conectado</span>
+    </div>
+    <div id="login-output" class="cie-output"></div>
+    <div id="iframe-warning" style="display:none" class="cie-card">
+      <p>⚠️ Si el boton Conectar no abre una ventana de login, abra esta pagina en una nueva pestana:</p>
+      <button id="btn-new-tab" class="cie-btn cie-btn--info">🔗 Abrir en nueva pestana</button>
+    </div>
+  </section>
+
+  <p>Configure el batch y, si lo necesita, use <b>Start at</b> para comenzar desde una posicion especifica.</p>
+
+  <div class="cie-hbox">
+    <label>Tamaño de lote <input type="number" id="int-batch-size" class="cie-input cie-input--small" value="10" min="1"></label>
+    <label>Empezar en <input type="number" id="int-start-at" class="cie-input cie-input--small" value="0" min="0"></label>
+    <button id="btn-leer-sheets" class="cie-btn cie-btn--info" disabled>📖 Leer Informes CIE</button>
+  </div>
+
+  <hr>
+
+  <div id="output-area" class="cie-output"></div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// =============================================================================
+// CONFIGURACION GLOBAL
+// =============================================================================
+const GOOGLE_CLIENT_ID = "950842522264-drkmot5s3h7t8718b9trvac05dv3qu83.apps.googleusercontent.com";
+const BUILD_TIMESTAMP = "2026-06-01T17:34:06-04:00";
+
+const SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/script.projects',
+  'https://www.googleapis.com/auth/gmail.send'
+].join(' ');
+
+const CONFIG_GLOBAL = {
+  CARPETA_CENTRAL_ID: '178dLaHh6JJ6WeQBnOkWkYeS7MsYC6QJB',
+  CARPETA_REGIONES_ID: '1AzAdUQTs0HCDxBH7o8b1jUwyqMVK6-B5',
+  API_DELAY: 5.2,
+};
+
+const CARPETA_CENTRAL_ID = CONFIG_GLOBAL.CARPETA_CENTRAL_ID;
+const CARPETA_REGIONES_ID = CONFIG_GLOBAL.CARPETA_REGIONES_ID;
+const API_DELAY_MS = CONFIG_GLOBAL.API_DELAY * 1000;
+const NOMBRE_MAESTRO = 'CIE_Datos_Maestros';
+
+const CONFIG_IDS = {
+  FOLDER_ID: CARPETA_CENTRAL_ID,
+  REGIONES_FOLDER_ID: CARPETA_REGIONES_ID,
+  MAESTRO_ID: null,
+  API_TRACE_SHEET_ID: null,
+};
+
+const CONFIG_NAMES = {
+  FOLDER_ID: 'central',
+  REGIONES_FOLDER_ID: 'regiones',
+  MAESTRO_ID: 'CIE_Datos_Maestros',
+  API_TRACE_FILE_ID: 'api_trace_informes_cie',
+};
+
+let configResuelta = false;
+
+const PROYECTOS_CIE = {
+  "CPE 2011": { nombre_completo: "Conectividad para le Educación 2011", descripcion: "Que los establecimientos educacionales cuenten y/o incrementen su conectividad a internet, de forma gratuita, para su uso educativo.", fecha: "A partir del año 2011 a la fecha.", beneficios: ["Conectividad", "Materiales"], icono: "🌐", color: "#1a73e8" },
+  "CPE 2030": { nombre_completo: "Conectividad para la Educación 2030", descripcion: "Entregar acceso a internet gratuito a los establecimientos educacionales, como apoyo al proceso educativo y administrativo.", fecha: "A partir del año 2020 a la fecha.", beneficios: ["Conectividad", "Materiales"], icono: "📡", color: "#34a853" },
+  "AC 2022": { nombre_completo: "Aulas Conectadas 2022", descripcion: "Llevar a los establecimientos a un nuevo estándar de acceso a internet en todas las aulas, para potenciar el aprendizaje con uso de recursos en línea.", fecha: "Segundo semestre año 2022 a la fecha.", beneficios: ["Infraestructura", "Conectividad", "Materiales", "Asesoría"], icono: "🏫", color: "#ea4335" },
+  "AC 2022 - 2da": { nombre_completo: "Aulas Conectadas 2022 - Segunda Convocatoria", descripcion: "Asesorar a los sostenedores y sus establecimientos para que alcancen un estándar de infraestructura de red de datos en las aulas.", fecha: "Segundo semestre año 2022 a la fecha.", beneficios: ["Materiales", "Asesoría"], icono: "🎓", color: "#ff6d01" },
+  "REAC RM": { nombre_completo: "Equipos Reacondicionados y Educación en Economía Circular 2023", descripcion: "Entregar equipamiento computacional reacondicionado y entrenamiento en economía circular.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "♻️", color: "#9c27b0" },
+  "KIT REV": { nombre_completo: "Kit Tecnológico para la Revinculación Educativa 2023", descripcion: "Entregar a los establecimientos que atienden a personas jóvenes y adultas, equipamiento TIC para enriquecer las experiencias de aprendizaje personalizado.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "🔄", color: "#00bcd4" },
+  "KIT TRANSF": { nombre_completo: "Kit Tecnológico para la Transformación Educativa 2023", descripcion: "Entregar a los establecimientos equipamiento TIC para enriquecer y potenciar experiencias de aprendizaje personalizado de acuerdo con sus prioridades y/o necesidades.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "🚀", color: "#607d8b" },
+  "A+S": { nombre_completo: "Aprendizaje + Servicio: Innovar para Transformar 2023", descripcion: "Fortalecer las capacidades de innovación de la comunidad educativa a través de experiencias con enfoque pedagógico de Aprendizaje + Servicio.", fecha: "Segundo semestre año 2023.", beneficios: ["Formación", "Materiales"], icono: "🤝", color: "#e91e63" },
+  "PDC 2024": { nombre_completo: "Protagonistas del Cambio: Formación y Tecnología para la Reactivación Educativa 2024", descripcion: "Fortalecer las capacidades de desarrollar proyectos de innovación en equipos pedagógicos, a través de formación, acompañamiento y entrega de equipamiento.", fecha: "Segundo semestre año 2024.", beneficios: ["Infraestructura", "Formación", "Materiales"], icono: "⭐", color: "#795548" },
+  "TDA 2025": { nombre_completo: "Tecnologías Digitales en Acción (TDA) 2025", descripcion: "Fortalecer el trabajo entre las y los docentes de la asignatura de Tecnología y las personas de la coordinación informática, para integrar pedagógicamente las tecnologías digitales.", fecha: "Segundo semestre año 2025.", beneficios: ["Formación", "Materiales"], icono: "💡", color: "#fbbc04" }
+};
+
+const OPCIONES_USO = [
+  "Seleccione...", "Nunca", "Casi Nunca (Menos de 1 vez al mes)",
+  "Ocasionalmente (1 o 2 veces al mes)", "Comúnmente (1 o 2 veces a la semana)",
+  "Casi siempre (3 o más veces a la semana)"
+];
+
+function generarColumnasFormulario() {
+  const columnas = [];
+  columnas.push('Sostenedor_Institucion', 'Sostenedor_RUT', 'Sostenedor_Correo', 'Sostenedor_Region');
+  columnas.push('Convenio_REX', 'Convenio_Fecha', 'Convenio_Cantidad_Escuelas');
+  for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
+    columnas.push(`${codigo}_Nota`);
+    columnas.push(`${codigo}_Pregunta_Respuesta`);
+    for (const beneficio of info.beneficios) {
+      columnas.push(`${codigo}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
+    }
+    columnas.push(`${codigo}_Comentarios`);
+  }
+  columnas.push('Comentarios_Finales_1', 'Comentarios_Finales_2', 'Comentarios_Finales_3');
+  columnas.push('Checkbox_Envio', 'Fecha_Envio', 'Estado_Formulario');
+  return columnas;
+}
+
+const COLUMNAS_FORMULARIO = generarColumnasFormulario();
+
+const COLUMNAS_METADATA = [
+  "ID_Registro", "Fecha_Extraccion", "Carpeta_Origen", "URL_Sheet",
+  "Hoja_Origen", "Numero_Observacion", "Fila_Valida", "Estado_Registro",
+  "Observaciones_Sistema", "Version"
+];
+
+function obtenerEncabezadosMaestro() {
+  return [...COLUMNAS_METADATA, ...COLUMNAS_FORMULARIO];
+}
+
+const PLACEHOLDER_PROYECTO_NO_EXISTE = "NO_EXISTE_EL_PROYECTO";
+
+// =============================================================================
+// DOM REFERENCES
+// =============================================================================
+const btnConectar = document.getElementById('btn-conectar');
+const loginStatus = document.getElementById('login-status');
+const loginOutput = document.getElementById('login-output');
+const btnLeerSheets = document.getElementById('btn-leer-sheets');
+const intBatchSize = document.getElementById('int-batch-size');
+const intStartAt = document.getElementById('int-start-at');
+const outputArea = document.getElementById('output-area');
+
+// =============================================================================
+// APP STATE
+// =============================================================================
+const appState = {
+  spreadsheetMaestro: null,
+  maestroId: null,
+};
+
+// =============================================================================
+// AUTH (GIS)
+// =============================================================================
+let tokenClient = null;
+let accessToken = null;
+let tokenExpiresAt = 0;
+const TOKEN_STORAGE_KEY = 'cie_access_token';
+
+function initGis() {
+  return new Promise((resolve) => {
+    if (typeof google === 'undefined' || typeof google.accounts === 'undefined') {
+      setTimeout(() => resolve(initGis()), 200);
+      return;
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      callback: '',
+      error_callback: (err) => console.warn('GIS error', err)
+    });
+    resolve();
+  });
+}
+
+function requestToken(interactive) {
+  return new Promise((resolve, reject) => {
+    if (!tokenClient) {
+      initGis().then(() => requestToken(interactive).then(resolve, reject));
+      return;
+    }
+    tokenClient.callback = (resp) => {
+      if (resp.error) return reject(resp);
+      accessToken = resp.access_token;
+      tokenExpiresAt = Date.now() + (resp.expires_in * 1000) - 60000;
+      sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken, tokenExpiresAt }));
+      resolve(resp);
+    };
+    tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+  });
+}
+
+async function ensureToken({ interactive = false } = {}) {
+  if (accessToken && Date.now() < tokenExpiresAt) return accessToken;
+  const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    if (Date.now() < parsed.tokenExpiresAt) {
+      accessToken = parsed.accessToken;
+      tokenExpiresAt = parsed.tokenExpiresAt;
+      return accessToken;
+    }
+  }
+  if (!interactive) throw new Error('No hay token valido. Pulse Conectar.');
+  await requestToken(true);
+  return accessToken;
+}
+
+function setLoginStatus(cls, msg) {
+  loginStatus.className = 'cie-status cie-status--' + cls;
+  loginStatus.textContent = msg;
+}
+
+// =============================================================================
+// API LAYER
+// =============================================================================
+const RETRIABLE = new Set([408, 429, 500, 502, 503, 504]);
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function apiFetch(url, init = {}, opts = {}) {
+  const maxRetries = opts.maxRetries ?? 3;
+  const baseDelay  = opts.baseDelay  ?? 10000;
+  const skipRetry  = opts.skipRetry  ?? false;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const token = await ensureToken({ interactive: false });
+    const headers = { ...(init.headers || {}), Authorization: `Bearer ${token}` };
+    if (init.body && typeof init.body === 'string' && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const resp = await fetch(url, { ...init, headers });
+    if (resp.ok) {
+      const ct = resp.headers.get('content-type') || '';
+      return ct.includes('application/json') ? resp.json() : resp.text();
+    }
+    const status = resp.status;
+    const retriable = RETRIABLE.has(status);
+    if (skipRetry || !retriable || attempt === maxRetries - 1) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`HTTP ${status}: ${text.slice(0, 500)}`);
+    }
+    const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+    console.warn(`API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
+    await sleep(wait);
+  }
+}
+
+async function logApiTrace(message) {
+  try {
+    const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    if (!CONFIG_IDS.API_TRACE_SHEET_ID) {
+      CONFIG_IDS.API_TRACE_SHEET_ID = await ensureTraceSheet();
+    }
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG_IDS.API_TRACE_SHEET_ID}/values/Sheet1!A:A:append?valueInputOption=USER_ENTERED`,
+      { method: 'POST', body: JSON.stringify({ values: [[ts, message]] }) }
+    );
+  } catch (e) { console.warn('trace', e); }
+}
+
+async function ensureTraceSheet() {
+  const q = "name='api_trace_informes_cie' and trashed=false and mimeType='application/vnd.google-apps.spreadsheet' and '" + CARPETA_CENTRAL_ID + "' in parents";
+  const r = await apiFetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true`);
+  if (r.files && r.files.length > 0) return r.files[0].id;
+  const body = JSON.stringify({ name: 'api_trace_informes_cie', mimeType: 'application/vnd.google-apps.spreadsheet', parents: [CARPETA_CENTRAL_ID] });
+  const created = await apiFetch('https://www.googleapis.com/drive/v3/files', { method: 'POST', body });
+  return created.id;
+}
+
+// =============================================================================
+// TEXT UTILS
+// =============================================================================
+function normalizarTexto(texto) {
+  if (!texto) return '';
+  texto = String(texto).toLowerCase().trim();
+  texto = texto.replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u');
+  texto = texto.replace(/ñ/g, 'n');
+  texto = texto.replace(/[_-]/g, ' ');
+  texto = texto.replace(/\s+/g, ' ').trim();
+  return texto;
+}
+
+function normalizarTituloHoja(titulo) {
+  let t = normalizarTexto(titulo);
+  for (const s of ['📊', '📝', '✅', '📌', '🚀', '✨', '•', '·']) t = t.replace(new RegExp(s, 'g'), ' ');
+  return t.replace(/\s+/g, ' ').trim();
+}
+
+function detectarProyectoActual(celdaTexto) {
+  const celdaNorm = normalizarTexto(celdaTexto);
+  if (!celdaNorm) return null;
+  const tokensExcluir = ['proyectos activos', 'evaluacion por proyecto', 'matriz de escuelas', 'datos del sostenedor', 'datos del convenio'];
+  if (tokensExcluir.some(x => celdaNorm.includes(x))) return null;
+  for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
+    const codigoNorm = normalizarTexto(codigo);
+    const nombreNorm = normalizarTexto(info.nombre_completo);
+    if (codigoNorm.includes(celdaNorm) || celdaNorm.includes(codigoNorm) || nombreNorm.includes(celdaNorm) || celdaNorm.includes(nombreNorm)) return codigo;
+  }
+  return null;
+}
+
+function extraerRexDeNombreArchivo(nombreArchivo) {
+  const s = String(nombreArchivo || '');
+  let m = s.match(/-\s*([A-Z0-9\-/]+)\s*-/);
+  if (m) {
+    const rex = m[1].trim();
+    if (rex && rex !== 'CIE' && rex !== 'INFORME') return rex;
+  }
+  m = s.match(/REX[\s\-]*([0-9]+[A-Z0-9\-/]*)/i);
+  if (m) return `REX-${m[1]}`;
+  return 'REX_DESCONOCIDO';
+}
+
+function textoLimpio(valor) {
+  if (valor === null || valor === undefined || (typeof valor === 'number' && isNaN(valor))) return '';
+  const texto = String(valor).trim();
+  return texto.toLowerCase() === 'nan' ? '' : texto;
+}
+
+function esValorPlaceholder(valor) { return textoLimpio(valor) === PLACEHOLDER_PROYECTO_NO_EXISTE; }
+
+function htmlEscape(valor) {
+  const v = textoLimpio(valor);
+  return v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function valorHtml(valor, vacio = '(vacio)') {
+  const texto = textoLimpio(valor);
+  return texto ? htmlEscape(texto) : `<span class="cie-muted">${htmlEscape(vacio)}</span>`;
+}
+
+function normalizarNumeroObservacion(valor) {
+  try { return parseInt(String(valor).trim() || '0', 10) || 0; } catch (e) { return 0; }
+}
+
+function obtenerColumnasProyecto(proyecto) {
+  const columnas = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Comentarios`];
+  for (const beneficio of (PROYECTOS_CIE[proyecto] || {}).beneficios || []) {
+    columnas.push(`${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
+  }
+  return columnas;
+}
+
+function proyectoEstaMarcadoComoInexistente(row, proyecto) {
+  const columnas = obtenerColumnasProyecto(proyecto);
+  let tieneColumnas = false;
+  for (const col of columnas) {
+    if (!(col in row)) continue;
+    tieneColumnas = true;
+    if (!esValorPlaceholder(row[col] || '')) return false;
+  }
+  return tieneColumnas;
+}
+
+function detectarProyectosDesdeRow(row) {
+  const visibles = [];
+  for (const proyecto of Object.keys(PROYECTOS_CIE)) {
+    if (!proyectoEstaMarcadoComoInexistente(row, proyecto)) visibles.push(proyecto);
+  }
+  return visibles;
+}
+
+function aplicarPlaceholderProyectosNoPresentes(datosFormulario, proyectosEvaluados) {
+  const presentes = new Set(proyectosEvaluados || []);
+  for (const [proyecto, info] of Object.entries(PROYECTOS_CIE)) {
+    if (presentes.has(proyecto)) continue;
+    const columnasProyecto = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Comentarios`];
+    for (const beneficio of info.beneficios || []) {
+      columnasProyecto.push(`${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
+    }
+    for (const col of columnasProyecto) {
+      if (!(col in datosFormulario)) continue;
+      const actual = textoLimpio(datosFormulario[col] || '');
+      if (actual && !esValorPlaceholder(actual)) continue;
+      datosFormulario[col] = PLACEHOLDER_PROYECTO_NO_EXISTE;
+    }
+  }
+  return datosFormulario;
+}
+
+function obtenerIndiceColumna(encabezados, nombreColumna) {
+  const idx = encabezados.findIndex(h => String(h || '').trim() === nombreColumna);
+  return idx >= 0 ? idx : null;
+}
+
+function indiceALetraColumna(idx) {
+  let letras = '';
+  let n = idx + 1;
+  while (n > 0) {
+    const resto = (n - 1) % 26;
+    letras = String.fromCharCode(65 + resto) + letras;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letras;
+}
+
+function formatNow() {
+  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+}
+
+// =============================================================================
+// SHEETS / DRIVE HELPERS
+// =============================================================================
+async function leerValoresHoja(spreadsheetId, rango) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rango)}`;
+  const data = await apiFetch(url);
+  return data.values || [];
+}
+
+async function obtenerHojasDelSheet(spreadsheetId) {
+  const data = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`);
+  const hojas = (data.sheets || []).map(s => s.properties).filter(p => p && p.title);
+  const result = { original: null, observaciones: [] };
+  for (const hoja of hojas) {
+    const t = normalizarTituloHoja(hoja.title);
+    if (t.includes('observacion') || t.includes('observaciones') || hoja.title.includes('📝')) {
+      result.observaciones.push(hoja);
+    } else if (!hoja.title.includes('🔒') && !t.includes('solo lectura') && !hoja.title.includes('banner')) {
+      result.original = hoja;
+    }
+  }
+  if (!result.original && hojas.length > 0) {
+    result.original = hojas[0];
+  }
+  return result;
+}
+
+async function _listarSubcarpetasRecursivo(folderId) {
+  const pendientes = [folderId];
+  const visitados = new Set();
+  const carpetas = new Set([folderId]);
+  while (pendientes.length > 0) {
+    const fid = pendientes.shift();
+    if (visitados.has(fid)) continue;
+    visitados.add(fid);
+    const q = `'${fid}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    let pageToken = null;
+    do {
+      const params = new URLSearchParams({ q, spaces: 'drive', fields: 'nextPageToken,files(id,name)', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', pageSize: '200' });
+      if (pageToken) params.set('pageToken', pageToken);
+      const results = await apiFetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+      for (const item of (results.files || [])) {
+        if (item.id && !carpetas.has(item.id)) { carpetas.add(item.id); pendientes.push(item.id); }
+      }
+      pageToken = results.nextPageToken || null;
+    } while (pageToken);
+  }
+  return [...carpetas];
+}
+
+async function listarSheetsEnCarpeta(carpetaId) {
+  const folderIds = await _listarSubcarpetasRecursivo(carpetaId);
+  const sheets = [];
+  for (const fid of folderIds) {
+    const q = `'${fid}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
+    let pageToken = null;
+    do {
+      const params = new URLSearchParams({ q, spaces: 'drive', fields: 'nextPageToken,files(id,name,createdTime,modifiedTime)', includeItemsFromAllDrives: 'true', supportsAllDrives: 'true', pageSize: '200' });
+      if (pageToken) params.set('pageToken', pageToken);
+      const results = await apiFetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+      sheets.push(...(results.files || []));
+      pageToken = results.nextPageToken || null;
+    } while (pageToken);
+  }
+  sheets.sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()) || (a.id || '').localeCompare(b.id || ''));
+  return sheets;
+}
+
+// =============================================================================
+// CONFIG RESOLVER
+// =============================================================================
+async function validarCarpetaDrive(folderId, label) {
+  const meta = await apiFetch(`https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType&supportsAllDrives=true`);
+  if (meta.mimeType !== 'application/vnd.google-apps.folder') throw new Error(`${label} no corresponde a una carpeta de Drive valida.`);
+  return meta;
+}
+
+async function buscarDriveIdPorNombre(name, mimeType, parentId) {
+  const parts = [`name='${name.replace(/'/g, "\\'")}'`, `mimeType='${mimeType}'`, 'trashed=false'];
+  if (parentId) parts.push(`'${parentId}' in parents`);
+  const q = parts.join(' and ');
+  const results = await apiFetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true&pageSize=50`);
+  return (results.files && results.files.length > 0) ? results.files[0].id : null;
+}
+
+async function validarIdYMime(fileId, mimeEsperado, label) {
+  if (!fileId) throw new Error(`No se resolvio ID obligatorio: ${label}`);
+  const meta = await apiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType&supportsAllDrives=true`);
+  if (mimeEsperado && meta.mimeType !== mimeEsperado) throw new Error(`${label} no tiene mime esperado.`);
+  return meta;
+}
+
+async function resolverConfiguracionIds(verbose = true) {
+  if (configResuelta) return CONFIG_IDS;
+  await validarIdYMime(CONFIG_IDS.FOLDER_ID, 'application/vnd.google-apps.folder', 'CARPETA_CENTRAL_ID');
+  await validarIdYMime(CONFIG_IDS.REGIONES_FOLDER_ID, 'application/vnd.google-apps.folder', 'CARPETA_REGIONES_ID');
+
+  if (!CONFIG_IDS.MAESTRO_ID) {
+    CONFIG_IDS.MAESTRO_ID = await buscarDriveIdPorNombre(CONFIG_NAMES.MAESTRO_ID, 'application/vnd.google-apps.spreadsheet', CONFIG_IDS.FOLDER_ID);
+  }
+  if (CONFIG_IDS.MAESTRO_ID) {
+    await validarIdYMime(CONFIG_IDS.MAESTRO_ID, 'application/vnd.google-apps.spreadsheet', 'MAESTRO_ID');
+  }
+  configResuelta = true;
+  if (verbose) {
+    print(`✅ CARPETA_CENTRAL_ID: ${CONFIG_IDS.FOLDER_ID}`);
+    print(`✅ CARPETA_REGIONES_ID: ${CONFIG_IDS.REGIONES_FOLDER_ID}`);
+    print(`✅ MAESTRO_ID: ${CONFIG_IDS.MAESTRO_ID}`);
+  }
+  return CONFIG_IDS;
+}
+
+// =============================================================================
+// DATA EXTRACTION
+// =============================================================================
+function valorColumna(row, idx) {
+  return (row && row.length > idx) ? String(row[idx] || '').trim() : '';
+}
+
+function _esCheckboxMarcado(valor) {
+  const v = String(valor || '').trim().toUpperCase();
+  return ['TRUE', 'VERDADERO', 'X', '☑', 'SI', 'SÍ', '✓', '✔', 'YES'].includes(v);
+}
+
+function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObservacion, carpetaNombre, nombreArchivo) {
+  const datosFormulario = {};
+  for (const c of COLUMNAS_FORMULARIO) datosFormulario[c] = '';
+
+  const datos = {
+    spreadsheet_id: spreadsheetId,
+    spreadsheet_url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
+    hoja: sheetName,
+    numero_observacion: numeroObservacion,
+    es_observacion: numeroObservacion > 0,
+    carpeta_nombre: carpetaNombre || '',
+    fecha_extraccion: formatNow(),
+    proyectos_evaluados: [],
+    tiene_datos_encuesta: false,
+    esta_enviado: false,
+    fecha_envio_detectada: '',
+    formulario: datosFormulario
+  };
+
+  let proyectoActual = null;
+  let beneficiosProyecto = [];
+
+  for (const row of allValues) {
+    if (row.length < 2) continue;
+    const celdaB = valorColumna(row, 1);
+    const celdaC = valorColumna(row, 2);
+    const celdaBNorm = normalizarTexto(celdaB);
+
+    if (celdaB && !celdaB.startsWith('=')) {
+      const nuevoProy = detectarProyectoActual(celdaB);
+      if (nuevoProy) {
+        if (proyectoActual !== nuevoProy) {
+          proyectoActual = nuevoProy;
+          beneficiosProyecto = [...(PROYECTOS_CIE[proyectoActual].beneficios)];
+        }
+        if (!datos.proyectos_evaluados.includes(proyectoActual)) datos.proyectos_evaluados.push(proyectoActual);
+      }
+    }
+
+    if (celdaB.includes('REX CIE:')) { datosFormulario['Convenio_REX'] = celdaC; continue; }
+    if (celdaB.includes('Fecha Convenio CIE:')) { datosFormulario['Convenio_Fecha'] = celdaC; continue; }
+    if (celdaB.includes('Cantidad de Escuelas:')) { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
+    if (celdaB.includes('Institución:')) { if (celdaC) datosFormulario['Sostenedor_Institucion'] = celdaC; continue; }
+    if (celdaB.includes('Institución:')) continue;
+    if (celdaB.includes('RUT Sostenedor:')) { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
+    if (celdaB.includes('Correo Institucional:')) { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
+    if (celdaB.includes('Región:')) { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
+
+    if ((celdaBNorm === 'nota:' || celdaBNorm === 'nota') && celdaC && celdaC !== 'Seleccione...') {
+      if (proyectoActual) {
+        const colNota = `${proyectoActual}_Nota`;
+        if (colNota in datosFormulario) { datosFormulario[colNota] = celdaC; datos.tiene_datos_encuesta = true; }
+      }
+      continue;
+    }
+    if (proyectoActual && (celdaBNorm === 'respuesta:' || celdaBNorm === 'respuesta')) {
+      if (celdaC) {
+        const colPreg = `${proyectoActual}_Pregunta_Respuesta`;
+        if (colPreg in datosFormulario) { datosFormulario[colPreg] = celdaC; datos.tiene_datos_encuesta = true; }
+      }
+      continue;
+    }
+    if (proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
+      let beneficioTexto = celdaB.trim();
+      const bullets = ['•', '●', '-', '·', '»', '>', '*'];
+      let tieneBullet = false;
+      for (const b of bullets) {
+        if (beneficioTexto.startsWith(b)) { tieneBullet = true; beneficioTexto = beneficioTexto.slice(b.length).trim(); break; }
+      }
+      if (tieneBullet && beneficioTexto) {
+        const bTextNorm = normalizarTexto(beneficioTexto);
+        for (const beneficio of beneficiosProyecto) {
+          const bNorm = normalizarTexto(beneficio);
+          if (bNorm === bTextNorm || bNorm.includes(bTextNorm) || bTextNorm.includes(bNorm)) {
+            const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
+            if (colFreq in datosFormulario) { datosFormulario[colFreq] = celdaC; datos.tiene_datos_encuesta = true; }
+            break;
+          }
+        }
+        continue;
+      }
+    }
+    if (proyectoActual && (celdaBNorm === 'comentario:' || celdaBNorm === 'comentario')) {
+      if (celdaC) {
+        const colCom = `${proyectoActual}_Comentarios`;
+        if (colCom in datosFormulario) { datosFormulario[colCom] = celdaC; datos.tiene_datos_encuesta = true; }
+      }
+      continue;
+    }
+    if (celdaBNorm.includes('recomendacion, sugerencia o reclamo') || celdaBNorm.includes('indiquenos cualquier')) {
+      if (celdaC) {
+        datosFormulario['Comentarios_Finales_1'] = celdaC;
+        datosFormulario['Comentarios_Finales_2'] = '';
+        datosFormulario['Comentarios_Finales_3'] = '';
+        datos.tiene_datos_encuesta = true;
+      }
+      continue;
+    }
+    if (celdaB.includes('MARQUE AQUÍ PARA CONFIRMAR ENVÍO') || celdaB.includes('MARQUE AQUI PARA CONFIRMAR ENVIO')) {
+      datosFormulario['Checkbox_Envio'] = _esCheckboxMarcado(celdaC) ? 'TRUE' : 'FALSE';
+      if (datosFormulario['Checkbox_Envio'] === 'TRUE') datos.esta_enviado = true;
+      continue;
+    }
+    if (celdaBNorm.includes('fecha de envio') || celdaBNorm.includes('fecha envio')) {
+      if (celdaC) { datosFormulario['Fecha_Envio'] = celdaC; datos.fecha_envio_detectada = celdaC; }
+      continue;
+    }
+    if (celdaBNorm === 'estado:' || celdaBNorm === 'estado') {
+      if (celdaC) {
+        datosFormulario['Estado_Formulario'] = celdaC;
+        if (celdaC.toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
+        if (celdaC.toUpperCase().includes('APROBADO')) {
+          print(`   ⏭️ Omitiendo sheet '${sheetName}' con estado Aprobado`);
+          return null;
+        }
+      }
+      continue;
+    }
+  }
+
+  aplicarPlaceholderProyectosNoPresentes(datosFormulario, datos.proyectos_evaluados);
+  datosFormulario['Comentarios_Finales_2'] = '';
+  datosFormulario['Comentarios_Finales_3'] = '';
+  datos.formulario = datosFormulario;
+  return datos;
+}
+
+function _buscarLabelYValor(row) {
+  const label = valorColumna(row, 1);
+  const valor = valorColumna(row, 2);
+  if (!label || label.startsWith('=')) return { label: '', labelNorm: '', valor: '' };
+  const textoNorm = normalizarTexto(label);
+  if (['banner', 'ministerio de educacion', 'centro de innovacion'].some(t => textoNorm.includes(t))) return { label: '', labelNorm: '', valor: '' };
+  const hasColon = label.includes(':');
+  const isCheckbox = textoNorm.includes('marque aqui para confirmar envio');
+  const isEstado = textoNorm === 'estado';
+  if (hasColon || isCheckbox || isEstado) {
+    const v = (valor === '' || valor === 'Seleccione...') ? '' : valor;
+    return { label, labelNorm: textoNorm, valor: v };
+  }
+  return { label: '', labelNorm: '', valor: '' };
+}
+
+function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservacion = 0, carpetaNombre = null, nombreArchivo = null) {
+  const datos = _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObservacion, carpetaNombre, nombreArchivo);
+  if (!datos || datos.tiene_error) return datos;
+
+  try {
+    const formulario = datos.formulario || {};
+    let proyectoActual = null;
+
+    for (const row of allValues) {
+      if (!row || row.length < 2) continue;
+      const celdaB = valorColumna(row, 1);
+      if (celdaB && !celdaB.startsWith('=')) {
+        const nuevoProy = detectarProyectoActual(celdaB);
+        if (nuevoProy) proyectoActual = nuevoProy;
+      }
+      const { label, labelNorm, valor } = _buscarLabelYValor(row);
+      if (!label) continue;
+
+      if (!formulario['Convenio_REX'] && labelNorm.includes('rex cie')) formulario['Convenio_REX'] = valor;
+      if (!formulario['Convenio_Fecha'] && labelNorm.includes('fecha convenio cie')) formulario['Convenio_Fecha'] = valor;
+      if (!formulario['Convenio_Cantidad_Escuelas'] && labelNorm.includes('cantidad de escuelas')) formulario['Convenio_Cantidad_Escuelas'] = valor;
+      if (!formulario['Sostenedor_Institucion'] && labelNorm.includes('institucion')) formulario['Sostenedor_Institucion'] = valor;
+      if (!formulario['Sostenedor_RUT'] && labelNorm.includes('rut sostenedor')) formulario['Sostenedor_RUT'] = valor;
+      if (!formulario['Sostenedor_Correo'] && labelNorm.includes('correo institucional')) formulario['Sostenedor_Correo'] = valor;
+      if (!formulario['Sostenedor_Region'] && labelNorm.includes('region')) formulario['Sostenedor_Region'] = valor;
+
+      if (proyectoActual && !formulario[`${proyectoActual}_Pregunta_Respuesta`] && (labelNorm === 'respuesta:' || labelNorm === 'respuesta')) {
+        formulario[`${proyectoActual}_Pregunta_Respuesta`] = valor;
+        if (valor) datos.tiene_datos_encuesta = true;
+      }
+      if (proyectoActual && !formulario[`${proyectoActual}_Comentarios`] && (labelNorm === 'comentario:' || labelNorm === 'comentario')) {
+        formulario[`${proyectoActual}_Comentarios`] = valor;
+        if (valor) datos.tiene_datos_encuesta = true;
+      }
+      if (!formulario['Comentarios_Finales_1'] && (labelNorm.includes('indiquenos cualquier') || labelNorm.includes('recomendacion, sugerencia o reclamo'))) {
+        formulario['Comentarios_Finales_1'] = valor;
+        formulario['Comentarios_Finales_2'] = '';
+        formulario['Comentarios_Finales_3'] = '';
+        if (valor) datos.tiene_datos_encuesta = true;
+      }
+      if (!formulario['Checkbox_Envio'] && labelNorm.includes('marque aqui para confirmar envio')) {
+        const v = String(valor).trim().toUpperCase();
+        formulario['Checkbox_Envio'] = ['TRUE', 'VERDADERO', 'X', '☑', 'SI', 'SÍ', '✓', '✔', 'YES'].includes(v) ? 'TRUE' : 'FALSE';
+        if (formulario['Checkbox_Envio'] === 'TRUE') datos.esta_enviado = true;
+      }
+      if (!formulario['Fecha_Envio'] && labelNorm.includes('fecha de envio')) {
+        formulario['Fecha_Envio'] = valor;
+        if (valor) datos.fecha_envio_detectada = valor;
+      }
+      if (!formulario['Estado_Formulario'] && (labelNorm === 'estado:' || labelNorm === 'estado')) {
+        formulario['Estado_Formulario'] = valor;
+        if (String(valor).toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
+      }
+    }
+    datos.formulario = formulario;
+  } catch (e) { /* fallback silently */ }
+  return datos;
+}
+
+async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNombre = null, nombreArchivo = null, returnDiagnostico = false) {
+  const diagnostico = {
+    spreadsheet_id: spreadsheetId, archivo: nombreArchivo || spreadsheetId,
+    hojas_total: 0, hojas_procesadas: 0, hoja_original: '', hojas_observaciones: 0,
+    registros_extraidos: 0, registros_error: 0, hojas_omitidas_aprobado: 0, omitido: false,
+    causa_omision: '', errores: []
+  };
+
+  try {
+    diagnostico.archivo = nombreArchivo || spreadsheetId;
+    const resultados = [];
+
+    if (hojaNombre) {
+      const allValues = await leerValoresHoja(spreadsheetId, hojaNombre);
+      diagnostico.hojas_total = 1;
+      diagnostico.hojas_procesadas = 1;
+      diagnostico.hoja_original = hojaNombre;
+      const datos = extraerDatosDeHoja(spreadsheetId, hojaNombre, allValues, 0, carpetaNombre, nombreArchivo);
+      if (datos) resultados.push(datos);
+      else diagnostico.hojas_omitidas_aprobado++;
+    } else {
+      const hojasClasificadas = await obtenerHojasDelSheet(spreadsheetId);
+      const hojaOriginal = hojasClasificadas.original;
+      const hojasObs = hojasClasificadas.observaciones;
+      diagnostico.hojas_original = hojaOriginal ? hojaOriginal.title : '';
+      diagnostico.hojas_observaciones = hojasObs.length;
+      diagnostico.hojas_total = 1 + hojasObs.length + (hojaOriginal ? 0 : 0);
+
+      if (hojaOriginal) {
+        diagnostico.hojas_procesadas++;
+        const allOrig = await leerValoresHoja(spreadsheetId, hojaOriginal.title);
+        const datosOrig = extraerDatosDeHoja(spreadsheetId, hojaOriginal.title, allOrig, 0, carpetaNombre, nombreArchivo);
+        if (datosOrig) resultados.push(datosOrig);
+        else diagnostico.hojas_omitidas_aprobado++;
+      }
+
+      for (let i = 0; i < hojasObs.length; i++) {
+        diagnostico.hojas_procesadas++;
+        const allObs = await leerValoresHoja(spreadsheetId, hojasObs[i].title);
+        const datosObs = extraerDatosDeHoja(spreadsheetId, hojasObs[i].title, allObs, i + 1, carpetaNombre, nombreArchivo);
+        if (datosObs) resultados.push(datosObs);
+        else diagnostico.hojas_omitidas_aprobado++;
+      }
+    }
+
+    diagnostico.registros_extraidos = resultados.length;
+    diagnostico.registros_error = resultados.filter(d => d.tiene_error).length;
+
+    if (resultados.length === 0) {
+      diagnostico.omitido = true;
+      if (diagnostico.hojas_procesadas === 0) diagnostico.causa_omision = 'No se detectaron hojas procesables';
+      else if (diagnostico.hojas_omitidas_aprobado === diagnostico.hojas_procesadas) diagnostico.causa_omision = 'Todas las hojas estan en estado APROBADO';
+      else diagnostico.causa_omision = 'No se extrajeron registros validos';
+    }
+
+    return returnDiagnostico ? [resultados, diagnostico] : resultados;
+  } catch (e) {
+    const rexExtraido = extraerRexDeNombreArchivo(nombreArchivo || spreadsheetId);
+    const datosFormularioError = {};
+    for (const c of COLUMNAS_FORMULARIO) datosFormularioError[c] = '';
+    datosFormularioError['Convenio_REX'] = rexExtraido;
+    datosFormularioError['Estado_Formulario'] = 'ERROR en la captura de informacion';
+    const datosError = {
+      spreadsheet_id: spreadsheetId, spreadsheet_url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
+      hoja: 'N/A', numero_observacion: 0, es_observacion: false, carpeta_nombre: carpetaNombre || '',
+      fecha_extraccion: formatNow(), proyectos_evaluados: [], tiene_datos_encuesta: false,
+      esta_enviado: false, fecha_envio_detectada: '', tiene_error: true, mensaje_error: String(e),
+      formulario: datosFormularioError
+    };
+    diagnostico.omitido = true;
+    diagnostico.causa_omision = `Error: ${e}`;
+    diagnostico.errores.push(String(e));
+    diagnostico.registros_error = 1;
+    return returnDiagnostico ? [[datosError], diagnostico] : [datosError];
+  }
+}
+
+// =============================================================================
+// MAESTRO OPERATIONS
+// =============================================================================
+async function crearObtenerMaestro() {
+  await resolverConfiguracionIds(true);
+  const maestroId = CONFIG_IDS.MAESTRO_ID;
+  if (!maestroId) throw new Error("No se encontro MAESTRO_ID en central.");
+  appState.maestroId = maestroId;
+  print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
+  return maestroId;
+}
+
+async function sincronizarEncabezadosMaestro(spreadsheetId) {
+  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1!1:1');
+  const existing = allValues.length > 0 ? allValues[0] : [];
+  const expected = obtenerEncabezadosMaestro();
+  if (existing.length >= expected.length) return;
+  await apiFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!1:1?valueInputOption=RAW`,
+    { method: 'PUT', body: JSON.stringify({ range: 'Sheet1!1:1', values: [expected] }) }
+  );
+  await sleep(API_DELAY_MS);
+}
+
+async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenio, numeroObservacion = 0) {
+  const idxId = obtenerIndiceColumna(encabezados, 'Convenio_REX');
+  const idxFilaValida = obtenerIndiceColumna(encabezados, 'Fila_Valida');
+  const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
+  const idxNumObs = obtenerIndiceColumna(encabezados, 'Numero_Observacion');
+
+  if (idxId === null || idxFilaValida === null) return { existe: false, estado: null, fila_num: null, accion: 'procesar_normal' };
+
+  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const filasValidas = [];
+
+  for (let i = 1; i < allValues.length; i++) {
+    const row = allValues[i];
+    if (String(row[idxId] || '').trim() !== String(idConvenio).trim()) continue;
+    if (String(row[idxFilaValida] || '').trim().toLowerCase() !== 'valid') continue;
+    const estado = idxEstado !== null && row.length > idxEstado ? String(row[idxEstado] || '').trim() : '';
+    let numObsFila = 0;
+    if (idxNumObs !== null && row.length > idxNumObs) {
+      try { numObsFila = parseInt(row[idxNumObs], 10) || 0; } catch (e) {}
+    }
+    filasValidas.push({ fila_num: i + 1, estado, numero_observacion: numObsFila });
+  }
+
+  if (filasValidas.length === 0) return { existe: false, estado: null, fila_num: null, accion: 'procesar_normal' };
+
+  const filaAprobada = filasValidas.find(f => f.estado.toUpperCase() === 'APROBADO');
+  if (filaAprobada) return { existe: true, estado: filaAprobada.estado, fila_num: filaAprobada.fila_num, accion: 'skip' };
+
+  if (numeroObservacion > 0) {
+    const filaOrig = filasValidas.find(f => f.numero_observacion === 0);
+    if (filaOrig) return { existe: true, estado: filaOrig.estado, fila_num: filaOrig.fila_num, accion: 'marcar_observado' };
+  }
+
+  return { existe: true, estado: filasValidas[0].estado, fila_num: filasValidas[0].fila_num, accion: 'procesar_normal' };
+}
+
+async function agregarDatosAMaestro(spreadsheetId, datosList) {
+  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  let encabezadosMaestro = allValues.length > 0 ? allValues[0] : [];
+  const encabezadosEsperados = obtenerEncabezadosMaestro();
+  const columnasCriticas = new Set(['ID_Registro', 'Fila_Valida', 'Estado_Registro']);
+
+  if (!encabezadosMaestro.length || ![...columnasCriticas].every(c => encabezadosMaestro.includes(c))) {
+    await sincronizarEncabezadosMaestro(spreadsheetId);
+    await sleep(API_DELAY_MS);
+    const refetched = await leerValoresHoja(spreadsheetId, 'Sheet1!1:1');
+    encabezadosMaestro = refetched.length > 0 ? refetched[0] : [];
+  }
+
+  print("🔍 Verificando estados en maestro...");
+  const datosAProcesar = [];
+  const datosOmitidos = [];
+  const filasAMarcarObservado = [];
+
+  for (const datos of datosList) {
+    const formulario = datos.formulario || {};
+    const idConvenio = formulario['Convenio_REX'] || '';
+    const numObs = datos.numero_observacion || 0;
+    if (!idConvenio) { datosAProcesar.push(datos); continue; }
+
+    const verificacion = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenio, numObs);
+    if (verificacion.accion === 'skip') {
+      datosOmitidos.push({ convenio: idConvenio, razon: 'Aprobado' });
+    } else if (verificacion.accion === 'marcar_observado') {
+      if (numObs > 0) {
+        const verOrig = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenio, 0);
+        if (verOrig.existe && verOrig.fila_num) filasAMarcarObservado.push({ fila_num: verOrig.fila_num, idConvenio });
+      }
+      datosAProcesar.push(datos);
+    } else {
+      datosAProcesar.push(datos);
+    }
+  }
+
+  for (const item of filasAMarcarObservado) {
+    const idxEstado = obtenerIndiceColumna(encabezadosMaestro, 'Estado_Registro');
+    if (idxEstado !== null) {
+      await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${indiceALetraColumna(idxEstado)}${item.fila_num}?valueInputOption=USER_ENTERED`,
+        { method: 'PUT', body: JSON.stringify({ values: [['Observado']] }) }
+      );
+    }
+    await sleep(API_DELAY_MS);
+  }
+
+  if (datosOmitidos.length > 0) print(`   ⏭️ Total omitidos: ${datosOmitidos.length}`);
+  if (!datosAProcesar.length) return 0;
+
+  const allRefetched = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const ultimaFila = allRefetched.length;
+  const idBase = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
+
+  const filasNuevas = [];
+  for (let i = 0; i < datosAProcesar.length; i++) {
+    const datos = datosAProcesar[i];
+    const estaEnviado = datos.esta_enviado || false;
+    const tieneDatos = datos.tiene_datos_encuesta || false;
+    const estado = estaEnviado ? 'Enviado' : (tieneDatos ? 'Llenado' : 'Pendiente');
+    const numObs = datos.numero_observacion || 0;
+    const formulario = datos.formulario || {};
+
+    const fila = [];
+    for (const col of encabezadosMaestro) {
+      if (col === 'ID_Registro') {
+        const obsSuffix = numObs > 0 ? `-obs${numObs}` : '';
+        const envSuffix = estaEnviado ? '-env' : '';
+        fila.push(`REG-${idBase}-${String(i + 1).padStart(3, '0')}${obsSuffix}${envSuffix}`);
+      } else if (col === 'Fecha_Extraccion') fila.push(datos.fecha_extraccion || '');
+      else if (col === 'Carpeta_Origen') fila.push(datos.carpeta_nombre || '');
+      else if (col === 'URL_Sheet') fila.push(datos.spreadsheet_url || '');
+      else if (col === 'Hoja_Origen') fila.push(datos.hoja || '');
+      else if (col === 'Numero_Observacion') fila.push(String(numObs));
+      else if (col === 'Fila_Valida') fila.push('valid');
+      else if (col === 'Estado_Registro') fila.push(estado);
+      else if (col === 'Observaciones_Sistema') {
+        const notas = [];
+        if (numObs > 0) notas.push(`Observacion #${numObs}`);
+        if (estaEnviado) {
+          const fechaEnv = datos.fecha_envio_detectada || '';
+          notas.push(fechaEnv ? `Enviado el ${fechaEnv}` : 'Enviado');
+        }
+        fila.push(notas.join(' | '));
+      } else if (col === 'Version') fila.push('1');
+      else fila.push(formulario[col] || '');
+    }
+    filasNuevas.push(fila);
+  }
+
+  if (filasNuevas.length > 0) {
+    await sleep(API_DELAY_MS);
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${ultimaFila + 1}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      { method: 'POST', body: JSON.stringify({ values: filasNuevas }) }
+    );
+    const enviados = datosAProcesar.filter(d => d.esta_enviado).length;
+    const llenados = datosAProcesar.filter(d => d.tiene_datos_encuesta && !d.esta_enviado).length;
+    const pendientes = datosAProcesar.filter(d => !d.tiene_datos_encuesta && !d.esta_enviado).length;
+    print(`✅ ${filasNuevas.length} registros agregados al maestro (${encabezadosMaestro.length} columnas)`);
+    print(`   📨 Enviados: ${enviados} | ✏️ Llenados: ${llenados} | ⏳ Pendientes: ${pendientes}`);
+  }
+  return filasNuevas.length;
+}
+
+async function asegurarUnicidadFilasValidas(spreadsheetId) {
+  await sleep(API_DELAY_MS);
+  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  if (!allValues.length) return { error: false, convenios_unicos: 0, duplicados_corregidos: 0 };
+
+  const encabezados = allValues[0];
+  const idxId = obtenerIndiceColumna(encabezados, 'Convenio_REX');
+  const idxFilaValida = obtenerIndiceColumna(encabezados, 'Fila_Valida');
+  const idxFecha = obtenerIndiceColumna(encabezados, 'Fecha_Extraccion');
+  const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
+  if (idxId === null || idxFilaValida === null) return { error: true };
+
+  print("🔍 Verificando unicidad de filas validas...");
+  const filasPorConvenio = {};
+
+  for (let i = 1; i < allValues.length; i++) {
+    const row = allValues[i];
+    const idConv = String(row[idxId] || '').trim();
+    const estadoValido = String(row[idxFilaValida] || '').trim().toLowerCase();
+    if (!idConv || estadoValido !== 'valid') continue;
+    filasPorConvenio[idConv] = filasPorConvenio[idConv] || [];
+    filasPorConvenio[idConv].push({
+      fila_num: i + 1,
+      fecha: idxFecha !== null ? String(row[idxFecha] || '').trim() : '',
+      estado: idxEstado !== null ? String(row[idxEstado] || '').trim() : ''
+    });
+  }
+
+  const actualizaciones = [];
+  for (const [convenio, filas] of Object.entries(filasPorConvenio)) {
+    if (filas.length <= 1) continue;
+    const filaAprobada = filas.find(f => f.estado.toUpperCase() === 'APROBADO');
+    const filaAMantener = filaAprobada || filas[0];
+
+    for (const fila of filas) {
+      if (fila.fila_num === filaAMantener.fila_num) continue;
+      actualizaciones.push({
+        range: `${indiceALetraColumna(idxFilaValida)}${fila.fila_num}`,
+        values: [['not valid']]
+      });
+    }
+  }
+
+  let totalInvalidadas = 0;
+  if (actualizaciones.length > 0) {
+    await sleep(API_DELAY_MS);
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
+      { method: 'POST', body: JSON.stringify({ data: actualizaciones, valueInputOption: 'USER_ENTERED' }) }
+    );
+    totalInvalidadas = actualizaciones.length;
+  }
+  print(`   ✅ ${totalInvalidadas} duplicados corregidos`);
+  return { error: false, convenios_unicos: Object.keys(filasPorConvenio).length, duplicados_corregidos: totalInvalidadas };
+}
+
+// =============================================================================
+// UI HELPERS
+// =============================================================================
+function print(msg) {
+  outputArea.innerHTML += `<div>${String(msg)}</div>`;
+  outputArea.scrollTop = outputArea.scrollHeight;
+}
+
+function clearOutput() { outputArea.innerHTML = ''; }
+
+function setProgress(value, max, text) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  outputArea.innerHTML += `<div><progress value="${value}" max="${max}" style="width:100%"></progress> ${pct}% ${text || ''}</div>`;
+  outputArea.scrollTop = outputArea.scrollHeight;
+}
+
+// =============================================================================
+// MAIN HANDLERS
+// =============================================================================
+async function onLoginSuccess() {
+  try {
+    await initGis();
+    await resolverConfiguracionIds(true);
+    const maestroId = await crearObtenerMaestro();
+    btnLeerSheets.disabled = false;
+    setLoginStatus('ok', '🟢 Conectado');
+    print('✅ Sistema listo para leer informes CIE');
+  } catch (e) {
+    setLoginStatus('err', '🔴 Error: ' + e.message);
+    print('❌ ' + e.message);
+  }
+}
+
+btnConectar.addEventListener('click', async () => {
+  setLoginStatus('warn', '🟡 Solicitando acceso...');
+  try {
+    await initGis();
+    await requestToken(true);
+    setLoginStatus('ok', '🟢 Conectado');
+    btnConectar.disabled = true;
+    btnConectar.textContent = '✅ Conectado';
+    await onLoginSuccess();
+  } catch (e) {
+    setLoginStatus('err', '🔴 Error: ' + (e.message || String(e)));
+    print('❌ Error de autenticacion: ' + (e.message || String(e)));
+  }
+});
+
+btnLeerSheets.addEventListener('click', async () => {
+  clearOutput();
+  btnLeerSheets.disabled = true;
+  btnLeerSheets.textContent = '⏳ Procesando...';
+
+  try {
+    const batchSize = Math.max(1, parseInt(intBatchSize.value, 10) || 10);
+    const startAt = Math.max(0, parseInt(intStartAt.value, 10) || 0);
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    if (!maestroId) throw new Error('Maestro no configurado');
+
+    print(`📋 Listando sheets en carpeta regiones...`);
+    const sheetsList = await listarSheetsEnCarpeta(CARPETA_REGIONES_ID);
+    print(`📊 ${sheetsList.length} sheets encontrados`);
+
+    const listToProcess = startAt > 0 ? sheetsList.slice(startAt - 1) : sheetsList;
+    const total = listToProcess.length;
+    let todosLosDatos = [];
+    const datosBatch = [];
+    let batchContador = 0;
+    let totalAgregadosBatches = 0;
+    const reporteArchivos = [];
+
+    for (let idx = 0; idx < total; idx++) {
+      const sheetInfo = listToProcess[idx];
+      const nombreSheet = sheetInfo.name || `sheet_${idx + 1}`;
+      const idSheet = sheetInfo.id;
+
+      try {
+        setProgress(idx + 1 + startAt, sheetsList.length, `Procesando: ${nombreSheet}`);
+        const [datosLista, diag] = await extraerDatosInforme(idSheet, null, null, nombreSheet, true);
+        const estadoArchivo = diag.omitido ? 'OMITIDO' : (diag.registros_error > 0 && diag.registros_error === diag.registros_extraidos ? 'ERROR' : 'LEIDO');
+        reporteArchivos.push({ archivo: nombreSheet, estado: estadoArchivo });
+
+        const logItems = [];
+        for (const datos of datosLista) {
+          todosLosDatos.push(datos);
+          datosBatch.push(datos);
+          if (datos.tiene_error) logItems.push(`Error (REX: ${(datos.formulario || {}).Convenio_REX || '?'})`);
+          else if (datos.esta_enviado) logItems.push('Enviado');
+          else if (datos.tiene_datos_encuesta) logItems.push(`${(datos.proyectos_evaluados || []).length} proyectos`);
+          else logItems.push('Pendiente');
+        }
+        if (diag.omitido) logItems.push(`OMITIDO: ${diag.causa_omision}`);
+        if (logItems.length) print(`   ✅ ${logItems.join(' | ')}`);
+
+        if (datosBatch.length >= batchSize) {
+          batchContador++;
+          print(`🔄 Guardando batch #${batchContador} (${datosBatch.length} registros)...`);
+          await sleep(API_DELAY_MS);
+          const agregados = await agregarDatosAMaestro(maestroId, datosBatch);
+          totalAgregadosBatches += agregados;
+          print(`   ✅ Batch #${batchContador}: ${agregados} registros agregados`);
+          datosBatch.length = 0;
+        }
+      } catch (e) {
+        reporteArchivos.push({ archivo: nombreSheet, estado: 'ERROR', causa: String(e) });
+        print(`   ❌ Error: ${e.message}`);
+      }
+      await sleep(API_DELAY_MS);
+    }
+
+    if (datosBatch.length > 0) {
+      batchContador++;
+      print(`🔄 Guardando batch final #${batchContador} (${datosBatch.length} registros)...`);
+      await sleep(API_DELAY_MS);
+      const agregados = await agregarDatosAMaestro(maestroId, datosBatch);
+      totalAgregadosBatches += agregados;
+      print(`   ✅ Batch final: ${agregados} registros agregados`);
+    }
+
+    await asegurarUnicidadFilasValidas(maestroId);
+
+    const errores = todosLosDatos.filter(d => d.tiene_error).length;
+    const enviados = todosLosDatos.filter(d => d.esta_enviado && !d.tiene_error).length;
+    const llenados = todosLosDatos.filter(d => d.tiene_datos_encuesta && !d.esta_enviado && !d.tiene_error).length;
+    const pendientes = todosLosDatos.filter(d => !d.tiene_datos_encuesta && !d.esta_enviado && !d.tiene_error).length;
+
+    print(`✅ Lectura completada: ${todosLosDatos.length} registros`);
+    print(`   📨 Enviados: ${enviados} | ✏️ Llenados: ${llenados} | ⏳ Pendientes: ${pendientes}` + (errores > 0 ? ` | ❌ Errores: ${errores}` : ''));
+    print(`   📦 Batches: ${batchContador} | Total agregados: ${totalAgregadosBatches}`);
+  } catch (e) {
+    print(`❌ Error: ${e.message}`);
+    console.error(e);
+  } finally {
+    btnLeerSheets.disabled = false;
+    btnLeerSheets.textContent = '📖 Leer Informes CIE';
+  }
+});
+
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+async function init() {
+  if (window.self !== window.top) {
+    document.getElementById('iframe-warning').style.display = 'block';
+    document.getElementById('btn-new-tab').addEventListener('click', () => {
+      window.open(window.location.href, '_blank');
+    });
+  }
+  await initGis();
+  const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Date.now() < parsed.tokenExpiresAt) {
+        accessToken = parsed.accessToken;
+        tokenExpiresAt = parsed.tokenExpiresAt;
+        await onLoginSuccess();
+        return;
+      }
+    } catch (e) {}
+  }
+  setLoginStatus('off', '⚪ No conectado');
+}
+
+init();
+</script>
+</body>
+</html>

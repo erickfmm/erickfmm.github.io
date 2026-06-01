@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="frame-ancestors https://sites.google.com">
+<title>Interfaz Coordinador Regional CIE</title>
+<style>
+:root {
+  --cie-primary: #1a73e8;
+  --cie-success: #34a853;
+  --cie-warning: #f9ab00;
+  --cie-danger:  #ea4335;
+  --cie-info:    #1967d2;
+  --cie-bg:      #fafbfc;
+  --cie-border:  #e8eaed;
+  --cie-muted:   #6b7280;
+  --cie-text:    #1f2937;
+  --cie-card-radius: 12px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--cie-bg); color: var(--cie-text); }
+#root { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.cie-hbox { display: flex; align-items: center; gap: 8px; flex-flow: row wrap; }
+.cie-vbox { display: flex; flex-direction: column; gap: 8px; }
+.cie-card { border: 1px solid var(--cie-border); border-radius: var(--cie-card-radius); padding: 20px; margin: 8px 0 16px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.cie-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--cie-border); background: #fff; color: var(--cie-text); font-weight: 600; cursor: pointer; }
+.cie-btn:hover:not(:disabled) { background: #f5f5f5; }
+.cie-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cie-btn--primary { background: var(--cie-primary); color: #fff; border-color: var(--cie-primary); }
+.cie-btn--success { background: var(--cie-success); color: #fff; border-color: var(--cie-success); }
+.cie-btn--warning { background: var(--cie-warning); color: #fff; border-color: var(--cie-warning); }
+.cie-btn--info    { background: var(--cie-info);    color: #fff; border-color: var(--cie-info); }
+.cie-btn--danger  { background: var(--cie-danger);  color: #fff; border-color: var(--cie-danger); }
+.cie-input, .cie-select, .cie-textarea { padding: 8px 12px; border: 1px solid var(--cie-border); border-radius: 8px; font: inherit; }
+.cie-input { width: 100%; }
+.cie-input--small { width: 130px; }
+.cie-textarea { width: 100%; min-height: 100px; resize: vertical; }
+.cie-select { width: 600px; max-width: 100%; }
+.cie-status { font-size: 13px; }
+.cie-status--ok    { color: var(--cie-success); }
+.cie-status--warn  { color: var(--cie-warning); }
+.cie-status--err   { color: var(--cie-danger);  }
+.cie-status--off   { color: var(--cie-muted);   }
+.cie-output { margin: 8px 0; font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 13px; }
+.cie-wrap { font-family: 'Segoe UI', 'Noto Sans', sans-serif; color: #1f2937; }
+.cie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 10px 0 14px; }
+.cie-card-inner { background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); border: 1px solid #dbeafe; border-radius: 12px; padding: 10px 12px; }
+.cie-label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.06em; }
+.cie-value { font-size: 14px; font-weight: 600; margin-top: 3px; word-break: break-word; }
+.cie-title { font-size: 16px; font-weight: 700; color: #0f172a; margin: 4px 0 8px; }
+.cie-subtitle { font-size: 13px; font-weight: 700; color: #1d4ed8; margin: 14px 0 6px; }
+.cie-scroll { overflow-x: auto; max-width: 100%; border: 1px solid #dbeafe; border-radius: 10px; background: #fff; }
+.cie-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 12px; }
+.cie-table th { background: #eff6ff; color: #1e3a8a; text-align: left; padding: 8px; border-bottom: 1px solid #bfdbfe; white-space: nowrap; }
+.cie-table td { padding: 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; white-space: normal; }
+.cie-table tbody tr:nth-child(even) { background: #f8fafc; }
+.cie-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.cie-badge--ok   { background: #dcfce7; color: #166534; }
+.cie-badge--warn { background: #fef3c7; color: #92400e; }
+.cie-badge--no   { background: #e5e7eb; color: #374151; }
+.cie-muted { color: #6b7280; }
+.cie-empty { padding: 10px; border: 1px dashed #93c5fd; border-radius: 8px; color: #334155; background: #f8fbff; }
+.cie-link { color: #1d4ed8; text-decoration: none; font-weight: 600; }
+.cie-link:hover { text-decoration: underline; }
+.cie-resumen-hero { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: #fff; padding: 24px 28px; border-radius: 18px; box-shadow: 0 14px 30px rgba(37,99,235,0.18); margin-bottom: 18px; }
+.cie-resumen-hero h2 { margin: 0 0 8px; font-size: 24px; font-weight: 700; }
+.cie-kpi-card { border: 1px solid; border-radius: 16px; padding: 16px; box-shadow: 0 8px 18px rgba(15,23,42,0.05); }
+.cie-kpi-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cie-kpi-icon { font-size: 18px; }
+.cie-kpi-label { font-size: 13px; font-weight: 700; }
+.cie-kpi-value { font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.cie-kpi-meta { font-size: 12px; color: var(--cie-muted); }
+</style>
+</head>
+<body>
+<div id="root">
+  <h2>📊 Sistema de Gestión de Informes CIE</h2>
+
+  <section id="login-panel" class="cie-card cie-login">
+    <h3>🔐 Conexión a Google</h3>
+    <p>Conecte su cuenta para acceder a Google Sheets y Drive</p>
+    <div class="cie-hbox">
+      <button id="btn-conectar" class="cie-btn cie-btn--primary">🔌 Conectar</button>
+      <span id="login-status" class="cie-status cie-status--off">⚪ No conectado</span>
+    </div>
+    <div id="login-output" class="cie-output"></div>
+    <div id="iframe-warning" style="display:none" class="cie-card" >
+      <p>⚠️ Si el boton Conectar no abre una ventana de login, abra esta pagina en una nueva pestana:</p>
+      <button id="btn-new-tab" class="cie-btn cie-btn--info">🔗 Abrir en nueva pestana</button>
+    </div>
+  </section>
+
+  <div id="seccion-resumen" class="cie-card cie-resumen">
+    <h3>📊 Resumen</h3>
+    <div id="output-resumen" class="cie-output"></div>
+  </div>
+
+  <p>Seleccione un convenio para ver sus datos automaticamente</p>
+
+  <select id="dropdown-convenios" class="cie-select" disabled>
+    <option>Seleccione un convenio...</option>
+  </select>
+
+  <div id="output-area" class="cie-output"></div>
+
+  <div id="wrapper-acciones" style="display:none">
+    <hr>
+    <button id="btn-aprobar" class="cie-btn cie-btn--success" disabled>✅ Aprobar</button>
+
+    <div class="cie-card cie-observaciones">
+      <h3>📝 Agregar Observaciones</h3>
+      <p>Escriba las observaciones para el convenio seleccionado</p>
+      <textarea id="textarea-observacion" class="cie-textarea" placeholder="Describa las observaciones..." disabled></textarea>
+      <button id="btn-agregar-observacion" class="cie-btn cie-btn--warning" disabled>📝 Observar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// =============================================================================
+// CONFIGURACION GLOBAL
+// =============================================================================
+const GOOGLE_CLIENT_ID = "950842522264-drkmot5s3h7t8718b9trvac05dv3qu83.apps.googleusercontent.com";
+const BUILD_TIMESTAMP = "2026-06-01T17:34:06-04:00";
+
+const SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/script.projects',
+  'https://www.googleapis.com/auth/gmail.send'
+].join(' ');
+
+const CONFIG_GLOBAL = {
+  CARPETA_CENTRAL_ID: '178dLaHh6JJ6WeQBnOkWkYeS7MsYC6QJB',
+  CARPETA_REGIONES_ID: '1AzAdUQTs0HCDxBH7o8b1jUwyqMVK6-B5',
+  API_DELAY: 5.2,
+};
+
+const CARPETA_CENTRAL_ID = CONFIG_GLOBAL.CARPETA_CENTRAL_ID;
+const CARPETA_REGIONES_ID = CONFIG_GLOBAL.CARPETA_REGIONES_ID;
+const API_DELAY_MS = CONFIG_GLOBAL.API_DELAY * 1000;
+const NOMBRE_MAESTRO = 'CIE_Datos_Maestros';
+const NOMBRE_LOG_NOTIFICACIONES = '📧 Log_Notificaciones_CRIE';
+
+const CONFIG_IDS = {
+  FOLDER_ID: CARPETA_CENTRAL_ID,
+  REGIONES_FOLDER_ID: CARPETA_REGIONES_ID,
+  MAESTRO_ID: null,
+  API_TRACE_SHEET_ID: null,
+};
+
+const CONFIG_NAMES = {
+  FOLDER_ID: 'central',
+  REGIONES_FOLDER_ID: 'regiones',
+  MAESTRO_ID: 'CIE_Datos_Maestros',
+  API_TRACE_FILE_ID: 'api_trace_informes_cie',
+};
+
+let configResuelta = false;
+
+const PROYECTOS_CIE = {
+  "CPE 2011": { nombre_completo: "Conectividad para le Educación 2011", beneficios: ["Conectividad", "Materiales"], icono: "🌐", color: "#1a73e8" },
+  "CPE 2030": { nombre_completo: "Conectividad para la Educación 2030", beneficios: ["Conectividad", "Materiales"], icono: "📡", color: "#34a853" },
+  "AC 2022": { nombre_completo: "Aulas Conectadas 2022", beneficios: ["Infraestructura", "Conectividad", "Materiales", "Asesoría"], icono: "🏫", color: "#ea4335" },
+  "AC 2022 - 2da": { nombre_completo: "Aulas Conectadas 2022 - Segunda Convocatoria", beneficios: ["Materiales", "Asesoría"], icono: "🎓", color: "#ff6d01" },
+  "REAC RM": { nombre_completo: "Equipos Reacondicionados y Educación en Economía Circular 2023", beneficios: ["Infraestructura", "Materiales"], icono: "♻️", color: "#9c27b0" },
+  "KIT REV": { nombre_completo: "Kit Tecnológico para la Revinculación Educativa 2023", beneficios: ["Infraestructura", "Materiales"], icono: "🔄", color: "#00bcd4" },
+  "KIT TRANSF": { nombre_completo: "Kit Tecnológico para la Transformación Educativa 2023", beneficios: ["Infraestructura", "Materiales"], icono: "🚀", color: "#607d8b" },
+  "A+S": { nombre_completo: "Aprendizaje + Servicio: Innovar para Transformar 2023", beneficios: ["Formación", "Materiales"], icono: "🤝", color: "#e91e63" },
+  "PDC 2024": { nombre_completo: "Protagonistas del Cambio: Formación y Tecnología para la Reactivación Educativa 2024", beneficios: ["Infraestructura", "Formación", "Materiales"], icono: "⭐", color: "#795548" },
+  "TDA 2025": { nombre_completo: "Tecnologías Digitales en Acción (TDA) 2025", beneficios: ["Formación", "Materiales"], icono: "💡", color: "#fbbc04" }
+};
+
+const ESTADOS_RESUMEN_ORDEN = ['No iniciado', 'Iniciado', 'Presentado', 'Corregido', 'Observado', 'Aprobado'];
+const PLACEHOLDER_PROYECTO_NO_EXISTE = "NO_EXISTE_EL_PROYECTO";
+
+function generarColumnasFormulario() {
+  const columnas = [];
+  columnas.push('Sostenedor_Institucion', 'Sostenedor_RUT', 'Sostenedor_Correo', 'Sostenedor_Region');
+  columnas.push('Convenio_REX', 'Convenio_Fecha', 'Convenio_Cantidad_Escuelas');
+  for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
+    columnas.push(`${codigo}_Nota`);
+    columnas.push(`${codigo}_Pregunta_Respuesta`);
+    for (const beneficio of info.beneficios) {
+      columnas.push(`${codigo}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
+    }
+    columnas.push(`${codigo}_Comentarios`);
+  }
+  columnas.push('Comentarios_Finales_1', 'Comentarios_Finales_2', 'Comentarios_Finales_3');
+  columnas.push('Checkbox_Envio', 'Fecha_Envio', 'Estado_Formulario');
+  return columnas;
+}
+
+const COLUMNAS_FORMULARIO = generarColumnasFormulario();
+
+// =============================================================================
+// DOM REFERENCES
+// =============================================================================
+const btnConectar = document.getElementById('btn-conectar');
+const loginStatus = document.getElementById('login-status');
+const loginOutput = document.getElementById('login-output');
+const outputArea = document.getElementById('output-area');
+const outputResumen = document.getElementById('output-resumen');
+const dropdownConvenios = document.getElementById('dropdown-convenios');
+const wrapperAcciones = document.getElementById('wrapper-acciones');
+const btnAprobar = document.getElementById('btn-aprobar');
+const btnAgregarObservacion = document.getElementById('btn-agregar-observacion');
+const textareaObservacion = document.getElementById('textarea-observacion');
+
+// =============================================================================
+// APP STATE
+// =============================================================================
+const appState = {
+  gc: null,
+  driveService: null,
+  spreadsheetMaestro: null,
+  maestroId: null,
+  dfMaestro: null,
+  dfMaestroVigentes: null,
+  correoUsuario: null,
+  regionAutorizada: null,
+  dfRegiones: null,
+  logNotificacionesEmail: [],
+};
+
+// =============================================================================
+// AUTH (GIS)
+// =============================================================================
+let tokenClient = null;
+let accessToken = null;
+let tokenExpiresAt = 0;
+const TOKEN_STORAGE_KEY = 'cie_access_token_coord';
+
+function initGis() {
+  return new Promise((resolve) => {
+    if (typeof google === 'undefined' || typeof google.accounts === 'undefined') {
+      setTimeout(() => resolve(initGis()), 200);
+      return;
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      callback: '',
+      error_callback: (err) => console.warn('GIS error', err)
+    });
+    resolve();
+  });
+}
+
+function requestToken(interactive) {
+  return new Promise((resolve, reject) => {
+    if (!tokenClient) {
+      initGis().then(() => requestToken(interactive).then(resolve, reject));
+      return;
+    }
+    tokenClient.callback = (resp) => {
+      if (resp.error) return reject(resp);
+      accessToken = resp.access_token;
+      tokenExpiresAt = Date.now() + (resp.expires_in * 1000) - 60000;
+      sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken, tokenExpiresAt }));
+      resolve(resp);
+    };
+    tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+  });
+}
+
+async function ensureToken({ interactive = false } = {}) {
+  if (accessToken && Date.now() < tokenExpiresAt) return accessToken;
+  const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    if (Date.now() < parsed.tokenExpiresAt) {
+      accessToken = parsed.accessToken;
+      tokenExpiresAt = parsed.tokenExpiresAt;
+      return accessToken;
+    }
+  }
+  if (!interactive) throw new Error('No hay token valido. Pulse Conectar.');
+  await requestToken(true);
+  return accessToken;
+}
+
+function setLoginStatus(cls, msg) {
+  loginStatus.className = 'cie-status cie-status--' + cls;
+  loginStatus.textContent = msg;
+}
+
+// =============================================================================
+// API LAYER
+// =============================================================================
+const RETRIABLE = new Set([408, 429, 500, 502, 503, 504]);
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function apiFetch(url, init = {}, opts = {}) {
+  const maxRetries = opts.maxRetries ?? 3;
+  const baseDelay  = opts.baseDelay  ?? 10000;
+  const skipRetry  = opts.skipRetry  ?? false;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const token = await ensureToken({ interactive: false });
+    const headers = { ...(init.headers || {}), Authorization: `Bearer ${token}` };
+    if (init.body && typeof init.body === 'string' && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const resp = await fetch(url, { ...init, headers });
+    if (resp.ok) {
+      const ct = resp.headers.get('content-type') || '';
+      return ct.includes('application/json') ? resp.json() : resp.text();
+    }
+    const status = resp.status;
+    const retriable = RETRIABLE.has(status);
+    if (skipRetry || !retriable || attempt === maxRetries - 1) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`HTTP ${status}: ${text.slice(0, 500)}`);
+    }
+    const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+    console.warn(`API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
+    await sleep(wait);
+  }
+}
+
+// =============================================================================
+// TEXT UTILS
+// =============================================================================
+function normalizarTexto(texto) {
+  if (!texto) return '';
+  texto = String(texto).toLowerCase().trim();
+  texto = texto.replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u');
+  texto = texto.replace(/ñ/g, 'n');
+  texto = texto.replace(/[_-]/g, ' ');
+  texto = texto.replace(/\s+/g, ' ').trim();
+  return texto;
+}
+
+function _normText(v) {
+  let t = String(v || '').toLowerCase().trim();
+  t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return t.replace(/\s+/g, ' ').trim();
+}
+
+function textoLimpio(valor) {
+  if (valor === null || valor === undefined || (typeof valor === 'number' && isNaN(valor))) return '';
+  const texto = String(valor).trim();
+  return texto.toLowerCase() === 'nan' ? '' : texto;
+}
+
+function esValorPlaceholder(valor) { return textoLimpio(valor) === PLACEHOLDER_PROYECTO_NO_EXISTE; }
+
+function htmlEscape(valor) {
+  const v = textoLimpio(valor);
+  return v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function valorHtml(valor, vacio = '(vacio)') {
+  const texto = textoLimpio(valor);
+  return texto ? htmlEscape(texto) : `<span class="cie-muted">${htmlEscape(vacio)}</span>`;
+}
+
+function normalizarNumeroObservacion(valor) {
+  try { return parseInt(String(valor).trim() || '0', 10) || 0; } catch (e) { return 0; }
+}
+
+function obtenerColumnasProyecto(proyecto) {
+  const columnas = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Comentarios`];
+  for (const beneficio of (PROYECTOS_CIE[proyecto] || {}).beneficios || []) {
+    columnas.push(`${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
+  }
+  return columnas;
+}
+
+function proyectoEstaMarcadoComoInexistente(row, proyecto) {
+  const columnas = obtenerColumnasProyecto(proyecto);
+  let tieneColumnas = false;
+  for (const col of columnas) {
+    if (!(col in row)) continue;
+    tieneColumnas = true;
+    if (!esValorPlaceholder(row[col] || '')) return false;
+  }
+  return tieneColumnas;
+}
+
+function detectarProyectosDesdeRow(row) {
+  const visibles = [];
+  for (const proyecto of Object.keys(PROYECTOS_CIE)) {
+    if (!proyectoEstaMarcadoComoInexistente(row, proyecto)) visibles.push(proyecto);
+  }
+  return visibles;
+}
+
+function obtenerIndiceColumna(encabezados, nombreColumna) {
+  const idx = encabezados.findIndex(h => String(h || '').trim() === nombreColumna);
+  return idx >= 0 ? idx : null;
+}
+
+function indiceALetraColumna(idx) {
+  let letras = '';
+  let n = idx + 1;
+  while (n > 0) {
+    const resto = (n - 1) % 26;
+    letras = String.fromCharCode(65 + resto) + letras;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letras;
+}
+
+function indiceAColumnaExcel(idx) {
+  let n = idx + 1;
+  let letras = '';
+  while (n > 0) {
+    const resto = (n - 1) % 26;
+    letras = String.fromCharCode(65 + resto) + letras;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letras;
+}
+
+function formatNow() {
+  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+}
+
+function emailRegex() { return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/; }
+function esEmailValido(valor) { return emailRegex().test(String(valor || '').trim()); }
+
+// =============================================================================
+// SHEETS HELPERS
+// =============================================================================
+async function leerValoresHoja(spreadsheetId, rango) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rango)}`;
+  const data = await apiFetch(url);
+  return data.values || [];
+}
+
+async function getAllRecords(spreadsheetId, sheetName = 'Sheet1') {
+  const data = await leerValoresHoja(spreadsheetId, `${sheetName}!A1:ZZ`);
+  if (!data.length) return [];
+  const headers = data[0];
+  return data.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (row[i] !== undefined) ? row[i] : ''; });
+    return obj;
+  });
+}
+
+// =============================================================================
+// CONFIG RESOLVER
+// =============================================================================
+async function validarIdYMime(fileId, mimeEsperado, label) {
+  if (!fileId) throw new Error(`No se resolvio ID obligatorio: ${label}`);
+  const meta = await apiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType&supportsAllDrives=true`);
+  if (mimeEsperado && meta.mimeType !== mimeEsperado) throw new Error(`${label} no tiene mime esperado.`);
+  return meta;
+}
+
+async function buscarDriveIdPorNombre(name, mimeType, parentId) {
+  const parts = [`name='${name.replace(/'/g, "\\'")}'`, `mimeType='${mimeType}'`, 'trashed=false'];
+  if (parentId) parts.push(`'${parentId}' in parents`);
+  const q = parts.join(' and ');
+  const results = await apiFetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true&pageSize=50`);
+  return (results.files && results.files.length > 0) ? results.files[0].id : null;
+}
+
+async function resolverConfiguracionIds(verbose = true) {
+  if (configResuelta) return CONFIG_IDS;
+  await validarIdYMime(CONFIG_IDS.FOLDER_ID, 'application/vnd.google-apps.folder', 'CARPETA_CENTRAL_ID');
+  if (!CONFIG_IDS.MAESTRO_ID) {
+    CONFIG_IDS.MAESTRO_ID = await buscarDriveIdPorNombre(CONFIG_NAMES.MAESTRO_ID, 'application/vnd.google-apps.spreadsheet', CONFIG_IDS.FOLDER_ID);
+  }
+  if (CONFIG_IDS.MAESTRO_ID) {
+    await validarIdYMime(CONFIG_IDS.MAESTRO_ID, 'application/vnd.google-apps.spreadsheet', 'MAESTRO_ID');
+  }
+  configResuelta = true;
+  if (verbose) {
+    print(`✅ CARPETA_CENTRAL_ID: ${CONFIG_IDS.FOLDER_ID}`);
+    print(`✅ MAESTRO_ID: ${CONFIG_IDS.MAESTRO_ID}`);
+  }
+  return CONFIG_IDS;
+}
+
+async function obtenerCorreoAutenticado() {
+  const data = await apiFetch('https://www.googleapis.com/drive/v3/about?fields=user');
+  return (data.user || {}).emailAddress || null;
+}
+
+// =============================================================================
+// REGIONES / AUTORIZACION
+// =============================================================================
+async function leerRegionesCorreos() {
+  const q = "name='regiones_correos' and trashed=false and mimeType='application/vnd.google-apps.spreadsheet' and '" + CARPETA_CENTRAL_ID + "' in parents";
+  const r = await apiFetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true`);
+  if (!r.files || r.files.length === 0) throw new Error('No se encontro el sheet regiones_correos en central');
+  const sheetId = r.files[0].id;
+  const values = await leerValoresHoja(sheetId, 'Sheet1!A:Z');
+  if (!values.length) return [];
+  const headers = values[0];
+  const correoIdx = headers.findIndex(h => String(h || '').toLowerCase() === 'correo');
+  const regionIdx = headers.findIndex(h => /region/i.test(String(h || '')));
+  if (correoIdx < 0 || regionIdx < 0) throw new Error('Formato invalido en regiones_correos. Se requieren columnas "correo" y "region"');
+  return values.slice(1).map(row => ({
+    correo: String(row[correoIdx] || '').trim(),
+    region: String(row[regionIdx] || '').trim()
+  })).filter(r => r.correo && r.region);
+}
+
+function resolverRegionAutorizada(correoUsuario, dfRegiones) {
+  if (!correoUsuario) return null;
+  const userLower = correoUsuario.toLowerCase();
+  const filas = dfRegiones.filter(r => r.correo.toLowerCase() === userLower);
+  if (filas.length === 0) return null;
+  const regionesNorm = filas.map(r => _normText(r.region));
+  if (regionesNorm.includes('todas')) return 'Todas';
+  return filas[0].region;
+}
+
+function usuarioPuedeOperarRegion(regionRegistro) {
+  const regionAut = appState.regionAutorizada;
+  if (!regionAut) return false;
+  if (_normText(regionAut) === 'todas') return true;
+  return _normText(String(regionRegistro || '')) === _normText(regionAut);
+}
+
+function filtrarPorRegionAutorizada(records, columnaRegion = 'Sostenedor_Region') {
+  if (!records || records.length === 0) return records;
+  const regionAut = appState.regionAutorizada;
+  if (!regionAut || _normText(regionAut) === 'todas') return records;
+  return records.filter(r => _normText(String(r[columnaRegion] || '')) === _normText(regionAut));
+}
+
+function bloquearInterfazNoAutorizado(mensaje) {
+  btnAprobar.disabled = true;
+  btnAgregarObservacion.disabled = true;
+  textareaObservacion.disabled = true;
+  dropdownConvenios.disabled = true;
+  wrapperAcciones.style.display = 'none';
+  print(mensaje);
+}
+
+// =============================================================================
+// RENDER UTILS
+// =============================================================================
+function _obtenerFilasRelacionadasConvenio(row) {
+  const df = appState.dfMaestro;
+  const rex = textoLimpio(row['Convenio_REX'] || '');
+  if (!df || df.length === 0 || !rex || !df[0].hasOwnProperty('Convenio_REX')) return [];
+  const rel = df.filter(r => String(r['Convenio_REX'] || '').trim() === rex);
+  if (rel.length === 0) return [];
+  const mapped = rel.map(r => ({
+    ...r,
+    __num_obs: normalizarNumeroObservacion(r['Numero_Observacion']),
+    __fecha: r['Fecha_Extraccion'] || ''
+  }));
+  mapped.sort((a, b) => b.__num_obs - a.__num_obs || b.__fecha.localeCompare(a.__fecha));
+  return mapped;
+}
+
+function obtenerUltimaObservacion(row) {
+  for (const fila of _obtenerFilasRelacionadasConvenio(row)) {
+    const obs = textoLimpio(fila['Observaciones_Sistema'] || '');
+    if (!obs) continue;
+    if (obs.startsWith('OBS:')) return obs.slice(4).trim();
+    if (obs.toLowerCase().includes('observacion') || obs.toLowerCase().includes('observado')) return obs;
+  }
+  return '';
+}
+
+function construirTablaProyectosConvenio(row) {
+  const proyectosVisibles = detectarProyectosDesdeRow(row);
+  if (!proyectosVisibles.length) return '<p class="cie-empty">No hay proyectos visibles para este convenio.</p>';
+  const cantidadEscuelas = valorHtml(row['Convenio_Cantidad_Escuelas'], 'Sin dato');
+
+  const filas = proyectosVisibles.map(proyecto => {
+    const nota = row[`${proyecto}_Nota`] || '';
+    const pregunta = row[`${proyecto}_Pregunta_Respuesta`] || '';
+    const comentarios = row[`${proyecto}_Comentarios`] || '';
+    let beneficiosHtml = '';
+    for (const beneficio of (PROYECTOS_CIE[proyecto] || {}).beneficios || []) {
+      const col = `${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
+      beneficiosHtml += `<div><strong>${htmlEscape(beneficio)}:</strong> ${valorHtml(row[col])}</div>`;
+    }
+    if (!beneficiosHtml) beneficiosHtml = '<span class="cie-muted">(vacio)</span>';
+    return `<tr>`
+      + `<td>${htmlEscape(proyecto)}</td>`
+      + `<td>${valorHtml(nota)}</td>`
+      + `<td>${valorHtml(pregunta)}</td>`
+      + `<td>${valorHtml(comentarios)}</td>`
+      + `<td>${beneficiosHtml}</td>`
+      + `<td>${cantidadEscuelas}</td>`
+      + `</tr>`;
+  });
+
+  const header = '<thead><tr><th>Proyecto</th><th>Nota</th><th>Pregunta</th><th>Comentarios</th><th>Beneficios</th><th>Cantidad Escuelas</th></tr></thead>';
+  return `<div class="cie-scroll"><table class="cie-table">${header}<tbody>${filas.join('')}</tbody></table></div>`;
+}
+
+function renderHtmlConvenio(row) {
+  const estadoRegistro = textoLimpio(row['Estado_Registro'] || 'Sin estado');
+  const rex = textoLimpio(row['Convenio_REX'] || 'N/A');
+  const region = textoLimpio(row['Sostenedor_Region'] || 'Sin region');
+  const sostenedor = textoLimpio(row['Sostenedor_Institucion'] || 'Sin dato');
+  const fechaConvenio = textoLimpio(row['Convenio_Fecha'] || 'Sin fecha');
+  const escuelas = textoLimpio(row['Convenio_Cantidad_Escuelas'] || 'Sin dato');
+  const fechaEnvio = textoLimpio(row['Fecha_Envio'] || '');
+  const observacion = obtenerUltimaObservacion(row);
+  const urlSheet = textoLimpio(row['URL_Sheet'] || row['Spreadsheet_URL'] || '');
+  const comentariosFinales = textoLimpio(row['Comentarios_Finales_1'] || '');
+
+  const estadoNorm = estadoRegistro.toLowerCase();
+  let estadoClase = 'no';
+  if (estadoNorm === 'aprobado') estadoClase = 'ok';
+  else if (['enviado', 'presentado', 'con observaciones', 'observado'].includes(estadoNorm)) estadoClase = 'warn';
+
+  const linkHtml = urlSheet
+    ? `<a class="cie-link" href="${htmlEscape(urlSheet)}" target="_blank">Enlace al informe</a>`
+    : '<span class="cie-muted">(vacio)</span>';
+
+  return `<div class="cie-wrap">`
+    + `<div class="cie-title">Datos del informe de convenio CIE REX ${htmlEscape(rex)}</div>`
+    + `<div class="cie-grid">`
+    + `<div class="cie-card-inner"><div class="cie-label">REX</div><div class="cie-value">${htmlEscape(rex)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Estado del registro</div><div class="cie-value"><span class="cie-badge cie-badge--${estadoClase}">${htmlEscape(estadoRegistro || 'Sin estado')}</span></div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Fecha y hora de envio</div><div class="cie-value">${valorHtml(fechaEnvio)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Region</div><div class="cie-value">${htmlEscape(region)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Nombre sostenedor</div><div class="cie-value">${htmlEscape(sostenedor)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Fecha convenio</div><div class="cie-value">${htmlEscape(fechaConvenio)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Cantidad escuelas</div><div class="cie-value">${htmlEscape(escuelas)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Ultima observacion</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Acceso al informe</div><div class="cie-value">${linkHtml}</div></div>`
+    + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Comentarios finales</div><div class="cie-value">${valorHtml(comentariosFinales)}</div></div>`
+    + `</div>`
+    + `<div class="cie-subtitle">Proyectos visibles del convenio</div>`
+    + construirTablaProyectosConvenio(row)
+    + `</div>`;
+}
+
+function _esEnviadoConObservaciones(row) {
+  const estadoNorm = String(row['Estado_Registro'] || '').trim().toLowerCase();
+  const ultimaObs = obtenerUltimaObservacion(row);
+  return estadoNorm === 'enviado' && Boolean(String(ultimaObs || '').trim());
+}
+
+function _mapearEstadoVisual(row) {
+  const estadoNorm = String(row['Estado_Registro'] || '').trim().toLowerCase();
+  if (_esEnviadoConObservaciones(row)) return 'Corregido';
+  if (estadoNorm === 'aprobado') return 'Aprobado';
+  if (['observado', 'con observaciones'].includes(estadoNorm)) return 'Observado';
+  if (estadoNorm === 'enviado') return 'Presentado';
+  if (estadoNorm === 'llenado') return 'Iniciado';
+  return 'No iniciado';
+}
+
+function _prepararDfConveniosVigentes(records) {
+  if (!records || records.length === 0) return [...(records || [])];
+  let df = records.map(r => ({ ...r }));
+  df = df.filter(r => {
+    const rex = String(r['Convenio_REX'] || '').trim();
+    return rex && rex !== 'nan' && rex !== 'None';
+  });
+  if (df.length === 0) return df;
+
+  df.forEach(r => {
+    r.__rex_key = String(r['Convenio_REX'] || '').trim();
+    r.__num_obs = normalizarNumeroObservacion(r['Numero_Observacion']);
+    r.__fecha_sort = r['Fecha_Extraccion'] || '';
+    r.__id_sort = String(r['ID_Registro'] || '').trim();
+  });
+
+  df.sort((a, b) => {
+    return a.__rex_key.localeCompare(b.__rex_key)
+      || b.__num_obs - a.__num_obs
+      || b.__fecha_sort.localeCompare(a.__fecha_sort)
+      || b.__id_sort.localeCompare(a.__id_sort);
+  });
+
+  const seen = new Set();
+  return df.filter(r => {
+    if (seen.has(r.__rex_key)) return false;
+    seen.add(r.__rex_key);
+    return true;
+  });
+}
+
+function _parsearFechaEnvio(fechaEnvio) {
+  const s = String(fechaEnvio || '').trim();
+  if (!s) return null;
+  const formatos = ['%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y'];
+  for (const fmt of formatos) {
+    const d = parseDate(s, fmt);
+    if (d) return d;
+  }
+  return null;
+}
+
+function parseDate(str, fmt) {
+  const patterns = {
+    '%d/%m/%Y %H:%M:%S': /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/,
+    '%d/%m/%Y %H:%M': /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/,
+    '%d-%m-%Y %H:%M:%S': /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2}):(\d{2})$/,
+    '%d-%m-%Y %H:%M': /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})$/,
+    '%Y-%m-%d %H:%M:%S': /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/,
+    '%Y-%m-%d %H:%M': /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/,
+    '%d/%m/%Y': /^(\d{2})\/(\d{2})\/(\d{4})$/,
+    '%d-%m-%Y': /^(\d{2})-(\d{2})-(\d{4})$/,
+    '%Y-%m-%d': /^(\d{4})-(\d{2})-(\d{2})$/,
+    '%m/%d/%Y': /^(\d{2})\/(\d{2})\/(\d{4})$/,
+  };
+  const re = patterns[fmt];
+  if (!re) return null;
+  const m = str.match(re);
+  if (!m) return null;
+  let y, mo, d, h = 0, mi = 0, s = 0;
+  if (fmt.startsWith('%d')) { d = m[1]; mo = m[2]; y = m[3]; }
+  else if (fmt.startsWith('%Y')) { y = m[1]; mo = m[2]; d = m[3]; }
+  else if (fmt.startsWith('%m')) { mo = m[1]; d = m[2]; y = m[3]; }
+  if (m[4]) { h = m[4]; mi = m[5] || '0'; s = m[6] || '0'; }
+  const date = new Date(parseInt(y), parseInt(mo) - 1, parseInt(d), parseInt(h), parseInt(mi), parseInt(s));
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function _labelConvenio(row) {
+  const rex = String(row['Convenio_REX'] || 'Sin REX').trim();
+  const estadoMostrado = _mapearEstadoVisual(row);
+  let label = `${rex} (${estadoMostrado})`;
+  const checkboxEnvio = String(row['Checkbox_Envio'] || '').trim().toUpperCase();
+  const fechaEnvioDt = _parsearFechaEnvio(row['Fecha_Envio']);
+  if (checkboxEnvio === 'TRUE' && fechaEnvioDt) {
+    const dias = Math.floor((Date.now() - fechaEnvioDt.getTime()) / 86400000);
+    if (dias >= 14) label = `${label} - 🚨⚠️ ${estadoMostrado.toUpperCase()} HACE ${dias} DIAS ⚠️🚨`;
+    else if (dias >= 10) label = `${label} - ${estadoMostrado.toUpperCase()} HACE ${dias} DIAS`;
+    else label = `${label} - ${estadoMostrado} hace ${dias} dias`;
+  }
+  return label;
+}
+
+// =============================================================================
+// DATA LOADING
+// =============================================================================
+async function cargarConveniosDropdown() {
+  try {
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    if (!maestroId) return;
+
+    let df = await getAllRecords(maestroId);
+    if (df[0] && 'Fila_Valida' in df[0]) df = df.filter(r => String(r['Fila_Valida'] || '').toLowerCase() === 'valid');
+
+    df = filtrarPorRegionAutorizada(df, 'Sostenedor_Region');
+    const dfVigentes = _prepararDfConveniosVigentes(df);
+    appState.dfMaestroVigentes = dfVigentes;
+    appState.dfMaestro = df;
+
+    dropdownConvenios.innerHTML = '<option value="">Seleccione un convenio...</option>';
+
+    if (dfVigentes.length === 0) {
+      dropdownConvenios.innerHTML = '<option value="">No hay convenios autorizados</option>';
+      dropdownConvenios.disabled = true;
+      return;
+    }
+
+    const opciones = dfVigentes.map((row, idx) => {
+      const rex = String(row['Convenio_REX'] || '').trim();
+      if (!rex || rex === 'nan') return null;
+      return { label: _labelConvenio(row), index: idx };
+    }).filter(Boolean);
+
+    opciones.sort((a, b) => a.label.localeCompare(b.label));
+    opciones.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt.index;
+      option.textContent = opt.label;
+      dropdownConvenios.appendChild(option);
+    });
+
+    dropdownConvenios.disabled = false;
+    const regionAut = appState.regionAutorizada || 'N/D';
+    print(`✅ ${opciones.length} convenios cargados (region autorizada: ${regionAut})`);
+  } catch (e) {
+    print(`❌ Error cargando convenios: ${e.message}`);
+  }
+}
+
+function obtenerDatosConvenioSeleccionado() {
+  const idx = parseInt(dropdownConvenios.value, 10);
+  if (isNaN(idx)) return null;
+  const df = appState.dfMaestroVigentes;
+  if (!df || idx >= df.length) return null;
+  return df[idx];
+}
+
+// =============================================================================
+// MAESTRO OPERATIONS
+// =============================================================================
+async function crearObtenerMaestro() {
+  await resolverConfiguracionIds(true);
+  const maestroId = CONFIG_IDS.MAESTRO_ID;
+  if (!maestroId) throw new Error("No se encontro MAESTRO_ID en central.");
+  appState.maestroId = maestroId;
+  print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
+  return maestroId;
+}
+
+async function actualizarEstadoMaestro(spreadsheetId, idRegistro, nuevoEstado) {
+  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  if (!allValues.length) return false;
+  const encabezados = allValues[0];
+  const idxId = obtenerIndiceColumna(encabezados, 'ID_Registro');
+  const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
+  if (idxId === null || idxEstado === null) return false;
+
+  for (let i = 1; i < allValues.length; i++) {
+    const row = allValues[i];
+    if (String(row[idxId] || '').trim() === idRegistro) {
+      await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${indiceALetraColumna(idxEstado)}${i + 1}?valueInputOption=USER_ENTERED`,
+        { method: 'PUT', body: JSON.stringify({ values: [[nuevoEstado]] }) }
+      );
+      return true;
+    }
+  }
+  return false;
+}
+
+// =============================================================================
+// OBSERVACION SYSTEM
+// =============================================================================
+function obtenerSiguienteVersionObservaciones(hojas) {
+  let maxVersion = 0;
+  for (const hoja of hojas) {
+    const titulo = (hoja.title || '').toLowerCase();
+    if (titulo.includes('con observaciones')) {
+      const partes = titulo.split(/\s+/);
+      for (const parte of partes) {
+        const n = parseInt(parte, 10);
+        if (!isNaN(n)) maxVersion = Math.max(maxVersion, n);
+      }
+    }
+  }
+  return maxVersion + 1;
+}
+
+async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
+  try {
+    const spreadsheetId = spreadsheetUrl.replace(/^https?:\/\/docs\.google\.com\/spreadsheets\/d\//, '').replace(/\/.*$/, '');
+    const spreadMeta = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`);
+    const hojas = (spreadMeta.sheets || []).map(s => s.properties).filter(Boolean);
+    const hojaEdit = hojas.find(h => !h.title.includes('🔒')) || hojas[0];
+    if (!hojaEdit) return { exito: false, error: 'No se encontraron hojas editables' };
+
+    const nuevaVersion = obtenerSiguienteVersionObservaciones(hojas);
+    const nuevoNombre = `📝 con observaciones ${nuevaVersion}`;
+
+    const dupe = await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/sheets:copyTo`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          sourceSheetId: hojaEdit.sheetId,
+          destinationSpreadsheetId: spreadsheetId
+        })
+      }
+    );
+    const nuevoSheetId = dupe.sheetId;
+
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          requests: [
+            { updateSheetProperties: { properties: { sheetId: nuevoSheetId, title: nuevoNombre }, fields: 'title' } },
+            { insertDimension: { range: { sheetId: nuevoSheetId, dimension: 'ROWS', startIndex: 0, endIndex: 5 }, inheritFromBefore: false } }
+          ]
+        })
+      }
+    );
+    await sleep(API_DELAY_MS);
+
+    const fechaObs = new Date().toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          valueInputOption: 'USER_ENTERED',
+          data: [
+            { range: `${nuevoNombre}!A1`, values: [[`⚠️ OBSERVACIONES RECIBIDAS - ${fechaObs}`]] },
+            { range: `${nuevoNombre}!A2`, values: [[`📋 ${observacionTexto}`]] },
+            { range: `${nuevoNombre}!A3`, values: [['Por favor corrija los puntos observados en las celdas verdes']] },
+            { range: `${nuevoNombre}!A4`, values: [['Cuando termine, marque el checkbox de envio al final del formulario']] }
+          ]
+        })
+      }
+    );
+    await sleep(API_DELAY_MS);
+
+    const requests = [
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 2, endRowIndex: 3, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 3, endRowIndex: 4, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+      {
+        repeatCell: {
+          range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 4, startColumnIndex: 0, endColumnIndex: 10 },
+          cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.92, blue: 0.7 }, textFormat: { bold: true, fontSize: 11 }, horizontalAlignment: 'CENTER' } },
+          fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
+        }
+      },
+      {
+        repeatCell: {
+          range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 },
+          cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.76, blue: 0.3 }, textFormat: { bold: true, fontSize: 14, foregroundColor: { red: 0.5, green: 0.2, blue: 0 } } } },
+          fields: 'userEnteredFormat(backgroundColor,textFormat)'
+        }
+      }
+    ];
+
+    const originalTitle = hojaEdit.title;
+    const tituloBloqueado = `🔒 ${originalTitle} (v${nuevaVersion - 1})`;
+    requests.push({ updateSheetProperties: { properties: { sheetId: hojaEdit.sheetId, title: tituloBloqueado }, fields: 'title' } });
+    requests.push({ addProtectedRange: { protectedRange: { range: { sheetId: hojaEdit.sheetId }, description: `Version anterior bloqueada - Ver pestana '${nuevoNombre}' para editar`, warningOnly: false } } });
+
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      { method: 'POST', body: JSON.stringify({ requests }) }
+    );
+    await sleep(API_DELAY_MS);
+
+    requests.length = 0;
+    requests.push({ insertDimension: { range: { sheetId: hojaEdit.sheetId, dimension: 'ROWS', startIndex: 0, endIndex: 2 }, inheritFromBefore: false } });
+    await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, { method: 'POST', body: JSON.stringify({ requests }) });
+    await sleep(500);
+
+    await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        valueInputOption: 'USER_ENTERED',
+        data: [
+          { range: `${tituloBloqueado}!A1`, values: [['🔒 ESTA HOJA ES DE SOLO LECTURA - NO SE PUEDE EDITAR']] },
+          { range: `${tituloBloqueado}!A2`, values: [['Revise la nueva pestana con observaciones para corregir y reenviar']] }
+        ]
+      })
+    });
+    await sleep(API_DELAY_MS);
+
+    await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: [
+          { mergeCells: { range: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+          { mergeCells: { range: { sheetId: hojaEdit.sheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+          {
+            repeatCell: {
+              range: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 },
+              cell: { userEnteredFormat: { backgroundColor: { red: 0.95, green: 0.76, blue: 0.76 }, textFormat: { bold: true, fontSize: 12, foregroundColor: { red: 0.6, green: 0, blue: 0 } }, horizontalAlignment: 'CENTER' } },
+              fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
+            }
+          },
+          { updateSheetProperties: { properties: { sheetId: nuevoSheetId, index: 0 }, fields: 'index' } }
+        ]
+      })
+    });
+
+    return { exito: true, hoja_nueva: nuevoNombre, hoja_bloqueada: tituloBloqueado, version: nuevaVersion, url: spreadsheetUrl };
+  } catch (e) {
+    console.error(e);
+    return { exito: false, error: String(e) };
+  }
+}
+
+async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observacion, urlSheet) {
+  try {
+    const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+    const encabezados = allValues[0];
+    const idxId = obtenerIndiceColumna(encabezados, 'ID_Registro');
+    const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
+    const idxNumObs = obtenerIndiceColumna(encabezados, 'Numero_Observacion');
+    const idxFecha = obtenerIndiceColumna(encabezados, 'Fecha_Extraccion');
+    if (idxId === null) return false;
+
+    let filaEncontrada = null;
+    let filaNum = null;
+    for (let i = 1; i < allValues.length; i++) {
+      const row = allValues[i];
+      if (String(row[idxId] || '').trim() === idRegistro) {
+        filaEncontrada = [...row];
+        filaNum = i + 1;
+        break;
+      }
+    }
+    if (!filaEncontrada) return false;
+
+    if (idxEstado !== null) {
+      await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${indiceALetraColumna(idxEstado)}${filaNum}?valueInputOption=USER_ENTERED`,
+        { method: 'PUT', body: JSON.stringify({ values: [['Observado']] }) }
+      );
+      await sleep(500);
+    }
+
+    const nuevaFila = [...filaEncontrada];
+    while (nuevaFila.length <= Math.max(idxId, idxEstado || 0, idxNumObs || 0, idxFecha || 0)) nuevaFila.push('');
+    const nuevoId = `${idRegistro}-OBS-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)}`;
+    nuevaFila[idxId] = nuevoId;
+
+    if (idxNumObs !== null) {
+      const actual = idxNumObs < filaEncontrada.length ? parseInt(filaEncontrada[idxNumObs], 10) || 0 : 0;
+      nuevaFila[idxNumObs] = actual + 1;
+    }
+    if (idxEstado !== null) nuevaFila[idxEstado] = 'Observado';
+    if (idxFecha !== null) nuevaFila[idxFecha] = formatNow();
+
+    const idxObs = obtenerIndiceColumna(encabezados, 'Observaciones_Sistema');
+    if (idxObs !== null) {
+      while (nuevaFila.length <= idxObs) nuevaFila.push('');
+      const obsTruncada = observacion.length > 200 ? observacion.slice(0, 200) + '...' : observacion;
+      nuevaFila[idxObs] = `OBS: ${obsTruncada}`;
+    }
+
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${allValues.length + 1}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      { method: 'POST', body: JSON.stringify({ values: [nuevaFila] }) }
+    );
+    await sleep(API_DELAY_MS);
+    print(`   📝 Nueva fila con observacion agregada: ${nuevoId}`);
+
+    try {
+      const idObsLog = `OBS-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)}`;
+      const filaObs = [idObsLog, nuevoId, '', formatNow(), observacion, 'Pendiente', '', urlSheet];
+      await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/%F0%9F%93%9D%20Observaciones%20Pendientes!A:append?valueInputOption=USER_ENTERED`,
+        { method: 'POST', body: JSON.stringify({ values: [filaObs] }) }
+      );
+      await sleep(API_DELAY_MS);
+    } catch (eObs) {
+      print(`   ⚠️ No se pudo registrar en hoja de observaciones: ${eObs.message}`);
+    }
+
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
+async function agregarObservacionCompleta(spreadsheetId, idRegistro, observacionTexto) {
+  const records = await getAllRecords(spreadsheetId);
+  const registro = records.find(r => String(r['ID_Registro'] || '') === idRegistro);
+  const urlSheet = registro ? (registro['URL_Sheet'] || '') : '';
+  if (!urlSheet) {
+    print(`❌ No se encontro registro con ID: ${idRegistro}`);
+    return false;
+  }
+  print(`📋 Agregando observacion al registro ${idRegistro}...`);
+  print('='.repeat(60));
+  const resultado = await crearHojaConObservaciones(urlSheet, observacionTexto);
+  if (resultado.exito) {
+    await registrarObservacionEnMaestro(spreadsheetId, idRegistro, observacionTexto, urlSheet);
+    print('='.repeat(60));
+    print('✅ Proceso completado:');
+    print(`   📄 Nueva hoja para edicion: ${resultado.hoja_nueva}`);
+    print(`   🔒 Hoja bloqueada (solo lectura): ${resultado.hoja_bloqueada}`);
+    return true;
+  }
+  print(`❌ Error: ${resultado.error}`);
+  return false;
+}
+
+// =============================================================================
+// GMAIL NOTIFICATIONS
+// =============================================================================
+function construirEmailObservacion(row, observacionTexto) {
+  const convenio = String(row['Convenio_REX'] || 'N/D').trim();
+  const region = String(row['Sostenedor_Region'] || 'N/D').trim();
+  const urlSheet = String(row['URL_Sheet'] || '').trim();
+  const fecha = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
+  const sostenedor = String(row['Sostenedor_Institucion'] || 'N/D').trim();
+
+  const asunto = `MINEDUC: Su informe del Convenio de Informatica Educativa REX ${convenio} ha sido observado`;
+  const cuerpo = `Estimado/a ${sostenedor} Presente\n\n`
+    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informatica Educativa (CIE) que mantiene vigente con la respectiva Secretaria Regional Ministerial de Educacion, N de REX '
+    + `${convenio} con fecha ${fecha}.\n\n`
+    + 'Le agradecemos que haya completado el Informe CIE y le informamos que se encuentra OBSERVADO, por el siguiente motivo:\n\n'
+    + `${observacionTexto}\n\n`
+    + 'Solicitamos que subsane o aclare las observaciones realizadas al Informe CIE a la brevedad, dado que el plazo es de diez (10) dias habiles.\n\n'
+    + `Para realizar las correcciones, usted debe ingresar a ${urlSheet} como la primera vez, y modificar los campos que fueron observados.\n\n`
+    + 'Cordialmente,\n\n'
+    + `Secretaria Regional Ministerial de Educacion Region de ${region}`;
+  return { asunto, cuerpo };
+}
+
+function construirEmailAprobacion(row) {
+  const convenio = String(row['Convenio_REX'] || 'N/D').trim();
+  const region = String(row['Sostenedor_Region'] || 'N/D').trim();
+  const fecha = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
+  const sostenedor = String(row['Sostenedor_Institucion'] || 'N/D').trim();
+
+  const asunto = `MINEDUC: Su informe del Convenio de Informatica Educativa REX ${convenio} ha sido aprobado`;
+  const cuerpo = `Estimado/a ${sostenedor} Presente\n\n`
+    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informatica Educativa (CIE) que mantiene vigente con la respectiva Secretaria Regional Ministerial de Educacion, N de REX '
+    + `${convenio} con fecha ${fecha}.\n\n`
+    + 'Le agradecemos que haya completado el Informe CIE y tenemos el agrado de informarle que ha sido revisado y APROBADO.\n\n'
+    + 'Cordialmente,\n\n'
+    + `Secretaria Regional Ministerial de Educacion Region de ${region}`;
+  return { asunto, cuerpo };
+}
+
+function construirMimeBase64({ to, subject, text }) {
+  const subjectEncoded = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(subject))) + '?=';
+  const mime = `To: ${to}\r\nSubject: ${subjectEncoded}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n${text}`;
+  let raw = btoa(unescape(encodeURIComponent(mime)));
+  raw = raw.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return raw;
+}
+
+async function enviarCorreoSostenedor(tipoEvento, row, observacionTexto = '') {
+  try {
+    const correo = String(row['Sostenedor_Correo'] || '');
+    const emailCol = row['EMAIL SOSTENEDOR'] || row['Email_Sostenedor'] || '';
+    const destinatario = correo || String(emailCol || '').trim();
+    if (!destinatario || !esEmailValido(destinatario)) {
+      return { exito: false, destinatario: '', detalle: 'No se encontro correo valido del sostenedor', tipoError: 'destinatario_invalido' };
+    }
+
+    const { asunto, cuerpo } = tipoEvento === 'observacion'
+      ? construirEmailObservacion(row, observacionTexto)
+      : construirEmailAprobacion(row);
+
+    const raw = construirMimeBase64({ to: destinatario, subject: asunto, text: cuerpo });
+    const r = await apiFetch(
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+      { method: 'POST', body: JSON.stringify({ raw }) }
+    );
+
+    await registrarLogNotificacion(tipoEvento, 'success', `messageId=${r.id}`, row, destinatario);
+    return { exito: true, destinatario, detalle: `messageId=${r.id}` };
+  } catch (e) {
+    const esScope = String(e.message || '').toLowerCase().includes('insufficient');
+    await registrarLogNotificacion(tipoEvento, 'error', String(e.message), row, '', esScope ? 'scope_gmail' : 'envio_error');
+    return { exito: false, destinatario: '', detalle: String(e.message), tipoError: esScope ? 'scope_gmail' : 'envio_error' };
+  }
+}
+
+async function registrarLogNotificacion(tipoEvento, resultado, detalle, row, destinatario, tipoError = '') {
+  const evento = {
+    fecha_hora: formatNow(), evento: tipoEvento, resultado, detalle: String(detalle || ''), destinatario: String(destinatario || ''),
+    convenio: String(row['Convenio_REX'] || ''), region: String(row['Sostenedor_Region'] || ''),
+    id_registro: String(row['ID_Registro'] || ''), tipo_error: String(tipoError || '')
+  };
+  appState.logNotificacionesEmail.push(evento);
+
+  try {
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/%F0%9F%93%A7%20Log_Notificaciones_CRIE!A1:append?valueInputOption=USER_ENTERED`,
+      { method: 'POST', body: JSON.stringify({ values: [[
+        evento.fecha_hora, evento.evento, evento.resultado, evento.detalle,
+        evento.destinatario, evento.convenio, evento.region, evento.id_registro, '', evento.tipo_error
+      ]] }) }
+    );
+  } catch (eLog) {
+    print(`⚠️ No se pudo persistir log de notificacion: ${eLog.message}`);
+  }
+}
+
+async function registrarIngresoNotebook() {
+  try {
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    const ts = formatNow();
+    const correo = appState.correoUsuario || 'desconocido';
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/Log_Accesos_Coordinadores!A:append?valueInputOption=USER_ENTERED`,
+      { method: 'POST', body: JSON.stringify({ values: [[ts, correo, 'Interfaz Coordinador Regional', 'OK']] }) }
+    );
+  } catch (e) { console.warn('Log acceso:', e.message); }
+}
+
+// =============================================================================
+// RESUMEN
+// =============================================================================
+async function mostrarResumenAutomatico() {
+  try {
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    if (!maestroId) { outputResumen.innerHTML = '<p>⚠️ No hay maestro cargado</p>'; return; }
+
+    let df = await getAllRecords(maestroId);
+    if (df.length === 0) { outputResumen.innerHTML = '<p>ℹ️ La tabla maestra esta vacia</p>'; return; }
+
+    if (df[0] && 'Fila_Valida' in df[0]) df = df.filter(r => String(r['Fila_Valida'] || '').toLowerCase() === 'valid');
+    df = filtrarPorRegionAutorizada(df, 'Sostenedor_Region');
+    const dfVigentes = _prepararDfConveniosVigentes(df);
+    appState.dfMaestroVigentes = dfVigentes;
+    appState.dfMaestro = df;
+
+    if (dfVigentes.length === 0) { outputResumen.innerHTML = '<p>ℹ️ No hay filas validas para su region autorizada</p>'; return; }
+
+    dfVigentes.forEach(r => { r.Estado_Resumen = _mapearEstadoVisual(r); });
+    const crosstab = {};
+    for (const r of dfVigentes) {
+      const reg = r['Sostenedor_Region'] || 'Sin region';
+      crosstab[reg] = crosstab[reg] || {};
+      crosstab[reg][r.Estado_Resumen] = (crosstab[reg][r.Estado_Resumen] || 0) + 1;
+    }
+
+    for (const reg of Object.keys(crosstab)) {
+      for (const estado of ESTADOS_RESUMEN_ORDEN) {
+        crosstab[reg][estado] = crosstab[reg][estado] || 0;
+      }
+    }
+
+    const filaTotal = {};
+    for (const estado of ESTADOS_RESUMEN_ORDEN) {
+      filaTotal[estado] = Object.values(crosstab).reduce((s, r) => s + (r[estado] || 0), 0);
+    }
+    const totalConvenios = Object.values(filaTotal).reduce((a, b) => a + b, 0);
+    const totalRegiones = Object.keys(crosstab).length;
+    const regionAut = appState.regionAutorizada || 'N/D';
+
+    const coloresEstados = {
+      'No iniciado': { bg: '#fff7d6', text: '#9a6700', border: '#f3d768', icon: '📋' },
+      'Iniciado':    { bg: '#e8f0fe', text: '#1557b0', border: '#b6ccfe', icon: '📝' },
+      'Presentado':  { bg: '#dbeafe', text: '#1d4ed8', border: '#93c5fd', icon: '📤' },
+      'Corregido':   { bg: '#f3e8ff', text: '#7e22ce', border: '#d8b4fe', icon: '🛠️' },
+      'Observado':   { bg: '#fde7ef', text: '#be185d', border: '#f9a8d4', icon: '⚠️' },
+      'Aprobado':    { bg: '#dcfce7', text: '#166534', border: '#86efac', icon: '✅' },
+    };
+
+    let htmlKpis = '';
+    for (const estado of ['Aprobado', 'Observado', 'Corregido', 'Presentado', 'Iniciado', 'No iniciado']) {
+      const valor = filaTotal[estado] || 0;
+      const pct = totalConvenios > 0 ? (valor / totalConvenios * 100).toFixed(1) : '0.0';
+      const c = coloresEstados[estado];
+      htmlKpis += `<div class="cie-kpi-card" style="border-color:${c.border}; background:${c.bg};">
+        <div class="cie-kpi-top"><span class="cie-kpi-icon">${c.icon}</span><span class="cie-kpi-label">${estado}</span></div>
+        <div class="cie-kpi-value" style="color:${c.text};">${valor}</div>
+        <div class="cie-kpi-meta">${pct}% del total</div></div>`;
+    }
+
+    let htmlFilas = '';
+    const regionesSorted = Object.keys(crosstab).sort((a, b) => {
+      const ta = Object.values(crosstab[a]).reduce((x, y) => x + y, 0);
+      const tb = Object.values(crosstab[b]).reduce((x, y) => x + y, 0);
+      return tb - ta;
+    });
+    for (const region of regionesSorted) {
+      htmlFilas += `<tr><td class="cie-region-cell">${htmlEscape(region)}</td>`;
+      for (const estado of ESTADOS_RESUMEN_ORDEN) {
+        const v = crosstab[region][estado] || 0;
+        const c = coloresEstados[estado];
+        htmlFilas += `<td><span class="cie-badge" style="background:${c.bg}; color:${c.text}; border-color:${c.border};">${v}</span></td>`;
+      }
+      htmlFilas += `<td class="cie-total-general">${Object.values(crosstab[region]).reduce((a, b) => a + b, 0)}</td></tr>`;
+    }
+    htmlFilas += `<tr class="cie-total-row"><td class="cie-region-cell">TOTAL</td>`;
+    for (const estado of ESTADOS_RESUMEN_ORDEN) {
+      htmlFilas += `<td class="cie-total-cell"><strong>${filaTotal[estado] || 0}</strong></td>`;
+    }
+    htmlFilas += `<td class="cie-total-cell">${totalConvenios}</td></tr>`;
+
+    outputResumen.innerHTML = `<style>
+      .cie-resumen-wrap { font-family: 'Segoe UI', 'Noto Sans', system-ui, sans-serif; color: #1f2937; max-width: 1180px; margin: 0 auto; }
+      .cie-resumen-hero { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: white; padding: 24px 28px; border-radius: 18px; box-shadow: 0 14px 30px rgba(37, 99, 235, 0.18); margin-bottom: 18px; }
+      .cie-resumen-hero h2 { margin: 0 0 8px 0; font-size: 24px; font-weight: 700; }
+      .cie-resumen-hero p { margin: 0; opacity: 0.95; line-height: 1.5; }
+      .cie-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 20px; }
+      .cie-meta-pill { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); }
+      .cie-meta-pill .label { display: block; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+      .cie-meta-pill .value { font-size: 20px; font-weight: 700; color: #111827; }
+      .cie-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+      .cie-table-card { background: white; border-radius: 18px; border: 1px solid #e5e7eb; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06); overflow: hidden; }
+      .cie-table-scroll { overflow-x: auto; }
+      .cie-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 920px; }
+      .cie-table thead th { position: sticky; top: 0; background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%); color: #334155; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 14px 12px; border-bottom: 1px solid #dbeafe; text-align: center; z-index: 1; }
+      .cie-table thead th:first-child { text-align: left; padding-left: 18px; }
+      .cie-table tbody tr:nth-child(odd) { background: #fcfcff; }
+      .cie-table tbody tr:hover { background: #f8fbff; }
+      .cie-table td { padding: 14px 12px; border-bottom: 1px solid #eef2f7; text-align: center; }
+      .cie-region-cell { text-align: left !important; padding-left: 18px !important; font-weight: 600; color: #0f172a; }
+      .cie-total-general { font-weight: 800; color: #0f172a; background: #f8fafc; }
+      .cie-total-row { background: linear-gradient(90deg, #eff6ff 0%, #f5f3ff 100%) !important; }
+      .cie-total-row td { border-top: 1px solid #c7d2fe; font-weight: 800; }
+      .cie-total-cell { background: rgba(255,255,255,0.55); color: #1e293b; }
+    </style>
+    <div class="cie-resumen-wrap">
+      <div class="cie-resumen-hero"><h2>📊 Resumen de Informes CIE por Region</h2><p>Se muestra un unico convenio vigente por cada REX, usando los estados normalizados del tablero.</p></div>
+      <div class="cie-meta-grid">
+        <div class="cie-meta-pill"><span class="label">Convenios vigentes</span><span class="value">${totalConvenios}</span></div>
+        <div class="cie-meta-pill"><span class="label">Regiones visibles</span><span class="value">${totalRegiones}</span></div>
+        <div class="cie-meta-pill"><span class="label">Region autorizada</span><span class="value">${htmlEscape(regionAut)}</span></div>
+      </div>
+      <div class="cie-kpi-grid">${htmlKpis}</div>
+      <div class="cie-table-card"><div class="cie-table-scroll"><table class="cie-table">
+        <thead><tr>
+          <th>Region</th>
+          <th>No iniciado</th><th>Iniciado</th><th>Presentado</th>
+          <th>Corregido</th><th>Observado</th><th>Aprobado</th><th>Total</th>
+        </tr></thead>
+        <tbody>${htmlFilas}</tbody>
+      </table></div></div>
+    </div>`;
+  } catch (e) {
+    outputResumen.innerHTML = `<p>❌ Error: ${htmlEscape(e.message)}</p>`;
+    console.error(e);
+  }
+}
+
+// =============================================================================
+// UI HELPERS
+// =============================================================================
+function print(msg) {
+  outputArea.innerHTML += `<div>${String(msg)}</div>`;
+  outputArea.scrollTop = outputArea.scrollHeight;
+}
+
+function clearOutput() { outputArea.innerHTML = ''; }
+
+function actualizarVisibilidadInterfaz() {
+  try {
+    const row = obtenerDatosConvenioSeleccionado();
+    if (row) {
+      const estado = textoLimpio(row['Estado_Registro'] || '');
+      const estadoNorm = estado.toLowerCase();
+      const habilitado = estadoNorm === 'enviado';
+      btnAprobar.disabled = !habilitado;
+      btnAgregarObservacion.disabled = !habilitado;
+      textareaObservacion.disabled = !habilitado;
+      wrapperAcciones.style.display = 'block';
+    } else {
+      btnAprobar.disabled = true;
+      btnAgregarObservacion.disabled = true;
+      textareaObservacion.disabled = true;
+    }
+  } catch (e) {}
+}
+
+// =============================================================================
+// EVENT HANDLERS
+// =============================================================================
+function _validarRegionRegistro(row) {
+  const regionRegistro = String(row['Sostenedor_Region'] || '').trim();
+  if (!usuarioPuedeOperarRegion(regionRegistro)) {
+    print(`❌ Operacion bloqueada: su region autorizada es '${appState.regionAutorizada}', pero el registro pertenece a '${regionRegistro || 'desconocida'}'.`);
+    return false;
+  }
+  return true;
+}
+
+async function onAprobarClick() {
+  clearOutput();
+  const row = obtenerDatosConvenioSeleccionado();
+  if (!row) { print('⚠️ Seleccione un convenio'); return; }
+  if (!_validarRegionRegistro(row)) return;
+
+  const idRegistro = String(row['ID_Registro'] || '').trim();
+  const rex = String(row['Convenio_REX'] || '').trim();
+  const estadoActual = String(row['Estado_Registro'] || '').trim();
+
+  if (estadoActual === 'Aprobado') {
+    print(`ℹ️ El convenio ${rex} ya esta APROBADO`);
+    return;
+  }
+
+  try {
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    await actualizarEstadoMaestro(maestroId, idRegistro, 'Aprobado');
+    print(`El estado del convenio ${rex} fue actualizado a Aprobado con exito.`);
+
+    await enviarCorreoSostenedor('aprobacion', row);
+
+    await sleep(API_DELAY_MS);
+    await cargarConveniosDropdown();
+    dropdownConvenios.value = '';
+    wrapperAcciones.style.display = 'none';
+    await mostrarResumenAutomatico();
+  } catch (e) {
+    print(`❌ Error: ${e.message}`);
+  }
+}
+
+async function onAgregarObservacionClick() {
+  clearOutput();
+  const row = obtenerDatosConvenioSeleccionado();
+  if (!row) { print('⚠️ Seleccione un convenio'); return; }
+  if (!_validarRegionRegistro(row)) return;
+
+  const observacion = textareaObservacion.value.trim();
+  if (!observacion) { print('⚠️ Ingrese la observacion'); return; }
+  const estado = String(row['Estado_Registro'] || '').trim();
+  if (estado === 'Aprobado') { print('❌ No se pueden agregar observaciones a convenios APROBADOS'); return; }
+
+  const idRegistro = String(row['ID_Registro'] || '').trim();
+  try {
+    const maestroId = CONFIG_IDS.MAESTRO_ID;
+    const resultado = await agregarObservacionCompleta(maestroId, idRegistro, observacion);
+    if (resultado) {
+      await enviarCorreoSostenedor('observacion', row, observacion);
+      textareaObservacion.value = '';
+      await sleep(API_DELAY_MS);
+      await cargarConveniosDropdown();
+      dropdownConvenios.value = '';
+      wrapperAcciones.style.display = 'none';
+      await mostrarResumenAutomatico();
+    } else {
+      print('⚠️ No se pudo agregar la observacion');
+    }
+  } catch (e) {
+    print(`❌ Error: ${e.message}`);
+  }
+}
+
+async function onConvenioSeleccionado() {
+  clearOutput();
+  const row = obtenerDatosConvenioSeleccionado();
+  if (row) {
+    const estado = textoLimpio(row['Estado_Registro'] || '');
+    const estadoNorm = estado.toLowerCase();
+    const habilitado = estadoNorm === 'enviado';
+    btnAprobar.disabled = !habilitado;
+    btnAgregarObservacion.disabled = !habilitado;
+    textareaObservacion.disabled = !habilitado;
+    wrapperAcciones.style.display = 'block';
+
+    outputArea.innerHTML = renderHtmlConvenio(row);
+    if (estadoNorm === 'aprobado') {
+      print('✅ Este convenio esta APROBADO. Las acciones ya no estan disponibles.');
+    } else if (estadoNorm !== 'enviado') {
+      print(`ℹ️ Acciones bloqueadas: solo se puede aprobar/observar en estado Enviado. Estado actual: ${estado || 'Sin estado'}`);
+    }
+  } else {
+    btnAprobar.disabled = true;
+    btnAgregarObservacion.disabled = true;
+    textareaObservacion.disabled = true;
+    wrapperAcciones.style.display = 'none';
+    print('📊 Seleccione un convenio para ver el detalle.');
+  }
+}
+
+btnConectar.addEventListener('click', async () => {
+  setLoginStatus('warn', '🟡 Solicitando acceso...');
+  try {
+    await initGis();
+    await requestToken(true);
+    setLoginStatus('ok', '🟢 Conectado');
+    btnConectar.disabled = true;
+    btnConectar.textContent = '✅ Conectado';
+    await loginSuccess();
+  } catch (e) {
+    setLoginStatus('err', '🔴 Error: ' + (e.message || String(e)));
+    print('❌ Error de autenticacion: ' + (e.message || String(e)));
+  }
+});
+
+btnAprobar.addEventListener('click', onAprobarClick);
+btnAgregarObservacion.addEventListener('click', onAgregarObservacionClick);
+dropdownConvenios.addEventListener('change', onConvenioSeleccionado);
+
+async function loginSuccess() {
+  try {
+    print('🔍 Resolviendo configuracion...');
+    await resolverConfiguracionIds(true);
+    const maestroId = await crearObtenerMaestro();
+
+    print('📧 Obteniendo correo autenticado...');
+    appState.correoUsuario = await obtenerCorreoAutenticado();
+    if (!appState.correoUsuario) throw new Error('No se pudo obtener correo del usuario autenticado');
+    print(`👤 Usuario: ${appState.correoUsuario}`);
+
+    print('📋 Cargando autorizaciones...');
+    const dfRegiones = await leerRegionesCorreos();
+    appState.dfRegiones = dfRegiones;
+    appState.regionAutorizada = resolverRegionAutorizada(appState.correoUsuario, dfRegiones);
+    if (!appState.regionAutorizada) {
+      bloquearInterfazNoAutorizado(`⚠️ Su correo (${appState.correoUsuario}) no esta autorizado.`);
+      setLoginStatus('warn', '🟡 No autorizado');
+      return;
+    }
+    print(`📍 Region autorizada: ${appState.regionAutorizada}`);
+
+    await registrarIngresoNotebook();
+    print('📊 Cargando resumen...');
+    await cargarConveniosDropdown();
+    await mostrarResumenAutomatico();
+    print('✅ Sistema listo.');
+  } catch (e) {
+    setLoginStatus('err', '🔴 Error: ' + e.message);
+    print('❌ ' + e.message);
+  }
+}
+
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+async function init() {
+  if (window.self !== window.top) {
+    document.getElementById('iframe-warning').style.display = 'block';
+    document.getElementById('btn-new-tab').addEventListener('click', () => {
+      window.open(window.location.href, '_blank');
+    });
+  }
+  await initGis();
+  const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Date.now() < parsed.tokenExpiresAt) {
+        accessToken = parsed.accessToken;
+        tokenExpiresAt = parsed.tokenExpiresAt;
+        await loginSuccess();
+        return;
+      }
+    } catch (e) {}
+  }
+  setLoginStatus('off', '⚪ No conectado');
+}
+
+init();
+</script>
+</body>
+</html>
