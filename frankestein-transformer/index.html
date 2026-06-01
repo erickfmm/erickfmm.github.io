@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <script src="ft-diagram.js"></script>
 <style>
 :root {
@@ -251,6 +252,36 @@ pre {
 }
 .list-builder-item .btn { padding:2px 6px; font-size:11px; }
 /* responsive */
+/* Paper content styles */
+.paper-content { line-height: 1.7; font-size: 15px; }
+.paper-content h1 { font-size: 26px; margin: 32px 0 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.paper-content h2 { font-size: 20px; margin: 28px 0 10px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.paper-content h3 { font-size: 17px; margin: 24px 0 8px; color: var(--text); }
+.paper-content h4 { font-size: 15px; margin: 20px 0 6px; color: var(--text); }
+.paper-content p { margin: 8px 0; }
+.paper-content ul, .paper-content ol { margin: 8px 0; padding-left: 24px; }
+.paper-content li { margin: 4px 0; }
+.paper-content a { color: var(--accent); text-decoration: none; }
+.paper-content a:hover { text-decoration: underline; }
+.paper-content code { background: var(--surface); padding: 2px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: 13px; }
+.paper-content pre { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; margin: 12px 0; }
+.paper-content table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; display: block; overflow-x: auto; }
+.paper-content th, .paper-content td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.paper-content th { background: var(--surface); color: var(--accent); font-weight: 600; }
+.paper-content blockquote { border-left: 3px solid var(--accent); padding: 8px 16px; margin: 12px 0; background: var(--surface); border-radius: 0 var(--radius) var(--radius) 0; }
+.paper-content .math { color: var(--text); }
+.paper-content .math display { display: block; margin: 12px 0; overflow-x: auto; }
+.paper-content .citation { color: var(--text-muted); font-size: 13px; }
+.paper-content figure { margin: 16px 0; text-align: center; }
+.paper-content figcaption { font-size: 13px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+.paper-content .paper-figure-placeholder { border: 1px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; margin: 16px 0; background: var(--surface); }
+.paper-content .paper-figure-caption { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+.paper-content .paper-figure-note { font-size: 13px; color: var(--warning); }
+.paper-content .paper-figure-link a { font-size: 13px; }
+.paper-pdf-link { display: inline-block; margin-bottom: 12px; }
+.paper-banner { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--text-muted); }
+.paper-banner a { color: var(--accent); }
+
 @media (max-width: 900px) {
   .app { flex-direction: column; }
   .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); }
@@ -309,6 +340,7 @@ pre {
     <button class="tab" id="tab-button-yaml" type="button" role="tab" aria-selected="false" aria-controls="tab-yaml" tabindex="-1" data-tab="yaml">📄 YAML Output</button>
     <button class="tab" id="tab-button-command" type="button" role="tab" aria-selected="false" aria-controls="tab-command" tabindex="-1" data-tab="command">▶️ Command</button>
     <button class="tab" id="tab-button-diagram" type="button" role="tab" aria-selected="false" aria-controls="tab-diagram" tabindex="-1" data-tab="diagram">🗺️ Diagram</button>
+    <button class="tab" id="tab-button-paper" type="button" role="tab" aria-selected="false" aria-controls="tab-paper" tabindex="-1" data-tab="paper">📝 Paper</button>
   </div>
 
   <!-- TAB: BUILDER -->
@@ -409,6 +441,14 @@ pre {
     <p id="full-cmd-display" class="info" style="margin-top:8px;"></p>
   </div>
 
+  <!-- TAB: PAPER -->
+  <div class="tab-content" id="tab-paper" role="tabpanel" aria-labelledby="tab-button-paper" hidden>
+    <h2 id="paper-title">Paper / Artículo</h2>
+    <div id="paper-container" aria-live="polite">
+      <p class="info" id="paper-loading">Loading paper...</p>
+    </div>
+  </div>
+
   <!-- TAB: DIAGRAM -->
   <div class="tab-content" id="tab-diagram" role="tabpanel" aria-labelledby="tab-button-diagram" hidden>
     <h2>Architecture Diagram</h2>
@@ -435,6 +475,7 @@ let lang = 'en';
 let selectedCmd = 'train';
 let configData = {};
 let activeTab = 'builder';
+const paperCache = { en: null, es: null };
 
 const UI = {
   required: { en:'Required', es:'Obligatorio' },
@@ -540,6 +581,7 @@ function switchTab(name, options) {
   if (name === 'yaml') updateYamlOutput();
   if (name === 'command') updateCmdPreview();
   if (name === 'diagram') renderDiagram();
+  if (name === 'paper') loadPaperContent();
 }
 
 function initTabs() {
@@ -1588,6 +1630,38 @@ function copyCmd() {
   navigator.clipboard.writeText(cmd).then(() => setFeedback(t('commandCopied'), 'success')).catch(() => setFeedback(t('commandCopied'), 'error', 'assertive'));
 }
 
+async function loadPaperContent() {
+  const container = document.getElementById('paper-container');
+  const langKey = lang;
+  if (!container) return;
+
+  if (paperCache[langKey]) {
+    container.innerHTML = paperCache[langKey];
+    if (window.MathJax && MathJax.typesetPromise) {
+      try { await MathJax.typesetPromise(); } catch(e) { console.warn('MathJax typeset:', e); }
+    }
+    return;
+  }
+
+  container.innerHTML = '<p class="info">⏳ ' + (lang === 'en' ? 'Loading paper...' : 'Cargando artículo...') + '</p>';
+
+  const file = langKey === 'es' ? '/frankestein-transformer/paper/paper-es.html' : '/frankestein-transformer/paper/paper-en.html';
+  try {
+    const resp = await fetch(file);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const html = await resp.text();
+    paperCache[langKey] = html;
+    container.innerHTML = html;
+    document.getElementById('paper-title').textContent = lang === 'en' ? '📝 Paper / Artículo' : '📝 Artículo / Paper';
+    if (window.MathJax && MathJax.typesetPromise) {
+      try { await MathJax.typesetPromise(); } catch(e) { console.warn('MathJax typeset:', e); }
+    }
+  } catch(e) {
+    container.innerHTML = '<p class="info" style="color:var(--danger)">❌ ' + (lang === 'en' ? 'Failed to load paper: ' : 'Error al cargar artículo: ') + escHtml(e.message) + '</p>';
+    console.error(e);
+  }
+}
+
 function onModelModeChange() {
   const mode = document.querySelector('input[name="model_mode"]:checked').value;
   document.getElementById('custom-model-div').style.display = mode === 'custom' ? 'block' : 'none';
@@ -1893,6 +1967,10 @@ function onLangChange() {
   if (SCHEMA) {
     buildAll();
     setTimeout(() => restoreAllFormValues(saved, { activeElementId, scrollTop }), 100);
+  }
+  // Reload paper content on language change if paper tab is active
+  if (activeTab === 'paper') {
+    loadPaperContent();
   }
 }
 
