@@ -900,11 +900,6 @@ async function crearObtenerMaestro() {
   return maestroId;
 }
 
-  appState.maestroId = maestroId;
-  print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
-  return maestroId;
-}
-
 async function obtenerNombrePrimeraHoja(spreadsheetId) {
   const data = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`);
   return data.sheets[0].properties.title;
