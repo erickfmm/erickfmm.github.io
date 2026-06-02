@@ -628,7 +628,7 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
 
     if (celdaB.includes('REX CIE:')) { datosFormulario['Convenio_REX'] = celdaC; continue; }
     if (celdaB.includes('Fecha Convenio CIE:')) { datosFormulario['Convenio_Fecha'] = celdaC; continue; }
-    if (celdaB.includes('Cantidad de Escuelas:')) { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
+    if (celdaB.includes('Cantidad de Escuelas:') || celdaB.includes('Establecimientos:')) { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
     if (celdaB.includes('Institución:')) { if (celdaC) datosFormulario['Sostenedor_Institucion'] = celdaC; continue; }
     if (celdaB.includes('Institución:')) continue;
     if (celdaB.includes('RUT Sostenedor:')) { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
@@ -669,6 +669,15 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
         continue;
       }
     }
+    if (celdaBNorm === 'comentario final:' || celdaBNorm === 'comentario final') {
+      if (celdaC) {
+        datosFormulario['Comentarios_Finales_1'] = celdaC;
+        datosFormulario['Comentarios_Finales_2'] = '';
+        datosFormulario['Comentarios_Finales_3'] = '';
+        datos.tiene_datos_encuesta = true;
+      }
+      continue;
+    }
     if (proyectoActual && (celdaBNorm === 'comentario:' || celdaBNorm === 'comentario')) {
       if (celdaC) {
         const colCom = `${proyectoActual}_Comentarios`;
@@ -705,6 +714,11 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
       }
       continue;
     }
+  }
+
+  if (datos.esta_enviado && !datosFormulario['Fecha_Envio']) {
+    datosFormulario['Fecha_Envio'] = datos.fecha_extraccion;
+    datos.fecha_envio_detectada = datos.fecha_extraccion;
   }
 
   aplicarPlaceholderProyectosNoPresentes(datosFormulario, datos.proyectos_evaluados);
@@ -750,7 +764,7 @@ function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservaci
 
       if (!formulario['Convenio_REX'] && labelNorm.includes('rex cie')) formulario['Convenio_REX'] = valor;
       if (!formulario['Convenio_Fecha'] && labelNorm.includes('fecha convenio cie')) formulario['Convenio_Fecha'] = valor;
-      if (!formulario['Convenio_Cantidad_Escuelas'] && labelNorm.includes('cantidad de escuelas')) formulario['Convenio_Cantidad_Escuelas'] = valor;
+      if (!formulario['Convenio_Cantidad_Escuelas'] && (labelNorm.includes('cantidad de escuelas') || labelNorm.includes('establecimientos'))) formulario['Convenio_Cantidad_Escuelas'] = valor;
       if (!formulario['Sostenedor_Institucion'] && labelNorm.includes('institucion')) formulario['Sostenedor_Institucion'] = valor;
       if (!formulario['Sostenedor_RUT'] && labelNorm.includes('rut sostenedor')) formulario['Sostenedor_RUT'] = valor;
       if (!formulario['Sostenedor_Correo'] && labelNorm.includes('correo institucional')) formulario['Sostenedor_Correo'] = valor;
@@ -759,6 +773,14 @@ function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservaci
       if (proyectoActual && !formulario[`${proyectoActual}_Pregunta_Respuesta`] && (labelNorm === 'respuesta:' || labelNorm === 'respuesta')) {
         formulario[`${proyectoActual}_Pregunta_Respuesta`] = valor;
         if (valor) datos.tiene_datos_encuesta = true;
+      }
+      if (labelNorm === 'comentario final:' || labelNorm === 'comentario final') {
+        if (!formulario['Comentarios_Finales_1'] && valor) {
+          formulario['Comentarios_Finales_1'] = valor;
+          formulario['Comentarios_Finales_2'] = '';
+          formulario['Comentarios_Finales_3'] = '';
+          if (valor) datos.tiene_datos_encuesta = true;
+        }
       }
       if (proyectoActual && !formulario[`${proyectoActual}_Comentarios`] && (labelNorm === 'comentario:' || labelNorm === 'comentario')) {
         formulario[`${proyectoActual}_Comentarios`] = valor;
@@ -783,6 +805,10 @@ function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservaci
         formulario['Estado_Formulario'] = valor;
         if (String(valor).toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
       }
+    }
+    if (datos.esta_enviado && !formulario['Fecha_Envio']) {
+      formulario['Fecha_Envio'] = datos.fecha_extraccion;
+      datos.fecha_envio_detectada = datos.fecha_extraccion;
     }
     datos.formulario = formulario;
   } catch (e) { /* fallback silently */ }
