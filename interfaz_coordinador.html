@@ -71,6 +71,14 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 .cie-kpi-label { font-size: 13px; font-weight: 700; }
 .cie-kpi-value { font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
 .cie-kpi-meta { font-size: 12px; color: var(--cie-muted); }
+.cie-tooltip-wrap { position: relative; display: inline-block; cursor: pointer; }
+.cie-tooltip-wrap .cie-tooltip-content { display: none; position: absolute; z-index: 100; bottom: 125%; left: 50%; transform: translateX(-50%); background: #fff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.13); min-width: 220px; max-width: 400px; font-size: 12px; font-weight: 400; color: #1f2937; white-space: normal; }
+.cie-tooltip-wrap:hover .cie-tooltip-content { display: block; }
+.cie-tooltip-wrap .cie-tooltip-content::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #bfdbfe; }
+.cie-tooltip-wrap .cie-estab-count { font-weight: 700; color: #1d4ed8; border-bottom: 1px dashed #93c5fd; }
+.cie-tooltip-wrap .cie-estab-item { padding: 3px 0; border-bottom: 1px solid #f1f5f9; line-height: 1.4; }
+.cie-tooltip-wrap .cie-estab-item:last-child { border-bottom: none; }
+.cie-estab-grid { max-height: 280px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -577,10 +585,24 @@ function obtenerUltimaObservacion(row) {
   return '';
 }
 
+function _renderEstablecimientos(valor) {
+  const raw = textoLimpio(valor);
+  if (!raw) return '<span class="cie-muted">(Sin dato)</span>';
+  const lineas = raw.split('\n').filter(l => l.trim());
+  if (lineas.length === 0) return '<span class="cie-muted">(Sin dato)</span>';
+  const esSoloNumero = lineas.length === 1 && /^\d+$/.test(lineas[0].trim());
+  if (esSoloNumero) {
+    const n = parseInt(lineas[0].trim(), 10);
+    return `<span class="cie-badge cie-badge--no">${n} establecimiento${n !== 1 ? 's' : ''}</span>`;
+  }
+  const itemsHtml = lineas.map(l => `<div class="cie-estab-item">${htmlEscape(l.trim())}</div>`).join('');
+  return `<div class="cie-tooltip-wrap"><span class="cie-estab-count">${lineas.length} establecimiento${lineas.length !== 1 ? 's' : ''}</span><div class="cie-tooltip-content"><div class="cie-estab-grid">${itemsHtml}</div></div></div>`;
+}
+
 function construirTablaProyectosConvenio(row) {
   const proyectosVisibles = detectarProyectosDesdeRow(row);
   if (!proyectosVisibles.length) return '<p class="cie-empty">No hay proyectos visibles para este convenio.</p>';
-  const cantidadEscuelas = valorHtml(row['Convenio_Cantidad_Escuelas'], 'Sin dato');
+  const establecimientosHtml = _renderEstablecimientos(row['Convenio_Cantidad_Escuelas']);
 
   const filas = proyectosVisibles.map(proyecto => {
     const nota = row[`${proyecto}_Nota`] || '';
@@ -598,11 +620,11 @@ function construirTablaProyectosConvenio(row) {
       + `<td>${valorHtml(pregunta)}</td>`
       + `<td>${valorHtml(comentarios)}</td>`
       + `<td>${beneficiosHtml}</td>`
-      + `<td>${cantidadEscuelas}</td>`
+      + `<td>${establecimientosHtml}</td>`
       + `</tr>`;
   });
 
-  const header = '<thead><tr><th>Proyecto</th><th>Nota</th><th>Pregunta</th><th>Comentarios</th><th>Beneficios</th><th>Cantidad Escuelas</th></tr></thead>';
+  const header = '<thead><tr><th>Proyecto</th><th>Nota</th><th>Pregunta</th><th>Comentarios</th><th>Beneficios</th><th>Establecimientos</th></tr></thead>';
   return `<div class="cie-scroll"><table class="cie-table">${header}<tbody>${filas.join('')}</tbody></table></div>`;
 }
 
@@ -612,8 +634,7 @@ function renderHtmlConvenio(row) {
   const region = textoLimpio(row['Sostenedor_Region'] || 'Sin region');
   const sostenedor = textoLimpio(row['Sostenedor_Institucion'] || 'Sin dato');
   const fechaConvenio = textoLimpio(row['Convenio_Fecha'] || 'Sin fecha');
-  const escuelas = textoLimpio(row['Convenio_Cantidad_Escuelas'] || 'Sin dato');
-  const fechaEnvio = textoLimpio(row['Fecha_Envio'] || '');
+  const establecimientosValor = textoLimpio(row['Convenio_Cantidad_Escuelas'] || '');
   const observacion = obtenerUltimaObservacion(row);
   const urlSheet = textoLimpio(row['URL_Sheet'] || row['Spreadsheet_URL'] || '');
   const comentariosFinales = textoLimpio(row['Comentarios_Finales_1'] || '');
@@ -627,16 +648,17 @@ function renderHtmlConvenio(row) {
     ? `<a class="cie-link" href="${htmlEscape(urlSheet)}" target="_blank">Enlace al informe</a>`
     : '<span class="cie-muted">(vacio)</span>';
 
+  const estabDetailHtml = _renderEstablecimientos(establecimientosValor);
+
   return `<div class="cie-wrap">`
     + `<div class="cie-title">Datos del informe de convenio CIE REX ${htmlEscape(rex)}</div>`
     + `<div class="cie-grid">`
     + `<div class="cie-card-inner"><div class="cie-label">REX</div><div class="cie-value">${htmlEscape(rex)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Estado del registro</div><div class="cie-value"><span class="cie-badge cie-badge--${estadoClase}">${htmlEscape(estadoRegistro || 'Sin estado')}</span></div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Fecha y hora de envio</div><div class="cie-value">${valorHtml(fechaEnvio)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Region</div><div class="cie-value">${htmlEscape(region)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Nombre sostenedor</div><div class="cie-value">${htmlEscape(sostenedor)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Fecha convenio</div><div class="cie-value">${htmlEscape(fechaConvenio)}</div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Cantidad escuelas</div><div class="cie-value">${htmlEscape(escuelas)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Establecimientos</div><div class="cie-value">${estabDetailHtml}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Ultima observacion</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Acceso al informe</div><div class="cie-value">${linkHtml}</div></div>`
     + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Comentarios finales</div><div class="cie-value">${valorHtml(comentariosFinales)}</div></div>`
