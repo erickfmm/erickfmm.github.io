@@ -217,6 +217,7 @@ const appState = {
   driveService: null,
   spreadsheetMaestro: null,
   maestroId: null,
+  hojaMaestra: null,
   dfMaestro: null,
   dfMaestroVigentes: null,
   correoUsuario: null,
@@ -426,14 +427,25 @@ function esEmailValido(valor) { return emailRegex().test(String(valor || '').tri
 // =============================================================================
 // SHEETS HELPERS
 // =============================================================================
+function hojaRange(hoja, suffix) {
+  const safe = /^[_A-Za-z0-9]+$/.test(hoja) ? hoja : `'${hoja.replace(/'/g, "''")}'`;
+  return suffix ? `${safe}${suffix}` : safe;
+}
+
+async function obtenerNombrePrimeraHoja(spreadsheetId) {
+  const data = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`);
+  return data.sheets[0].properties.title;
+}
+
 async function leerValoresHoja(spreadsheetId, rango) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rango)}`;
   const data = await apiFetch(url);
   return data.values || [];
 }
 
-async function getAllRecords(spreadsheetId, sheetName = 'Sheet1') {
-  const data = await leerValoresHoja(spreadsheetId, `${sheetName}!A1:ZZ`);
+async function getAllRecords(spreadsheetId, sheetName) {
+  const hoja = sheetName || appState.hojaMaestra || await obtenerNombrePrimeraHoja(spreadsheetId);
+  const data = await leerValoresHoja(spreadsheetId, `${hojaRange(hoja)}!A1:ZZ`);
   if (!data.length) return [];
   const headers = data[0];
   return data.slice(1).map(row => {
@@ -491,7 +503,8 @@ async function leerRegionesCorreos() {
   const r = await apiFetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true`);
   if (!r.files || r.files.length === 0) throw new Error('No se encontro el sheet regiones_correos en central');
   const sheetId = r.files[0].id;
-  const values = await leerValoresHoja(sheetId, 'Sheet1!A:Z');
+  const hojaNombre = await obtenerNombrePrimeraHoja(sheetId);
+  const values = await leerValoresHoja(sheetId, hojaRange(hojaNombre, '!A:Z'));
   if (!values.length) return [];
   const headers = values[0];
   const correoIdx = headers.findIndex(h => String(h || '').toLowerCase() === 'correo');
@@ -794,12 +807,14 @@ async function crearObtenerMaestro() {
   const maestroId = CONFIG_IDS.MAESTRO_ID;
   if (!maestroId) throw new Error("No se encontro MAESTRO_ID en central.");
   appState.maestroId = maestroId;
+  appState.hojaMaestra = await obtenerNombrePrimeraHoja(maestroId);
   print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
   return maestroId;
 }
 
 async function actualizarEstadoMaestro(spreadsheetId, idRegistro, nuevoEstado) {
-  const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+  const hoja = appState.hojaMaestra || 'Sheet1';
+  const allValues = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
   if (!allValues.length) return false;
   const encabezados = allValues[0];
   const idxId = obtenerIndiceColumna(encabezados, 'ID_Registro');
@@ -968,7 +983,8 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
 
 async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observacion, urlSheet) {
   try {
-    const allValues = await leerValoresHoja(spreadsheetId, 'Sheet1');
+    const hoja = appState.hojaMaestra || 'Sheet1';
+    const allValues = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
     const encabezados = allValues[0];
     const idxId = obtenerIndiceColumna(encabezados, 'ID_Registro');
     const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
@@ -1016,7 +1032,7 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
     }
 
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${allValues.length + 1}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaRange(hoja, '!A' + (allValues.length + 1)))}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       { method: 'POST', body: JSON.stringify({ values: [nuevaFila] }) }
     );
     await sleep(API_DELAY_MS);
