@@ -178,7 +178,7 @@ function generarColumnasFormulario() {
 const COLUMNAS_FORMULARIO = generarColumnasFormulario();
 
 const COLUMNAS_METADATA = [
-  "ID_Registro", "Fecha_Extraccion", "Carpeta_Origen", "URL_Sheet",
+  "ID_Registro", "ID_Convenio_Archivo", "Fecha_Extraccion", "Carpeta_Origen", "URL_Sheet",
   "Hoja_Origen", "Numero_Observacion", "Fila_Valida", "Estado_Registro",
   "Observaciones_Sistema", "Version"
 ];
@@ -369,6 +369,12 @@ function extraerRexDeNombreArchivo(nombreArchivo) {
   m = s.match(/REX[\s\-]*([0-9]+[A-Z0-9\-/]*)/i);
   if (m) return `REX-${m[1]}`;
   return 'REX_DESCONOCIDO';
+}
+
+function extraerIdConvenioDeNombreArchivo(nombreArchivo) {
+  let s = String(nombreArchivo || '').trim();
+  s = s.replace(/\.(xlsx|gsheet)$/i, '');
+  return s;
 }
 
 function textoLimpio(valor) {
@@ -626,14 +632,13 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
       }
     }
 
-    if (celdaB.includes('REX CIE:')) { datosFormulario['Convenio_REX'] = celdaC; continue; }
-    if (celdaB.includes('Fecha Convenio CIE:')) { datosFormulario['Convenio_Fecha'] = celdaC; continue; }
-    if (celdaB.includes('Cantidad de Escuelas:') || celdaB.includes('Establecimientos:')) { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
-    if (celdaB.includes('Institución:')) { if (celdaC) datosFormulario['Sostenedor_Institucion'] = celdaC; continue; }
-    if (celdaB.includes('Institución:')) continue;
-    if (celdaB.includes('RUT Sostenedor:')) { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
-    if (celdaB.includes('Correo Institucional:')) { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
-    if (celdaB.includes('Región:')) { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
+    if (celdaB.includes('REX CIE:') || celdaBNorm.includes('rex cie')) { datosFormulario['Convenio_REX'] = celdaC; continue; }
+    if (celdaB.includes('Fecha Convenio CIE:') || celdaBNorm.includes('fecha convenio cie')) { datosFormulario['Convenio_Fecha'] = celdaC; continue; }
+    if (celdaB.includes('Cantidad de Escuelas:') || celdaB.includes('Establecimientos:') || celdaBNorm.includes('establecimientos')) { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
+    if (celdaB.includes('Institución:') || celdaB.includes('Institucion:') || celdaBNorm.includes('institucion')) { if (celdaC) datosFormulario['Sostenedor_Institucion'] = celdaC; continue; }
+    if (celdaB.includes('RUT Sostenedor:') || celdaBNorm.includes('rut sostenedor')) { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
+    if (celdaB.includes('Correo Institucional:') || celdaBNorm.includes('correo institucional')) { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
+    if (celdaB.includes('Región:') || celdaB.includes('Region:') || celdaBNorm.includes('region')) { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
 
     if ((celdaBNorm === 'nota:' || celdaBNorm === 'nota') && celdaC && celdaC !== 'Seleccione...') {
       if (proyectoActual) {
@@ -839,7 +844,7 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
       const hojasClasificadas = await obtenerHojasDelSheet(spreadsheetId);
       const hojaOriginal = hojasClasificadas.original;
       const hojasObs = hojasClasificadas.observaciones;
-      diagnostico.hojas_original = hojaOriginal ? hojaOriginal.title : '';
+      diagnostico.hoja_original = hojaOriginal ? hojaOriginal.title : '';
       diagnostico.hojas_observaciones = hojasObs.length;
       diagnostico.hojas_total = 1 + hojasObs.length + (hojaOriginal ? 0 : 0);
 
@@ -860,6 +865,9 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
       }
     }
 
+    const idConvenioArchivo = extraerIdConvenioDeNombreArchivo(nombreArchivo || spreadsheetId);
+    for (const r of resultados) r.id_convenio_archivo = idConvenioArchivo;
+
     diagnostico.registros_extraidos = resultados.length;
     diagnostico.registros_error = resultados.filter(d => d.tiene_error).length;
 
@@ -873,6 +881,7 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
     return returnDiagnostico ? [resultados, diagnostico] : resultados;
   } catch (e) {
     const rexExtraido = extraerRexDeNombreArchivo(nombreArchivo || spreadsheetId);
+    const idConvenioArchivo = extraerIdConvenioDeNombreArchivo(nombreArchivo || spreadsheetId);
     const datosFormularioError = {};
     for (const c of COLUMNAS_FORMULARIO) datosFormularioError[c] = '';
     datosFormularioError['Convenio_REX'] = rexExtraido;
@@ -882,6 +891,7 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
       hoja: 'N/A', numero_observacion: 0, es_observacion: false, carpeta_nombre: carpetaNombre || '',
       fecha_extraccion: formatNow(), proyectos_evaluados: [], tiene_datos_encuesta: false,
       esta_enviado: false, fecha_envio_detectada: '', tiene_error: true, mensaje_error: String(e),
+      id_convenio_archivo: idConvenioArchivo,
       formulario: datosFormularioError
     };
     diagnostico.omitido = true;
@@ -937,17 +947,20 @@ async function sincronizarEncabezadosMaestro(spreadsheetId) {
   const allValues = await leerValoresHoja(spreadsheetId, encRange);
   const existing = allValues.length > 0 ? allValues[0] : [];
   const expected = obtenerEncabezadosMaestro();
-  if (existing.length >= expected.length) return;
+  const missing = expected.filter(c => !existing.includes(c));
+  if (missing.length === 0) return;
+  const merged = [...existing];
+  for (const c of missing) merged.push(c);
   const rangeStr = hojaRange(hoja, '!1:1');
   await apiFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rangeStr)}?valueInputOption=RAW`,
-    { method: 'PUT', body: JSON.stringify({ range: rangeStr, values: [expected] }) }
+    { method: 'PUT', body: JSON.stringify({ range: rangeStr, values: [merged] }) }
   );
   await sleep(API_DELAY_MS);
 }
 
-async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenio, numeroObservacion = 0) {
-  const idxId = obtenerIndiceColumna(encabezados, 'Convenio_REX');
+async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenioArchivo, numeroObservacion = 0) {
+  const idxId = obtenerIndiceColumna(encabezados, 'ID_Convenio_Archivo');
   const idxFilaValida = obtenerIndiceColumna(encabezados, 'Fila_Valida');
   const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
   const idxNumObs = obtenerIndiceColumna(encabezados, 'Numero_Observacion');
@@ -960,7 +973,7 @@ async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenio, 
 
   for (let i = 1; i < allValues.length; i++) {
     const row = allValues[i];
-    if (String(row[idxId] || '').trim() !== String(idConvenio).trim()) continue;
+    if (String(row[idxId] || '').trim() !== String(idConvenioArchivo).trim()) continue;
     if (String(row[idxFilaValida] || '').trim().toLowerCase() !== 'valid') continue;
     const estado = idxEstado !== null && row.length > idxEstado ? String(row[idxEstado] || '').trim() : '';
     let numObsFila = 0;
@@ -988,7 +1001,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
   const allValues = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
   let encabezadosMaestro = allValues.length > 0 ? allValues[0] : [];
   const encabezadosEsperados = obtenerEncabezadosMaestro();
-  const columnasCriticas = new Set(['ID_Registro', 'Fila_Valida', 'Estado_Registro']);
+  const columnasCriticas = new Set(['ID_Registro', 'ID_Convenio_Archivo', 'Fila_Valida', 'Estado_Registro']);
 
   if (!encabezadosMaestro.length || ![...columnasCriticas].every(c => encabezadosMaestro.includes(c))) {
     await sincronizarEncabezadosMaestro(spreadsheetId);
@@ -1004,17 +1017,17 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
 
   for (const datos of datosList) {
     const formulario = datos.formulario || {};
-    const idConvenio = formulario['Convenio_REX'] || '';
+    const idConvenioArchivo = datos.id_convenio_archivo || '';
     const numObs = datos.numero_observacion || 0;
-    if (!idConvenio) { datosAProcesar.push(datos); continue; }
+    if (!idConvenioArchivo) { datosAProcesar.push(datos); continue; }
 
-    const verificacion = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenio, numObs);
+    const verificacion = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenioArchivo, numObs);
     if (verificacion.accion === 'skip') {
-      datosOmitidos.push({ convenio: idConvenio, razon: 'Aprobado' });
+      datosOmitidos.push({ convenio: idConvenioArchivo, razon: 'Aprobado' });
     } else if (verificacion.accion === 'marcar_observado') {
       if (numObs > 0) {
-        const verOrig = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenio, 0);
-        if (verOrig.existe && verOrig.fila_num) filasAMarcarObservado.push({ fila_num: verOrig.fila_num, idConvenio });
+        const verOrig = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenioArchivo, 0);
+        if (verOrig.existe && verOrig.fila_num) filasAMarcarObservado.push({ fila_num: verOrig.fila_num, idConvenio: idConvenioArchivo });
       }
       datosAProcesar.push(datos);
     } else {
@@ -1055,7 +1068,8 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
         const obsSuffix = numObs > 0 ? `-obs${numObs}` : '';
         const envSuffix = estaEnviado ? '-env' : '';
         fila.push(`REG-${idBase}-${String(i + 1).padStart(3, '0')}${obsSuffix}${envSuffix}`);
-      } else if (col === 'Fecha_Extraccion') fila.push(datos.fecha_extraccion || '');
+      } else if (col === 'ID_Convenio_Archivo') fila.push(datos.id_convenio_archivo || '');
+      else if (col === 'Fecha_Extraccion') fila.push(datos.fecha_extraccion || '');
       else if (col === 'Carpeta_Origen') fila.push(datos.carpeta_nombre || '');
       else if (col === 'URL_Sheet') fila.push(datos.spreadsheet_url || '');
       else if (col === 'Hoja_Origen') fila.push(datos.hoja || '');
@@ -1098,7 +1112,7 @@ async function asegurarUnicidadFilasValidas(spreadsheetId) {
   if (!allValues.length) return { error: false, convenios_unicos: 0, duplicados_corregidos: 0 };
 
   const encabezados = allValues[0];
-  const idxId = obtenerIndiceColumna(encabezados, 'Convenio_REX');
+  const idxId = obtenerIndiceColumna(encabezados, 'ID_Convenio_Archivo');
   const idxFilaValida = obtenerIndiceColumna(encabezados, 'Fila_Valida');
   const idxFecha = obtenerIndiceColumna(encabezados, 'Fecha_Extraccion');
   const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');

@@ -445,6 +445,34 @@ async function obtenerNombrePrimeraHoja(spreadsheetId) {
   return data.sheets[0].properties.title;
 }
 
+async function listarTitulosHojas(spreadsheetId) {
+  const data = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(title,sheetId)`);
+  return (data.sheets || []).map(s => s.properties).filter(Boolean);
+}
+
+async function asegurarHojaLog(spreadsheetId, nombreHoja, encabezados) {
+  const hojas = await listarTitulosHojas(spreadsheetId);
+  if (hojas.some(h => h.title === nombreHoja)) return true;
+  await apiFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: [
+          { addSheet: { properties: { title: nombreHoja, gridProperties: { rowCount: 1000, columnCount: 26 } } } }
+        ]
+      })
+    }
+  );
+  if (encabezados && encabezados.length) {
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(nombreHoja + '!A1')}`,
+      { method: 'PUT', body: JSON.stringify({ values: [encabezados] }) }
+    );
+  }
+  return false;
+}
+
 async function leerValoresHoja(spreadsheetId, rango) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rango)}`;
   const data = await apiFetch(url);
@@ -562,8 +590,22 @@ function bloquearInterfazNoAutorizado(mensaje) {
 // =============================================================================
 function _obtenerFilasRelacionadasConvenio(row) {
   const df = appState.dfMaestro;
+  const idArchivo = textoLimpio(row['ID_Convenio_Archivo'] || '');
+  if (!df || df.length === 0) return [];
+  if (idArchivo) {
+    const rel = df.filter(r => String(r['ID_Convenio_Archivo'] || '').trim() === idArchivo);
+    if (rel.length > 0) {
+      const mapped = rel.map(r => ({
+        ...r,
+        __num_obs: normalizarNumeroObservacion(r['Numero_Observacion']),
+        __fecha: r['Fecha_Extraccion'] || ''
+      }));
+      mapped.sort((a, b) => b.__num_obs - a.__num_obs || b.__fecha.localeCompare(a.__fecha));
+      return mapped;
+    }
+  }
   const rex = textoLimpio(row['Convenio_REX'] || '');
-  if (!df || df.length === 0 || !rex || !df[0].hasOwnProperty('Convenio_REX')) return [];
+  if (!rex || !df[0].hasOwnProperty('Convenio_REX')) return [];
   const rel = df.filter(r => String(r['Convenio_REX'] || '').trim() === rex);
   if (rel.length === 0) return [];
   const mapped = rel.map(r => ({
@@ -688,20 +730,22 @@ function _prepararDfConveniosVigentes(records) {
   if (!records || records.length === 0) return [...(records || [])];
   let df = records.map(r => ({ ...r }));
   df = df.filter(r => {
+    const idArchivo = String(r['ID_Convenio_Archivo'] || '').trim();
     const rex = String(r['Convenio_REX'] || '').trim();
-    return rex && rex !== 'nan' && rex !== 'None';
+    const clave = idArchivo || rex;
+    return clave && clave !== 'nan' && clave !== 'None';
   });
   if (df.length === 0) return df;
 
   df.forEach(r => {
-    r.__rex_key = String(r['Convenio_REX'] || '').trim();
+    r.__id_key = String(r['ID_Convenio_Archivo'] || r['Convenio_REX'] || '').trim();
     r.__num_obs = normalizarNumeroObservacion(r['Numero_Observacion']);
     r.__fecha_sort = r['Fecha_Extraccion'] || '';
     r.__id_sort = String(r['ID_Registro'] || '').trim();
   });
 
   df.sort((a, b) => {
-    return a.__rex_key.localeCompare(b.__rex_key)
+    return a.__id_key.localeCompare(b.__id_key)
       || b.__num_obs - a.__num_obs
       || b.__fecha_sort.localeCompare(a.__fecha_sort)
       || b.__id_sort.localeCompare(a.__id_sort);
@@ -709,8 +753,8 @@ function _prepararDfConveniosVigentes(records) {
 
   const seen = new Set();
   return df.filter(r => {
-    if (seen.has(r.__rex_key)) return false;
-    seen.add(r.__rex_key);
+    if (seen.has(r.__id_key)) return false;
+    seen.add(r.__id_key);
     return true;
   });
 }
@@ -754,8 +798,10 @@ function parseDate(str, fmt) {
 
 function _labelConvenio(row) {
   const rex = String(row['Convenio_REX'] || 'Sin REX').trim();
+  const idArchivo = String(row['ID_Convenio_Archivo'] || '').trim();
+  const labelBase = idArchivo || rex;
   const estadoMostrado = _mapearEstadoVisual(row);
-  let label = `${rex} (${estadoMostrado})`;
+  let label = `${labelBase} (${estadoMostrado})`;
   const checkboxEnvio = String(row['Checkbox_Envio'] || '').trim().toUpperCase();
   const fechaEnvioDt = _parsearFechaEnvio(row['Fecha_Envio']);
   if (checkboxEnvio === 'TRUE' && fechaEnvioDt) {
@@ -792,8 +838,10 @@ async function cargarConveniosDropdown() {
     }
 
     const opciones = dfVigentes.map((row, idx) => {
+      const idArchivo = String(row['ID_Convenio_Archivo'] || '').trim();
       const rex = String(row['Convenio_REX'] || '').trim();
-      if (!rex || rex === 'nan') return null;
+      const clave = idArchivo || rex;
+      if (!clave || clave === 'nan') return null;
       return { label: _labelConvenio(row), index: idx };
     }).filter(Boolean);
 
@@ -884,18 +932,24 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
 
     const nuevaVersion = obtenerSiguienteVersionObservaciones(hojas);
     const nuevoNombre = `📝 con observaciones ${nuevaVersion}`;
+    const srcRows = (hojaEdit.gridProperties && hojaEdit.gridProperties.rowCount) || 1000;
+    const srcCols = (hojaEdit.gridProperties && hojaEdit.gridProperties.columnCount) || 26;
 
-    const dupe = await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/sheets:copyTo`,
+    const addResp = await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
       {
         method: 'POST',
         body: JSON.stringify({
-          sourceSheetId: hojaEdit.sheetId,
-          destinationSpreadsheetId: spreadsheetId
+          requests: [
+            { addSheet: { properties: { title: nuevoNombre, gridProperties: { rowCount: srcRows, columnCount: srcCols } } } }
+          ]
         })
       }
     );
-    const nuevoSheetId = dupe.sheetId;
+    const nuevoSheetId = (addResp.replies && addResp.replies[0] && addResp.replies[0].addSheet && addResp.replies[0].addSheet.properties)
+      ? addResp.replies[0].addSheet.properties.sheetId
+      : null;
+    if (nuevoSheetId === null) throw new Error('No se pudo crear la hoja destino (addSheet sin sheetId en respuesta)');
 
     await apiFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
@@ -903,7 +957,25 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         method: 'POST',
         body: JSON.stringify({
           requests: [
-            { updateSheetProperties: { properties: { sheetId: nuevoSheetId, title: nuevoNombre }, fields: 'title' } },
+            {
+              copyPaste: {
+                source: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: srcRows, startColumnIndex: 0, endColumnIndex: srcCols },
+                destination: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: srcRows, startColumnIndex: 0, endColumnIndex: srcCols },
+                pasteType: 'PASTE_NORMAL',
+                pasteOrientation: 'NORMAL'
+              }
+            }
+          ]
+        })
+      }
+    );
+
+    await apiFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          requests: [
             { insertDimension: { range: { sheetId: nuevoSheetId, dimension: 'ROWS', startIndex: 0, endIndex: 5 }, inheritFromBefore: false } }
           ]
         })
@@ -1061,10 +1133,12 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
     print(`   📝 Nueva fila con observacion agregada: ${nuevoId}`);
 
     try {
+      const hojaObsPend = '📝 Observaciones Pendientes';
+      await asegurarHojaLog(spreadsheetId, hojaObsPend, ['ID_Observacion', 'ID_Registro', '', 'Fecha_Hora', 'Observacion', 'Estado', '', 'URL_Sheet']);
       const idObsLog = `OBS-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)}`;
       const filaObs = [idObsLog, nuevoId, '', formatNow(), observacion, 'Pendiente', '', urlSheet];
       await apiFetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/%F0%9F%93%9D%20Observaciones%20Pendientes!A:append?valueInputOption=USER_ENTERED`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaObsPend)}!A:append?valueInputOption=USER_ENTERED`,
         { method: 'POST', body: JSON.stringify({ values: [filaObs] }) }
       );
       await sleep(API_DELAY_MS);
@@ -1187,8 +1261,10 @@ async function registrarLogNotificacion(tipoEvento, resultado, detalle, row, des
 
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
+    const hojaLog = '📧 Log_Notificaciones_CRIE';
+    await asegurarHojaLog(maestroId, hojaLog, ['Fecha_Hora', 'Evento', 'Resultado', 'Detalle', 'Destinatario', 'Convenio', 'Region', 'ID_Registro', '', 'Tipo_Error']);
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/%F0%9F%93%A7%20Log_Notificaciones_CRIE!A1:append?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/${encodeURIComponent(hojaLog)}!A1:append?valueInputOption=USER_ENTERED`,
       { method: 'POST', body: JSON.stringify({ values: [[
         evento.fecha_hora, evento.evento, evento.resultado, evento.detalle,
         evento.destinatario, evento.convenio, evento.region, evento.id_registro, '', evento.tipo_error
@@ -1202,10 +1278,12 @@ async function registrarLogNotificacion(tipoEvento, resultado, detalle, row, des
 async function registrarIngresoNotebook() {
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
+    const hojaLog = 'Log_Accesos_Coordinadores';
+    await asegurarHojaLog(maestroId, hojaLog, ['Fecha_Hora', 'Correo', 'Interfaz', 'Estado']);
     const ts = formatNow();
     const correo = appState.correoUsuario || 'desconocido';
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/Log_Accesos_Coordinadores!A:append?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/${encodeURIComponent(hojaLog)}!A:append?valueInputOption=USER_ENTERED`,
       { method: 'POST', body: JSON.stringify({ values: [[ts, correo, 'Interfaz Coordinador Regional', 'OK']] }) }
     );
   } catch (e) { console.warn('Log acceso:', e.message); }
