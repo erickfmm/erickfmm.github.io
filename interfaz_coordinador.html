@@ -925,10 +925,13 @@ function obtenerSiguienteVersionObservaciones(hojas) {
 async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
   try {
     const spreadsheetId = spreadsheetUrl.replace(/^https?:\/\/docs\.google\.com\/spreadsheets\/d\//, '').replace(/\/.*$/, '');
-    const spreadMeta = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`);
+    const spreadMeta = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties,sheets.protectedRanges`);
     const hojas = (spreadMeta.sheets || []).map(s => s.properties).filter(Boolean);
     const hojaEdit = hojas.find(h => !h.title.includes('🔒')) || hojas[0];
     if (!hojaEdit) return { exito: false, error: 'No se encontraron hojas editables' };
+
+    const proteccionesExistentes = ((spreadMeta.sheets || []).find(s => s.properties && s.properties.sheetId === hojaEdit.sheetId) || {}).protectedRanges || [];
+    const deleteProtectionRequests = proteccionesExistentes.map(pr => ({ deleteProtectedRange: { protectedRangeId: pr.protectedRangeId } }));
 
     const nuevaVersion = obtenerSiguienteVersionObservaciones(hojas);
     const nuevoNombre = `📝 con observaciones ${nuevaVersion}`;
@@ -1002,6 +1005,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
     await sleep(API_DELAY_MS);
 
     const requests = [
+      ...deleteProtectionRequests,
       { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
       { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
       { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 2, endRowIndex: 3, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
@@ -1025,7 +1029,6 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
     const originalTitle = hojaEdit.title;
     const tituloBloqueado = `🔒 ${originalTitle} (v${nuevaVersion - 1})`;
     requests.push({ updateSheetProperties: { properties: { sheetId: hojaEdit.sheetId, title: tituloBloqueado }, fields: 'title' } });
-    requests.push({ addProtectedRange: { protectedRange: { range: { sheetId: hojaEdit.sheetId }, description: `Version anterior bloqueada - Ver pestana '${nuevoNombre}' para editar`, warningOnly: false } } });
 
     await apiFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
@@ -1063,7 +1066,8 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
               fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
             }
           },
-          { updateSheetProperties: { properties: { sheetId: nuevoSheetId, index: 0 }, fields: 'index' } }
+          { updateSheetProperties: { properties: { sheetId: nuevoSheetId, index: 0 }, fields: 'index' } },
+          { addProtectedRange: { protectedRange: { range: { sheetId: hojaEdit.sheetId }, description: `Version anterior bloqueada - Ver pestana '${nuevoNombre}' para editar`, warningOnly: false, editors: { users: [], domainUsersCanEdit: true } } } }
         ]
       })
     });
