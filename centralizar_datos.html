@@ -614,6 +614,7 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
 
   let proyectoActual = null;
   let beneficiosProyecto = [];
+  let inFrecuencia = false;
 
   for (const row of allValues) {
     if (row.length < 2) continue;
@@ -640,11 +641,17 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
     if (celdaB.includes('Correo Institucional:') || celdaBNorm.includes('correo institucional')) { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
     if (celdaB.includes('Región:') || celdaB.includes('Region:') || celdaBNorm.includes('region')) { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
 
+    if (celdaBNorm.includes('frecuencia de uso de beneficios')) {
+      inFrecuencia = true;
+      continue;
+    }
+
     if ((celdaBNorm === 'nota:' || celdaBNorm === 'nota') && celdaC && celdaC !== 'Seleccione...') {
       if (proyectoActual) {
         const colNota = `${proyectoActual}_Nota`;
         if (colNota in datosFormulario) { datosFormulario[colNota] = celdaC; datos.tiene_datos_encuesta = true; }
       }
+      inFrecuencia = false;
       continue;
     }
     if (proyectoActual && (celdaBNorm === 'respuesta:' || celdaBNorm === 'respuesta')) {
@@ -652,9 +659,22 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
         const colPreg = `${proyectoActual}_Pregunta_Respuesta`;
         if (colPreg in datosFormulario) { datosFormulario[colPreg] = celdaC; datos.tiene_datos_encuesta = true; }
       }
+      inFrecuencia = false;
       continue;
     }
-    if (proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
+    if (inFrecuencia && proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
+      const bTextNorm = normalizarTexto(celdaB);
+      for (const beneficio of beneficiosProyecto) {
+        const bNorm = normalizarTexto(beneficio);
+        if (bNorm === bTextNorm || bNorm.includes(bTextNorm) || bTextNorm.includes(bNorm)) {
+          const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
+          if (colFreq in datosFormulario) { datosFormulario[colFreq] = celdaC; datos.tiene_datos_encuesta = true; }
+          break;
+        }
+      }
+      continue;
+    }
+    if (proyectoActual && !inFrecuencia && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
       let beneficioTexto = celdaB.trim();
       const bullets = ['•', '●', '-', '·', '»', '>', '*'];
       let tieneBullet = false;
@@ -674,13 +694,20 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
         continue;
       }
     }
+    if (celdaBNorm === 'sugerencia o reclamo:' || celdaBNorm === 'sugerencia o reclamo') {
+      if (celdaC) {
+        datosFormulario['Comentarios_Finales_2'] = celdaC;
+        datos.tiene_datos_encuesta = true;
+      }
+      inFrecuencia = false;
+      continue;
+    }
     if (celdaBNorm === 'comentario final:' || celdaBNorm === 'comentario final') {
       if (celdaC) {
         datosFormulario['Comentarios_Finales_1'] = celdaC;
-        datosFormulario['Comentarios_Finales_2'] = '';
-        datosFormulario['Comentarios_Finales_3'] = '';
         datos.tiene_datos_encuesta = true;
       }
+      inFrecuencia = false;
       continue;
     }
     if (proyectoActual && (celdaBNorm === 'comentario:' || celdaBNorm === 'comentario')) {
@@ -688,15 +715,11 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
         const colCom = `${proyectoActual}_Comentarios`;
         if (colCom in datosFormulario) { datosFormulario[colCom] = celdaC; datos.tiene_datos_encuesta = true; }
       }
+      inFrecuencia = false;
       continue;
     }
     if (celdaBNorm.includes('recomendacion, sugerencia o reclamo') || celdaBNorm.includes('indiquenos cualquier')) {
-      if (celdaC) {
-        datosFormulario['Comentarios_Finales_1'] = celdaC;
-        datosFormulario['Comentarios_Finales_2'] = '';
-        datosFormulario['Comentarios_Finales_3'] = '';
-        datos.tiene_datos_encuesta = true;
-      }
+      inFrecuencia = false;
       continue;
     }
     if (celdaB.includes('MARQUE AQUÍ PARA CONFIRMAR ENVÍO') || celdaB.includes('MARQUE AQUI PARA CONFIRMAR ENVIO')) {
@@ -727,8 +750,6 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
   }
 
   aplicarPlaceholderProyectosNoPresentes(datosFormulario, datos.proyectos_evaluados);
-  datosFormulario['Comentarios_Finales_2'] = '';
-  datosFormulario['Comentarios_Finales_3'] = '';
   datos.formulario = datosFormulario;
   return datos;
 }
@@ -756,13 +777,40 @@ function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservaci
   try {
     const formulario = datos.formulario || {};
     let proyectoActual = null;
+    let beneficiosProyecto = [];
+    let inFrecuencia2 = false;
 
     for (const row of allValues) {
       if (!row || row.length < 2) continue;
       const celdaB = valorColumna(row, 1);
+      const celdaC = valorColumna(row, 2);
+      const celdaBNorm = normalizarTexto(celdaB);
       if (celdaB && !celdaB.startsWith('=')) {
         const nuevoProy = detectarProyectoActual(celdaB);
-        if (nuevoProy) proyectoActual = nuevoProy;
+        if (nuevoProy) {
+          proyectoActual = nuevoProy;
+          beneficiosProyecto = [...(PROYECTOS_CIE[proyectoActual].beneficios)];
+          inFrecuencia2 = false;
+        }
+      }
+      if (celdaBNorm.includes('frecuencia de uso de beneficios')) {
+        inFrecuencia2 = true;
+      } else if (celdaBNorm.includes(':') || celdaBNorm.includes('marque aqui')) {
+        inFrecuencia2 = false;
+      }
+      if (inFrecuencia2 && proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
+        const bTextNorm = normalizarTexto(celdaB);
+        for (const beneficio of beneficiosProyecto) {
+          const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
+          if (!formulario[colFreq]) {
+            const bNorm = normalizarTexto(beneficio);
+            if (bNorm === bTextNorm || bNorm.includes(bTextNorm) || bTextNorm.includes(bNorm)) {
+              formulario[colFreq] = celdaC;
+              if (celdaC) datos.tiene_datos_encuesta = true;
+              break;
+            }
+          }
+        }
       }
       const { label, labelNorm, valor } = _buscarLabelYValor(row);
       if (!label) continue;
@@ -782,8 +830,12 @@ function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservaci
       if (labelNorm === 'comentario final:' || labelNorm === 'comentario final') {
         if (!formulario['Comentarios_Finales_1'] && valor) {
           formulario['Comentarios_Finales_1'] = valor;
-          formulario['Comentarios_Finales_2'] = '';
-          formulario['Comentarios_Finales_3'] = '';
+          if (valor) datos.tiene_datos_encuesta = true;
+        }
+      }
+      if (labelNorm === 'sugerencia o reclamo:' || labelNorm === 'sugerencia o reclamo') {
+        if (!formulario['Comentarios_Finales_2'] && valor) {
+          formulario['Comentarios_Finales_2'] = valor;
           if (valor) datos.tiene_datos_encuesta = true;
         }
       }
@@ -793,8 +845,6 @@ function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservaci
       }
       if (!formulario['Comentarios_Finales_1'] && (labelNorm.includes('indiquenos cualquier') || labelNorm.includes('recomendacion, sugerencia o reclamo'))) {
         formulario['Comentarios_Finales_1'] = valor;
-        formulario['Comentarios_Finales_2'] = '';
-        formulario['Comentarios_Finales_3'] = '';
         if (valor) datos.tiene_datos_encuesta = true;
       }
       if (!formulario['Checkbox_Envio'] && labelNorm.includes('marque aqui para confirmar envio')) {
@@ -1163,6 +1213,57 @@ async function asegurarUnicidadFilasValidas(spreadsheetId) {
 }
 
 // =============================================================================
+// DOMAIN SHARING
+// =============================================================================
+async function obtenerDominioOrganizacion() {
+  try {
+    const about = await apiFetch('https://www.googleapis.com/drive/v3/about?fields=user');
+    const email = (about.user || {}).emailAddress || '';
+    const parts = email.split('@');
+    if (parts.length < 2) return null;
+    return parts[1];
+  } catch (e) {
+    console.warn('No se pudo obtener dominio:', e);
+    return null;
+  }
+}
+
+async function compartirConDominio(fileId, role, verbose = true) {
+  try {
+    const dominio = await obtenerDominioOrganizacion();
+    if (!dominio) {
+      if (verbose) print('⚠️ No se pudo detectar el dominio de la organizacion');
+      return false;
+    }
+    const body = JSON.stringify({
+      role: role,
+      type: 'domain',
+      domain: dominio
+    });
+    await apiFetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`,
+      { method: 'POST', body }
+    );
+    if (verbose) print(`✅ Permiso '${role}' otorgado al dominio @${dominio} para ${fileId}`);
+    return true;
+  } catch (e) {
+    if (verbose) print(`⚠️ No se pudo compartir con dominio: ${e.message}`);
+    return false;
+  }
+}
+
+async function compartirRecursosConDominio(maestroId, verbose = true) {
+  if (verbose) print('🔗 Compartiendo recursos con la organizacion...');
+  await compartirConDominio(CONFIG_IDS.FOLDER_ID, 'writer', verbose);
+  await sleep(500);
+  if (maestroId) {
+    await compartirConDominio(maestroId, 'writer', verbose);
+    await sleep(500);
+  }
+  await compartirConDominio(CONFIG_IDS.REGIONES_FOLDER_ID, 'writer', verbose);
+}
+
+// =============================================================================
 // UI HELPERS
 // =============================================================================
 function print(msg) {
@@ -1186,6 +1287,7 @@ async function onLoginSuccess() {
     await initGis();
     await resolverConfiguracionIds(true);
     const maestroId = await crearObtenerMaestro();
+    await compartirRecursosConDominio(maestroId, true);
     btnLeerSheets.disabled = false;
     setLoginStatus('ok', '🟢 Conectado');
     print('✅ Sistema listo para leer informes CIE');

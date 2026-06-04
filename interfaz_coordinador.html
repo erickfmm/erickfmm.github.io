@@ -79,6 +79,15 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 .cie-tooltip-wrap .cie-estab-item { padding: 3px 0; border-bottom: 1px solid #f1f5f9; line-height: 1.4; }
 .cie-tooltip-wrap .cie-estab-item:last-child { border-bottom: none; }
 .cie-estab-grid { max-height: 280px; overflow-y: auto; }
+.cie-estab-dropdown { display: inline-block; }
+.cie-estab-dropdown summary { font-weight: 700; color: #1d4ed8; cursor: pointer; list-style: none; border-bottom: 1px dashed #93c5fd; padding: 2px 0; user-select: none; }
+.cie-estab-dropdown summary::-webkit-details-marker { display: none; }
+.cie-estab-dropdown summary::marker { display: none; content: ''; }
+.cie-estab-dropdown summary::before { content: '📋 '; }
+.cie-estab-dropdown[open] summary::before { content: '📤 '; }
+.cie-estab-dropdown .cie-estab-list { background: #fff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 8px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.13); margin-top: 6px; max-width: 500px; font-size: 12px; font-weight: 400; color: #1f2937; }
+.cie-estab-dropdown .cie-estab-item { padding: 4px 0; border-bottom: 1px solid #f1f5f9; line-height: 1.5; }
+.cie-estab-dropdown .cie-estab-item:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -638,7 +647,7 @@ function _renderEstablecimientos(valor) {
     return `<span class="cie-badge cie-badge--no">${n} establecimiento${n !== 1 ? 's' : ''}</span>`;
   }
   const itemsHtml = lineas.map(l => `<div class="cie-estab-item">${htmlEscape(l.trim())}</div>`).join('');
-  return `<div class="cie-tooltip-wrap"><span class="cie-estab-count">${lineas.length} establecimiento${lineas.length !== 1 ? 's' : ''}</span><div class="cie-tooltip-content"><div class="cie-estab-grid">${itemsHtml}</div></div></div>`;
+  return `<details class="cie-estab-dropdown"><summary>${lineas.length} establecimiento${lineas.length !== 1 ? 's' : ''}</summary><div class="cie-estab-list">${itemsHtml}</div></details>`;
 }
 
 function construirTablaProyectosConvenio(row) {
@@ -679,7 +688,8 @@ function renderHtmlConvenio(row) {
   const establecimientosValor = textoLimpio(row['Convenio_Cantidad_Escuelas'] || '');
   const observacion = obtenerUltimaObservacion(row);
   const urlSheet = textoLimpio(row['URL_Sheet'] || row['Spreadsheet_URL'] || '');
-  const comentariosFinales = textoLimpio(row['Comentarios_Finales_1'] || '');
+  const comentariosFinales1 = textoLimpio(row['Comentarios_Finales_1'] || '');
+  const comentariosFinales2 = textoLimpio(row['Comentarios_Finales_2'] || '');
 
   const estadoNorm = estadoRegistro.toLowerCase();
   let estadoClase = 'no';
@@ -703,7 +713,8 @@ function renderHtmlConvenio(row) {
     + `<div class="cie-card-inner"><div class="cie-label">Establecimientos</div><div class="cie-value">${estabDetailHtml}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Ultima observacion</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Acceso al informe</div><div class="cie-value">${linkHtml}</div></div>`
-    + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Comentarios finales</div><div class="cie-value">${valorHtml(comentariosFinales)}</div></div>`
+    + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Sugerencia o reclamo</div><div class="cie-value">${valorHtml(comentariosFinales2)}</div></div>`
+    + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Comentario final</div><div class="cie-value">${valorHtml(comentariosFinales1)}</div></div>`
     + `</div>`
     + `<div class="cie-subtitle">Proyectos visibles del convenio</div>`
     + construirTablaProyectosConvenio(row)
@@ -994,32 +1005,53 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         body: JSON.stringify({
           valueInputOption: 'USER_ENTERED',
           data: [
-            { range: `${nuevoNombre}!A1`, values: [[`⚠️ OBSERVACIONES RECIBIDAS - ${fechaObs}`]] },
-            { range: `${nuevoNombre}!A2`, values: [[`📋 ${observacionTexto}`]] },
-            { range: `${nuevoNombre}!A3`, values: [['Por favor corrija los puntos observados en las celdas verdes']] },
-            { range: `${nuevoNombre}!A4`, values: [['Cuando termine, marque el checkbox de envio al final del formulario']] }
+            { range: `${nuevoNombre}!B1`, values: [[`⚠️ OBSERVACIONES RECIBIDAS - ${fechaObs}`]] },
+            { range: `${nuevoNombre}!B2`, values: [[`📋 ${observacionTexto}`]] },
+            { range: `${nuevoNombre}!B3`, values: [['Por favor corrija los puntos observados en las celdas verdes']] },
+            { range: `${nuevoNombre}!B4`, values: [['Cuando termine, marque el checkbox de envio al final del formulario']] }
           ]
         })
       }
     );
     await sleep(API_DELAY_MS);
 
+    const OBS_ROW_OFFSET = 5;
+    const replicateProtectionRequests = proteccionesExistentes.map(pr => {
+      const newRange = { sheetId: nuevoSheetId };
+      if (pr.range) {
+        if (pr.range.startRowIndex !== undefined) newRange.startRowIndex = pr.range.startRowIndex + OBS_ROW_OFFSET;
+        if (pr.range.endRowIndex !== undefined) newRange.endRowIndex = pr.range.endRowIndex + OBS_ROW_OFFSET;
+        if (pr.range.startColumnIndex !== undefined) newRange.startColumnIndex = pr.range.startColumnIndex;
+        if (pr.range.endColumnIndex !== undefined) newRange.endColumnIndex = pr.range.endColumnIndex;
+      }
+      return {
+        addProtectedRange: {
+          protectedRange: {
+            range: newRange,
+            description: pr.description || 'Celdas bloqueadas - solo edite las celdas verdes',
+            warningOnly: pr.warningOnly || false,
+            editors: pr.editors || { users: [], domainUsersCanEdit: true }
+          }
+        }
+      };
+    });
+
     const requests = [
-      ...deleteProtectionRequests,
-      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
-      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
-      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 2, endRowIndex: 3, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
-      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 3, endRowIndex: 4, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+      ...replicateProtectionRequests,
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 1, endColumnIndex: 4 }, mergeType: 'MERGE_ALL' } },
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 1, endColumnIndex: 4 }, mergeType: 'MERGE_ALL' } },
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 2, endRowIndex: 3, startColumnIndex: 1, endColumnIndex: 4 }, mergeType: 'MERGE_ALL' } },
+      { mergeCells: { range: { sheetId: nuevoSheetId, startRowIndex: 3, endRowIndex: 4, startColumnIndex: 1, endColumnIndex: 4 }, mergeType: 'MERGE_ALL' } },
       {
         repeatCell: {
-          range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 4, startColumnIndex: 0, endColumnIndex: 10 },
+          range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 4, startColumnIndex: 1, endColumnIndex: 4 },
           cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.92, blue: 0.7 }, textFormat: { bold: true, fontSize: 11 }, horizontalAlignment: 'CENTER' } },
           fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
         }
       },
       {
         repeatCell: {
-          range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 },
+          range: { sheetId: nuevoSheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 1, endColumnIndex: 4 },
           cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.76, blue: 0.3 }, textFormat: { bold: true, fontSize: 14, foregroundColor: { red: 0.5, green: 0.2, blue: 0 } } } },
           fields: 'userEnteredFormat(backgroundColor,textFormat)'
         }
@@ -1046,8 +1078,8 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
       body: JSON.stringify({
         valueInputOption: 'USER_ENTERED',
         data: [
-          { range: `${tituloBloqueado}!A1`, values: [['🔒 ESTA HOJA ES DE SOLO LECTURA - NO SE PUEDE EDITAR']] },
-          { range: `${tituloBloqueado}!A2`, values: [['Revise la nueva pestana con observaciones para corregir y reenviar']] }
+          { range: `${tituloBloqueado}!B1`, values: [['🔒 ESTA HOJA ES DE SOLO LECTURA - NO SE PUEDE EDITAR']] },
+          { range: `${tituloBloqueado}!B2`, values: [['Revise la nueva pestana con observaciones para corregir y reenviar']] }
         ]
       })
     });
@@ -1057,11 +1089,12 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
       method: 'POST',
       body: JSON.stringify({
         requests: [
-          { mergeCells: { range: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
-          { mergeCells: { range: { sheetId: hojaEdit.sheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 }, mergeType: 'MERGE_ALL' } },
+          ...deleteProtectionRequests,
+          { mergeCells: { range: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 1, endColumnIndex: 4 }, mergeType: 'MERGE_ALL' } },
+          { mergeCells: { range: { sheetId: hojaEdit.sheetId, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 1, endColumnIndex: 4 }, mergeType: 'MERGE_ALL' } },
           {
             repeatCell: {
-              range: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 10 },
+              range: { sheetId: hojaEdit.sheetId, startRowIndex: 0, endRowIndex: 2, startColumnIndex: 1, endColumnIndex: 4 },
               cell: { userEnteredFormat: { backgroundColor: { red: 0.95, green: 0.76, blue: 0.76 }, textFormat: { bold: true, fontSize: 12, foregroundColor: { red: 0.6, green: 0, blue: 0 } }, horizontalAlignment: 'CENTER' } },
               fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
             }
@@ -1106,6 +1139,15 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
       await apiFetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${indiceALetraColumna(idxEstado)}${filaNum}?valueInputOption=USER_ENTERED`,
         { method: 'PUT', body: JSON.stringify({ values: [['Observado']] }) }
+      );
+      await sleep(500);
+    }
+
+    const idxCheckbox = obtenerIndiceColumna(encabezados, 'Checkbox_Envio');
+    if (idxCheckbox !== null) {
+      await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${indiceALetraColumna(idxCheckbox)}${filaNum}?valueInputOption=USER_ENTERED`,
+        { method: 'PUT', body: JSON.stringify({ values: [['FALSE']] }) }
       );
       await sleep(500);
     }
