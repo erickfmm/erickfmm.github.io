@@ -1085,20 +1085,10 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
     }
   }
 
-  for (const item of filasAMarcarObservado) {
-    const idxEstado = obtenerIndiceColumna(encabezadosMaestro, 'Estado_Registro');
-    if (idxEstado !== null) {
-      await apiFetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${indiceALetraColumna(idxEstado)}${item.fila_num}?valueInputOption=USER_ENTERED`,
-        { method: 'PUT', body: JSON.stringify({ values: [['Observado']] }) }
-      );
-    }
-    await sleep(API_DELAY_MS);
-  }
-
   if (datosOmitidos.length > 0) print(`   ⏭️ Total omitidos: ${datosOmitidos.length}`);
   if (!datosAProcesar.length) return 0;
 
+  await sleep(API_DELAY_MS);
   const allRefetched = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
   const ultimaFila = allRefetched.length;
   const idBase = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
@@ -1151,6 +1141,47 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
     const pendientes = datosAProcesar.filter(d => !d.tiene_datos_encuesta && !d.esta_enviado).length;
     print(`✅ ${filasNuevas.length} registros agregados al maestro (${encabezadosMaestro.length} columnas)`);
     print(`   📨 Enviados: ${enviados} | ✏️ Llenados: ${llenados} | ⏳ Pendientes: ${pendientes}`);
+
+    // Batch: "Observado" markings + invalidate old valid rows (except APROBADO)
+    const idsConvenioAProcesar = [...new Set(datosAProcesar.map(d => d.id_convenio_archivo).filter(Boolean))];
+    const batchActualizaciones = [];
+    const idxId = obtenerIndiceColumna(encabezadosMaestro, 'ID_Convenio_Archivo');
+    const idxFilaValida = obtenerIndiceColumna(encabezadosMaestro, 'Fila_Valida');
+    const idxEstadoCol = obtenerIndiceColumna(encabezadosMaestro, 'Estado_Registro');
+
+    for (const item of filasAMarcarObservado) {
+      if (idxEstadoCol !== null) {
+        batchActualizaciones.push({
+          range: `${indiceALetraColumna(idxEstadoCol)}${item.fila_num}`,
+          values: [['Observado']]
+        });
+      }
+    }
+
+    if (idsConvenioAProcesar.length > 0 && idxId !== null && idxFilaValida !== null) {
+      const idsSet = new Set(idsConvenioAProcesar.map(id => String(id).trim()));
+      for (let i = 1; i < allRefetched.length; i++) {
+        const row = allRefetched[i];
+        const idConv = String(row[idxId] || '').trim();
+        if (!idsSet.has(idConv)) continue;
+        if (String(row[idxFilaValida] || '').trim().toLowerCase() !== 'valid') continue;
+        const estado = idxEstadoCol !== null && row.length > idxEstadoCol ? String(row[idxEstadoCol] || '').trim().toUpperCase() : '';
+        if (estado === 'APROBADO') continue;
+        batchActualizaciones.push({
+          range: `${indiceALetraColumna(idxFilaValida)}${i + 1}`,
+          values: [['not valid']]
+        });
+      }
+    }
+
+    if (batchActualizaciones.length > 0) {
+      await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
+        { method: 'POST', body: JSON.stringify({ data: batchActualizaciones, valueInputOption: 'USER_ENTERED' }) }
+      );
+      const invalidadas = batchActualizaciones.filter(a => String(a.values[0][0]).toLowerCase() === 'not valid').length;
+      if (invalidadas > 0) print(`   🔄 ${invalidadas} filas previas invalidadas`);
+    }
   }
   return filasNuevas.length;
 }
@@ -1188,7 +1219,7 @@ async function asegurarUnicidadFilasValidas(spreadsheetId) {
   for (const [convenio, filas] of Object.entries(filasPorConvenio)) {
     if (filas.length <= 1) continue;
     const filaAprobada = filas.find(f => f.estado.toUpperCase() === 'APROBADO');
-    const filaAMantener = filaAprobada || filas[0];
+    const filaAMantener = filaAprobada || filas[filas.length - 1];
 
     for (const fila of filas) {
       if (fila.fila_num === filaAMantener.fila_num) continue;
