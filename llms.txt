@@ -35,6 +35,7 @@ Profesional de Centro de Innovación en el Ministerio de Educación (MINEDUC) de
 
 ### Frankenstein Transformer (⭐ Proyecto Estrella)
 Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers. Permite configurar y entrenar modelos con Mixture of Experts (MoE), BitNet 1.58, Titan Memory y más mediante archivos de configuración YAML/JSON. Diseñada para facilitar la investigación en NLP.
+- **Config Builder (Interactivo)**: https://erickfmm.github.io/frankestein-transformer/index.html
 - GitHub: https://github.com/erickfmm/transformer-encoder-frankestein
 - Paper oficial: https://jaigp.org/paper/38/markdown
 - Tecnologías: Python, Library, CLI, Config-Driven, Transformers, Research
@@ -45,10 +46,11 @@ Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM 
 - GitHub: https://github.com/erickfmm/Awesome-NLP-LLM-Spanish-Espa-ol
 - Tipo: Curación de recursos para la comunidad
 
-### ANMetaL
-Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas.
-- GitHub: https://github.com/erickfmm/ANMetaL
-- Tecnologías: Python, Optimización, Visualización
+### ANMetaL (Destacado)
+Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas. Incluye algoritmos como PSO, DE, CMA-ES, Black Hole, y más con visualizaciones interactivas.
+- **Repositorio principal**: https://github.com/erickfmm/ANMetaL
+- Tecnologías: Python, Optimización, Visualización, Metaheurísticas
+- Estado: Activo - Investigación y desarrollo continuo
 
 ### Markdown to Audio
 Convierte libros en Markdown a audiolibros multicapítulo con motores TTS en español.
@@ -121,8 +123,10 @@ Perfil: https://huggingface.co/erickfmm
 2. Using Multimodal Data to Find Patterns in Student Presentations (2019)
 3. Developing a Dashboard to Support the Analysis of Multimodal Educational Data (2018)
 
-## Enlaces
+## Enlaces Principales
 - Portfolio: https://erickfmm.github.io
+- **Config Builder (Frankestein Transformer)**: https://erickfmm.github.io/frankestein-transformer/index.html
+- **ANMetaL (Metaheurísticas y optimización)**: https://github.com/erickfmm/ANMetaL
 - GitHub: https://github.com/erickfmm (28 repositorios públicos)
 - LinkedIn: https://www.linkedin.com/in/erickfmm/
 - Hugging Face: https://huggingface.co/erickfmm
