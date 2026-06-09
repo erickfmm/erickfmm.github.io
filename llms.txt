@@ -8,7 +8,6 @@ Portafolio profesional de Erick Francisco Merino Menares, AI Engineer especializ
 - **Rol**: AI Engineer · Backend · Datos
 - **Ubicación**: Santiago de Chile
 - **Email**: erickfmm@gmail.com
-- **Teléfono**: +56 9 618 300 57
 
 ## Especialización
 - Procesamiento del Lenguaje Natural (NLP)
@@ -48,8 +47,10 @@ Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM 
 
 ### ANMetaL (Destacado)
 Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas. Incluye algoritmos como PSO, DE, CMA-ES, Black Hole, y más con visualizaciones interactivas.
-- **Repositorio principal**: https://github.com/erickfmm/ANMetaL
-- Tecnologías: Python, Optimización, Visualización, Metaheurísticas
+- **Demo web**: https://erickfmm.github.io/anmetal
+- **Repositorio principal (Python)**: https://github.com/erickfmm/ANMetaL
+- **Rama JS/TS (en desarrollo)**: La rama `js` está tomando fuerza y próximamente se publicará como repo separado **anmetal-js** con implementación en JavaScript/TypeScript para uso en navegador y Node.js.
+- Tecnologías: Python, JavaScript/TypeScript (próximamente), Optimización, Visualización, Metaheurísticas
 - Estado: Activo - Investigación y desarrollo continuo
 
 ### Markdown to Audio
@@ -126,7 +127,7 @@ Perfil: https://huggingface.co/erickfmm
 ## Enlaces Principales
 - Portfolio: https://erickfmm.github.io
 - **Config Builder (Frankestein Transformer)**: https://erickfmm.github.io/frankestein-transformer/index.html
-- **ANMetaL (Metaheurísticas y optimización)**: https://github.com/erickfmm/ANMetaL
+- **ANMetaL (Metaheurísticas y optimización)**: https://erickfmm.github.io/anmetal
 - GitHub: https://github.com/erickfmm (28 repositorios públicos)
 - LinkedIn: https://www.linkedin.com/in/erickfmm/
 - Hugging Face: https://huggingface.co/erickfmm
