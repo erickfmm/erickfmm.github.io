@@ -720,6 +720,7 @@ function renderHtmlConvenio(row) {
   const rex = textoLimpio(row['Convenio_REX'] || 'N/A');
   const region = textoLimpio(row['Sostenedor_Region'] || 'Sin region');
   const sostenedor = textoLimpio(row['Sostenedor_Institucion'] || 'Sin dato');
+  const correoSostenedor = textoLimpio(row['Sostenedor_Correo'] || '');
   const fechaConvenio = textoLimpio(row['Convenio_Fecha'] || 'Sin fecha');
   const establecimientosValor = textoLimpio(row['Convenio_Cantidad_Escuelas'] || '');
   const observacion = obtenerUltimaObservacion(row);
@@ -745,6 +746,7 @@ function renderHtmlConvenio(row) {
     + `<div class="cie-card-inner"><div class="cie-label">Estado del registro</div><div class="cie-value"><span class="cie-badge cie-badge--${estadoClase}">${htmlEscape(estadoRegistro || 'Sin estado')}</span></div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Region</div><div class="cie-value">${htmlEscape(region)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Nombre sostenedor</div><div class="cie-value">${htmlEscape(sostenedor)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Correo sostenedor</div><div class="cie-value">${valorHtml(correoSostenedor, '(sin correo)')}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Fecha convenio</div><div class="cie-value">${htmlEscape(fechaConvenio)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Establecimientos</div><div class="cie-value">${estabDetailHtml}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Ultima observacion</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
