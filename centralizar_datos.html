@@ -464,6 +464,35 @@ function formatNow() {
   return new Date().toISOString().replace('T', ' ').slice(0, 19);
 }
 
+function validarAlineacionColumnasMaestro(encabezadosMaestro, datosFormulario) {
+  const problemas = [];
+  const esperado = obtenerEncabezadosMaestro();
+  const setMaestro = new Set((encabezadosMaestro || []).map(h => String(h || '').trim()));
+  const setEsperado = new Set(esperado);
+
+  const faltantes = esperado.filter(c => !setMaestro.has(c));
+  const inesperadas = (encabezadosMaestro || []).map(h => String(h || '').trim()).filter(c => c && !setEsperado.has(c));
+  if (faltantes.length) problemas.push(`Faltan ${faltantes.length} columnas del esquema: ${faltantes.slice(0, 8).join(', ')}${faltantes.length > 8 ? '…' : ''}`);
+  if (inesperadas.length) problemas.push(`Hay ${inesperadas.length} columnas inesperadas: ${inesperadas.slice(0, 8).join(', ')}${inesperadas.length > 8 ? '…' : ''}`);
+
+  const datosHuerfanos = [];
+  if (datosFormulario) {
+    for (const [k, v] of Object.entries(datosFormulario)) {
+      if (textoLimpio(v) === '' || esValorPlaceholder(v)) continue;
+      if (!setMaestro.has(k)) datosHuerfanos.push(k);
+    }
+  }
+  if (datosHuerfanos.length) problemas.push(`Hay ${datosHuerfanos.length} claves con valor sin columna en maestro: ${datosHuerfanos.slice(0, 8).join(', ')}${datosHuerfanos.length > 8 ? '…' : ''}`);
+
+  const layout = (encabezadosMaestro || []).map((header, idx) => {
+    const headerTrim = String(header || '').trim();
+    const tiene = datosFormulario && (headerTrim in datosFormulario) && textoLimpio(datosFormulario[headerTrim] || '') !== '' && !esValorPlaceholder(datosFormulario[headerTrim] || '');
+    return { header: headerTrim, letra: indiceALetraColumna(idx), idx, tieneValor: tiene };
+  });
+
+  return { ok: problemas.length === 0, problemas, layout, faltantes, inesperadas, datosHuerfanos };
+}
+
 // =============================================================================
 // SHEETS / DRIVE HELPERS
 // =============================================================================
@@ -593,7 +622,7 @@ function _esCheckboxMarcado(valor) {
   return ['TRUE', 'VERDADERO', 'X', '☑', 'SI', 'SÍ', '✓', '✔', 'YES'].includes(v);
 }
 
-function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObservacion, carpetaNombre, nombreArchivo) {
+function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObservacion, carpetaNombre, nombreArchivo) {
   const datosFormulario = {};
   for (const c of COLUMNAS_FORMULARIO) datosFormulario[c] = '';
 
@@ -609,6 +638,7 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
     tiene_datos_encuesta: false,
     esta_enviado: false,
     fecha_envio_detectada: '',
+    warnings: [],
     formulario: datosFormulario
   };
 
@@ -628,6 +658,7 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
         if (proyectoActual !== nuevoProy) {
           proyectoActual = nuevoProy;
           beneficiosProyecto = [...(PROYECTOS_CIE[proyectoActual].beneficios)];
+          inFrecuencia = false;
         }
         if (!datos.proyectos_evaluados.includes(proyectoActual)) datos.proyectos_evaluados.push(proyectoActual);
       }
@@ -666,11 +697,14 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
       const bTextNorm = normalizarTexto(celdaB);
       for (const beneficio of beneficiosProyecto) {
         const bNorm = normalizarTexto(beneficio);
-        if (bNorm === bTextNorm || bNorm.includes(bTextNorm) || bTextNorm.includes(bNorm)) {
+        if (bNorm === bTextNorm) {
           const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
           if (colFreq in datosFormulario) { datosFormulario[colFreq] = celdaC; datos.tiene_datos_encuesta = true; }
           break;
         }
+      }
+      if (!beneficiosProyecto.some(b => normalizarTexto(b) === bTextNorm)) {
+        datos.warnings.push(`Fila ${allValues.indexOf(row) + 1}: bullet "${celdaB}" no matchea beneficio de ${proyectoActual} (esperado exacto: ${beneficiosProyecto.map(normalizarTexto).join(' | ')})`);
       }
       continue;
     }
@@ -685,11 +719,14 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
         const bTextNorm = normalizarTexto(beneficioTexto);
         for (const beneficio of beneficiosProyecto) {
           const bNorm = normalizarTexto(beneficio);
-          if (bNorm === bTextNorm || bNorm.includes(bTextNorm) || bTextNorm.includes(bNorm)) {
+          if (bNorm === bTextNorm) {
             const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
             if (colFreq in datosFormulario) { datosFormulario[colFreq] = celdaC; datos.tiene_datos_encuesta = true; }
             break;
           }
+        }
+        if (!beneficiosProyecto.some(b => normalizarTexto(b) === bTextNorm)) {
+          datos.warnings.push(`Fila ${allValues.indexOf(row) + 1}: bullet "${beneficioTexto}" no matchea beneficio de ${proyectoActual}`);
         }
         continue;
       }
@@ -754,120 +791,8 @@ function _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObse
   return datos;
 }
 
-function _buscarLabelYValor(row) {
-  const label = valorColumna(row, 1);
-  const valor = valorColumna(row, 2);
-  if (!label || label.startsWith('=')) return { label: '', labelNorm: '', valor: '' };
-  const textoNorm = normalizarTexto(label);
-  if (['banner', 'ministerio de educacion', 'centro de innovacion'].some(t => textoNorm.includes(t))) return { label: '', labelNorm: '', valor: '' };
-  const hasColon = label.includes(':');
-  const isCheckbox = textoNorm.includes('marque aqui para confirmar envio');
-  const isEstado = textoNorm === 'estado';
-  if (hasColon || isCheckbox || isEstado) {
-    const v = (valor === '' || valor === 'Seleccione...') ? '' : valor;
-    return { label, labelNorm: textoNorm, valor: v };
-  }
-  return { label: '', labelNorm: '', valor: '' };
-}
-
 function extraerDatosDeHoja(spreadsheetId, sheetName, allValues, numeroObservacion = 0, carpetaNombre = null, nombreArchivo = null) {
-  const datos = _extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObservacion, carpetaNombre, nombreArchivo);
-  if (!datos || datos.tiene_error) return datos;
-
-  try {
-    const formulario = datos.formulario || {};
-    let proyectoActual = null;
-    let beneficiosProyecto = [];
-    let inFrecuencia2 = false;
-
-    for (const row of allValues) {
-      if (!row || row.length < 2) continue;
-      const celdaB = valorColumna(row, 1);
-      const celdaC = valorColumna(row, 2);
-      const celdaBNorm = normalizarTexto(celdaB);
-      if (celdaB && !celdaB.startsWith('=')) {
-        const nuevoProy = detectarProyectoActual(celdaB);
-        if (nuevoProy) {
-          proyectoActual = nuevoProy;
-          beneficiosProyecto = [...(PROYECTOS_CIE[proyectoActual].beneficios)];
-          inFrecuencia2 = false;
-        }
-      }
-      if (celdaBNorm.includes('frecuencia de uso de beneficios')) {
-        inFrecuencia2 = true;
-      } else if (celdaBNorm.includes(':') || celdaBNorm.includes('marque aqui')) {
-        inFrecuencia2 = false;
-      }
-      if (inFrecuencia2 && proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
-        const bTextNorm = normalizarTexto(celdaB);
-        for (const beneficio of beneficiosProyecto) {
-          const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
-          if (!formulario[colFreq]) {
-            const bNorm = normalizarTexto(beneficio);
-            if (bNorm === bTextNorm || bNorm.includes(bTextNorm) || bTextNorm.includes(bNorm)) {
-              formulario[colFreq] = celdaC;
-              if (celdaC) datos.tiene_datos_encuesta = true;
-              break;
-            }
-          }
-        }
-      }
-      const { label, labelNorm, valor } = _buscarLabelYValor(row);
-      if (!label) continue;
-
-      if (!formulario['Convenio_REX'] && labelNorm.includes('rex cie')) formulario['Convenio_REX'] = valor;
-      if (!formulario['Convenio_Fecha'] && labelNorm.includes('fecha convenio cie')) formulario['Convenio_Fecha'] = valor;
-      if (!formulario['Convenio_Cantidad_Escuelas'] && (labelNorm.includes('cantidad de escuelas') || labelNorm.includes('establecimientos'))) formulario['Convenio_Cantidad_Escuelas'] = valor;
-      if (!formulario['Sostenedor_Institucion'] && labelNorm.includes('institucion')) formulario['Sostenedor_Institucion'] = valor;
-      if (!formulario['Sostenedor_RUT'] && labelNorm.includes('rut sostenedor')) formulario['Sostenedor_RUT'] = valor;
-      if (!formulario['Sostenedor_Correo'] && labelNorm.includes('correo institucional')) formulario['Sostenedor_Correo'] = valor;
-      if (!formulario['Sostenedor_Region'] && labelNorm.includes('region')) formulario['Sostenedor_Region'] = valor;
-
-      if (proyectoActual && !formulario[`${proyectoActual}_Pregunta_Respuesta`] && (labelNorm === 'respuesta:' || labelNorm === 'respuesta')) {
-        formulario[`${proyectoActual}_Pregunta_Respuesta`] = valor;
-        if (valor) datos.tiene_datos_encuesta = true;
-      }
-      if (labelNorm === 'comentario final:' || labelNorm === 'comentario final') {
-        if (!formulario['Comentarios_Finales_1'] && valor) {
-          formulario['Comentarios_Finales_1'] = valor;
-          if (valor) datos.tiene_datos_encuesta = true;
-        }
-      }
-      if (labelNorm === 'sugerencia o reclamo:' || labelNorm === 'sugerencia o reclamo') {
-        if (!formulario['Comentarios_Finales_2'] && valor) {
-          formulario['Comentarios_Finales_2'] = valor;
-          if (valor) datos.tiene_datos_encuesta = true;
-        }
-      }
-      if (proyectoActual && !formulario[`${proyectoActual}_Comentarios`] && (labelNorm === 'comentario:' || labelNorm === 'comentario')) {
-        formulario[`${proyectoActual}_Comentarios`] = valor;
-        if (valor) datos.tiene_datos_encuesta = true;
-      }
-      if (!formulario['Comentarios_Finales_1'] && (labelNorm.includes('indiquenos cualquier') || labelNorm.includes('recomendacion, sugerencia o reclamo'))) {
-        formulario['Comentarios_Finales_1'] = valor;
-        if (valor) datos.tiene_datos_encuesta = true;
-      }
-      if (!formulario['Checkbox_Envio'] && labelNorm.includes('marque aqui para confirmar envio')) {
-        const v = String(valor).trim().toUpperCase();
-        formulario['Checkbox_Envio'] = ['TRUE', 'VERDADERO', 'X', '☑', 'SI', 'SÍ', '✓', '✔', 'YES'].includes(v) ? 'TRUE' : 'FALSE';
-        if (formulario['Checkbox_Envio'] === 'TRUE') datos.esta_enviado = true;
-      }
-      if (!formulario['Fecha_Envio'] && labelNorm.includes('fecha de envio')) {
-        formulario['Fecha_Envio'] = valor;
-        if (valor) datos.fecha_envio_detectada = valor;
-      }
-      if (!formulario['Estado_Formulario'] && (labelNorm === 'estado:' || labelNorm === 'estado')) {
-        formulario['Estado_Formulario'] = valor;
-        if (String(valor).toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
-      }
-    }
-    if (datos.esta_enviado && !formulario['Fecha_Envio']) {
-      formulario['Fecha_Envio'] = datos.fecha_extraccion;
-      datos.fecha_envio_detectada = datos.fecha_extraccion;
-    }
-    datos.formulario = formulario;
-  } catch (e) { /* fallback silently */ }
-  return datos;
+  return extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObservacion, carpetaNombre, nombreArchivo);
 }
 
 async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNombre = null, nombreArchivo = null, returnDiagnostico = false) {
@@ -955,12 +880,33 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
 // =============================================================================
 // MAESTRO OPERATIONS
 // =============================================================================
+async function eliminarMaestroExistente() {
+  if (!CONFIG_IDS.MAESTRO_ID) return;
+  try {
+    await apiFetch(
+      `https://www.googleapis.com/drive/v3/files/${CONFIG_IDS.MAESTRO_ID}?supportsAllDrives=true`,
+      { method: 'DELETE' }
+    );
+    print(`🗑️ Maestro previo eliminado: ${CONFIG_IDS.MAESTRO_ID}`);
+  } catch (e) {
+    print(`⚠️ No se pudo eliminar maestro previo: ${e.message}`);
+  }
+  CONFIG_IDS.MAESTRO_ID = null;
+  configResuelta = false;
+}
+
 async function crearObtenerMaestro() {
   await resolverConfiguracionIds(true);
   let maestroId = CONFIG_IDS.MAESTRO_ID;
 
+  if (maestroId) {
+    print('🗑️ Eliminando maestro previo para recrear con esquema limpio...');
+    await eliminarMaestroExistente();
+    maestroId = null;
+  }
+
   if (!maestroId) {
-    print('📄 Maestro no encontrado. Creando CIE_Datos_Maestros en central...');
+    print('📄 Creando CIE_Datos_Maestros en central con esquema limpio...');
     const body = JSON.stringify({
       name: NOMBRE_MAESTRO,
       mimeType: 'application/vnd.google-apps.spreadsheet',
@@ -969,7 +915,7 @@ async function crearObtenerMaestro() {
     const created = await apiFetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', { method: 'POST', body });
     maestroId = created.id;
     CONFIG_IDS.MAESTRO_ID = maestroId;
-    print(`✅ Maestro creado automaticamente: ${maestroId}`);
+    print(`✅ Maestro recreado automaticamente: ${maestroId}`);
   }
 
   appState.maestroId = maestroId;
@@ -1128,6 +1074,37 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
       else fila.push(formulario[col] || '');
     }
     filasNuevas.push(fila);
+  }
+
+  print("🔍 Validando alineacion de columnas contra el maestro...");
+  let desalineado = false;
+  for (let i = 0; i < filasNuevas.length; i++) {
+    const d = datosAProcesar[i];
+    const validacion = validarAlineacionColumnasMaestro(encabezadosMaestro, d.formulario || {});
+    if (!validacion.ok) {
+      desalineado = true;
+      print(`   ⚠️ Registro #${i + 1} (${d.id_convenio_archivo || 'sin ID'}): ${validacion.problemas.join(' | ')}`);
+    }
+  }
+  if (desalineado) print("   ⚠️ Continuando escritura de todos modos (validacion no aborta)");
+
+  const previewN = Math.min(3, filasNuevas.length);
+  if (previewN > 0) {
+    print(`👀 Preview de los primeros ${previewN} registros (columna: header -> valor):`);
+    for (let i = 0; i < previewN; i++) {
+      const d = datosAProcesar[i];
+      print(`   --- Registro #${i + 1} (${d.id_convenio_archivo || 'sin ID'}) ---`);
+      const validacion = validarAlineacionColumnasMaestro(encabezadosMaestro, d.formulario || {});
+      const mostrados = new Set();
+      for (const item of validacion.layout) {
+        if (!item.tieneValor) continue;
+        if (mostrados.has(item.header)) continue;
+        const val = (d.formulario || {})[item.header];
+        const trunc = String(val == null ? '' : val).length > 60 ? String(val).slice(0, 60) + '…' : val;
+        print(`      ${item.letra}: ${item.header} -> ${trunc}`);
+        mostrados.add(item.header);
+      }
+    }
   }
 
   if (filasNuevas.length > 0) {
@@ -1388,6 +1365,14 @@ btnLeerSheets.addEventListener('click', async () => {
         }
         if (diag.omitido) logItems.push(`OMITIDO: ${diag.causa_omision}`);
         if (logItems.length) print(`   ✅ ${logItems.join(' | ')}`);
+
+        for (const datos of datosLista) {
+          if (datos.warnings && datos.warnings.length > 0) {
+            print(`   ⚠️ ${datos.hoja}: ${datos.warnings.length} bullets no reconocidos en match estricto`);
+            for (const w of datos.warnings.slice(0, 5)) print(`      - ${w}`);
+            if (datos.warnings.length > 5) print(`      - … y ${datos.warnings.length - 5} más`);
+          }
+        }
 
         if (datosBatch.length >= batchSize) {
           batchContador++;
