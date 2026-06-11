@@ -658,6 +658,15 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     'sugerencia o reclamo:', 'comentario final:',
     'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
   ]);
+  const ETIQUETAS_SECCION_PROYECTO = new Set([
+    'escuelas participantes:', 'escuelas participantes',
+    'descripcion:', 'descripcion',
+    'fecha implementacion:', 'fecha implementacion',
+    'instrucciones importantes:', 'instrucciones importantes',
+    '1. marque la casilla de arriba:', '1. marque la casilla de arriba',
+    'ano del convenio:', 'ano del convenio',
+    'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
+  ]);
 
   function esEtiqueta(celdaBNorm, setEtiquetas) {
     if (!celdaBNorm) return false;
@@ -726,6 +735,29 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     }
     if (celdaBNorm.includes('recomendacion, sugerencia o reclamo') || celdaBNorm.includes('indiquenos cualquier')) continue;
 
+    if (esEtiqueta(celdaBNorm, ETIQUETAS_SECCION_PROYECTO)) continue;
+
+    if (celdaB.includes('MARQUE AQUÍ PARA CONFIRMAR ENVÍO') || celdaB.includes('MARQUE AQUI PARA CONFIRMAR ENVIO')) {
+      datosFormulario['Checkbox_Envio'] = _esCheckboxMarcado(celdaC) ? 'TRUE' : 'FALSE';
+      if (datosFormulario['Checkbox_Envio'] === 'TRUE') datos.esta_enviado = true;
+      continue;
+    }
+    if (celdaBNorm === 'fecha de envio' || celdaBNorm === 'fecha de envio:' || celdaBNorm === 'fecha envio' || celdaBNorm === 'fecha envio:') {
+      if (celdaC) { datosFormulario['Fecha_Envio'] = celdaC; datos.fecha_envio_detectada = celdaC; }
+      continue;
+    }
+    if (celdaBNorm === 'estado' || celdaBNorm === 'estado:') {
+      if (celdaC) {
+        datosFormulario['Estado_Formulario'] = celdaC;
+        if (celdaC.toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
+        if (celdaC.toUpperCase().includes('APROBADO')) {
+          print(`   ⏭️ Omitiendo sheet '${sheetName}' con estado Aprobado`);
+          return null;
+        }
+      }
+      continue;
+    }
+
     if (proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
       const bullets = ['•', '●', '-', '·', '»', '>', '*'];
       let beneficioTexto = celdaB;
@@ -745,27 +777,6 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
         }
         if (!beneficiosProyecto.some(b => normalizarTexto(b) === bTextNorm)) {
           datos.warnings.push(`Fila ${allValues.indexOf(row) + 1}: bullet "${beneficioTexto}" no matchea beneficio de ${proyectoActual} (esperado exacto: ${beneficiosProyecto.map(normalizarTexto).join(' | ')})`);
-        }
-      }
-      continue;
-    }
-
-    if (celdaB.includes('MARQUE AQUÍ PARA CONFIRMAR ENVÍO') || celdaB.includes('MARQUE AQUI PARA CONFIRMAR ENVIO')) {
-      datosFormulario['Checkbox_Envio'] = _esCheckboxMarcado(celdaC) ? 'TRUE' : 'FALSE';
-      if (datosFormulario['Checkbox_Envio'] === 'TRUE') datos.esta_enviado = true;
-      continue;
-    }
-    if (celdaBNorm === 'fecha de envio' || celdaBNorm === 'fecha de envio:' || celdaBNorm === 'fecha envio' || celdaBNorm === 'fecha envio:') {
-      if (celdaC) { datosFormulario['Fecha_Envio'] = celdaC; datos.fecha_envio_detectada = celdaC; }
-      continue;
-    }
-    if (celdaBNorm === 'estado' || celdaBNorm === 'estado:') {
-      if (celdaC) {
-        datosFormulario['Estado_Formulario'] = celdaC;
-        if (celdaC.toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
-        if (celdaC.toUpperCase().includes('APROBADO')) {
-          print(`   ⏭️ Omitiendo sheet '${sheetName}' con estado Aprobado`);
-          return null;
         }
       }
       continue;
@@ -1360,8 +1371,7 @@ btnLeerSheets.addEventListener('click', async () => {
         for (const datos of datosLista) {
           if (datos.warnings && datos.warnings.length > 0) {
             print(`   ⚠️ ${datos.hoja}: ${datos.warnings.length} bullets no reconocidos en match estricto`);
-            for (const w of datos.warnings.slice(0, 5)) print(`      - ${w}`);
-            if (datos.warnings.length > 5) print(`      - … y ${datos.warnings.length - 5} más`);
+            for (const w of datos.warnings) print(`      - ${w}`);
           }
         }
 
