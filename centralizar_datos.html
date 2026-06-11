@@ -347,14 +347,22 @@ function normalizarTituloHoja(titulo) {
 }
 
 function detectarProyectoActual(celdaTexto) {
+  if (!celdaTexto) return null;
   const celdaNorm = normalizarTexto(celdaTexto);
-  if (!celdaNorm) return null;
   const tokensExcluir = ['proyectos activos', 'evaluacion por proyecto', 'matriz de escuelas', 'datos del sostenedor', 'datos del convenio'];
-  if (tokensExcluir.some(x => celdaNorm.includes(x))) return null;
+  if (celdaNorm && tokensExcluir.some(x => celdaNorm.includes(x))) return null;
   for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
+    if (info.icono && celdaTexto.includes(info.icono)) return codigo;
+  }
+  if (!celdaNorm) return null;
+  for (const [codigo] of Object.entries(PROYECTOS_CIE)) {
     const codigoNorm = normalizarTexto(codigo);
+    if (celdaNorm === codigoNorm || (codigoNorm.length >= 3 && celdaTexto.includes(codigo))) return codigo;
+  }
+  for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
     const nombreNorm = normalizarTexto(info.nombre_completo);
-    if (codigoNorm.includes(celdaNorm) || celdaNorm.includes(codigoNorm) || nombreNorm.includes(celdaNorm) || celdaNorm.includes(nombreNorm)) return codigo;
+    if (celdaNorm === nombreNorm) return codigo;
+    if (celdaNorm.length >= 15 && nombreNorm.includes(celdaNorm)) return codigo;
   }
   return null;
 }
@@ -642,9 +650,25 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     formulario: datosFormulario
   };
 
+  const ETIQUETAS_SOSTENEDOR = new Set([
+    'rex cie:', 'fecha convenio cie:', 'cantidad de escuelas:', 'establecimientos:',
+    'institucion:', 'rut sostenedor:', 'correo institucional:', 'region:'
+  ]);
+  const ETIQUETAS_FINALES = new Set([
+    'sugerencia o reclamo:', 'comentario final:',
+    'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
+  ]);
+
+  function esEtiqueta(celdaBNorm, setEtiquetas) {
+    if (!celdaBNorm) return false;
+    for (const e of setEtiquetas) {
+      if (celdaBNorm === e || celdaBNorm.startsWith(e)) return true;
+    }
+    return false;
+  }
+
   let proyectoActual = null;
   let beneficiosProyecto = [];
-  let inFrecuencia = false;
 
   for (const row of allValues) {
     if (row.length < 2) continue;
@@ -655,67 +679,61 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     if (celdaB && !celdaB.startsWith('=')) {
       const nuevoProy = detectarProyectoActual(celdaB);
       if (nuevoProy) {
-        if (proyectoActual !== nuevoProy) {
-          proyectoActual = nuevoProy;
-          beneficiosProyecto = [...(PROYECTOS_CIE[proyectoActual].beneficios)];
-          inFrecuencia = false;
-        }
+        proyectoActual = nuevoProy;
+        beneficiosProyecto = [...(PROYECTOS_CIE[proyectoActual].beneficios)];
         if (!datos.proyectos_evaluados.includes(proyectoActual)) datos.proyectos_evaluados.push(proyectoActual);
       }
     }
 
-    if (celdaB.includes('REX CIE:') || celdaBNorm.includes('rex cie')) { datosFormulario['Convenio_REX'] = celdaC; continue; }
-    if (celdaB.includes('Fecha Convenio CIE:') || celdaBNorm.includes('fecha convenio cie')) { datosFormulario['Convenio_Fecha'] = celdaC; continue; }
-    if (celdaB.includes('Cantidad de Escuelas:') || celdaB.includes('Establecimientos:') || celdaBNorm.includes('establecimientos')) { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
-    if (celdaB.includes('Institución:') || celdaB.includes('Institucion:') || celdaBNorm.includes('institucion')) { if (celdaC) datosFormulario['Sostenedor_Institucion'] = celdaC; continue; }
-    if (celdaB.includes('RUT Sostenedor:') || celdaBNorm.includes('rut sostenedor')) { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
-    if (celdaB.includes('Correo Institucional:') || celdaBNorm.includes('correo institucional')) { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
-    if (celdaB.includes('Región:') || celdaB.includes('Region:') || celdaBNorm.includes('region')) { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
+    if (celdaBNorm === 'rex cie' || celdaBNorm === 'rex cie:' || celdaB.includes('REX CIE:')) { datosFormulario['Convenio_REX'] = celdaC; continue; }
+    if (celdaBNorm === 'fecha convenio cie' || celdaBNorm === 'fecha convenio cie:' || celdaB.includes('Fecha Convenio CIE:')) { datosFormulario['Convenio_Fecha'] = celdaC; continue; }
+    if (celdaB.includes('Cantidad de Escuelas:') || celdaB.includes('Establecimientos:') || celdaBNorm === 'establecimientos' || celdaBNorm === 'establecimientos:') { datosFormulario['Convenio_Cantidad_Escuelas'] = celdaC; continue; }
+    if (celdaBNorm === 'institucion' || celdaBNorm === 'institucion:') { if (celdaC) datosFormulario['Sostenedor_Institucion'] = celdaC; continue; }
+    if (celdaBNorm === 'rut sostenedor' || celdaBNorm === 'rut sostenedor:') { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
+    if (celdaBNorm === 'correo institucional' || celdaBNorm === 'correo institucional:') { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
+    if (celdaBNorm === 'region' || celdaBNorm === 'region:') { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
 
-    if (celdaBNorm.includes('frecuencia de uso de beneficios')) {
-      inFrecuencia = true;
-      continue;
-    }
-
-    if ((celdaBNorm === 'nota:' || celdaBNorm === 'nota') && celdaC && celdaC !== 'Seleccione...') {
-      if (proyectoActual) {
+    if (celdaBNorm === 'nota' || celdaBNorm === 'nota:') {
+      if (proyectoActual && celdaC && celdaC !== 'Seleccione...') {
         const colNota = `${proyectoActual}_Nota`;
         if (colNota in datosFormulario) { datosFormulario[colNota] = celdaC; datos.tiene_datos_encuesta = true; }
       }
-      inFrecuencia = false;
       continue;
     }
-    if (proyectoActual && (celdaBNorm === 'respuesta:' || celdaBNorm === 'respuesta')) {
-      if (celdaC) {
+    if (celdaBNorm === 'respuesta' || celdaBNorm === 'respuesta:') {
+      if (proyectoActual && celdaC) {
         const colPreg = `${proyectoActual}_Pregunta_Respuesta`;
         if (colPreg in datosFormulario) { datosFormulario[colPreg] = celdaC; datos.tiene_datos_encuesta = true; }
       }
-      inFrecuencia = false;
       continue;
     }
-    if (inFrecuencia && proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
-      const bTextNorm = normalizarTexto(celdaB);
-      for (const beneficio of beneficiosProyecto) {
-        const bNorm = normalizarTexto(beneficio);
-        if (bNorm === bTextNorm) {
-          const colFreq = `${proyectoActual}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
-          if (colFreq in datosFormulario) { datosFormulario[colFreq] = celdaC; datos.tiene_datos_encuesta = true; }
-          break;
-        }
-      }
-      if (!beneficiosProyecto.some(b => normalizarTexto(b) === bTextNorm)) {
-        datos.warnings.push(`Fila ${allValues.indexOf(row) + 1}: bullet "${celdaB}" no matchea beneficio de ${proyectoActual} (esperado exacto: ${beneficiosProyecto.map(normalizarTexto).join(' | ')})`);
+    if (celdaBNorm.includes('frecuencia de uso de beneficios')) continue;
+
+    if (celdaBNorm === 'sugerencia o reclamo' || celdaBNorm === 'sugerencia o reclamo:') {
+      if (celdaC) { datosFormulario['Comentarios_Finales_2'] = celdaC; datos.tiene_datos_encuesta = true; }
+      continue;
+    }
+    if (celdaBNorm === 'comentario final' || celdaBNorm === 'comentario final:') {
+      if (celdaC) { datosFormulario['Comentarios_Finales_1'] = celdaC; datos.tiene_datos_encuesta = true; }
+      continue;
+    }
+    if (proyectoActual && (celdaBNorm === 'comentario' || celdaBNorm === 'comentario:')) {
+      if (celdaC) {
+        const colCom = `${proyectoActual}_Comentarios`;
+        if (colCom in datosFormulario) { datosFormulario[colCom] = celdaC; datos.tiene_datos_encuesta = true; }
       }
       continue;
     }
-    if (proyectoActual && !inFrecuencia && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
-      let beneficioTexto = celdaB.trim();
+    if (celdaBNorm.includes('recomendacion, sugerencia o reclamo') || celdaBNorm.includes('indiquenos cualquier')) continue;
+
+    if (proyectoActual && celdaC && celdaC !== 'Seleccione...' && celdaC.trim()) {
       const bullets = ['•', '●', '-', '·', '»', '>', '*'];
-      let tieneBullet = false;
+      let beneficioTexto = celdaB;
       for (const b of bullets) {
-        if (beneficioTexto.startsWith(b)) { tieneBullet = true; beneficioTexto = beneficioTexto.slice(b.length).trim(); break; }
+        if (beneficioTexto.startsWith(b)) { beneficioTexto = beneficioTexto.slice(b.length).trim(); break; }
       }
-      if (tieneBullet && beneficioTexto) {
+      beneficioTexto = beneficioTexto.trim();
+      if (beneficioTexto) {
         const bTextNorm = normalizarTexto(beneficioTexto);
         for (const beneficio of beneficiosProyecto) {
           const bNorm = normalizarTexto(beneficio);
@@ -726,49 +744,22 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
           }
         }
         if (!beneficiosProyecto.some(b => normalizarTexto(b) === bTextNorm)) {
-          datos.warnings.push(`Fila ${allValues.indexOf(row) + 1}: bullet "${beneficioTexto}" no matchea beneficio de ${proyectoActual}`);
+          datos.warnings.push(`Fila ${allValues.indexOf(row) + 1}: bullet "${beneficioTexto}" no matchea beneficio de ${proyectoActual} (esperado exacto: ${beneficiosProyecto.map(normalizarTexto).join(' | ')})`);
         }
-        continue;
       }
-    }
-    if (celdaBNorm === 'sugerencia o reclamo:' || celdaBNorm === 'sugerencia o reclamo') {
-      if (celdaC) {
-        datosFormulario['Comentarios_Finales_2'] = celdaC;
-        datos.tiene_datos_encuesta = true;
-      }
-      inFrecuencia = false;
       continue;
     }
-    if (celdaBNorm === 'comentario final:' || celdaBNorm === 'comentario final') {
-      if (celdaC) {
-        datosFormulario['Comentarios_Finales_1'] = celdaC;
-        datos.tiene_datos_encuesta = true;
-      }
-      inFrecuencia = false;
-      continue;
-    }
-    if (proyectoActual && (celdaBNorm === 'comentario:' || celdaBNorm === 'comentario')) {
-      if (celdaC) {
-        const colCom = `${proyectoActual}_Comentarios`;
-        if (colCom in datosFormulario) { datosFormulario[colCom] = celdaC; datos.tiene_datos_encuesta = true; }
-      }
-      inFrecuencia = false;
-      continue;
-    }
-    if (celdaBNorm.includes('recomendacion, sugerencia o reclamo') || celdaBNorm.includes('indiquenos cualquier')) {
-      inFrecuencia = false;
-      continue;
-    }
+
     if (celdaB.includes('MARQUE AQUÍ PARA CONFIRMAR ENVÍO') || celdaB.includes('MARQUE AQUI PARA CONFIRMAR ENVIO')) {
       datosFormulario['Checkbox_Envio'] = _esCheckboxMarcado(celdaC) ? 'TRUE' : 'FALSE';
       if (datosFormulario['Checkbox_Envio'] === 'TRUE') datos.esta_enviado = true;
       continue;
     }
-    if (celdaBNorm.includes('fecha de envio') || celdaBNorm.includes('fecha envio')) {
+    if (celdaBNorm === 'fecha de envio' || celdaBNorm === 'fecha de envio:' || celdaBNorm === 'fecha envio' || celdaBNorm === 'fecha envio:') {
       if (celdaC) { datosFormulario['Fecha_Envio'] = celdaC; datos.fecha_envio_detectada = celdaC; }
       continue;
     }
-    if (celdaBNorm === 'estado:' || celdaBNorm === 'estado') {
+    if (celdaBNorm === 'estado' || celdaBNorm === 'estado:') {
       if (celdaC) {
         datosFormulario['Estado_Formulario'] = celdaC;
         if (celdaC.toUpperCase().includes('ENVIADO')) datos.esta_enviado = true;
