@@ -334,7 +334,7 @@ async function apiFetch(url, init = {}, opts = {}) {
       throw new Error(`HTTP ${status}: ${text.slice(0, 500)}`);
     }
     const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-    console.warn(`API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
+    logWarn(`API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`, { url });
     await sleep(wait);
   }
 }
@@ -438,6 +438,24 @@ function formatNow() {
   return new Date().toISOString().replace('T', ' ').slice(0, 19);
 }
 
+function obtenerEsquemaMaestroCoord() {
+  return COLUMNAS_FORMULARIO;
+}
+
+function validarAlineacionColumnasMaestroCoord(encabezadosMaestro) {
+  const problemas = [];
+  const esperado = obtenerEsquemaMaestroCoord();
+  const setMaestro = new Set((encabezadosMaestro || []).map(h => String(h || '').trim()).filter(Boolean));
+  const setEsperado = new Set(esperado);
+
+  const faltantes = esperado.filter(c => !setMaestro.has(c));
+  const inesperadas = (encabezadosMaestro || []).map(h => String(h || '').trim()).filter(c => c && !setEsperado.has(c));
+  if (faltantes.length) problemas.push(`Faltan ${faltantes.length} columnas del esquema: ${faltantes.slice(0, 8).join(', ')}${faltantes.length > 8 ? '…' : ''}`);
+  if (inesperadas.length) problemas.push(`Hay ${inesperadas.length} columnas inesperadas: ${inesperadas.slice(0, 8).join(', ')}${inesperadas.length > 8 ? '…' : ''}`);
+
+  return { ok: problemas.length === 0, problemas, faltantes, inesperadas };
+}
+
 function emailRegex() { return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/; }
 function esEmailValido(valor) { return emailRegex().test(String(valor || '').trim()); }
 
@@ -448,6 +466,25 @@ function hojaRange(hoja, suffix) {
   const safe = /^[_A-Za-z0-9]+$/.test(hoja) ? hoja : `'${hoja.replace(/'/g, "''")}'`;
   return suffix ? `${safe}${suffix}` : safe;
 }
+
+function buildSheetsAppendUrl(spreadsheetId, sheetName, rangeA1, queryParams) {
+  const sheetRef = hojaRange(sheetName);
+  const fullRange = rangeA1 ? `${sheetRef}!${rangeA1}` : sheetRef;
+  const qs = queryParams ? `?${queryParams}` : '';
+  return `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(fullRange)}:append${qs}`;
+}
+
+function _log(nivel, msg, ...args) {
+  const ts = new Date().toISOString();
+  const linea = `[CIE] ${ts} [${nivel}] ${msg}`;
+  if (nivel === 'error') console.error(linea, ...args);
+  else if (nivel === 'warn') console.warn(linea, ...args);
+  else console.log(linea, ...args);
+}
+const logDebug = (msg, ...args) => _log('debug', msg, ...args);
+const logInfo  = (msg, ...args) => _log('info',  msg, ...args);
+const logWarn  = (msg, ...args) => _log('warn',  msg, ...args);
+const logError = (msg, ...args) => _log('error', msg, ...args);
 
 async function obtenerNombrePrimeraHoja(spreadsheetId) {
   const data = await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`);
@@ -475,7 +512,7 @@ async function asegurarHojaLog(spreadsheetId, nombreHoja, encabezados) {
   );
   if (encabezados && encabezados.length) {
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(nombreHoja + '!A1')}`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaRange(nombreHoja, '!A1'))}?valueInputOption=USER_ENTERED`,
       { method: 'PUT', body: JSON.stringify({ values: [encabezados] }) }
     );
   }
@@ -529,8 +566,7 @@ async function resolverConfiguracionIds(verbose = true) {
   }
   configResuelta = true;
   if (verbose) {
-    print(`✅ CARPETA_CENTRAL_ID: ${CONFIG_IDS.FOLDER_ID}`);
-    print(`✅ MAESTRO_ID: ${CONFIG_IDS.MAESTRO_ID}`);
+    logInfo('config resuelta', { CARPETA_CENTRAL_ID: CONFIG_IDS.FOLDER_ID, MAESTRO_ID: CONFIG_IDS.MAESTRO_ID });
   }
   return CONFIG_IDS;
 }
@@ -833,6 +869,19 @@ async function cargarConveniosDropdown() {
     if (!maestroId) return;
 
     let df = await getAllRecords(maestroId);
+
+    try {
+      const hoja = appState.hojaMaestra || await obtenerNombrePrimeraHoja(maestroId);
+      const enc = await leerValoresHoja(maestroId, hojaRange(hoja, '!1:1'));
+      const encabezadosMaestro = (enc && enc[0]) ? enc[0] : [];
+      const validacion = validarAlineacionColumnasMaestroCoord(encabezadosMaestro);
+      if (!validacion.ok) {
+        for (const p of validacion.problemas) logWarn(`Maestro desalineado: ${p}`);
+      } else {
+        logInfo('Maestro alineado con esquema (columnas OK)');
+      }
+    } catch (e) { logWarn('No se pudo validar alineacion del maestro', { error: String(e) }); }
+
     if (df[0] && 'Fila_Valida' in df[0]) df = df.filter(r => String(r['Fila_Valida'] || '').toLowerCase() === 'valid');
 
     df = filtrarPorRegionAutorizada(df, 'Sostenedor_Region');
@@ -1107,7 +1156,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
 
     return { exito: true, hoja_nueva: nuevoNombre, hoja_bloqueada: tituloBloqueado, version: nuevaVersion, url: spreadsheetUrl };
   } catch (e) {
-    console.error(e);
+    logError('crearHojaConObservaciones fail', { err: String(e) });
     return { exito: false, error: String(e) };
   }
 }
@@ -1176,6 +1225,7 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
       { method: 'POST', body: JSON.stringify({ values: [nuevaFila] }) }
     );
     await sleep(API_DELAY_MS);
+    logInfo('nueva fila con observacion agregada', { id: nuevoId });
     print(`   📝 Nueva fila con observacion agregada: ${nuevoId}`);
 
     try {
@@ -1184,17 +1234,18 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
       const idObsLog = `OBS-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)}`;
       const filaObs = [idObsLog, nuevoId, '', formatNow(), observacion, 'Pendiente', '', urlSheet];
       await apiFetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaObsPend)}!A:append?valueInputOption=USER_ENTERED`,
+        buildSheetsAppendUrl(spreadsheetId, hojaObsPend, 'A', 'valueInputOption=USER_ENTERED'),
         { method: 'POST', body: JSON.stringify({ values: [filaObs] }) }
       );
       await sleep(API_DELAY_MS);
     } catch (eObs) {
+      logWarn('hoja observaciones persist fail', { err: eObs.message });
       print(`   ⚠️ No se pudo registrar en hoja de observaciones: ${eObs.message}`);
     }
 
     return true;
   } catch (e) {
-    console.error(e);
+    logError('registrarObservacionEnMaestro fail', { err: String(e) });
     return false;
   }
 }
@@ -1208,11 +1259,9 @@ async function agregarObservacionCompleta(spreadsheetId, idRegistro, observacion
     return false;
   }
   print(`📋 Agregando observacion al registro ${idRegistro}...`);
-  print('='.repeat(60));
   const resultado = await crearHojaConObservaciones(urlSheet, observacionTexto);
   if (resultado.exito) {
     await registrarObservacionEnMaestro(spreadsheetId, idRegistro, observacionTexto, urlSheet);
-    print('='.repeat(60));
     print('✅ Proceso completado:');
     print(`   📄 Nueva hoja para edicion: ${resultado.hoja_nueva}`);
     print(`   🔒 Hoja bloqueada (solo lectura): ${resultado.hoja_bloqueada}`);
@@ -1275,6 +1324,7 @@ async function enviarCorreoSostenedor(tipoEvento, row, observacionTexto = '') {
     const emailCol = row['EMAIL SOSTENEDOR'] || row['Email_Sostenedor'] || '';
     const destinatario = correo || String(emailCol || '').trim();
     if (!destinatario || !esEmailValido(destinatario)) {
+      logWarn('email destinatario invalido', { tipoEvento, correo, emailCol });
       return { exito: false, destinatario: '', detalle: 'No se encontro correo valido del sostenedor', tipoError: 'destinatario_invalido' };
     }
 
@@ -1282,16 +1332,20 @@ async function enviarCorreoSostenedor(tipoEvento, row, observacionTexto = '') {
       ? construirEmailObservacion(row, observacionTexto)
       : construirEmailAprobacion(row);
 
+    logInfo('email send attempt', { tipoEvento, destinatario, asunto });
+
     const raw = construirMimeBase64({ to: destinatario, subject: asunto, text: cuerpo });
     const r = await apiFetch(
       'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
       { method: 'POST', body: JSON.stringify({ raw }) }
     );
 
+    logInfo('email send success', { tipoEvento, destinatario, messageId: r.id });
     await registrarLogNotificacion(tipoEvento, 'success', `messageId=${r.id}`, row, destinatario);
     return { exito: true, destinatario, detalle: `messageId=${r.id}` };
   } catch (e) {
     const esScope = String(e.message || '').toLowerCase().includes('insufficient');
+    logError('email send fail', { tipoEvento, err: e.message, tipoError: esScope ? 'scope_gmail' : 'envio_error' });
     await registrarLogNotificacion(tipoEvento, 'error', String(e.message), row, '', esScope ? 'scope_gmail' : 'envio_error');
     return { exito: false, destinatario: '', detalle: String(e.message), tipoError: esScope ? 'scope_gmail' : 'envio_error' };
   }
@@ -1310,13 +1364,14 @@ async function registrarLogNotificacion(tipoEvento, resultado, detalle, row, des
     const hojaLog = '📧 Log_Notificaciones_CRIE';
     await asegurarHojaLog(maestroId, hojaLog, ['Fecha_Hora', 'Evento', 'Resultado', 'Detalle', 'Destinatario', 'Convenio', 'Region', 'ID_Registro', '', 'Tipo_Error']);
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/${encodeURIComponent(hojaLog)}!A1:append?valueInputOption=USER_ENTERED`,
+      buildSheetsAppendUrl(maestroId, hojaLog, 'A1', 'valueInputOption=USER_ENTERED'),
       { method: 'POST', body: JSON.stringify({ values: [[
         evento.fecha_hora, evento.evento, evento.resultado, evento.detalle,
         evento.destinatario, evento.convenio, evento.region, evento.id_registro, '', evento.tipo_error
       ]] }) }
     );
   } catch (eLog) {
+    logWarn('log notificacion persist fail', { err: eLog.message });
     print(`⚠️ No se pudo persistir log de notificacion: ${eLog.message}`);
   }
 }
@@ -1329,10 +1384,10 @@ async function registrarIngresoNotebook() {
     const ts = formatNow();
     const correo = appState.correoUsuario || 'desconocido';
     await apiFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${maestroId}/values/${encodeURIComponent(hojaLog)}!A:append?valueInputOption=USER_ENTERED`,
+      buildSheetsAppendUrl(maestroId, hojaLog, 'A', 'valueInputOption=USER_ENTERED'),
       { method: 'POST', body: JSON.stringify({ values: [[ts, correo, 'Interfaz Coordinador Regional', 'OK']] }) }
     );
-  } catch (e) { console.warn('Log acceso:', e.message); }
+  } catch (e) { logWarn('log acceso fail', { err: e.message }); }
 }
 
 // =============================================================================
@@ -1459,8 +1514,8 @@ async function mostrarResumenAutomatico() {
       </table></div></div>
     </div>`;
   } catch (e) {
+    logError('mostrarResumenAutomatico fail', { err: String(e) });
     outputResumen.innerHTML = `<p>❌ Error: ${htmlEscape(e.message)}</p>`;
-    console.error(e);
   }
 }
 
@@ -1525,7 +1580,12 @@ async function onAprobarClick() {
     await actualizarEstadoMaestro(maestroId, idRegistro, 'Aprobado');
     print(`El estado del convenio ${rex} fue actualizado a Aprobado con exito.`);
 
-    await enviarCorreoSostenedor('aprobacion', row);
+    const emailRes = await enviarCorreoSostenedor('aprobacion', row);
+    if (emailRes.exito) {
+      print(`📧 Email de aprobacion enviado a ${emailRes.destinatario} (${emailRes.detalle})`);
+    } else {
+      print(`❌ No se envio email de aprobacion: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
+    }
 
     await sleep(API_DELAY_MS);
     await cargarConveniosDropdown();
@@ -1533,6 +1593,7 @@ async function onAprobarClick() {
     wrapperAcciones.style.display = 'none';
     await mostrarResumenAutomatico();
   } catch (e) {
+    logError('onAprobarClick fail', { err: e.message });
     print(`❌ Error: ${e.message}`);
   }
 }
@@ -1553,7 +1614,12 @@ async function onAgregarObservacionClick() {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     const resultado = await agregarObservacionCompleta(maestroId, idRegistro, observacion);
     if (resultado) {
-      await enviarCorreoSostenedor('observacion', row, observacion);
+      const emailRes = await enviarCorreoSostenedor('observacion', row, observacion);
+      if (emailRes.exito) {
+        print(`📧 Email de observacion enviado a ${emailRes.destinatario} (${emailRes.detalle})`);
+      } else {
+        print(`❌ No se envio email de observacion: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
+      }
       textareaObservacion.value = '';
       await sleep(API_DELAY_MS);
       await cargarConveniosDropdown();
@@ -1564,6 +1630,7 @@ async function onAgregarObservacionClick() {
       print('⚠️ No se pudo agregar la observacion');
     }
   } catch (e) {
+    logError('onAgregarObservacionClick fail', { err: e.message });
     print(`❌ Error: ${e.message}`);
   }
 }
