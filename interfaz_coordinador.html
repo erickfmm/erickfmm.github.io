@@ -1067,6 +1067,75 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
     await sleep(API_DELAY_MS);
 
     const OBS_ROW_OFFSET = 5;
+
+    // --- Copy column widths and hidden status from original sheet ---
+    try {
+      const colMetaResp = await apiFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets(data(columnMetadata),properties(sheetId))`
+      );
+      const origSheetColMeta = (colMetaResp.sheets || []).find(
+        s => s.properties && s.properties.sheetId === hojaEdit.sheetId
+      );
+      if (origSheetColMeta && origSheetColMeta.data && origSheetColMeta.data[0]) {
+        const colMeta = origSheetColMeta.data[0].columnMetadata || [];
+        const colRequests = [];
+        for (let i = 0; i < colMeta.length; i++) {
+          const meta = colMeta[i];
+          const props = {};
+          if (meta.pixelSize) props.pixelSize = meta.pixelSize;
+          if (meta.hiddenByUser) props.hiddenByUser = meta.hiddenByUser;
+          if (Object.keys(props).length > 0) {
+            colRequests.push({
+              updateDimensionProperties: {
+                range: { sheetId: nuevoSheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
+                properties: props,
+                fields: Object.keys(props).join(',')
+              }
+            });
+          }
+        }
+        const maxCol = Math.max(srcCols, 26);
+        let hasHiddenFromMeta = colMeta.some(m => m.hiddenByUser);
+        if (!hasHiddenFromMeta) {
+          colRequests.push({
+            updateDimensionProperties: {
+              range: { sheetId: nuevoSheetId, dimension: 'COLUMNS', startIndex: 4, endIndex: maxCol },
+              properties: { hiddenByUser: true },
+              fields: 'hiddenByUser'
+            }
+          });
+        }
+        if (colRequests.length > 0) {
+          await apiFetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+            { method: 'POST', body: JSON.stringify({ requests: colRequests }) }
+          );
+          await sleep(API_DELAY_MS);
+        }
+      }
+    } catch (eCol) {
+      logWarn('column metadata copy failed', { err: String(eCol) });
+    }
+
+    // --- Uncheck the send checkbox in the new sheet ---
+    try {
+      const headerRows = await leerValoresHoja(spreadsheetId, `${hojaRange(nuevoNombre)}!B${OBS_ROW_OFFSET + 1}:B${OBS_ROW_OFFSET + 300}`);
+      for (let i = 0; i < headerRows.length; i++) {
+        const val = String((headerRows[i] && headerRows[i][0]) || '').trim().toUpperCase();
+        if (val.includes('MARQUE AQUI') && val.includes('CONFIRMAR') && val.includes('ENVIO')) {
+          const checkboxRow = OBS_ROW_OFFSET + 1 + i;
+          await apiFetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaRange(nuevoNombre, '!C' + checkboxRow))}?valueInputOption=USER_ENTERED`,
+            { method: 'PUT', body: JSON.stringify({ values: [['FALSE']] }) }
+          );
+          await sleep(500);
+          break;
+        }
+      }
+    } catch (eCb) {
+      logWarn('uncheck checkbox failed', { err: String(eCb) });
+    }
+
     const replicateProtectionRequests = proteccionesExistentes.map(pr => {
       const newRange = { sheetId: nuevoSheetId };
       if (pr.range) {
@@ -1075,16 +1144,23 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         if (pr.range.startColumnIndex !== undefined) newRange.startColumnIndex = pr.range.startColumnIndex;
         if (pr.range.endColumnIndex !== undefined) newRange.endColumnIndex = pr.range.endColumnIndex;
       }
-      return {
-        addProtectedRange: {
-          protectedRange: {
-            range: newRange,
-            description: pr.description || 'Celdas bloqueadas - solo edite las celdas verdes',
-            warningOnly: pr.warningOnly || false,
-            editors: pr.editors || { users: [], domainUsersCanEdit: true }
-          }
-        }
+      const protectedRange = {
+        range: newRange,
+        description: pr.description || 'Celdas bloqueadas - solo edite las celdas verdes',
+        warningOnly: pr.warningOnly || false,
+        editors: pr.editors || { users: [], domainUsersCanEdit: true }
       };
+      if (pr.unprotectedRanges && pr.unprotectedRanges.length) {
+        protectedRange.unprotectedRanges = pr.unprotectedRanges.map(ur => {
+          const adj = { sheetId: nuevoSheetId };
+          if (ur.startRowIndex !== undefined) adj.startRowIndex = ur.startRowIndex + OBS_ROW_OFFSET;
+          if (ur.endRowIndex !== undefined) adj.endRowIndex = ur.endRowIndex + OBS_ROW_OFFSET;
+          if (ur.startColumnIndex !== undefined) adj.startColumnIndex = ur.startColumnIndex;
+          if (ur.endColumnIndex !== undefined) adj.endColumnIndex = ur.endColumnIndex;
+          return adj;
+        });
+      }
+      return { addProtectedRange: { protectedRange } };
     });
 
     const requests = [
@@ -1531,6 +1607,30 @@ function print(msg) {
 
 function clearOutput() { outputArea.innerHTML = ''; }
 
+function construirMensajeConfirmacion(tipoAccion, row, observacion) {
+  const rex = textoLimpio(row['Convenio_REX'] || 'N/D') || 'N/D';
+  const sostenedor = textoLimpio(row['Sostenedor_Institucion'] || 'N/D') || 'N/D';
+  const region = textoLimpio(row['Sostenedor_Region'] || 'N/D') || 'N/D';
+  const estadoActual = textoLimpio(row['Estado_Registro'] || 'Sin estado') || 'Sin estado';
+
+  const titulo = tipoAccion === 'aprobacion' ? 'APROBAR' : 'OBSERVAR';
+  const emoji = tipoAccion === 'aprobacion' ? '✅' : '⚠️';
+  const advertencia = tipoAccion === 'aprobacion'
+    ? 'Esta acción enviará un email de aprobación al sostenedor y NO se puede deshacer.'
+    : 'Esta acción creará una nueva hoja de observaciones, bloqueará la hoja actual y enviará un email al sostenedor. NO se puede deshacer.';
+
+  const lineaObs = (tipoAccion === 'observacion' && observacion)
+    ? `\n\nObservación a registrar:\n"${observacion}"\n`
+    : '';
+
+  return `${emoji} ¿${titulo} el convenio REX ${rex}?\n\n`
+    + `• Sostenedor: ${sostenedor}\n`
+    + `• Región: ${region}\n`
+    + `• Estado actual: ${estadoActual}`
+    + `${lineaObs}\n`
+    + `⚠️ ATENCIÓN: ${advertencia}`;
+}
+
 function actualizarVisibilidadInterfaz() {
   try {
     const row = obtenerDatosConvenioSeleccionado();
@@ -1577,6 +1677,12 @@ async function onAprobarClick() {
     return;
   }
 
+  const msgAprobar = construirMensajeConfirmacion('aprobacion', row, null);
+  if (!window.confirm(msgAprobar)) {
+    print('ℹ️ Aprobación cancelada por el usuario.');
+    return;
+  }
+
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     await actualizarEstadoMaestro(maestroId, idRegistro, 'Aprobado');
@@ -1612,6 +1718,12 @@ async function onAgregarObservacionClick() {
   if (estado === 'Aprobado') { print('❌ No se pueden agregar observaciones a convenios APROBADOS'); return; }
 
   const idRegistro = String(row['ID_Registro'] || '').trim();
+  const msgObservar = construirMensajeConfirmacion('observacion', row, observacion);
+  if (!window.confirm(msgObservar)) {
+    print('ℹ️ Observación cancelada por el usuario.');
+    return;
+  }
+
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     const resultado = await agregarObservacionCompleta(maestroId, idRegistro, observacion);
