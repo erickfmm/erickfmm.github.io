@@ -957,7 +957,7 @@ async function sincronizarEncabezadosMaestro(spreadsheetId) {
   await sleep(API_DELAY_MS);
 }
 
-async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenioArchivo, numeroObservacion = 0) {
+function verificarEstadoEnMaestro(allValues, encabezados, idConvenioArchivo, numeroObservacion = 0) {
   const idxId = obtenerIndiceColumna(encabezados, 'ID_Convenio_Archivo');
   const idxFilaValida = obtenerIndiceColumna(encabezados, 'Fila_Valida');
   const idxEstado = obtenerIndiceColumna(encabezados, 'Estado_Registro');
@@ -965,8 +965,6 @@ async function verificarEstadoEnMaestro(spreadsheetId, encabezados, idConvenioAr
 
   if (idxId === null || idxFilaValida === null) return { existe: false, estado: null, fila_num: null, accion: 'procesar_normal' };
 
-  const hoja = appState.hojaMaestra || 'Sheet1';
-  const allValues = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
   const filasValidas = [];
 
   for (let i = 1; i < allValues.length; i++) {
@@ -1019,12 +1017,12 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
     const numObs = datos.numero_observacion || 0;
     if (!idConvenioArchivo) { datosAProcesar.push(datos); continue; }
 
-    const verificacion = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenioArchivo, numObs);
+    const verificacion = verificarEstadoEnMaestro(allValues, encabezadosMaestro, idConvenioArchivo, numObs);
     if (verificacion.accion === 'skip') {
       datosOmitidos.push({ convenio: idConvenioArchivo, razon: 'Aprobado' });
     } else if (verificacion.accion === 'marcar_observado') {
       if (numObs > 0) {
-        const verOrig = await verificarEstadoEnMaestro(spreadsheetId, encabezadosMaestro, idConvenioArchivo, 0);
+        const verOrig = verificarEstadoEnMaestro(allValues, encabezadosMaestro, idConvenioArchivo, 0);
         if (verOrig.existe && verOrig.fila_num) filasAMarcarObservado.push({ fila_num: verOrig.fila_num, idConvenio: idConvenioArchivo });
       }
       datosAProcesar.push(datos);
@@ -1036,9 +1034,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
   if (datosOmitidos.length > 0) print(`   ⏭️ Total omitidos: ${datosOmitidos.length}`);
   if (!datosAProcesar.length) return 0;
 
-  await sleep(API_DELAY_MS);
-  const allRefetched = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
-  const ultimaFila = allRefetched.length;
+  const ultimaFila = allValues.length;
   const idBase = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
 
   const filasNuevas = [];
@@ -1139,8 +1135,8 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
 
     if (idsConvenioAProcesar.length > 0 && idxId !== null && idxFilaValida !== null) {
       const idsSet = new Set(idsConvenioAProcesar.map(id => String(id).trim()));
-      for (let i = 1; i < allRefetched.length; i++) {
-        const row = allRefetched[i];
+      for (let i = 1; i < allValues.length; i++) {
+        const row = allValues[i];
         const idConv = String(row[idxId] || '').trim();
         if (!idsSet.has(idConv)) continue;
         if (String(row[idxFilaValida] || '').trim().toLowerCase() !== 'valid') continue;
