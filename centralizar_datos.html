@@ -89,7 +89,28 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   <div class="cie-hbox">
     <label>Tamaño de lote <input type="number" id="int-batch-size" class="cie-input cie-input--small" value="10" min="1"></label>
     <label>Empezar en <input type="number" id="int-start-at" class="cie-input cie-input--small" value="0" min="0"></label>
+    <label>Región
+      <select id="select-region-filtro" class="cie-select" style="width: 220px;">
+        <option value="__TODAS__">Todas</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="cie-hbox" style="margin-top:8px;">
+    <label>Delay entre llamadas (s) <input type="number" id="input-api-delay" class="cie-input cie-input--small" value="5.2" min="0.1" step="0.1" max="60"></label>
+    <span id="delay-rate-info" class="cie-status cie-status--off" style="margin-left:8px;"></span>
     <button id="btn-leer-sheets" class="cie-btn cie-btn--info" disabled>📖 Leer Informes CIE</button>
+    <button id="btn-pausar-batch" class="cie-btn cie-btn--warning" disabled>⏸️ Pausar</button>
+    <button id="btn-reconectar" class="cie-btn cie-btn--danger" style="display:none;">🔌 Reconectar</button>
+  </div>
+
+  <div id="progreso-panel" class="cie-card" style="margin-top:12px;">
+    <h4 style="margin:0 0 6px 0;">📍 Progreso de la corrida</h4>
+    <div id="progreso-info" class="cie-status">Sin progreso registrado.</div>
+    <div class="cie-hbox" style="margin-top:8px;">
+      <button id="btn-reanudar" class="cie-btn cie-btn--success" disabled>▶️ Reanudar desde último</button>
+      <button id="btn-reiniciar-contador" class="cie-btn cie-btn--danger" disabled>🔄 Reiniciar contador</button>
+    </div>
   </div>
 
   <hr>
@@ -120,7 +141,6 @@ const CONFIG_GLOBAL = {
 
 const CARPETA_CENTRAL_ID = CONFIG_GLOBAL.CARPETA_CENTRAL_ID;
 const CARPETA_REGIONES_ID = CONFIG_GLOBAL.CARPETA_REGIONES_ID;
-const API_DELAY_MS = CONFIG_GLOBAL.API_DELAY * 1000;
 const NOMBRE_MAESTRO = 'CIE_Datos_Maestros';
 
 const CONFIG_IDS = {
@@ -198,6 +218,14 @@ const loginOutput = document.getElementById('login-output');
 const btnLeerSheets = document.getElementById('btn-leer-sheets');
 const intBatchSize = document.getElementById('int-batch-size');
 const intStartAt = document.getElementById('int-start-at');
+const inputApiDelay = document.getElementById('input-api-delay');
+const delayRateInfo = document.getElementById('delay-rate-info');
+const selectRegionFiltro = document.getElementById('select-region-filtro');
+const btnPausarBatch = document.getElementById('btn-pausar-batch');
+const btnReconectar = document.getElementById('btn-reconectar');
+const progresoInfo = document.getElementById('progreso-info');
+const btnReanudar = document.getElementById('btn-reanudar');
+const btnReiniciarContador = document.getElementById('btn-reiniciar-contador');
 const outputArea = document.getElementById('output-area');
 
 // =============================================================================
@@ -207,7 +235,39 @@ const appState = {
   spreadsheetMaestro: null,
   maestroId: null,
   hojaMaestra: null,
+  batchEnCurso: false,
+  batchPausado: false,
+  reanudarEsperado: false,
+  regionesDisponibles: [],
 };
+
+const DELAY_DEFAULT = 5.2;
+const DELAY_MIN = 0.1;
+const DELAY_MAX = 60;
+const LS_KEYS = {
+  API_DELAY: 'cie_cent_api_delay',
+  TOKEN: 'cie_cent_access_token_persist',
+  PROGRESSO: 'cie_cent_progreso',
+  REGION_FILTRO: 'cie_cent_region_filtro',
+};
+
+function obtenerDelaySegundos() {
+  let v = parseFloat(inputApiDelay.value);
+  if (!isFinite(v) || isNaN(v)) v = DELAY_DEFAULT;
+  v = Math.max(DELAY_MIN, Math.min(DELAY_MAX, v));
+  return v;
+}
+
+function obtenerDelayMs() {
+  return Math.round(obtenerDelaySegundos() * 1000);
+}
+
+function actualizarInfoDelay() {
+  const s = obtenerDelaySegundos();
+  const rpm = (60 / s).toFixed(1);
+  delayRateInfo.textContent = `≈ ${rpm} req/min (cuota Sheets: 60/min/usuario, 300/min/proyecto)`;
+  delayRateInfo.className = s < 1.0 ? 'cie-status cie-status--warn' : 'cie-status cie-status--ok';
+}
 
 // =============================================================================
 // AUTH (GIS)
@@ -215,7 +275,31 @@ const appState = {
 let tokenClient = null;
 let accessToken = null;
 let tokenExpiresAt = 0;
+const TOKEN_TTL_MS = 60 * 60 * 1000;
+const TOKEN_RENEW_MARGIN_MS = 2 * 60 * 1000;
 const TOKEN_STORAGE_KEY = 'cie_access_token';
+const TOKEN_PERSIST_KEY = LS_KEYS.TOKEN;
+
+function guardarTokenPersistente() {
+  try {
+    const stored = { accessToken, tokenExpiresAt };
+    localStorage.setItem(TOKEN_PERSIST_KEY, JSON.stringify(stored));
+  } catch (e) { console.warn('No se pudo persistir token en localStorage', e); }
+}
+
+function cargarTokenPersistente() {
+  try {
+    const raw = localStorage.getItem(TOKEN_PERSIST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.accessToken || !parsed.tokenExpiresAt) return null;
+    if (Date.now() >= parsed.tokenExpiresAt) {
+      localStorage.removeItem(TOKEN_PERSIST_KEY);
+      return null;
+    }
+    return parsed;
+  } catch (e) { return null; }
+}
 
 function initGis() {
   return new Promise((resolve) => {
@@ -243,23 +327,48 @@ function requestToken(interactive) {
       if (resp.error) return reject(resp);
       accessToken = resp.access_token;
       tokenExpiresAt = Date.now() + (resp.expires_in * 1000) - 60000;
-      sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken, tokenExpiresAt }));
+      try { sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken, tokenExpiresAt })); } catch (e) {}
+      guardarTokenPersistente();
       resolve(resp);
     };
     tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
   });
 }
 
+async function renovarTokenSilencioso() {
+  try {
+    if (!tokenClient) await initGis();
+    await requestToken(false);
+    return true;
+  } catch (e) {
+    console.warn('Renovacion silenciosa fallo', e);
+    return false;
+  }
+}
+
 async function ensureToken({ interactive = false } = {}) {
-  if (accessToken && Date.now() < tokenExpiresAt) return accessToken;
+  if (accessToken && Date.now() < tokenExpiresAt) {
+    if (tokenExpiresAt - Date.now() < TOKEN_RENEW_MARGIN_MS) {
+      renovarTokenSilencioso().catch(() => {});
+    }
+    return accessToken;
+  }
   const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (stored) {
-    const parsed = JSON.parse(stored);
-    if (Date.now() < parsed.tokenExpiresAt) {
-      accessToken = parsed.accessToken;
-      tokenExpiresAt = parsed.tokenExpiresAt;
-      return accessToken;
-    }
+    try {
+      const parsed = JSON.parse(stored);
+      if (Date.now() < parsed.tokenExpiresAt) {
+        accessToken = parsed.accessToken;
+        tokenExpiresAt = parsed.tokenExpiresAt;
+        return accessToken;
+      }
+    } catch (e) {}
+  }
+  const persist = cargarTokenPersistente();
+  if (persist) {
+    accessToken = persist.accessToken;
+    tokenExpiresAt = persist.tokenExpiresAt;
+    return accessToken;
   }
   if (!interactive) throw new Error('No hay token valido. Pulse Conectar.');
   await requestToken(true);
@@ -274,35 +383,134 @@ function setLoginStatus(cls, msg) {
 // =============================================================================
 // API LAYER
 // =============================================================================
-const RETRIABLE = new Set([408, 429, 500, 502, 503, 504]);
+const RETRIABLE = new Set([401, 408, 429, 500, 502, 503, 504]);
+let __lastApiCallTs = 0;
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+async function esperarDelayApi(forzarEsperaCompleta = false) {
+  const delayMs = obtenerDelayMs();
+  const elapsed = Date.now() - __lastApiCallTs;
+  const wait = delayMs - elapsed;
+  if (wait <= 0) {
+    __lastApiCallTs = Date.now();
+    return 0;
+  }
+  if (forzarEsperaCompleta) {
+    if (wait > 100) print(`⏱️ Esperando ${(wait / 1000).toFixed(1)}s por delay configurado`);
+    await sleep(wait);
+  } else {
+    if (wait > 100) print(`⏱️ Esperando ${(wait / 1000).toFixed(1)}s por delay configurado`);
+    await sleep(wait);
+  }
+  __lastApiCallTs = Date.now();
+  return wait;
+}
+
+async function esperarReanudacion() {
+  while (appState.batchPausado) {
+    await sleep(1000);
+  }
+}
 
 async function apiFetch(url, init = {}, opts = {}) {
-  const maxRetries = opts.maxRetries ?? 3;
-  const baseDelay  = opts.baseDelay  ?? 10000;
+  const maxRetries = opts.maxRetries ?? 4;
+  const baseDelay  = opts.baseDelay  ?? 15000;
   const skipRetry  = opts.skipRetry  ?? false;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const token = await ensureToken({ interactive: false });
+  const enforceDelay = opts.enforceDelay !== false;
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < maxRetries) {
+    await esperarReanudacion();
+    if (enforceDelay) await esperarDelayApi(true);
+
+    let token;
+    try {
+      token = await ensureToken({ interactive: false });
+    } catch (e) {
+      await pausarPorToken('No se pudo obtener token antes de la llamada');
+      attempt++;
+      continue;
+    }
+
     const headers = { ...(init.headers || {}), Authorization: `Bearer ${token}` };
     if (init.body && typeof init.body === 'string' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
-    const resp = await fetch(url, { ...init, headers });
+    let resp;
+    try {
+      resp = await fetch(url, { ...init, headers });
+    } catch (e) {
+      lastError = new Error(`fetch failed: ${e.message}`);
+      if (skipRetry) throw lastError;
+      const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      print(`⚠️ Error de red, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
+      await sleep(wait);
+      attempt++;
+      continue;
+    }
     if (resp.ok) {
       const ct = resp.headers.get('content-type') || '';
       return ct.includes('application/json') ? resp.json() : resp.text();
     }
     const status = resp.status;
     const retriable = RETRIABLE.has(status);
+
+    if (status === 401) {
+      accessToken = null;
+      tokenExpiresAt = 0;
+      try { localStorage.removeItem(TOKEN_PERSIST_KEY); } catch (e) {}
+      try { sessionStorage.removeItem(TOKEN_STORAGE_KEY); } catch (e) {}
+      const renovado = await renovarTokenSilencioso();
+      if (renovado) {
+        print('🔄 Token renovado silenciosamente tras 401, reintentando...');
+        attempt++;
+        continue;
+      } else {
+        await pausarPorToken('Token expirado y no se pudo renovar. Pulse Reconectar.');
+        attempt++;
+        continue;
+      }
+    }
+
     if (skipRetry || !retriable || attempt === maxRetries - 1) {
       const text = await resp.text().catch(() => '');
       throw new Error(`HTTP ${status}: ${text.slice(0, 500)}`);
     }
-    const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-    console.warn(`API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
+    let wait;
+    const retryAfter = parseFloat(resp.headers.get('Retry-After') || '0');
+    if (retryAfter > 0) {
+      wait = Math.min(retryAfter * 1000, 120000) + Math.random() * 500;
+    } else {
+      wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+    }
+    print(`⚠️ API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
     await sleep(wait);
+    attempt++;
+    lastError = new Error(`HTTP ${status}`);
   }
+  if (lastError) throw lastError;
+  throw new Error('apiFetch: reintentos agotados');
+}
+
+async function pausarPorToken(motivo) {
+  if (!appState.batchEnCurso) return;
+  appState.batchPausado = true;
+  btnReconectar.style.display = '';
+  btnReconectar.disabled = false;
+  btnLeerSheets.disabled = true;
+  btnPausarBatch.disabled = true;
+  print(`⏸️ ${motivo}`);
+}
+
+async function reanudarPorToken() {
+  appState.batchPausado = false;
+  btnReconectar.style.display = 'none';
+  btnReconectar.disabled = true;
+  if (appState.batchEnCurso) {
+    btnLeerSheets.disabled = true;
+    btnPausarBatch.disabled = false;
+  }
+  print('▶️ Reanudando batch...');
 }
 
 async function logApiTrace(message) {
@@ -330,6 +538,8 @@ async function ensureTraceSheet() {
 // =============================================================================
 // TEXT UTILS
 // =============================================================================
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 function normalizarTexto(texto) {
   if (!texto) return '';
   texto = String(texto).toLowerCase().trim();
@@ -502,8 +712,167 @@ function validarAlineacionColumnasMaestro(encabezadosMaestro, datosFormulario) {
 }
 
 // =============================================================================
-// SHEETS / DRIVE HELPERS
+// PROGRESS PERSISTENCE
 // =============================================================================
+function cargarProgreso() {
+  try {
+    const raw = localStorage.getItem(LS_KEYS.PROGRESSO);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p || typeof p !== 'object') return null;
+    return p;
+  } catch (e) { return null; }
+}
+
+function guardarProgreso(idxAbsoluto, idConvenio, totalHojas) {
+  try {
+    const data = {
+      ultimo_indice: idxAbsoluto,
+      ultimo_id: idConvenio || '',
+      timestamp: new Date().toISOString(),
+      total_hojas: totalHojas,
+      lote_size: parseInt(intBatchSize.value, 10) || 10,
+      region_filtro: selectRegionFiltro.value || '__TODAS__',
+      delay_segundos: obtenerDelaySegundos(),
+    };
+    localStorage.setItem(LS_KEYS.PROGRESSO, JSON.stringify(data));
+    refrescarBarraProgreso();
+  } catch (e) { console.warn('No se pudo guardar progreso', e); }
+}
+
+function limpiarProgreso() {
+  try {
+    localStorage.removeItem(LS_KEYS.PROGRESSO);
+    refrescarBarraProgreso();
+  } catch (e) {}
+}
+
+function formatearFechaProgreso(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function refrescarBarraProgreso() {
+  const p = cargarProgreso();
+  if (!p) {
+    progresoInfo.textContent = 'Sin progreso registrado.';
+    btnReanudar.disabled = true;
+    btnReiniciarContador.disabled = true;
+    return;
+  }
+  const fecha = formatearFechaProgreso(p.timestamp);
+  const totalTxt = p.total_hojas ? ` de ${p.total_hojas}` : '';
+  progresoInfo.innerHTML = `Último informe procesado: <b>#${p.ultimo_indice}${totalTxt}</b>`
+    + (p.ultimo_id ? ` — <code>${htmlEscape(p.ultimo_id)}</code>` : '')
+    + ` — <span class="cie-muted">${fecha}</span>`;
+  btnReanudar.disabled = false;
+  btnReiniciarContador.disabled = false;
+}
+
+function reanudarDesdeUltimo() {
+  const p = cargarProgreso();
+  if (!p) { print('⚠️ No hay progreso guardado.'); return; }
+  const nuevoStart = (p.ultimo_indice || 0);
+  intStartAt.value = String(nuevoStart);
+  print(`▶️ Reanudando desde el índice ${nuevoStart}. Pulse "Leer Informes CIE" para continuar.`);
+}
+
+function reiniciarContador() {
+  if (!window.confirm('¿Reiniciar el contador de progreso? Esto NO borra el maestro, sólo olvida el último índice.')) return;
+  limpiarProgreso();
+  intStartAt.value = '0';
+  print('🔄 Contador de progreso reiniciado.');
+}
+
+// =============================================================================
+// REGION PARSING FROM FILENAME
+// =============================================================================
+const REGIONES_CONOCIDAS = [
+  'Arica y Parinacota', 'Tarapacá', 'Antofagasta', 'Atacama', 'Coquimbo',
+  'Valparaíso', 'Metropolitana', "O'Higgins", 'Maule', 'Ñuble', 'Biobío',
+  'La Araucanía', 'Los Ríos', 'Los Lagos', 'Aysén', 'Magallanes'
+];
+const REGION_NORM_MAP = new Map();
+for (const r of REGIONES_CONOCIDAS) {
+  REGION_NORM_MAP.set(normalizarTexto(r), r);
+  REGION_NORM_MAP.set(normalizarTexto(r.replace("'", '')), r);
+}
+const ALIAS_REGION = {
+  'rm': 'Metropolitana',
+  'metropolitana de santiago': 'Metropolitana',
+  'region metropolitana': 'Metropolitana',
+  'bio bio': 'Biobío',
+  'biobio': 'Biobío',
+  'del biobio': 'Biobío',
+  'de la araucania': 'La Araucanía',
+  'araucania': 'La Araucanía',
+  'ohiggins': "O'Higgins",
+  "o'higgins": "O'Higgins",
+  'libertador general bernardo ohiggins': "O'Higgins",
+  'nuble': 'Ñuble',
+  'del maule': 'Maule',
+  'aysen del general carlos ibanez del campo': 'Aysén',
+  'aysen': 'Aysén',
+  'magallanes y de la antartica chilena': 'Magallanes',
+  'magallanes': 'Magallanes',
+};
+
+function parsearRegionDeNombreArchivo(nombreArchivo) {
+  const s = String(nombreArchivo || '').trim();
+  if (!s) return null;
+  let m = s.match(/-\s*REX-([A-Z0-9\-]+)\s*-\s*([^-\s][^-\n]*?)\s*(?:\.|$|-)/i);
+  if (m) {
+    const candidato = m[2].trim();
+    const canon = canonizarRegion(candidato);
+    if (canon) return canon;
+  }
+  m = s.match(/\bREX[\s\-]*([0-9]+[A-Z0-9\-]*)\b[\s\-]+([^-\s.][^-\n.]*?)(?:\s*-\s*|\.|$)/i);
+  if (m) {
+    const canon = canonizarRegion(m[2].trim());
+    if (canon) return canon;
+  }
+  const sNorm = normalizarTexto(s);
+  for (const [norm, canon] of REGION_NORM_MAP.entries()) {
+    if (norm.length < 4) continue;
+    if (sNorm.includes(norm)) return canon;
+  }
+  for (const [alias, canon] of Object.entries(ALIAS_REGION)) {
+    if (sNorm.includes(alias)) return canon;
+  }
+  return null;
+}
+
+function canonizarRegion(texto) {
+  if (!texto) return null;
+  const norm = normalizarTexto(texto).replace(/[''`´]/g, '');
+  if (REGION_NORM_MAP.has(norm)) return REGION_NORM_MAP.get(norm);
+  if (ALIAS_REGION[norm]) return ALIAS_REGION[norm];
+  return null;
+}
+
+function regionCoincideFiltro(regionDetectada, filtroValor) {
+  if (!filtroValor || filtroValor === '__TODAS__') return true;
+  if (!regionDetectada) return false;
+  return normalizarTexto(regionDetectada) === normalizarTexto(filtroValor);
+}
+
+function poblarDropdownRegiones() {
+  const anteriores = cargarProgreso();
+  const filtroGuardado = anteriores ? (anteriores.region_filtro || '__TODAS__') : '__TODAS__';
+  const opciones = ['__TODAS__', ...REGIONES_CONOCIDAS];
+  selectRegionFiltro.innerHTML = '';
+  for (const op of opciones) {
+    const opt = document.createElement('option');
+    opt.value = op;
+    opt.textContent = op === '__TODAS__' ? 'Todas' : op;
+    selectRegionFiltro.appendChild(opt);
+  }
+  if (opciones.includes(filtroGuardado)) selectRegionFiltro.value = filtroGuardado;
+  else selectRegionFiltro.value = '__TODAS__';
+  try { localStorage.setItem(LS_KEYS.REGION_FILTRO, selectRegionFiltro.value); } catch (e) {}
+}
 function hojaRange(hoja, suffix) {
   const safe = /^[_A-Za-z0-9]+$/.test(hoja) ? hoja : `'${hoja.replace(/'/g, "''")}'`;
   return suffix ? `${safe}${suffix}` : safe;
@@ -882,33 +1251,15 @@ async function extraerDatosInforme(spreadsheetId, hojaNombre = null, carpetaNomb
 // =============================================================================
 // MAESTRO OPERATIONS
 // =============================================================================
-async function eliminarMaestroExistente() {
-  if (!CONFIG_IDS.MAESTRO_ID) return;
-  try {
-    await apiFetch(
-      `https://www.googleapis.com/drive/v3/files/${CONFIG_IDS.MAESTRO_ID}?supportsAllDrives=true`,
-      { method: 'DELETE' }
-    );
-    print(`🗑️ Maestro previo eliminado: ${CONFIG_IDS.MAESTRO_ID}`);
-  } catch (e) {
-    print(`⚠️ No se pudo eliminar maestro previo: ${e.message}`);
-  }
-  CONFIG_IDS.MAESTRO_ID = null;
-  configResuelta = false;
-}
-
 async function crearObtenerMaestro() {
   await resolverConfiguracionIds(true);
   let maestroId = CONFIG_IDS.MAESTRO_ID;
 
   if (maestroId) {
-    print('🗑️ Eliminando maestro previo para recrear con esquema limpio...');
-    await eliminarMaestroExistente();
-    maestroId = null;
-  }
-
-  if (!maestroId) {
-    print('📄 Creando CIE_Datos_Maestros en central con esquema limpio...');
+    print('✅ Maestro existente reutilizado (modo incremental). No se eliminan datos previos.');
+    print(`   ID: ${maestroId}`);
+  } else {
+    print('📄 Creando CIE_Datos_Maestros en central...');
     const body = JSON.stringify({
       name: NOMBRE_MAESTRO,
       mimeType: 'application/vnd.google-apps.spreadsheet',
@@ -917,7 +1268,7 @@ async function crearObtenerMaestro() {
     const created = await apiFetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', { method: 'POST', body });
     maestroId = created.id;
     CONFIG_IDS.MAESTRO_ID = maestroId;
-    print(`✅ Maestro recreado automaticamente: ${maestroId}`);
+    print(`✅ Maestro creado: ${maestroId}`);
   }
 
   appState.maestroId = maestroId;
@@ -926,11 +1277,12 @@ async function crearObtenerMaestro() {
 
   try {
     await sincronizarEncabezadosMaestro(maestroId);
+    print('   ✅ Encabezados sincronizados (columnas faltantes agregadas, no se eliminaron)');
   } catch (e) {
     print(`⚠️ Sincronizacion de encabezados: ${e.message}`);
   }
 
-  print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
+  print(`✅ Maestro oficial: https://docs.google.com/spreadsheets/d/${maestroId}`);
   return maestroId;
 }
 
@@ -954,7 +1306,7 @@ async function sincronizarEncabezadosMaestro(spreadsheetId) {
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(rangeStr)}?valueInputOption=RAW`,
     { method: 'PUT', body: JSON.stringify({ range: rangeStr, values: [merged] }) }
   );
-  await sleep(API_DELAY_MS);
+  await sleep(obtenerDelayMs());
 }
 
 function verificarEstadoEnMaestro(allValues, encabezados, idConvenioArchivo, numeroObservacion = 0) {
@@ -1001,7 +1353,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
 
   if (!encabezadosMaestro.length || ![...columnasCriticas].every(c => encabezadosMaestro.includes(c))) {
     await sincronizarEncabezadosMaestro(spreadsheetId);
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
     const refetched = await leerValoresHoja(spreadsheetId, hojaRange(hoja, '!1:1'));
     encabezadosMaestro = refetched.length > 0 ? refetched[0] : [];
   }
@@ -1106,7 +1458,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
   }
 
   if (filasNuevas.length > 0) {
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
     await apiFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaRange(hoja, '!A' + (ultimaFila + 1)))}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       { method: 'POST', body: JSON.stringify({ values: filasNuevas }) }
@@ -1162,7 +1514,7 @@ async function agregarDatosAMaestro(spreadsheetId, datosList) {
 }
 
 async function asegurarUnicidadFilasValidas(spreadsheetId) {
-  await sleep(API_DELAY_MS);
+  await sleep(obtenerDelayMs());
   const hoja = appState.hojaMaestra || 'Sheet1';
   const allValues = await leerValoresHoja(spreadsheetId, hojaRange(hoja));
   if (!allValues.length) return { error: false, convenios_unicos: 0, duplicados_corregidos: 0 };
@@ -1207,7 +1559,7 @@ async function asegurarUnicidadFilasValidas(spreadsheetId) {
 
   let totalInvalidadas = 0;
   if (actualizaciones.length > 0) {
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
     await apiFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
       { method: 'POST', body: JSON.stringify({ data: actualizaciones, valueInputOption: 'USER_ENTERED' }) }
@@ -1322,32 +1674,57 @@ btnLeerSheets.addEventListener('click', async () => {
   clearOutput();
   btnLeerSheets.disabled = true;
   btnLeerSheets.textContent = '⏳ Procesando...';
+  btnPausarBatch.disabled = false;
+  appState.batchEnCurso = true;
+  appState.batchPausado = false;
+  btnReconectar.style.display = 'none';
 
   try {
     const batchSize = Math.max(1, parseInt(intBatchSize.value, 10) || 10);
     const startAt = Math.max(0, parseInt(intStartAt.value, 10) || 0);
+    const regionFiltro = selectRegionFiltro.value || '__TODAS__';
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     if (!maestroId) throw new Error('Maestro no configurado');
+    if (regionFiltro !== '__TODAS__') print(`🗺️ Filtro de región: ${regionFiltro}`);
+    print(`⏱️ Delay entre llamadas: ${obtenerDelaySegundos()}s`);
 
     print(`📋 Listando sheets en carpeta regiones...`);
     const sheetsList = await listarSheetsEnCarpeta(CARPETA_REGIONES_ID);
     print(`📊 ${sheetsList.length} sheets encontrados`);
 
-    const listToProcess = startAt > 0 ? sheetsList.slice(startAt - 1) : sheetsList;
+    const startIdx = startAt > 0 ? (startAt - 1) : 0;
+    const listToProcess = sheetsList.slice(startIdx);
     const total = listToProcess.length;
     let todosLosDatos = [];
     const datosBatch = [];
     let batchContador = 0;
     let totalAgregadosBatches = 0;
+    let saltadosPorRegion = 0;
     const reporteArchivos = [];
 
     for (let idx = 0; idx < total; idx++) {
+      if (appState.batchPausado) {
+        print('⏸️ Batch pausado por el usuario.');
+        break;
+      }
       const sheetInfo = listToProcess[idx];
       const nombreSheet = sheetInfo.name || `sheet_${idx + 1}`;
       const idSheet = sheetInfo.id;
+      const idxAbsoluto = startIdx + idx + 1;
+
+      const regionDetectada = parsearRegionDeNombreArchivo(nombreSheet);
+      if (!regionCoincideFiltro(regionDetectada, regionFiltro)) {
+        saltadosPorRegion++;
+        print(`   ⏭️ #${idxAbsoluto} saltado por región (detectada: ${regionDetectada || 'desconocida'}): ${nombreSheet}`);
+        guardarProgreso(idxAbsoluto, idSheet, sheetsList.length);
+        continue;
+      }
+      if (regionFiltro !== '__TODAS__' && !regionDetectada) {
+        print(`   ⚠️ #${idxAbsoluto} no se pudo parsear región de '${nombreSheet}' — se procesará`);
+      }
 
       try {
-        setProgress(idx + 1 + startAt, sheetsList.length, `Procesando: ${nombreSheet}`);
+        setProgress(idxAbsoluto, sheetsList.length, `Procesando: ${nombreSheet}`);
         const [datosLista, diag] = await extraerDatosInforme(idSheet, null, null, nombreSheet, true);
         const estadoArchivo = diag.omitido ? 'OMITIDO' : (diag.registros_error > 0 && diag.registros_error === diag.registros_extraidos ? 'ERROR' : 'LEIDO');
         reporteArchivos.push({ archivo: nombreSheet, estado: estadoArchivo });
@@ -1362,7 +1739,7 @@ btnLeerSheets.addEventListener('click', async () => {
           else logItems.push('Pendiente');
         }
         if (diag.omitido) logItems.push(`OMITIDO: ${diag.causa_omision}`);
-        if (logItems.length) print(`   ✅ ${logItems.join(' | ')}`);
+        if (logItems.length) print(`   ✅ #${idxAbsoluto} ${logItems.join(' | ')}`);
 
         for (const datos of datosLista) {
           if (datos.warnings && datos.warnings.length > 0) {
@@ -1374,7 +1751,6 @@ btnLeerSheets.addEventListener('click', async () => {
         if (datosBatch.length >= batchSize) {
           batchContador++;
           print(`🔄 Guardando batch #${batchContador} (${datosBatch.length} registros)...`);
-          await sleep(API_DELAY_MS);
           const agregados = await agregarDatosAMaestro(maestroId, datosBatch);
           totalAgregadosBatches += agregados;
           print(`   ✅ Batch #${batchContador}: ${agregados} registros agregados`);
@@ -1384,13 +1760,13 @@ btnLeerSheets.addEventListener('click', async () => {
         reporteArchivos.push({ archivo: nombreSheet, estado: 'ERROR', causa: String(e) });
         print(`   ❌ Error: ${e.message}`);
       }
-      await sleep(API_DELAY_MS);
+
+      guardarProgreso(idxAbsoluto, idSheet, sheetsList.length);
     }
 
     if (datosBatch.length > 0) {
       batchContador++;
       print(`🔄 Guardando batch final #${batchContador} (${datosBatch.length} registros)...`);
-      await sleep(API_DELAY_MS);
       const agregados = await agregarDatosAMaestro(maestroId, datosBatch);
       totalAgregadosBatches += agregados;
       print(`   ✅ Batch final: ${agregados} registros agregados`);
@@ -1405,14 +1781,63 @@ btnLeerSheets.addEventListener('click', async () => {
 
     print(`✅ Lectura completada: ${todosLosDatos.length} registros`);
     print(`   📨 Enviados: ${enviados} | ✏️ Llenados: ${llenados} | ⏳ Pendientes: ${pendientes}` + (errores > 0 ? ` | ❌ Errores: ${errores}` : ''));
-    print(`   📦 Batches: ${batchContador} | Total agregados: ${totalAgregadosBatches}`);
+    print(`   📦 Batches: ${batchContador} | Total agregados: ${totalAgregadosBatches}` + (saltadosPorRegion > 0 ? ` | ⏭️ Saltados por región: ${saltadosPorRegion}` : ''));
   } catch (e) {
     print(`❌ Error: ${e.message}`);
     console.error(e);
   } finally {
+    appState.batchEnCurso = false;
+    appState.batchPausado = false;
     btnLeerSheets.disabled = false;
     btnLeerSheets.textContent = '📖 Leer Informes CIE';
+    btnPausarBatch.disabled = true;
+    btnReconectar.style.display = 'none';
   }
+});
+
+btnPausarBatch.addEventListener('click', () => {
+  appState.batchPausado = !appState.batchPausado;
+  if (appState.batchPausado) {
+    btnPausarBatch.textContent = '▶️ Reanudar';
+    print('⏸️ Pausa solicitada. Terminará el batch en curso y se detendrá.');
+  } else {
+    btnPausarBatch.textContent = '⏸️ Pausar';
+    print('▶️ Reanudación solicitada.');
+  }
+});
+
+btnReconectar.addEventListener('click', async () => {
+  setLoginStatus('warn', '🟡 Reconectando...');
+  try {
+    await initGis();
+    await requestToken(true);
+    setLoginStatus('ok', '🟢 Conectado');
+    print('🔌 Reconexión exitosa.');
+    await reanudarPorToken();
+  } catch (e) {
+    setLoginStatus('err', '🔴 Error: ' + (e.message || String(e)));
+    print('❌ Error de reconexión: ' + (e.message || String(e)));
+  }
+});
+
+btnReanudar.addEventListener('click', reanudarDesdeUltimo);
+btnReiniciarContador.addEventListener('click', reiniciarContador);
+
+inputApiDelay.addEventListener('change', () => {
+  let v = parseFloat(inputApiDelay.value);
+  if (!isFinite(v) || isNaN(v)) v = DELAY_DEFAULT;
+  v = Math.max(DELAY_MIN, Math.min(DELAY_MAX, v));
+  inputApiDelay.value = v.toString();
+  try { localStorage.setItem(LS_KEYS.API_DELAY, v.toString()); } catch (e) {}
+  actualizarInfoDelay();
+  print(`⏱️ Delay actualizado a ${v}s entre llamadas.`);
+});
+
+inputApiDelay.addEventListener('input', actualizarInfoDelay);
+
+selectRegionFiltro.addEventListener('change', () => {
+  try { localStorage.setItem(LS_KEYS.REGION_FILTRO, selectRegionFiltro.value); } catch (e) {}
+  print(`🗺️ Filtro de región cambiado a: ${selectRegionFiltro.value === '__TODAS__' ? 'Todas' : selectRegionFiltro.value}`);
 });
 
 // =============================================================================
@@ -1426,6 +1851,18 @@ async function init() {
     });
   }
   await initGis();
+
+  let delayGuardado = null;
+  try { delayGuardado = localStorage.getItem(LS_KEYS.API_DELAY); } catch (e) {}
+  if (delayGuardado) {
+    const v = parseFloat(delayGuardado);
+    if (isFinite(v) && !isNaN(v)) inputApiDelay.value = v.toString();
+  }
+  actualizarInfoDelay();
+
+  poblarDropdownRegiones();
+  refrescarBarraProgreso();
+
   const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (stored) {
     try {
@@ -1437,6 +1874,13 @@ async function init() {
         return;
       }
     } catch (e) {}
+  }
+  const persist = cargarTokenPersistente();
+  if (persist) {
+    accessToken = persist.accessToken;
+    tokenExpiresAt = persist.tokenExpiresAt;
+    await onLoginSuccess();
+    return;
   }
   setLoginStatus('off', '⚪ No conectado');
 }
