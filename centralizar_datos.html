@@ -164,12 +164,12 @@ const PROYECTOS_CIE = {
   "CPE 2030": { nombre_completo: "Conectividad para la Educación 2030", descripcion: "Entregar acceso a internet gratuito a los establecimientos educacionales, como apoyo al proceso educativo y administrativo.", fecha: "A partir del año 2020 a la fecha.", beneficios: ["Conectividad", "Materiales"], icono: "📡", color: "#34a853" },
   "AC 2022": { nombre_completo: "Aulas Conectadas 2022", descripcion: "Llevar a los establecimientos a un nuevo estándar de acceso a internet en todas las aulas, para potenciar el aprendizaje con uso de recursos en línea.", fecha: "Segundo semestre año 2022 a la fecha.", beneficios: ["Infraestructura", "Conectividad", "Materiales", "Asesoría"], icono: "🏫", color: "#ea4335" },
   "AC 2022 - 2da": { nombre_completo: "Aulas Conectadas 2022 - Segunda Convocatoria", descripcion: "Asesorar a los sostenedores y sus establecimientos para que alcancen un estándar de infraestructura de red de datos en las aulas.", fecha: "Segundo semestre año 2022 a la fecha.", beneficios: ["Materiales", "Asesoría"], icono: "🎓", color: "#ff6d01" },
-  "REAC RM": { nombre_completo: "Equipos Reacondicionados y Educación en Economía Circular 2023", descripcion: "Entregar equipamiento computacional reacondicionado y entrenamiento en economía circular.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "♻️", color: "#9c27b0" },
+  "REAC RM": { nombre_completo: "Equipos Reacondicionados y Educación en Economía Circular 2023", descripcion: "Entregar equipamiento computacional reacondicionado y entrenamiento en economía circular.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "🖥️", color: "#9c27b0" },
   "KIT REV": { nombre_completo: "Kit Tecnológico para la Revinculación Educativa 2023", descripcion: "Entregar a los establecimientos que atienden a personas jóvenes y adultas, equipamiento TIC para enriquecer las experiencias de aprendizaje personalizado.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "🔄", color: "#00bcd4" },
   "KIT TRANSF": { nombre_completo: "Kit Tecnológico para la Transformación Educativa 2023", descripcion: "Entregar a los establecimientos equipamiento TIC para enriquecer y potenciar experiencias de aprendizaje personalizado de acuerdo con sus prioridades y/o necesidades.", fecha: "Segundo semestre año 2023.", beneficios: ["Infraestructura", "Materiales"], icono: "🚀", color: "#607d8b" },
-  "A+S": { nombre_completo: "Aprendizaje + Servicio: Innovar para Transformar 2023", descripcion: "Fortalecer las capacidades de innovación de la comunidad educativa a través de experiencias con enfoque pedagógico de Aprendizaje + Servicio.", fecha: "Segundo semestre año 2023.", beneficios: ["Formación", "Materiales"], icono: "🤝", color: "#e91e63" },
-  "PDC 2024": { nombre_completo: "Protagonistas del Cambio: Formación y Tecnología para la Reactivación Educativa 2024", descripcion: "Fortalecer las capacidades de desarrollar proyectos de innovación en equipos pedagógicos, a través de formación, acompañamiento y entrega de equipamiento.", fecha: "Segundo semestre año 2024.", beneficios: ["Infraestructura", "Formación", "Materiales"], icono: "⭐", color: "#795548" },
-  "TDA 2025": { nombre_completo: "Tecnologías Digitales en Acción (TDA) 2025", descripcion: "Fortalecer el trabajo entre las y los docentes de la asignatura de Tecnología y las personas de la coordinación informática, para integrar pedagógicamente las tecnologías digitales.", fecha: "Segundo semestre año 2025.", beneficios: ["Formación", "Materiales"], icono: "💡", color: "#fbbc04" }
+  "A+S": { nombre_completo: "Aprendizaje + Servicio: Innovar para Transformar 2023", descripcion: "Fortalecer las capacidades de innovación de la comunidad educativa a través de experiencias con enfoque pedagógico de Aprendizaje + Servicio.", fecha: "Segundo semestre año 2023.", beneficios: ["Formación", "Materiales"], icono: "🙌", color: "#e91e63" },
+  "PDC 2024": { nombre_completo: "Protagonistas del Cambio: Formación y Tecnología para la Reactivación Educativa 2024", descripcion: "Fortalecer las capacidades de desarrollar proyectos de innovación en equipos pedagógicos, a través de formación, acompañamiento y entrega de equipamiento.", fecha: "Segundo semestre año 2024.", beneficios: ["Infraestructura", "Formación", "Materiales"], icono: "🌟", color: "#795548" },
+  "TDA 2025": { nombre_completo: "Tecnologías Digitales en Acción (TDA) 2025", descripcion: "Fortalecer el trabajo entre las y los docentes de la asignatura de Tecnología y las personas de la coordinación informática, para integrar pedagógicamente las tecnologías digitales.", fecha: "Segundo semestre año 2025.", beneficios: ["Formación", "Materiales"], icono: "💻", color: "#fbbc04" }
 };
 
 const OPCIONES_USO = [
@@ -185,6 +185,7 @@ function generarColumnasFormulario() {
   for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
     columnas.push(`${codigo}_Nota`);
     columnas.push(`${codigo}_Pregunta_Respuesta`);
+    columnas.push(`${codigo}_Escuelas_Participantes`);
     for (const beneficio of info.beneficios) {
       columnas.push(`${codigo}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
     }
@@ -546,6 +547,7 @@ function normalizarTexto(texto) {
   texto = texto.replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u');
   texto = texto.replace(/ñ/g, 'n');
   texto = texto.replace(/[_-]/g, ' ');
+  texto = texto.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, ' ');
   texto = texto.replace(/\s+/g, ' ').trim();
   return texto;
 }
@@ -555,6 +557,18 @@ function normalizarTituloHoja(titulo) {
   for (const s of ['📊', '📝', '✅', '📌', '🚀', '✨', '•', '·']) t = t.replace(new RegExp(s, 'g'), ' ');
   return t.replace(/\s+/g, ' ').trim();
 }
+
+const ALIAS_PROYECTO = {
+  'protagonistas del cambio': 'PDC 2024',
+  'tecnologias digitales en accion': 'TDA 2025',
+  'tda': 'TDA 2025',
+  'aulas conectadas 2022 segunda': 'AC 2022 - 2da',
+  'economia circular': 'REAC RM',
+  'aprendizaje mas servicio': 'A+S',
+  'aprendizaje + servicio': 'A+S',
+  'revinculacion educativa': 'KIT REV',
+  'transformacion educativa': 'KIT TRANSF',
+};
 
 function detectarProyectoActual(celdaTexto) {
   if (!celdaTexto) return null;
@@ -567,12 +581,15 @@ function detectarProyectoActual(celdaTexto) {
   if (!celdaNorm) return null;
   for (const [codigo] of Object.entries(PROYECTOS_CIE)) {
     const codigoNorm = normalizarTexto(codigo);
-    if (celdaNorm === codigoNorm || (codigoNorm.length >= 3 && celdaTexto.includes(codigo))) return codigo;
+    if (celdaNorm === codigoNorm || (codigoNorm.length >= 3 && celdaNorm.includes(codigoNorm))) return codigo;
   }
   for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
     const nombreNorm = normalizarTexto(info.nombre_completo);
     if (celdaNorm === nombreNorm) return codigo;
-    if (celdaNorm.length >= 15 && nombreNorm.includes(celdaNorm)) return codigo;
+    if (celdaNorm.length >= 15 && (nombreNorm.includes(celdaNorm) || celdaNorm.includes(nombreNorm))) return codigo;
+  }
+  for (const [alias, codigo] of Object.entries(ALIAS_PROYECTO)) {
+    if (alias.length >= 4 && celdaNorm.includes(alias)) return codigo;
   }
   return null;
 }
@@ -618,7 +635,7 @@ function normalizarNumeroObservacion(valor) {
 }
 
 function obtenerColumnasProyecto(proyecto) {
-  const columnas = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Comentarios`];
+  const columnas = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Escuelas_Participantes`, `${proyecto}_Comentarios`];
   for (const beneficio of (PROYECTOS_CIE[proyecto] || {}).beneficios || []) {
     columnas.push(`${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
   }
@@ -648,7 +665,7 @@ function aplicarPlaceholderProyectosNoPresentes(datosFormulario, proyectosEvalua
   const presentes = new Set(proyectosEvaluados || []);
   for (const [proyecto, info] of Object.entries(PROYECTOS_CIE)) {
     if (presentes.has(proyecto)) continue;
-    const columnasProyecto = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Comentarios`];
+    const columnasProyecto = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Escuelas_Participantes`, `${proyecto}_Comentarios`];
     for (const beneficio of info.beneficios || []) {
       columnasProyecto.push(`${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
     }
@@ -1028,7 +1045,6 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
   ]);
   const ETIQUETAS_SECCION_PROYECTO = new Set([
-    'escuelas participantes:', 'escuelas participantes',
     'descripcion:', 'descripcion',
     'fecha implementacion:', 'fecha implementacion',
     'instrucciones importantes:', 'instrucciones importantes',
@@ -1036,6 +1052,9 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     'ano del convenio:', 'ano del convenio',
     'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
   ]);
+  const TOKENES_FIN_SECCION_PROYECTO = [
+    'comentarios finales', 'seccion de envio', 'datos del sostenedor', 'datos del convenio cie'
+  ];
 
   function esEtiqueta(celdaBNorm, setEtiquetas) {
     if (!celdaBNorm) return false;
@@ -1054,6 +1073,11 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     const celdaC = valorColumna(row, 2);
     const celdaBNorm = normalizarTexto(celdaB);
 
+    if (TOKENES_FIN_SECCION_PROYECTO.some(t => celdaBNorm.includes(t))) {
+      proyectoActual = null;
+      beneficiosProyecto = [];
+    }
+
     if (celdaB && !celdaB.startsWith('=')) {
       const nuevoProy = detectarProyectoActual(celdaB);
       if (nuevoProy) {
@@ -1070,6 +1094,14 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     if (celdaBNorm === 'rut sostenedor' || celdaBNorm === 'rut sostenedor:') { datosFormulario['Sostenedor_RUT'] = celdaC; continue; }
     if (celdaBNorm === 'correo institucional' || celdaBNorm === 'correo institucional:') { datosFormulario['Sostenedor_Correo'] = celdaC; continue; }
     if (celdaBNorm === 'region' || celdaBNorm === 'region:') { if (celdaC) datosFormulario['Sostenedor_Region'] = celdaC; continue; }
+
+    if (celdaBNorm === 'escuelas participantes' || celdaBNorm === 'escuelas participantes:') {
+      if (proyectoActual && celdaC) {
+        const col = `${proyectoActual}_Escuelas_Participantes`;
+        if (col in datosFormulario) datosFormulario[col] = celdaC;
+      }
+      continue;
+    }
 
     if (celdaBNorm === 'nota' || celdaBNorm === 'nota:') {
       if (proyectoActual && celdaC && celdaC !== 'Seleccione...') {

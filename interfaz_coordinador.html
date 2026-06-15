@@ -182,12 +182,12 @@ const PROYECTOS_CIE = {
   "CPE 2030": { nombre_completo: "Conectividad para la Educación 2030", beneficios: ["Conectividad", "Materiales"], icono: "📡", color: "#34a853" },
   "AC 2022": { nombre_completo: "Aulas Conectadas 2022", beneficios: ["Infraestructura", "Conectividad", "Materiales", "Asesoría"], icono: "🏫", color: "#ea4335" },
   "AC 2022 - 2da": { nombre_completo: "Aulas Conectadas 2022 - Segunda Convocatoria", beneficios: ["Materiales", "Asesoría"], icono: "🎓", color: "#ff6d01" },
-  "REAC RM": { nombre_completo: "Equipos Reacondicionados y Educación en Economía Circular 2023", beneficios: ["Infraestructura", "Materiales"], icono: "♻️", color: "#9c27b0" },
-  "KIT REV": { nombre_completo: "Kit Tecnológico para la Revinculación Educativa 2023", beneficios: ["Infraestructura", "Materiales"], icono: "🔄", color: "#00bcd4" },
+  "REAC RM": { nombre_completo: "Equipos Reacondicionados y Educación en Economía Circular 2023", beneficios: ["Infraestructura", "Materiales"], icono: "🖥️", color: "#9c27b0" },
+  "KIT REV": { nombre_completo: "Kit Tecnológico para la Revinculación Educativa 2023", beneficios: ["Infraestructura", "Materiales"], icono: "♻️", color: "#00bcd4" },
   "KIT TRANSF": { nombre_completo: "Kit Tecnológico para la Transformación Educativa 2023", beneficios: ["Infraestructura", "Materiales"], icono: "🚀", color: "#607d8b" },
-  "A+S": { nombre_completo: "Aprendizaje + Servicio: Innovar para Transformar 2023", beneficios: ["Formación", "Materiales"], icono: "🤝", color: "#e91e63" },
-  "PDC 2024": { nombre_completo: "Protagonistas del Cambio: Formación y Tecnología para la Reactivación Educativa 2024", beneficios: ["Infraestructura", "Formación", "Materiales"], icono: "⭐", color: "#795548" },
-  "TDA 2025": { nombre_completo: "Tecnologías Digitales en Acción (TDA) 2025", beneficios: ["Formación", "Materiales"], icono: "💡", color: "#fbbc04" }
+  "A+S": { nombre_completo: "Aprendizaje + Servicio: Innovar para Transformar 2023", beneficios: ["Formación", "Materiales"], icono: "🙌", color: "#e91e63" },
+  "PDC 2024": { nombre_completo: "Protagonistas del Cambio: Formación y Tecnología para la Reactivación Educativa 2024", beneficios: ["Infraestructura", "Formación", "Materiales"], icono: "🌟", color: "#795548" },
+  "TDA 2025": { nombre_completo: "Tecnologías Digitales en Acción (TDA) 2025", beneficios: ["Formación", "Materiales"], icono: "💻", color: "#fbbc04" }
 };
 
 const ESTADOS_RESUMEN_ORDEN = ['No iniciado', 'Iniciado', 'Presentado', 'Corregido', 'Observado', 'Aprobado'];
@@ -576,8 +576,14 @@ function formatNow() {
   return new Date().toISOString().replace('T', ' ').slice(0, 19);
 }
 
+const COLUMNAS_METADATA_COORD = [
+  "ID_Registro", "ID_Convenio_Archivo", "Fecha_Extraccion", "Carpeta_Origen", "URL_Sheet",
+  "Hoja_Origen", "Numero_Observacion", "Fila_Valida", "Estado_Registro",
+  "Observaciones_Sistema", "Version"
+];
+
 function obtenerEsquemaMaestroCoord() {
-  return COLUMNAS_FORMULARIO;
+  return [...COLUMNAS_METADATA_COORD, ...COLUMNAS_FORMULARIO];
 }
 
 function validarAlineacionColumnasMaestroCoord(encabezadosMaestro) {
