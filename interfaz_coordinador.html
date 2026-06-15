@@ -93,6 +93,7 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 <body>
 <div id="root">
   <h2>📊 Sistema de Gestión de Informes CIE</h2>
+  <p class="cie-muted" id="coord-delay-info" style="font-size: 12px; margin: 4px 0 0 0;"></p>
 
   <section id="login-panel" class="cie-card cie-login">
     <h3>🔐 Conexión a Google</h3>
@@ -157,7 +158,6 @@ const CONFIG_GLOBAL = {
 
 const CARPETA_CENTRAL_ID = CONFIG_GLOBAL.CARPETA_CENTRAL_ID;
 const CARPETA_REGIONES_ID = CONFIG_GLOBAL.CARPETA_REGIONES_ID;
-const API_DELAY_MS = CONFIG_GLOBAL.API_DELAY * 1000;
 const NOMBRE_MAESTRO = 'CIE_Datos_Maestros';
 const NOMBRE_LOG_NOTIFICACIONES = '📧 Log_Notificaciones_CRIE';
 
@@ -243,13 +243,61 @@ const appState = {
   logNotificacionesEmail: [],
 };
 
+const DELAY_DEFAULT = 5.2;
+const DELAY_MIN = 0.1;
+const DELAY_MAX = 60;
+const LS_KEYS_COORD = {
+  API_DELAY: 'cie_coord_api_delay',
+  TOKEN: 'cie_coord_access_token_persist',
+};
+
+function obtenerDelaySegundos() {
+  let v = DELAY_DEFAULT;
+  try {
+    const raw = localStorage.getItem(LS_KEYS_COORD.API_DELAY);
+    if (raw) {
+      const p = parseFloat(raw);
+      if (isFinite(p) && !isNaN(p)) v = p;
+    }
+  } catch (e) {}
+  v = Math.max(DELAY_MIN, Math.min(DELAY_MAX, v));
+  return v;
+}
+
+function obtenerDelayMs() {
+  return Math.round(obtenerDelaySegundos() * 1000);
+}
+
 // =============================================================================
 // AUTH (GIS)
 // =============================================================================
 let tokenClient = null;
 let accessToken = null;
 let tokenExpiresAt = 0;
+const TOKEN_TTL_MS = 60 * 60 * 1000;
+const TOKEN_RENEW_MARGIN_MS = 2 * 60 * 1000;
 const TOKEN_STORAGE_KEY = 'cie_access_token_coord';
+const TOKEN_PERSIST_KEY = LS_KEYS_COORD.TOKEN;
+
+function guardarTokenPersistente() {
+  try {
+    localStorage.setItem(TOKEN_PERSIST_KEY, JSON.stringify({ accessToken, tokenExpiresAt }));
+  } catch (e) { console.warn('No se pudo persistir token en localStorage', e); }
+}
+
+function cargarTokenPersistente() {
+  try {
+    const raw = localStorage.getItem(TOKEN_PERSIST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.accessToken || !parsed.tokenExpiresAt) return null;
+    if (Date.now() >= parsed.tokenExpiresAt) {
+      localStorage.removeItem(TOKEN_PERSIST_KEY);
+      return null;
+    }
+    return parsed;
+  } catch (e) { return null; }
+}
 
 function initGis() {
   return new Promise((resolve) => {
@@ -277,23 +325,48 @@ function requestToken(interactive) {
       if (resp.error) return reject(resp);
       accessToken = resp.access_token;
       tokenExpiresAt = Date.now() + (resp.expires_in * 1000) - 60000;
-      sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken, tokenExpiresAt }));
+      try { sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken, tokenExpiresAt })); } catch (e) {}
+      guardarTokenPersistente();
       resolve(resp);
     };
     tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
   });
 }
 
+async function renovarTokenSilencioso() {
+  try {
+    if (!tokenClient) await initGis();
+    await requestToken(false);
+    return true;
+  } catch (e) {
+    console.warn('Renovacion silenciosa fallo', e);
+    return false;
+  }
+}
+
 async function ensureToken({ interactive = false } = {}) {
-  if (accessToken && Date.now() < tokenExpiresAt) return accessToken;
+  if (accessToken && Date.now() < tokenExpiresAt) {
+    if (tokenExpiresAt - Date.now() < TOKEN_RENEW_MARGIN_MS) {
+      renovarTokenSilencioso().catch(() => {});
+    }
+    return accessToken;
+  }
   const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (stored) {
-    const parsed = JSON.parse(stored);
-    if (Date.now() < parsed.tokenExpiresAt) {
-      accessToken = parsed.accessToken;
-      tokenExpiresAt = parsed.tokenExpiresAt;
-      return accessToken;
-    }
+    try {
+      const parsed = JSON.parse(stored);
+      if (Date.now() < parsed.tokenExpiresAt) {
+        accessToken = parsed.accessToken;
+        tokenExpiresAt = parsed.tokenExpiresAt;
+        return accessToken;
+      }
+    } catch (e) {}
+  }
+  const persist = cargarTokenPersistente();
+  if (persist) {
+    accessToken = persist.accessToken;
+    tokenExpiresAt = persist.tokenExpiresAt;
+    return accessToken;
   }
   if (!interactive) throw new Error('No hay token valido. Pulse Conectar.');
   await requestToken(true);
@@ -308,35 +381,100 @@ function setLoginStatus(cls, msg) {
 // =============================================================================
 // API LAYER
 // =============================================================================
-const RETRIABLE = new Set([408, 429, 500, 502, 503, 504]);
+const RETRIABLE = new Set([401, 408, 429, 500, 502, 503, 504]);
+let __lastApiCallTs = 0;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+async function esperarDelayApi(forzarEsperaCompleta = true) {
+  const delayMs = obtenerDelayMs();
+  const elapsed = Date.now() - __lastApiCallTs;
+  const wait = delayMs - elapsed;
+  if (wait <= 0) {
+    __lastApiCallTs = Date.now();
+    return 0;
+  }
+  if (wait > 100) logDebug(`⏱️ Esperando ${(wait/1000).toFixed(1)}s por delay configurado`);
+  await sleep(wait);
+  __lastApiCallTs = Date.now();
+  return wait;
+}
+
 async function apiFetch(url, init = {}, opts = {}) {
-  const maxRetries = opts.maxRetries ?? 3;
-  const baseDelay  = opts.baseDelay  ?? 10000;
+  const maxRetries = opts.maxRetries ?? 4;
+  const baseDelay  = opts.baseDelay  ?? 15000;
   const skipRetry  = opts.skipRetry  ?? false;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const token = await ensureToken({ interactive: false });
+  const enforceDelay = opts.enforceDelay !== false;
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < maxRetries) {
+    if (enforceDelay) await esperarDelayApi(true);
+
+    let token;
+    try {
+      token = await ensureToken({ interactive: false });
+    } catch (e) {
+      lastError = e;
+      if (skipRetry) throw lastError;
+      attempt++;
+      continue;
+    }
+
     const headers = { ...(init.headers || {}), Authorization: `Bearer ${token}` };
     if (init.body && typeof init.body === 'string' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
-    const resp = await fetch(url, { ...init, headers });
+    let resp;
+    try {
+      resp = await fetch(url, { ...init, headers });
+    } catch (e) {
+      lastError = new Error(`fetch failed: ${e.message}`);
+      if (skipRetry) throw lastError;
+      const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      logWarn(`API error de red, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`, { err: String(e) });
+      await sleep(wait);
+      attempt++;
+      continue;
+    }
     if (resp.ok) {
       const ct = resp.headers.get('content-type') || '';
       return ct.includes('application/json') ? resp.json() : resp.text();
     }
     const status = resp.status;
     const retriable = RETRIABLE.has(status);
+
+    if (status === 401) {
+      accessToken = null;
+      tokenExpiresAt = 0;
+      try { localStorage.removeItem(TOKEN_PERSIST_KEY); } catch (e) {}
+      try { sessionStorage.removeItem(TOKEN_STORAGE_KEY); } catch (e) {}
+      const renovado = await renovarTokenSilencioso();
+      if (renovado) {
+        logDebug('Token renovado silenciosamente tras 401, reintentando...');
+        attempt++;
+        continue;
+      }
+    }
+
     if (skipRetry || !retriable || attempt === maxRetries - 1) {
       const text = await resp.text().catch(() => '');
       throw new Error(`HTTP ${status}: ${text.slice(0, 500)}`);
     }
-    const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+    let wait;
+    const retryAfter = parseFloat(resp.headers.get('Retry-After') || '0');
+    if (retryAfter > 0) {
+      wait = Math.min(retryAfter * 1000, 120000) + Math.random() * 500;
+    } else {
+      wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+    }
     logWarn(`API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`, { url });
     await sleep(wait);
+    attempt++;
+    lastError = new Error(`HTTP ${status}`);
   }
+  if (lastError) throw lastError;
+  throw new Error('apiFetch: reintentos agotados');
 }
 
 // =============================================================================
@@ -672,6 +810,53 @@ function obtenerUltimaObservacion(row) {
   return '';
 }
 
+function formatearFechaExtraccion(fechaStr) {
+  const s = String(fechaStr || '').trim();
+  if (!s) return null;
+  const formatos = [
+    { re: /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/, kind: 'ymd' },
+    { re: /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/, kind: 'ymd' },
+    { re: /^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/, kind: 'dmy' },
+    { re: /^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})$/, kind: 'dmy' },
+    { re: /^(\d{2})-(\d{2})-(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/, kind: 'dmy' },
+    { re: /^(\d{2})-(\d{2})-(\d{4})[ T](\d{2}):(\d{2})$/, kind: 'dmy' },
+  ];
+  for (const f of formatos) {
+    const m = s.match(f.re);
+    if (!m) continue;
+    let y, mo, d, h = 0, mi = 0;
+    if (f.kind === 'ymd') { y = +m[1]; mo = +m[2]; d = +m[3]; h = +(m[4] || 0); mi = +(m[5] || 0); }
+    else { d = +m[1]; mo = +m[2]; y = +m[3]; h = +(m[4] || 0); mi = +(m[5] || 0); }
+    const dt = new Date(y, mo - 1, d, h, mi, 0);
+    if (!isNaN(dt.getTime())) return dt;
+  }
+  const dt = new Date(s);
+  if (!isNaN(dt.getTime())) return dt;
+  return null;
+}
+
+function obtenerUltimaFechaExtraccion(row) {
+  const directa = textoLimpio(row['Fecha_Extraccion'] || '');
+  const dtDirecta = formatearFechaExtraccion(directa);
+  let mejor = dtDirecta;
+  for (const fila of _obtenerFilasRelacionadasConvenio(row)) {
+    const f = textoLimpio(fila['Fecha_Extraccion'] || '');
+    const d = formatearFechaExtraccion(f);
+    if (!d) continue;
+    if (!mejor || d.getTime() > mejor.getTime()) mejor = d;
+  }
+  return mejor;
+}
+
+function renderFechaExtraccion(dt) {
+  if (!dt) return '<span class="cie-muted">(sin extracción)</span>';
+  try {
+    return dt.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return htmlEscape(dt.toISOString().replace('T', ' ').slice(0, 16));
+  }
+}
+
 function _renderEstablecimientos(valor) {
   const raw = textoLimpio(valor);
   if (!raw) return '<span class="cie-muted">(Sin dato)</span>';
@@ -724,6 +909,7 @@ function renderHtmlConvenio(row) {
   const fechaConvenio = textoLimpio(row['Convenio_Fecha'] || 'Sin fecha');
   const establecimientosValor = textoLimpio(row['Convenio_Cantidad_Escuelas'] || '');
   const observacion = obtenerUltimaObservacion(row);
+  const fechaExtraccion = obtenerUltimaFechaExtraccion(row);
   const urlSheet = textoLimpio(row['URL_Sheet'] || row['Spreadsheet_URL'] || '');
   const comentariosFinales1 = textoLimpio(row['Comentarios_Finales_1'] || '');
   const comentariosFinales2 = textoLimpio(row['Comentarios_Finales_2'] || '');
@@ -750,6 +936,7 @@ function renderHtmlConvenio(row) {
     + `<div class="cie-card-inner"><div class="cie-label">Fecha convenio</div><div class="cie-value">${htmlEscape(fechaConvenio)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Establecimientos</div><div class="cie-value">${estabDetailHtml}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Ultima observacion</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Última obtención</div><div class="cie-value">${renderFechaExtraccion(fechaExtraccion)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Acceso al informe</div><div class="cie-value">${linkHtml}</div></div>`
     + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Sugerencia o reclamo</div><div class="cie-value">${valorHtml(comentariosFinales2)}</div></div>`
     + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Comentario final</div><div class="cie-value">${valorHtml(comentariosFinales1)}</div></div>`
@@ -1046,7 +1233,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         })
       }
     );
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
 
     const fechaObs = new Date().toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     await apiFetch(
@@ -1064,7 +1251,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         })
       }
     );
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
 
     const OBS_ROW_OFFSET = 5;
 
@@ -1110,7 +1297,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
             `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
             { method: 'POST', body: JSON.stringify({ requests: colRequests }) }
           );
-          await sleep(API_DELAY_MS);
+          await sleep(obtenerDelayMs());
         }
       }
     } catch (eCol) {
@@ -1193,7 +1380,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
       { method: 'POST', body: JSON.stringify({ requests }) }
     );
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
 
     requests.length = 0;
     requests.push({ insertDimension: { range: { sheetId: hojaEdit.sheetId, dimension: 'ROWS', startIndex: 0, endIndex: 2 }, inheritFromBefore: false } });
@@ -1210,7 +1397,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         ]
       })
     });
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
 
     await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
       method: 'POST',
@@ -1302,7 +1489,7 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaRange(hoja, '!A' + (allValues.length + 1)))}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       { method: 'POST', body: JSON.stringify({ values: [nuevaFila] }) }
     );
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
     logInfo('nueva fila con observacion agregada', { id: nuevoId });
     print(`   📝 Nueva fila con observacion agregada: ${nuevoId}`);
 
@@ -1315,7 +1502,7 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
         buildSheetsAppendUrl(spreadsheetId, hojaObsPend, 'A', 'valueInputOption=USER_ENTERED'),
         { method: 'POST', body: JSON.stringify({ values: [filaObs] }) }
       );
-      await sleep(API_DELAY_MS);
+      await sleep(obtenerDelayMs());
     } catch (eObs) {
       logWarn('hoja observaciones persist fail', { err: eObs.message });
       print(`   ⚠️ No se pudo registrar en hoja de observaciones: ${eObs.message}`);
@@ -1695,7 +1882,7 @@ async function onAprobarClick() {
       print(`❌ No se envio email de aprobacion: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
     }
 
-    await sleep(API_DELAY_MS);
+    await sleep(obtenerDelayMs());
     await cargarConveniosDropdown();
     dropdownConvenios.value = '';
     wrapperAcciones.style.display = 'none';
@@ -1735,7 +1922,7 @@ async function onAgregarObservacionClick() {
         print(`❌ No se envio email de observacion: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
       }
       textareaObservacion.value = '';
-      await sleep(API_DELAY_MS);
+      await sleep(obtenerDelayMs());
       await cargarConveniosDropdown();
       dropdownConvenios.value = '';
       wrapperAcciones.style.display = 'none';
@@ -1839,6 +2026,11 @@ async function init() {
     });
   }
   await initGis();
+  const delayInfo = document.getElementById('coord-delay-info');
+  if (delayInfo) {
+    const s = obtenerDelaySegundos();
+    delayInfo.textContent = `⏱️ Delay activo entre llamadas a la API: ${s}s (≈ ${(60/s).toFixed(1)} req/min). Configurable desde centralizar_datos.html.`;
+  }
   const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (stored) {
     try {
@@ -1850,6 +2042,13 @@ async function init() {
         return;
       }
     } catch (e) {}
+  }
+  const persist = cargarTokenPersistente();
+  if (persist) {
+    accessToken = persist.accessToken;
+    tokenExpiresAt = persist.tokenExpiresAt;
+    await loginSuccess();
+    return;
   }
   setLoginStatus('off', '⚪ No conectado');
 }
