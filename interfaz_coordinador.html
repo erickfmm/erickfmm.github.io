@@ -200,6 +200,7 @@ function generarColumnasFormulario() {
   for (const [codigo, info] of Object.entries(PROYECTOS_CIE)) {
     columnas.push(`${codigo}_Nota`);
     columnas.push(`${codigo}_Pregunta_Respuesta`);
+    columnas.push(`${codigo}_Escuelas_Participantes`);
     for (const beneficio of info.beneficios) {
       columnas.push(`${codigo}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
     }
@@ -519,7 +520,7 @@ function normalizarNumeroObservacion(valor) {
 }
 
 function obtenerColumnasProyecto(proyecto) {
-  const columnas = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Comentarios`];
+  const columnas = [`${proyecto}_Nota`, `${proyecto}_Pregunta_Respuesta`, `${proyecto}_Escuelas_Participantes`, `${proyecto}_Comentarios`];
   for (const beneficio of (PROYECTOS_CIE[proyecto] || {}).beneficios || []) {
     columnas.push(`${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`);
   }
@@ -880,12 +881,16 @@ function _renderEstablecimientos(valor) {
 function construirTablaProyectosConvenio(row) {
   const proyectosVisibles = detectarProyectosDesdeRow(row);
   if (!proyectosVisibles.length) return '<p class="cie-empty">No hay proyectos visibles para este convenio.</p>';
-  const establecimientosHtml = _renderEstablecimientos(row['Convenio_Cantidad_Escuelas']);
+  const establecimientosGlobal = row['Convenio_Cantidad_Escuelas'] || '';
 
   const filas = proyectosVisibles.map(proyecto => {
     const nota = row[`${proyecto}_Nota`] || '';
     const pregunta = row[`${proyecto}_Pregunta_Respuesta`] || '';
     const comentarios = row[`${proyecto}_Comentarios`] || '';
+    const colEscuelasProy = `${proyecto}_Escuelas_Participantes`;
+    const escuelasProyecto = (colEscuelasProy in row) ? textoLimpio(row[colEscuelasProy]) : '';
+    const valorEstab = escuelasProyecto && !esValorPlaceholder(escuelasProyecto) ? escuelasProyecto : establecimientosGlobal;
+    const establecimientosHtml = _renderEstablecimientos(valorEstab);
     let beneficiosHtml = '';
     for (const beneficio of (PROYECTOS_CIE[proyecto] || {}).beneficios || []) {
       const col = `${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
