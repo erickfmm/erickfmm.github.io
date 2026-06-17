@@ -43,6 +43,9 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 .cie-status--err   { color: var(--cie-danger);  }
 .cie-status--off   { color: var(--cie-muted);   }
 .cie-output { margin: 8px 0; font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 13px; }
+.cie-progress { height: 12px; background: #e8eaed; border-radius: 999px; overflow: hidden; margin: 12px 0; max-width: 600px; }
+.cie-progress-bar { height: 100%; width: 0; background: var(--cie-primary); transition: width .25s ease, background .2s; }
+.cie-progress-bar--err { background: var(--cie-danger); }
 .cie-wrap { font-family: 'Segoe UI', 'Noto Sans', sans-serif; color: #1f2937; }
 .cie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 10px 0 14px; }
 .cie-card-inner { background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); border: 1px solid #dbeafe; border-radius: 12px; padding: 10px 12px; }
@@ -153,7 +156,7 @@ const SCOPES = [
 const CONFIG_GLOBAL = {
   CARPETA_CENTRAL_ID: '178dLaHh6JJ6WeQBnOkWkYeS7MsYC6QJB',
   CARPETA_REGIONES_ID: '1AzAdUQTs0HCDxBH7o8b1jUwyqMVK6-B5',
-  API_DELAY: 5.2,
+  API_DELAY: 1.5,
 };
 
 const CARPETA_CENTRAL_ID = CONFIG_GLOBAL.CARPETA_CENTRAL_ID;
@@ -244,7 +247,7 @@ const appState = {
   logNotificacionesEmail: [],
 };
 
-const DELAY_DEFAULT = 5.2;
+const DELAY_DEFAULT = 1.5;
 const DELAY_MIN = 0.1;
 const DELAY_MAX = 60;
 const LS_KEYS_COORD = {
@@ -1798,12 +1801,55 @@ async function mostrarResumenAutomatico() {
 // =============================================================================
 // UI HELPERS
 // =============================================================================
+const ProgressBar = (() => {
+  let active = null;
+  const FILL_ID = 'cie-pb-fill';
+
+  function _render() {
+    const fill = document.getElementById(FILL_ID);
+    if (!fill || !active) return;
+    const pct = Math.round((active.current / active.total) * 100);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('cie-progress-bar--err', !!active.failed);
+  }
+
+  function start(total) {
+    active = { current: 0, total: Math.max(1, total || 1), failed: false };
+    outputArea.innerHTML = `<div class="cie-progress"><div id="${FILL_ID}" class="cie-progress-bar"></div></div>`;
+    _render();
+  }
+
+  function tick() {
+    if (!active) return;
+    active.current = Math.min(active.current + 1, active.total);
+    _render();
+  }
+
+  function fail() {
+    if (!active) return;
+    active.failed = true;
+    _render();
+  }
+
+  function done() {
+    active = null;
+    outputArea.innerHTML = '';
+  }
+
+  function isActive() { return !!active; }
+
+  return { start, tick, fail, done, isActive };
+})();
+
 function print(msg) {
-  outputArea.innerHTML += `<div>${String(msg)}</div>`;
-  outputArea.scrollTop = outputArea.scrollHeight;
+  console.log('[CIE]', msg);
+  ProgressBar.tick();
 }
 
-function clearOutput() { outputArea.innerHTML = ''; }
+function clearOutput() {
+  if (ProgressBar.isActive()) return;
+  outputArea.innerHTML = '';
+}
 
 function construirMensajeConfirmacion(tipoAccion, row, observacion) {
   const rex = textoLimpio(row['Convenio_REX'] || 'N/D') || 'N/D';
@@ -1881,6 +1927,7 @@ async function onAprobarClick() {
     return;
   }
 
+  ProgressBar.start(3);
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     await actualizarEstadoMaestro(maestroId, idRegistro, 'Aprobado');
@@ -1898,9 +1945,11 @@ async function onAprobarClick() {
     dropdownConvenios.value = '';
     wrapperAcciones.style.display = 'none';
     await mostrarResumenAutomatico();
+    ProgressBar.done();
   } catch (e) {
     logError('onAprobarClick fail', { err: e.message });
     print(`❌ Error: ${e.message}`);
+    ProgressBar.fail();
   }
 }
 
@@ -1922,6 +1971,7 @@ async function onAgregarObservacionClick() {
     return;
   }
 
+  ProgressBar.start(7);
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     const resultado = await agregarObservacionCompleta(maestroId, idRegistro, observacion);
@@ -1938,16 +1988,20 @@ async function onAgregarObservacionClick() {
       dropdownConvenios.value = '';
       wrapperAcciones.style.display = 'none';
       await mostrarResumenAutomatico();
+      ProgressBar.done();
     } else {
       print('⚠️ No se pudo agregar la observacion');
+      ProgressBar.fail();
     }
   } catch (e) {
     logError('onAgregarObservacionClick fail', { err: e.message });
     print(`❌ Error: ${e.message}`);
+    ProgressBar.fail();
   }
 }
 
 async function onConvenioSeleccionado() {
+  if (ProgressBar.isActive()) ProgressBar.done();
   clearOutput();
   const row = obtenerDatosConvenioSeleccionado();
   if (row) {
@@ -1994,6 +2048,7 @@ btnAgregarObservacion.addEventListener('click', onAgregarObservacionClick);
 dropdownConvenios.addEventListener('change', onConvenioSeleccionado);
 
 async function loginSuccess() {
+  ProgressBar.start(9);
   try {
     print('🔍 Resolviendo configuracion...');
     await resolverConfiguracionIds(true);
@@ -2011,6 +2066,7 @@ async function loginSuccess() {
     if (!appState.regionAutorizada) {
       bloquearInterfazNoAutorizado(`⚠️ Su correo (${appState.correoUsuario}) no esta autorizado.`);
       setLoginStatus('warn', '🟡 No autorizado');
+      ProgressBar.fail();
       return;
     }
     print(`📍 Region autorizada: ${appState.regionAutorizada}`);
@@ -2020,9 +2076,11 @@ async function loginSuccess() {
     await cargarConveniosDropdown();
     await mostrarResumenAutomatico();
     print('✅ Sistema listo.');
+    ProgressBar.done();
   } catch (e) {
     setLoginStatus('err', '🔴 Error: ' + e.message);
     print('❌ ' + e.message);
+    ProgressBar.fail();
   }
 }
 
