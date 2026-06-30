@@ -160,7 +160,7 @@ const CONFIG_NAMES = {
 let configResuelta = false;
 
 const PROYECTOS_CIE = {
-  "CPE 2011": { nombre_completo: "Conectividad para le Educación 2011", descripcion: "Que los establecimientos educacionales cuenten y/o incrementen su conectividad a internet, de forma gratuita, para su uso educativo.", fecha: "A partir del año 2011 a la fecha.", beneficios: ["Conectividad", "Materiales"], icono: "🌐", color: "#1a73e8" },
+  "CPE 2011": { nombre_completo: "Conectividad para la Educación 2011", descripcion: "Que los establecimientos educacionales cuenten y/o incrementen su conectividad a internet, de forma gratuita, para su uso educativo.", fecha: "A partir del año 2011 a la fecha.", beneficios: ["Conectividad", "Materiales"], icono: "🌐", color: "#1a73e8" },
   "CPE 2030": { nombre_completo: "Conectividad para la Educación 2030", descripcion: "Entregar acceso a internet gratuito a los establecimientos educacionales, como apoyo al proceso educativo y administrativo.", fecha: "A partir del año 2020 a la fecha.", beneficios: ["Conectividad", "Materiales"], icono: "📡", color: "#34a853" },
   "AC 2022": { nombre_completo: "Aulas Conectadas 2022", descripcion: "Llevar a los establecimientos a un nuevo estándar de acceso a internet en todas las aulas, para potenciar el aprendizaje con uso de recursos en línea.", fecha: "Segundo semestre año 2022 a la fecha.", beneficios: ["Infraestructura", "Conectividad", "Materiales", "Asesoría"], icono: "🏫", color: "#ea4335" },
   "AC 2022 - 2da": { nombre_completo: "Aulas Conectadas 2022 - Segunda Convocatoria", descripcion: "Asesorar a los sostenedores y sus establecimientos para que alcancen un estándar de infraestructura de red de datos en las aulas.", fecha: "Segundo semestre año 2022 a la fecha.", beneficios: ["Materiales", "Asesoría"], icono: "🎓", color: "#ff6d01" },
@@ -1041,16 +1041,13 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
     'institucion:', 'rut sostenedor:', 'correo institucional:', 'region:'
   ]);
   const ETIQUETAS_FINALES = new Set([
-    'sugerencia o reclamo:', 'comentario final:',
-    'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
+    'comentario final:',
+    'finalmente, se solicita que pueda indicarnos cualquier'
   ]);
   const ETIQUETAS_SECCION_PROYECTO = new Set([
     'descripcion:', 'descripcion',
     'fecha implementacion:', 'fecha implementacion',
-    'instrucciones importantes:', 'instrucciones importantes',
-    '1. marque la casilla de arriba:', '1. marque la casilla de arriba',
-    'ano del convenio:', 'ano del convenio',
-    'recomendacion, sugerencia o reclamo', 'indiquenos cualquier'
+    'finalmente, se solicita que pueda indicarnos cualquier'
   ]);
   const TOKENES_FIN_SECCION_PROYECTO = [
     'comentarios finales', 'seccion de envio', 'datos del sostenedor', 'datos del convenio cie'
@@ -1103,7 +1100,7 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
       continue;
     }
 
-    if (celdaBNorm === 'nota' || celdaBNorm === 'nota:') {
+    if (celdaBNorm.startsWith('coloque una nota') || celdaBNorm.startsWith('coloque una nota:')) {
       if (proyectoActual && celdaC && celdaC !== 'Seleccione...') {
         const colNota = `${proyectoActual}_Nota`;
         if (colNota in datosFormulario) { datosFormulario[colNota] = celdaC; datos.tiene_datos_encuesta = true; }
@@ -1117,12 +1114,8 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
       }
       continue;
     }
-    if (celdaBNorm.includes('frecuencia de uso de beneficios')) continue;
+    if (celdaBNorm.includes('indiquenos el grado de uso de los beneficios')) continue;
 
-    if (celdaBNorm === 'sugerencia o reclamo' || celdaBNorm === 'sugerencia o reclamo:') {
-      if (celdaC) { datosFormulario['Comentarios_Finales_2'] = celdaC; datos.tiene_datos_encuesta = true; }
-      continue;
-    }
     if (celdaBNorm === 'comentario final' || celdaBNorm === 'comentario final:') {
       if (celdaC) { datosFormulario['Comentarios_Finales_1'] = celdaC; datos.tiene_datos_encuesta = true; }
       continue;
@@ -1134,7 +1127,7 @@ function extraerDatosDeHojaBase(spreadsheetId, sheetName, allValues, numeroObser
       }
       continue;
     }
-    if (celdaBNorm.includes('recomendacion, sugerencia o reclamo') || celdaBNorm.includes('indiquenos cualquier')) continue;
+    if (celdaBNorm.includes('finalmente, se solicita que pueda indicarnos cualquier')) continue;
 
     if (esEtiqueta(celdaBNorm, ETIQUETAS_SECCION_PROYECTO)) continue;
 
