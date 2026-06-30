@@ -96,28 +96,31 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 <body>
 <div id="root">
   <h2>📊 Sistema de Gestión de Informes CIE</h2>
-  <p class="cie-muted" id="coord-delay-info" style="font-size: 12px; margin: 4px 0 0 0;"></p>
+
 
   <section id="login-panel" class="cie-card cie-login">
     <h3>🔐 Conexión a Google</h3>
-    <p>Conecte su cuenta para acceder a Google Sheets y Drive</p>
+    <p>Conéctese a través de su cuenta @innovacion.mineduc.cl</p>
     <div class="cie-hbox">
       <button id="btn-conectar" class="cie-btn cie-btn--primary">🔌 Conectar</button>
       <span id="login-status" class="cie-status cie-status--off">⚪ No conectado</span>
     </div>
     <div id="login-output" class="cie-output"></div>
     <div id="iframe-warning" style="display:none" class="cie-card" >
-      <p>⚠️ Si el boton Conectar no abre una ventana de login, abra esta pagina en una nueva pestana:</p>
-      <button id="btn-new-tab" class="cie-btn cie-btn--info">🔗 Abrir en nueva pestana</button>
+      <p>⚠️ Si el botón Conectar no abre una ventana de login, abra esta página en una nueva pestaña:</p>
+      <button id="btn-new-tab" class="cie-btn cie-btn--info">🔗 Abrir en nueva pestaña</button>
     </div>
   </section>
 
   <div id="seccion-resumen" class="cie-card cie-resumen">
-    <h3>📊 Resumen</h3>
     <div id="output-resumen" class="cie-output"></div>
   </div>
 
-  <p>Seleccione un convenio para ver sus datos automaticamente</p>
+  <p>Seleccione un convenio para ver sus datos automáticamente</p>
+
+  <select id="dropdown-estado" class="cie-select" disabled>
+    <option value="">Todos los estados</option>
+  </select>
 
   <select id="dropdown-convenios" class="cie-select" disabled>
     <option>Seleccione un convenio...</option>
@@ -127,13 +130,11 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   <div id="wrapper-acciones" style="display:none">
     <hr>
-    <button id="btn-aprobar" class="cie-btn cie-btn--success" disabled>✅ Aprobar</button>
-
-    <div class="cie-card cie-observaciones">
-      <h3>📝 Agregar Observaciones</h3>
-      <p>Escriba las observaciones para el convenio seleccionado</p>
-      <textarea id="textarea-observacion" class="cie-textarea" placeholder="Describa las observaciones..." disabled></textarea>
-      <button id="btn-agregar-observacion" class="cie-btn cie-btn--warning" disabled>📝 Observar</button>
+    <p>Una vez revisado el informe, y no tiene observaciones, haga click en el botón Aprobar. De lo contrario, ingrese las observaciones y haga click en el botón Observar.</p>
+    <textarea id="textarea-observacion" class="cie-textarea" placeholder="Describa las observaciones..." disabled></textarea>
+    <div class="cie-hbox" style="margin-top:8px;">
+      <button id="btn-observar" class="cie-btn cie-btn--warning" disabled>📝 Observar</button>
+      <button id="btn-aprobar" class="cie-btn cie-btn--success" disabled>✅ Aprobar</button>
     </div>
   </div>
 </div>
@@ -181,7 +182,7 @@ const CONFIG_NAMES = {
 let configResuelta = false;
 
 const PROYECTOS_CIE = {
-  "CPE 2011": { nombre_completo: "Conectividad para le Educación 2011", beneficios: ["Conectividad", "Materiales"], icono: "🌐", color: "#1a73e8" },
+  "CPE 2011": { nombre_completo: "Conectividad para la Educación 2011", beneficios: ["Conectividad", "Materiales"], icono: "🌐", color: "#1a73e8" },
   "CPE 2030": { nombre_completo: "Conectividad para la Educación 2030", beneficios: ["Conectividad", "Materiales"], icono: "📡", color: "#34a853" },
   "AC 2022": { nombre_completo: "Aulas Conectadas 2022", beneficios: ["Infraestructura", "Conectividad", "Materiales", "Asesoría"], icono: "🏫", color: "#ea4335" },
   "AC 2022 - 2da": { nombre_completo: "Aulas Conectadas 2022 - Segunda Convocatoria", beneficios: ["Materiales", "Asesoría"], icono: "🎓", color: "#ff6d01" },
@@ -225,9 +226,10 @@ const loginOutput = document.getElementById('login-output');
 const outputArea = document.getElementById('output-area');
 const outputResumen = document.getElementById('output-resumen');
 const dropdownConvenios = document.getElementById('dropdown-convenios');
+const dropdownEstado = document.getElementById('dropdown-estado');
 const wrapperAcciones = document.getElementById('wrapper-acciones');
 const btnAprobar = document.getElementById('btn-aprobar');
-const btnAgregarObservacion = document.getElementById('btn-agregar-observacion');
+const btnObservar = document.getElementById('btn-observar');
 const textareaObservacion = document.getElementById('textarea-observacion');
 
 // =============================================================================
@@ -513,7 +515,7 @@ function htmlEscape(valor) {
   return v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function valorHtml(valor, vacio = '(vacio)') {
+function valorHtml(valor, vacio = '(vacío)') {
   const texto = textoLimpio(valor);
   return texto ? htmlEscape(texto) : `<span class="cie-muted">${htmlEscape(vacio)}</span>`;
 }
@@ -730,7 +732,7 @@ async function obtenerCorreoAutenticado() {
 async function leerRegionesCorreos() {
   const q = "name='regiones_correos' and trashed=false and mimeType='application/vnd.google-apps.spreadsheet' and '" + CARPETA_CENTRAL_ID + "' in parents";
   const r = await apiFetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true`);
-  if (!r.files || r.files.length === 0) throw new Error('No se encontro el sheet regiones_correos en central');
+  if (!r.files || r.files.length === 0) throw new Error('No se encontró el sheet regiones_correos en central');
   const sheetId = r.files[0].id;
   const hojaNombre = await obtenerNombrePrimeraHoja(sheetId);
   const values = await leerValoresHoja(sheetId, hojaRange(hojaNombre, '!A:Z'));
@@ -738,7 +740,7 @@ async function leerRegionesCorreos() {
   const headers = values[0];
   const correoIdx = headers.findIndex(h => String(h || '').toLowerCase() === 'correo');
   const regionIdx = headers.findIndex(h => /region/i.test(String(h || '')));
-  if (correoIdx < 0 || regionIdx < 0) throw new Error('Formato invalido en regiones_correos. Se requieren columnas "correo" y "region"');
+  if (correoIdx < 0 || regionIdx < 0) throw new Error('Formato inválido en regiones_correos. Se requieren columnas "correo" y "región"');
   return values.slice(1).map(row => ({
     correo: String(row[correoIdx] || '').trim(),
     region: String(row[regionIdx] || '').trim()
@@ -771,9 +773,10 @@ function filtrarPorRegionAutorizada(records, columnaRegion = 'Sostenedor_Region'
 
 function bloquearInterfazNoAutorizado(mensaje) {
   btnAprobar.disabled = true;
-  btnAgregarObservacion.disabled = true;
+  btnObservar.disabled = true;
   textareaObservacion.disabled = true;
   dropdownConvenios.disabled = true;
+  dropdownEstado.disabled = true;
   wrapperAcciones.style.display = 'none';
   print(mensaje);
 }
@@ -899,7 +902,7 @@ function construirTablaProyectosConvenio(row) {
       const col = `${proyecto}_${beneficio.replace(/ /g, '_')}_Frecuencia`;
       beneficiosHtml += `<div><strong>${htmlEscape(beneficio)}:</strong> ${valorHtml(row[col])}</div>`;
     }
-    if (!beneficiosHtml) beneficiosHtml = '<span class="cie-muted">(vacio)</span>';
+    if (!beneficiosHtml) beneficiosHtml = '<span class="cie-muted">(vacío)</span>';
     return `<tr>`
       + `<td>${htmlEscape(proyecto)}</td>`
       + `<td>${valorHtml(nota)}</td>`
@@ -917,7 +920,7 @@ function construirTablaProyectosConvenio(row) {
 function renderHtmlConvenio(row) {
   const estadoRegistro = textoLimpio(row['Estado_Registro'] || 'Sin estado');
   const rex = textoLimpio(row['Convenio_REX'] || 'N/A');
-  const region = textoLimpio(row['Sostenedor_Region'] || 'Sin region');
+  const region = textoLimpio(row['Sostenedor_Region'] || 'Sin región');
   const sostenedor = textoLimpio(row['Sostenedor_Institucion'] || 'Sin dato');
   const correoSostenedor = textoLimpio(row['Sostenedor_Correo'] || '');
   const fechaConvenio = textoLimpio(row['Convenio_Fecha'] || 'Sin fecha');
@@ -926,7 +929,6 @@ function renderHtmlConvenio(row) {
   const fechaExtraccion = obtenerUltimaFechaExtraccion(row);
   const urlSheet = textoLimpio(row['URL_Sheet'] || row['Spreadsheet_URL'] || '');
   const comentariosFinales1 = textoLimpio(row['Comentarios_Finales_1'] || '');
-  const comentariosFinales2 = textoLimpio(row['Comentarios_Finales_2'] || '');
 
   const estadoNorm = estadoRegistro.toLowerCase();
   let estadoClase = 'no';
@@ -935,7 +937,7 @@ function renderHtmlConvenio(row) {
 
   const linkHtml = urlSheet
     ? `<a class="cie-link" href="${htmlEscape(urlSheet)}" target="_blank">Enlace al informe</a>`
-    : '<span class="cie-muted">(vacio)</span>';
+    : '<span class="cie-muted">(vacío)</span>';
 
   const estabDetailHtml = _renderEstablecimientos(establecimientosValor);
 
@@ -943,20 +945,21 @@ function renderHtmlConvenio(row) {
     + `<div class="cie-title">Datos del informe de convenio CIE REX ${htmlEscape(rex)}</div>`
     + `<div class="cie-grid">`
     + `<div class="cie-card-inner"><div class="cie-label">REX</div><div class="cie-value">${htmlEscape(rex)}</div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Estado del registro</div><div class="cie-value"><span class="cie-badge cie-badge--${estadoClase}">${htmlEscape(estadoRegistro || 'Sin estado')}</span></div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Region</div><div class="cie-value">${htmlEscape(region)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Estado del informe CIE</div><div class="cie-value"><span class="cie-badge cie-badge--${estadoClase}">${htmlEscape(_mapearEstadoVisual(row) || 'Sin estado')}</span></div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Región</div><div class="cie-value">${htmlEscape(region)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Nombre sostenedor</div><div class="cie-value">${htmlEscape(sostenedor)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Correo sostenedor</div><div class="cie-value">${valorHtml(correoSostenedor, '(sin correo)')}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Fecha convenio</div><div class="cie-value">${htmlEscape(fechaConvenio)}</div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Establecimientos</div><div class="cie-value">${estabDetailHtml}</div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Ultima observacion</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
-    + `<div class="cie-card-inner"><div class="cie-label">Última obtención</div><div class="cie-value">${renderFechaExtraccion(fechaExtraccion)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">EE en la REX</div><div class="cie-value">${estabDetailHtml}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">Última observación</div><div class="cie-value">${valorHtml(observacion)}</div></div>`
+    + `<div class="cie-card-inner"><div class="cie-label">última actualización</div><div class="cie-value">${renderFechaExtraccion(fechaExtraccion)}</div></div>`
     + `<div class="cie-card-inner"><div class="cie-label">Acceso al informe</div><div class="cie-value">${linkHtml}</div></div>`
-    + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Sugerencia o reclamo</div><div class="cie-value">${valorHtml(comentariosFinales2)}</div></div>`
+    + `</div>`
+    + `<div class="cie-subtitle">Contenido del Informe</div>`
+    + construirTablaProyectosConvenio(row)
+    + `<div class="cie-grid" style="margin-top:12px;">`
     + `<div class="cie-card-inner" style="grid-column: 1 / -1;"><div class="cie-label">Comentario final</div><div class="cie-value">${valorHtml(comentariosFinales1)}</div></div>`
     + `</div>`
-    + `<div class="cie-subtitle">Proyectos visibles del convenio</div>`
-    + construirTablaProyectosConvenio(row)
     + `</div>`;
 }
 
@@ -1056,9 +1059,9 @@ function _labelConvenio(row) {
   const fechaEnvioDt = _parsearFechaEnvio(row['Fecha_Envio']);
   if (checkboxEnvio === 'TRUE' && fechaEnvioDt) {
     const dias = Math.floor((Date.now() - fechaEnvioDt.getTime()) / 86400000);
-    if (dias >= 14) label = `${label} - 🚨⚠️ ${estadoMostrado.toUpperCase()} HACE ${dias} DIAS ⚠️🚨`;
-    else if (dias >= 10) label = `${label} - ${estadoMostrado.toUpperCase()} HACE ${dias} DIAS`;
-    else label = `${label} - ${estadoMostrado} hace ${dias} dias`;
+    if (dias >= 14) label = `${label} - 🚨⚠️ ${estadoMostrado.toUpperCase()} HACE ${dias} DÍAS ⚠️🚨`;
+    else if (dias >= 10) label = `${label} - ${estadoMostrado.toUpperCase()} HACE ${dias} DÍAS`;
+    else label = `${label} - ${estadoMostrado} hace ${dias} días`;
   }
   return label;
 }
@@ -1083,7 +1086,7 @@ async function cargarConveniosDropdown() {
       } else {
         logInfo('Maestro alineado con esquema (columnas OK)');
       }
-    } catch (e) { logWarn('No se pudo validar alineacion del maestro', { error: String(e) }); }
+    } catch (e) { logWarn('No se pudo validar alineación del maestro', { error: String(e) }); }
 
     if (df[0] && 'Fila_Valida' in df[0]) df = df.filter(r => String(r['Fila_Valida'] || '').toLowerCase() === 'valid');
 
@@ -1092,20 +1095,42 @@ async function cargarConveniosDropdown() {
     appState.dfMaestroVigentes = dfVigentes;
     appState.dfMaestro = df;
 
+    const conteoEstados = {};
+    for (const r of dfVigentes) {
+      const est = _mapearEstadoVisual(r);
+      conteoEstados[est] = (conteoEstados[est] || 0) + 1;
+    }
+
+    const estadoSeleccionado = dropdownEstado.value;
+    dropdownEstado.innerHTML = '<option value="">Todos los estados</option>';
+    for (const est of ESTADOS_RESUMEN_ORDEN) {
+      const n = conteoEstados[est] || 0;
+      const option = document.createElement('option');
+      option.value = est;
+      option.textContent = `${est} (${n})`;
+      dropdownEstado.appendChild(option);
+    }
+    dropdownEstado.value = estadoSeleccionado || '';
+    dropdownEstado.disabled = false;
+
+    const dfFiltrados = estadoSeleccionado
+      ? dfVigentes.filter(r => _mapearEstadoVisual(r) === estadoSeleccionado)
+      : dfVigentes;
+
     dropdownConvenios.innerHTML = '<option value="">Seleccione un convenio...</option>';
 
-    if (dfVigentes.length === 0) {
-      dropdownConvenios.innerHTML = '<option value="">No hay convenios autorizados</option>';
+    if (dfFiltrados.length === 0) {
+      dropdownConvenios.innerHTML = '<option value="">No hay convenios en este estado</option>';
       dropdownConvenios.disabled = true;
       return;
     }
 
-    const opciones = dfVigentes.map((row, idx) => {
+    const opciones = dfFiltrados.map((row, idx) => {
       const idArchivo = String(row['ID_Convenio_Archivo'] || '').trim();
       const rex = String(row['Convenio_REX'] || '').trim();
       const clave = idArchivo || rex;
       if (!clave || clave === 'nan') return null;
-      return { label: _labelConvenio(row), index: idx };
+      return { label: _labelConvenio(row), index: dfVigentes.indexOf(row) };
     }).filter(Boolean);
 
     opciones.sort((a, b) => a.label.localeCompare(b.label));
@@ -1118,7 +1143,7 @@ async function cargarConveniosDropdown() {
 
     dropdownConvenios.disabled = false;
     const regionAut = appState.regionAutorizada || 'N/D';
-    print(`✅ ${opciones.length} convenios cargados (region autorizada: ${regionAut})`);
+    print(`✅ ${opciones.length} convenios cargados (región autorizada: ${regionAut})`);
   } catch (e) {
     print(`❌ Error cargando convenios: ${e.message}`);
   }
@@ -1138,7 +1163,7 @@ function obtenerDatosConvenioSeleccionado() {
 async function crearObtenerMaestro() {
   await resolverConfiguracionIds(true);
   const maestroId = CONFIG_IDS.MAESTRO_ID;
-  if (!maestroId) throw new Error("No se encontro MAESTRO_ID en central.");
+  if (!maestroId) throw new Error("No se encontró MAESTRO_ID en central.");
   appState.maestroId = maestroId;
   appState.hojaMaestra = await obtenerNombrePrimeraHoja(maestroId);
   print(`✅ Maestro oficial cargado por ID: https://docs.google.com/spreadsheets/d/${maestroId}`);
@@ -1260,7 +1285,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
             { range: `${nuevoNombre}!B1`, values: [[`⚠️ OBSERVACIONES RECIBIDAS - ${fechaObs}`]] },
             { range: `${nuevoNombre}!B2`, values: [[`📋 ${observacionTexto}`]] },
             { range: `${nuevoNombre}!B3`, values: [['Por favor corrija los puntos observados en las celdas verdes']] },
-            { range: `${nuevoNombre}!B4`, values: [['Cuando termine, marque el checkbox de envio al final del formulario']] }
+            { range: `${nuevoNombre}!B4`, values: [['Cuando termine, marque el checkbox de envío al final del formulario']] }
           ]
         })
       }
@@ -1323,7 +1348,8 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
       const headerRows = await leerValoresHoja(spreadsheetId, `${hojaRange(nuevoNombre)}!B${OBS_ROW_OFFSET + 1}:B${OBS_ROW_OFFSET + 300}`);
       for (let i = 0; i < headerRows.length; i++) {
         const val = String((headerRows[i] && headerRows[i][0]) || '').trim().toUpperCase();
-        if (val.includes('MARQUE AQUI') && val.includes('CONFIRMAR') && val.includes('ENVIO')) {
+        const valNorm = val.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (valNorm.includes('MARQUE AQUI') && valNorm.includes('CONFIRMAR') && valNorm.includes('ENVIO')) {
           const checkboxRow = OBS_ROW_OFFSET + 1 + i;
           await apiFetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(hojaRange(nuevoNombre, '!C' + checkboxRow))}?valueInputOption=USER_ENTERED`,
@@ -1407,7 +1433,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
         valueInputOption: 'USER_ENTERED',
         data: [
           { range: `${tituloBloqueado}!B1`, values: [['🔒 ESTA HOJA ES DE SOLO LECTURA - NO SE PUEDE EDITAR']] },
-          { range: `${tituloBloqueado}!B2`, values: [['Revise la nueva pestana con observaciones para corregir y reenviar']] }
+          { range: `${tituloBloqueado}!B2`, values: [['Revise la nueva pestaña con observaciones para corregir y reenviar']] }
         ]
       })
     });
@@ -1428,7 +1454,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
             }
           },
           { updateSheetProperties: { properties: { sheetId: nuevoSheetId, index: 0 }, fields: 'index' } },
-          { addProtectedRange: { protectedRange: { range: { sheetId: hojaEdit.sheetId }, description: `Version anterior bloqueada - Ver pestana '${nuevoNombre}' para editar`, warningOnly: false, editors: { users: [], domainUsersCanEdit: true } } } }
+          { addProtectedRange: { protectedRange: { range: { sheetId: hojaEdit.sheetId }, description: `Versión anterior bloqueada - Ver pestaña '${nuevoNombre}' para editar`, warningOnly: false, editors: { users: [], domainUsersCanEdit: true } } } }
         ]
       })
     });
@@ -1504,8 +1530,8 @@ async function registrarObservacionEnMaestro(spreadsheetId, idRegistro, observac
       { method: 'POST', body: JSON.stringify({ values: [nuevaFila] }) }
     );
     await sleep(obtenerDelayMs());
-    logInfo('nueva fila con observacion agregada', { id: nuevoId });
-    print(`   📝 Nueva fila con observacion agregada: ${nuevoId}`);
+    logInfo('nueva fila con observación agregada', { id: nuevoId });
+    print(`   📝 Nueva fila con observación agregada: ${nuevoId}`);
 
     try {
       const hojaObsPend = '📝 Observaciones Pendientes';
@@ -1534,15 +1560,15 @@ async function agregarObservacionCompleta(spreadsheetId, idRegistro, observacion
   const registro = records.find(r => String(r['ID_Registro'] || '') === idRegistro);
   const urlSheet = registro ? (registro['URL_Sheet'] || '') : '';
   if (!urlSheet) {
-    print(`❌ No se encontro registro con ID: ${idRegistro}`);
+    print(`❌ No se encontró registro con ID: ${idRegistro}`);
     return false;
   }
-  print(`📋 Agregando observacion al registro ${idRegistro}...`);
+  print(`📋 Agregando observación al registro ${idRegistro}...`);
   const resultado = await crearHojaConObservaciones(urlSheet, observacionTexto);
   if (resultado.exito) {
     await registrarObservacionEnMaestro(spreadsheetId, idRegistro, observacionTexto, urlSheet);
     print('✅ Proceso completado:');
-    print(`   📄 Nueva hoja para edicion: ${resultado.hoja_nueva}`);
+    print(`   📄 Nueva hoja para edición: ${resultado.hoja_nueva}`);
     print(`   🔒 Hoja bloqueada (solo lectura): ${resultado.hoja_bloqueada}`);
     return true;
   }
@@ -1560,16 +1586,16 @@ function construirEmailObservacion(row, observacionTexto) {
   const fecha = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
   const sostenedor = String(row['Sostenedor_Institucion'] || 'N/D').trim();
 
-  const asunto = `MINEDUC: Su informe del Convenio de Informatica Educativa REX ${convenio} ha sido observado`;
-  const cuerpo = `Estimado/a ${sostenedor} Presente\n\n`
-    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informatica Educativa (CIE) que mantiene vigente con la respectiva Secretaria Regional Ministerial de Educacion, N de REX '
+  const asunto = `MINEDUC: Su Informe del Convenio de Informática Educativa REX ${convenio} ha sido observado`;
+  const cuerpo = `Estimado/a\n${sostenedor}\n_Presente_\n\n`
+    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informática Educativa (CIE) que mantiene vigente con la respectiva Secretaría Regional Ministerial de Educación, N° de REX '
     + `${convenio} con fecha ${fecha}.\n\n`
     + 'Le agradecemos que haya completado el Informe CIE y le informamos que se encuentra OBSERVADO, por el siguiente motivo:\n\n'
     + `${observacionTexto}\n\n`
-    + 'Solicitamos que subsane o aclare las observaciones realizadas al Informe CIE a la brevedad, dado que el plazo es de diez (10) dias habiles.\n\n'
+    + 'Solicitamos que subsane o aclare las observaciones realizadas al Informe CIE a la brevedad, dado que el plazo es de diez (10) días hábiles.\n\n'
     + `Para realizar las correcciones, usted debe ingresar a ${urlSheet} como la primera vez, y modificar los campos que fueron observados.\n\n`
     + 'Cordialmente,\n\n'
-    + `Secretaria Regional Ministerial de Educacion Region de ${region}`;
+    + `Secretaría Regional Ministerial de Educación Región de ${region}`;
   return { asunto, cuerpo };
 }
 
@@ -1579,13 +1605,13 @@ function construirEmailAprobacion(row) {
   const fecha = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
   const sostenedor = String(row['Sostenedor_Institucion'] || 'N/D').trim();
 
-  const asunto = `MINEDUC: Su informe del Convenio de Informatica Educativa REX ${convenio} ha sido aprobado`;
-  const cuerpo = `Estimado/a ${sostenedor} Presente\n\n`
-    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informatica Educativa (CIE) que mantiene vigente con la respectiva Secretaria Regional Ministerial de Educacion, N de REX '
+  const asunto = `MINEDUC: Su Informe del Convenio de Informática Educativa REX ${convenio} ha sido aprobado`;
+  const cuerpo = `Estimado/a\n${sostenedor}\n_Presente_\n\n`
+    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informática Educativa (CIE) que mantiene vigente con la respectiva Secretaría Regional Ministerial de Educación, N° de REX '
     + `${convenio} con fecha ${fecha}.\n\n`
     + 'Le agradecemos que haya completado el Informe CIE y tenemos el agrado de informarle que ha sido revisado y APROBADO.\n\n'
     + 'Cordialmente,\n\n'
-    + `Secretaria Regional Ministerial de Educacion Region de ${region}`;
+    + `Secretaría Regional Ministerial de Educación Región de ${region}`;
   return { asunto, cuerpo };
 }
 
@@ -1604,7 +1630,7 @@ async function enviarCorreoSostenedor(tipoEvento, row, observacionTexto = '') {
     const destinatario = correo || String(emailCol || '').trim();
     if (!destinatario || !esEmailValido(destinatario)) {
       logWarn('email destinatario invalido', { tipoEvento, correo, emailCol });
-      return { exito: false, destinatario: '', detalle: 'No se encontro correo valido del sostenedor', tipoError: 'destinatario_invalido' };
+      return { exito: false, destinatario: '', detalle: 'No se encontró correo válido del sostenedor', tipoError: 'destinatario_invalido' };
     }
 
     const { asunto, cuerpo } = tipoEvento === 'observacion'
@@ -1624,9 +1650,8 @@ async function enviarCorreoSostenedor(tipoEvento, row, observacionTexto = '') {
     return { exito: true, destinatario, detalle: `messageId=${r.id}` };
   } catch (e) {
     const esScope = String(e.message || '').toLowerCase().includes('insufficient');
-    logError('email send fail', { tipoEvento, err: e.message, tipoError: esScope ? 'scope_gmail' : 'envio_error' });
-    await registrarLogNotificacion(tipoEvento, 'error', String(e.message), row, '', esScope ? 'scope_gmail' : 'envio_error');
-    return { exito: false, destinatario: '', detalle: String(e.message), tipoError: esScope ? 'scope_gmail' : 'envio_error' };
+    logError('email send fail', { tipoEvento, err: e.message, tipoError: esScope ? 'scope_gmail' : 'envío_error' });
+    return { exito: false, destinatario: '', detalle: String(e.message), tipoError: esScope ? 'scope_gmail' : 'envío_error' };
   }
 }
 
@@ -1650,8 +1675,8 @@ async function registrarLogNotificacion(tipoEvento, resultado, detalle, row, des
       ]] }) }
     );
   } catch (eLog) {
-    logWarn('log notificacion persist fail', { err: eLog.message });
-    print(`⚠️ No se pudo persistir log de notificacion: ${eLog.message}`);
+    logWarn('log notificación persist fail', { err: eLog.message });
+    print(`⚠️ No se pudo persistir log de notificación: ${eLog.message}`);
   }
 }
 
@@ -1678,7 +1703,7 @@ async function mostrarResumenAutomatico() {
     if (!maestroId) { outputResumen.innerHTML = '<p>⚠️ No hay maestro cargado</p>'; return; }
 
     let df = await getAllRecords(maestroId);
-    if (df.length === 0) { outputResumen.innerHTML = '<p>ℹ️ La tabla maestra esta vacia</p>'; return; }
+    if (df.length === 0) { outputResumen.innerHTML = '<p>ℹ️ La tabla maestra está vacía</p>'; return; }
 
     if (df[0] && 'Fila_Valida' in df[0]) df = df.filter(r => String(r['Fila_Valida'] || '').toLowerCase() === 'valid');
     df = filtrarPorRegionAutorizada(df, 'Sostenedor_Region');
@@ -1686,12 +1711,12 @@ async function mostrarResumenAutomatico() {
     appState.dfMaestroVigentes = dfVigentes;
     appState.dfMaestro = df;
 
-    if (dfVigentes.length === 0) { outputResumen.innerHTML = '<p>ℹ️ No hay filas validas para su region autorizada</p>'; return; }
+    if (dfVigentes.length === 0) { outputResumen.innerHTML = '<p>ℹ️ No hay filas válidas para su región autorizada</p>'; return; }
 
     dfVigentes.forEach(r => { r.Estado_Resumen = _mapearEstadoVisual(r); });
     const crosstab = {};
     for (const r of dfVigentes) {
-      const reg = r['Sostenedor_Region'] || 'Sin region';
+      const reg = r['Sostenedor_Region'] || 'Sin región';
       crosstab[reg] = crosstab[reg] || {};
       crosstab[reg][r.Estado_Resumen] = (crosstab[reg][r.Estado_Resumen] || 0) + 1;
     }
@@ -1776,16 +1801,18 @@ async function mostrarResumenAutomatico() {
       .cie-total-cell { background: rgba(255,255,255,0.55); color: #1e293b; }
     </style>
     <div class="cie-resumen-wrap">
-      <div class="cie-resumen-hero"><h2>📊 Resumen de Informes CIE por Region</h2><p>Se muestra un unico convenio vigente por cada REX, usando los estados normalizados del tablero.</p></div>
-      <div class="cie-meta-grid">
-        <div class="cie-meta-pill"><span class="label">Convenios vigentes</span><span class="value">${totalConvenios}</span></div>
-        <div class="cie-meta-pill"><span class="label">Regiones visibles</span><span class="value">${totalRegiones}</span></div>
-        <div class="cie-meta-pill"><span class="label">Region autorizada</span><span class="value">${htmlEscape(regionAut)}</span></div>
+      <div class="cie-resumen-hero"><h2>📊 Resumen de Informes CIE Región: ${htmlEscape(regionAut)}</h2></div>
+      <div class="cie-kpi-grid">
+        <div class="cie-kpi-card" style="border-color:#c7d2fe; background:linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);">
+          <div class="cie-kpi-top"><span class="cie-kpi-icon">📋</span><span class="cie-kpi-label">Total</span></div>
+          <div class="cie-kpi-value" style="color:#1e3a8a;">${totalConvenios}</div>
+          <div class="cie-kpi-meta">${totalRegiones} regiones</div>
+        </div>
+        ${htmlKpis}
       </div>
-      <div class="cie-kpi-grid">${htmlKpis}</div>
       <div class="cie-table-card"><div class="cie-table-scroll"><table class="cie-table">
         <thead><tr>
-          <th>Region</th>
+          <th>Región</th>
           <th>No iniciado</th><th>Iniciado</th><th>Presentado</th>
           <th>Corregido</th><th>Observado</th><th>Aprobado</th><th>Total</th>
         </tr></thead>
@@ -1861,7 +1888,7 @@ function construirMensajeConfirmacion(tipoAccion, row, observacion) {
   const emoji = tipoAccion === 'aprobacion' ? '✅' : '⚠️';
   const advertencia = tipoAccion === 'aprobacion'
     ? 'Esta acción enviará un email de aprobación al sostenedor y NO se puede deshacer.'
-    : 'Esta acción creará una nueva hoja de observaciones, bloqueará la hoja actual y enviará un email al sostenedor. NO se puede deshacer.';
+    : 'Esta acción creará una nueva hoja de observaciones para que el sostenedor la corrija, bloqueará la hoja actual y enviará un email al sostenedor. NO se puede deshacer.';
 
   const lineaObs = (tipoAccion === 'observacion' && observacion)
     ? `\n\nObservación a registrar:\n"${observacion}"\n`
@@ -1883,12 +1910,12 @@ function actualizarVisibilidadInterfaz() {
       const estadoNorm = estado.toLowerCase();
       const habilitado = estadoNorm === 'enviado';
       btnAprobar.disabled = !habilitado;
-      btnAgregarObservacion.disabled = !habilitado;
+      btnObservar.disabled = !habilitado;
       textareaObservacion.disabled = !habilitado;
       wrapperAcciones.style.display = 'block';
     } else {
       btnAprobar.disabled = true;
-      btnAgregarObservacion.disabled = true;
+  btnObservar.disabled = true;
       textareaObservacion.disabled = true;
     }
   } catch (e) {}
@@ -1917,7 +1944,7 @@ async function onAprobarClick() {
   const estadoActual = String(row['Estado_Registro'] || '').trim();
 
   if (estadoActual === 'Aprobado') {
-    print(`ℹ️ El convenio ${rex} ya esta APROBADO`);
+    print(`ℹ️ El convenio ${rex} ya está APROBADO`);
     return;
   }
 
@@ -1931,13 +1958,13 @@ async function onAprobarClick() {
   try {
     const maestroId = CONFIG_IDS.MAESTRO_ID;
     await actualizarEstadoMaestro(maestroId, idRegistro, 'Aprobado');
-    print(`El estado del convenio ${rex} fue actualizado a Aprobado con exito.`);
+    print(`El estado del convenio ${rex} fue actualizado a Aprobado con éxito.`);
 
     const emailRes = await enviarCorreoSostenedor('aprobacion', row);
     if (emailRes.exito) {
-      print(`📧 Email de aprobacion enviado a ${emailRes.destinatario} (${emailRes.detalle})`);
+      print(`📧 Email de aprobación enviado a ${emailRes.destinatario} (${emailRes.detalle})`);
     } else {
-      print(`❌ No se envio email de aprobacion: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
+      print(`❌ No se envió email de aprobación: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
     }
 
     await sleep(obtenerDelayMs());
@@ -1960,7 +1987,7 @@ async function onAgregarObservacionClick() {
   if (!_validarRegionRegistro(row)) return;
 
   const observacion = textareaObservacion.value.trim();
-  if (!observacion) { print('⚠️ Ingrese la observacion'); return; }
+  if (!observacion) { print('⚠️ Ingrese la observación'); return; }
   const estado = String(row['Estado_Registro'] || '').trim();
   if (estado === 'Aprobado') { print('❌ No se pueden agregar observaciones a convenios APROBADOS'); return; }
 
@@ -1978,9 +2005,9 @@ async function onAgregarObservacionClick() {
     if (resultado) {
       const emailRes = await enviarCorreoSostenedor('observacion', row, observacion);
       if (emailRes.exito) {
-        print(`📧 Email de observacion enviado a ${emailRes.destinatario} (${emailRes.detalle})`);
+        print(`📧 Email de observación enviado a ${emailRes.destinatario} (${emailRes.detalle})`);
       } else {
-        print(`❌ No se envio email de observacion: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
+        print(`❌ No se envió email de observación: ${emailRes.detalle} [${emailRes.tipoError || 'sin tipo'}]`);
       }
       textareaObservacion.value = '';
       await sleep(obtenerDelayMs());
@@ -1990,7 +2017,7 @@ async function onAgregarObservacionClick() {
       await mostrarResumenAutomatico();
       ProgressBar.done();
     } else {
-      print('⚠️ No se pudo agregar la observacion');
+      print('⚠️ No se pudo agregar la observación');
       ProgressBar.fail();
     }
   } catch (e) {
@@ -2009,19 +2036,19 @@ async function onConvenioSeleccionado() {
     const estadoNorm = estado.toLowerCase();
     const habilitado = estadoNorm === 'enviado';
     btnAprobar.disabled = !habilitado;
-    btnAgregarObservacion.disabled = !habilitado;
+    btnObservar.disabled = !habilitado;
     textareaObservacion.disabled = !habilitado;
     wrapperAcciones.style.display = 'block';
 
     outputArea.innerHTML = renderHtmlConvenio(row);
     if (estadoNorm === 'aprobado') {
-      print('✅ Este convenio esta APROBADO. Las acciones ya no estan disponibles.');
+      print('✅ Este convenio está APROBADO. Las acciones ya no están disponibles.');
     } else if (estadoNorm !== 'enviado') {
       print(`ℹ️ Acciones bloqueadas: solo se puede aprobar/observar en estado Enviado. Estado actual: ${estado || 'Sin estado'}`);
     }
   } else {
     btnAprobar.disabled = true;
-    btnAgregarObservacion.disabled = true;
+    btnObservar.disabled = true;
     textareaObservacion.disabled = true;
     wrapperAcciones.style.display = 'none';
     print('📊 Seleccione un convenio para ver el detalle.');
@@ -2039,18 +2066,23 @@ btnConectar.addEventListener('click', async () => {
     await loginSuccess();
   } catch (e) {
     setLoginStatus('err', '🔴 Error: ' + (e.message || String(e)));
-    print('❌ Error de autenticacion: ' + (e.message || String(e)));
+    print('❌ Error de autenticación: ' + (e.message || String(e)));
   }
 });
 
 btnAprobar.addEventListener('click', onAprobarClick);
-btnAgregarObservacion.addEventListener('click', onAgregarObservacionClick);
+btnObservar.addEventListener('click', onAgregarObservacionClick);
 dropdownConvenios.addEventListener('change', onConvenioSeleccionado);
+dropdownEstado.addEventListener('change', async () => {
+  wrapperAcciones.style.display = 'none';
+  outputArea.innerHTML = '';
+  await cargarConveniosDropdown();
+});
 
 async function loginSuccess() {
   ProgressBar.start(9);
   try {
-    print('🔍 Resolviendo configuracion...');
+    print('🔍 Resolviendo configuración...');
     await resolverConfiguracionIds(true);
     const maestroId = await crearObtenerMaestro();
 
@@ -2064,12 +2096,12 @@ async function loginSuccess() {
     appState.dfRegiones = dfRegiones;
     appState.regionAutorizada = resolverRegionAutorizada(appState.correoUsuario, dfRegiones);
     if (!appState.regionAutorizada) {
-      bloquearInterfazNoAutorizado(`⚠️ Su correo (${appState.correoUsuario}) no esta autorizado.`);
+      bloquearInterfazNoAutorizado(`⚠️ Su correo (${appState.correoUsuario}) no está autorizado.`);
       setLoginStatus('warn', '🟡 No autorizado');
       ProgressBar.fail();
       return;
     }
-    print(`📍 Region autorizada: ${appState.regionAutorizada}`);
+    print(`📍 Región autorizada: ${appState.regionAutorizada}`);
 
     await registrarIngresoNotebook();
     print('📊 Cargando resumen...');
@@ -2095,11 +2127,6 @@ async function init() {
     });
   }
   await initGis();
-  const delayInfo = document.getElementById('coord-delay-info');
-  if (delayInfo) {
-    const s = obtenerDelaySegundos();
-    delayInfo.textContent = `⏱️ Delay activo entre llamadas a la API: ${s}s (≈ ${(60/s).toFixed(1)} req/min). Configurable desde centralizar_datos.html.`;
-  }
   const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (stored) {
     try {
