@@ -239,7 +239,20 @@ pre {
   max-height: 500px;
   overflow-y: auto;
 }
-.section { margin-bottom: 8px; }
+.section { margin-bottom: 8px; position: relative; }
+/* Per-field include/exclude toggle. Required fields are locked-on (checked+disabled). */
+.section > .field-include {
+  position: absolute; top: -2px; right: 0;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-muted); font-weight: 500;
+  cursor: pointer; user-select: none; z-index: 1;
+}
+.section > .field-include input { margin: 0; cursor: pointer; accent-color: var(--accent); }
+.section[data-required="true"] > .field-include { opacity: .55; cursor: default; }
+.section[data-required="true"] > .field-include input { cursor: default; }
+/* When an optional field is excluded, dim and disable its controls. */
+.section.disabled-opt > :not(.field-include) { opacity: .45; pointer-events: none; }
+.section.disabled-opt > .field-include { opacity: 1; pointer-events: auto; }
 .warn { color: var(--warning); font-size: 12px; }
 .info { color: var(--text-muted); font-size: 12px; }
 .optimizer-params { margin-top: 8px; }
@@ -618,6 +631,12 @@ const UI = {
   outputBlocked: { en:'Fix validation errors before generating output.', es:'Corrige los errores antes de generar la salida.' },
   taskFields: { en:'Task-specific settings', es:'Configuracion segun tarea' },
   gpuFields: { en:'GPU thermal safeguards', es:'Protecciones termicas GPU' },
+  sbertConfig: { en:'SBERT Configuration', es:'Configuracion SBERT' },
+  includeKey: { en:'Include key', es:'Incluir clave' },
+  optimizerRequiredForMlm: { en:'optimizer is required when task is mlm.', es:'optimizer es obligatorio cuando task es mlm.' },
+  sbertRequiredForSbert: { en:'sbert is required when task is sbert.', es:'sbert es obligatorio cuando task es sbert.' },
+  nameOrPathRequiredForMlm: { en:'tokenizer.name_or_path is required for MLM with a base model.', es:'tokenizer.name_or_path es obligatorio para MLM con un modelo base.' },
+  taskRequiredWithBaseModel: { en:'task is required when using a base model.', es:'task es obligatorio al usar un modelo base.' },
 };
 
 const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
@@ -889,6 +908,55 @@ function validateBuilder() {
     clearFieldError(document.getElementById(createId('training.mlm_probability')));
   }
 
+  // ---- Conditional rules from schema/_conditional_rules.yaml (SCHEMA.allOf) ----
+  // Evaluated imperatively against the live form state.
+  const currentTask = taskEl ? taskEl.value : '';
+  const isBaseMode = mode === 'base';
+  const isCustomMode = mode === 'custom';
+
+  // Rule: if task==mlm -> training.optimizer required (optimizer_class present).
+  if (currentTask === 'mlm') {
+    const optClassEl = document.getElementById(createId('training.optimizer.optimizer_class'));
+    if (!optClassEl || !optClassEl.value || !optClassEl.value.trim()) {
+      addError(optClassEl, t('optimizerRequiredForMlm'));
+    }
+  }
+
+  // Rule: if task==sbert -> training.sbert required. The sbert subsection has
+  // no schema-level required keys, so treat it as satisfied only when at least
+  // its dataset definition (dataset_name + dataset_type) is included & filled.
+  if (currentTask === 'sbert') {
+    const dsNameEl = document.getElementById(createId('training.sbert.dataset_name'));
+    const dsTypeEl = document.getElementById(createId('training.sbert.dataset_type'));
+    const nameOk = dsNameEl && dsNameEl.value && dsNameEl.value.trim() && isFieldIncluded('training.sbert.dataset_name');
+    const typeOk = dsTypeEl && dsTypeEl.value && dsTypeEl.value.trim() && isFieldIncluded('training.sbert.dataset_type');
+    if (!(nameOk && typeOk)) {
+      addError(dsNameEl || dsTypeEl, t('sbertRequiredForSbert'));
+    }
+  }
+
+  // Rule: if base_model set -> training.task required; and if task==mlm ->
+  //       tokenizer.name_or_path required.
+  if (isBaseMode) {
+    if (!currentTask || !currentTask.trim()) {
+      addError(taskEl, t('taskRequiredWithBaseModel'));
+    }
+    if (currentTask === 'mlm') {
+      const nameOrPathEl = document.getElementById(createId('tokenizer.name_or_path'));
+      if (!nameOrPathEl || !nameOrPathEl.value || !nameOrPathEl.value.trim()) {
+        addError(nameOrPathEl, t('nameOrPathRequiredForMlm'));
+      }
+    }
+  }
+
+  // Rule: if base_model NOT set -> model_class + model required.
+  if (isCustomMode) {
+    const modelEl = document.getElementById(createId('model_class'));
+    if (!modelEl || !modelEl.value || !modelEl.value.trim()) {
+      addError(modelEl, t('fieldRequiredMessage'));
+    }
+  }
+
   const summary = document.getElementById('validation-summary');
   if (summary) {
     if (errors.length) {
@@ -932,6 +1000,87 @@ function createLabel(targetId, title, required) {
 
 function createId(name) {
   return 'f_' + name.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// ====== FIELD INCLUDE/EXCLUDE TOGGLE ======
+// Every optional field gets a checkbox to add/remove its key from the output.
+// Required fields render checked + disabled (always included).
+function includeCheckboxId(dottedPath) {
+  return createId(dottedPath) + '_inc';
+}
+
+function createFieldWrapper(dottedPath, isRequired, innerHtml) {
+  const checked = isRequired ? 'checked' : '';
+  const disabled = isRequired ? 'disabled' : '';
+  const disabledCls = isRequired ? '' : ' disabled-opt';
+  return `<div class="section${disabledCls}" data-field="${dottedPath}" data-required="${isRequired ? 'true' : 'false'}">
+    <label class="field-include" title="${t('includeKey')}">
+      <input type="checkbox" id="${includeCheckboxId(dottedPath)}" data-include="${dottedPath}" ${checked} ${disabled} onchange="onFieldIncludeChange('${dottedPath}')">
+      <span class="sr-only">${t('includeKey')}</span>${t('includeKey')}
+    </label>
+    ${innerHtml}
+  </div>`;
+}
+
+function onFieldIncludeChange(dottedPath) {
+  const cb = document.getElementById(includeCheckboxId(dottedPath));
+  if (!cb) return;
+  const section = document.querySelector(`.section[data-field="${dottedPath}"]`);
+  if (section) section.classList.toggle('disabled-opt', !cb.checked);
+  // Refresh validation (e.g. conditional rules) and live previews.
+  validateBuilder();
+  updateYamlOutput();
+  updateCmdPreview();
+}
+
+function isFieldIncluded(dottedPath) {
+  const cb = document.getElementById(includeCheckboxId(dottedPath));
+  // No checkbox means the field isn't rendered (or is structurally required) -> include by default.
+  if (!cb) return true;
+  return cb.checked;
+}
+
+function setFieldIncluded(dottedPath, included) {
+  const cb = document.getElementById(includeCheckboxId(dottedPath));
+  if (!cb || cb.disabled) return; // never override a locked-on required field
+  cb.checked = !!included;
+  const section = document.querySelector(`.section[data-field="${dottedPath}"]`);
+  if (section) section.classList.toggle('disabled-opt', !cb.checked);
+}
+
+// Read a value at a dotted path from a plain object; returns undefined if absent.
+function getPath(obj, dotted) {
+  const parts = dotted.split('.');
+  let cur = obj;
+  for (const p of parts) {
+    if (cur === null || cur === undefined || typeof cur !== 'object') return undefined;
+    cur = cur[p];
+  }
+  return cur;
+}
+
+// After loading a config (preset or example), set each rendered include/exclude
+// checkbox to match whether its key is present in the source. Required fields
+// (disabled checkboxes) keep their locked-on state. This keeps load->export
+// round-trips faithful: only keys present in the source are emitted.
+function syncIncludesFromConfig(config) {
+  document.querySelectorAll('input[data-include]').forEach(cb => {
+    if (cb.disabled) return; // required field: always included
+    const dotted = cb.getAttribute('data-include');
+    const present = getPath(config, dotted) !== undefined;
+    setFieldIncluded(dotted, present);
+  });
+}
+
+// Re-apply the disabled-opt visual class from each include checkbox state.
+// Used after bulk restores (e.g. language switch) where .checked was set
+// directly without toggling the wrapper class.
+function refreshIncludeStyles() {
+  document.querySelectorAll('input[data-include]').forEach(cb => {
+    const dotted = cb.getAttribute('data-include');
+    const section = document.querySelector(`.section[data-field="${dotted}"]`);
+    if (section && !cb.disabled) section.classList.toggle('disabled-opt', !cb.checked);
+  });
 }
 
 // ====== FIELD RENDERERS ======
@@ -1024,15 +1173,11 @@ function renderObject(name, objSchema, prefix, level) {
     if (propType === 'object') {
       html += createFieldGroup(propTitle, isReq, propDesc, renderObject(propName, propSchema, pp, level+1));
     } else {
-      html += `<div class="section">`;
-      if (isReq) {
-        html += createLabel(createId(pp + '.' + propName), propTitle, true);
-      } else {
-        html += createLabel(createId(pp + '.' + propName), propTitle, false);
-      }
-      if (propDesc) html += `<div class="desc">${propDesc}</div>`;
-      html += renderField(propName, propSchema, pp).replace(/<div class="section">/, '').replace(/<\/div>$/, '');
-      html += `</div>`;
+      const dotted = pp + '.' + propName;
+      let inner = createLabel(createId(dotted), propTitle, isReq);
+      if (propDesc) inner += `<div class="desc">${propDesc}</div>`;
+      inner += renderField(propName, propSchema, pp).replace(/<div class="section">/, '').replace(/<\/div>$/, '');
+      html += createFieldWrapper(dotted, isReq, inner);
     }
   }
   return html;
@@ -1077,8 +1222,13 @@ function readObjectValue(name, objSchema, prefix) {
   const pp = prefix ? prefix + '.' + name : name;
   const result = {};
   for (const [propName, propSchema] of Object.entries(props)) {
+    const dotted = pp + '.' + propName;
+    // Skip props whose include/exclude checkbox is unchecked (optional & excluded).
+    if (!isFieldIncluded(dotted)) continue;
     if (propSchema.type === 'object') {
-      result[propName] = readObjectValue(propName, propSchema, pp);
+      const sub = readObjectValue(propName, propSchema, pp);
+      // Only emit the object if it has at least one included property.
+      if (Object.keys(sub).length > 0) result[propName] = sub;
     } else {
       result[propName] = readFieldValue(propName, propSchema, pp);
     }
@@ -1152,64 +1302,67 @@ function buildTrainingSection() {
 
   let html = `<h2>${t('trainingConfig')}</h2>`;
 
-  // Task
+  // Task (required)
   const taskSchema = trainingProps.task;
-  html += `<div class="section">`;
-  html += createLabel(createId('training.task'), getTitle(taskSchema, 'Task'), true);
-  html += `<div class="desc">${getDesc(taskSchema)}</div>`;
-  html += `<select id="${createId('training.task')}" onchange="onTaskChange()" required aria-required="true">`;
-  (taskSchema.enum || []).forEach(v => html += `<option value="${v}">${v}</option>`);
-  html += `</select></div>`;
+  html += createFieldWrapper('training.task', true,
+    createLabel(createId('training.task'), getTitle(taskSchema, 'Task'), true) +
+    `<div class="desc">${getDesc(taskSchema)}</div>` +
+    `<select id="${createId('training.task')}" onchange="onTaskChange()" required aria-required="true">` +
+    (taskSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('') +
+    `</select>`);
 
-  // General training params
+  // General training params (num_epochs, batch_size, max_length required; mlm_probability conditional)
+  const mlmProbField = `<div id="mlm-probability-field" class="conditional-field">` +
+    createFieldWrapper('training.mlm_probability', false,
+      createLabel(createId('training.mlm_probability'), getTitle(trainingProps.mlm_probability, 'MLM Prob'), false) +
+      `<div class="desc">${getDesc(trainingProps.mlm_probability)}</div>` +
+      `<input type="number" id="${createId('training.mlm_probability')}" value="0.15" min="0" max="1" step="any">`) +
+    `</div>`;
+
   html += createFieldGroup(t('generalTraining'), false, '', `
     <div class="row">
-      <div>${createLabel(createId('training.num_epochs'), getTitle(trainingProps.num_epochs, 'Epochs'), true)}
-        <div class="desc">${getDesc(trainingProps.num_epochs)}</div>
-        <input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1" required aria-required="true">
-      </div>
-      <div>${createLabel(createId('training.batch_size'), getTitle(trainingProps.batch_size, 'Batch Size'), true)}
-        <div class="desc">${getDesc(trainingProps.batch_size)}</div>
-        <input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1" required aria-required="true">
-      </div>
+      ${createFieldWrapper('training.num_epochs', true,
+        createLabel(createId('training.num_epochs'), getTitle(trainingProps.num_epochs, 'Epochs'), true) +
+        `<div class="desc">${getDesc(trainingProps.num_epochs)}</div>` +
+        `<input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1" required aria-required="true">`)}
+      ${createFieldWrapper('training.batch_size', true,
+        createLabel(createId('training.batch_size'), getTitle(trainingProps.batch_size, 'Batch Size'), true) +
+        `<div class="desc">${getDesc(trainingProps.batch_size)}</div>` +
+        `<input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1" required aria-required="true">`)}
     </div>
     <div class="row">
-      <div>${createLabel(createId('training.max_length'), getTitle(trainingProps.max_length, 'Max Length'), true)}
-        <div class="desc">${getDesc(trainingProps.max_length)}</div>
-        <input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1" required aria-required="true">
-      </div>
-      <div id="mlm-probability-field" class="conditional-field">${createLabel(createId('training.mlm_probability'), getTitle(trainingProps.mlm_probability, 'MLM Prob'), false)}
-        <div class="desc">${getDesc(trainingProps.mlm_probability)}</div>
-        <input type="number" id="${createId('training.mlm_probability')}" value="0.15" min="0" max="1" step="any">
-      </div>
+      ${createFieldWrapper('training.max_length', true,
+        createLabel(createId('training.max_length'), getTitle(trainingProps.max_length, 'Max Length'), true) +
+        `<div class="desc">${getDesc(trainingProps.max_length)}</div>` +
+        `<input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1" required aria-required="true">`)}
+      ${mlmProbField}
     </div>
   `);
 
   // Dataset params
   html += createFieldGroup(t('datasetParams'), false, '', `
     <div class="row">
-      <div>${createLabel(createId('training.max_samples'), getTitle(trainingProps.max_samples, 'Max Samples'), false)}
-        <div class="desc">${getDesc(trainingProps.max_samples)}</div>
-        <input type="number" id="${createId('training.max_samples')}" value="20000000" min="1" step="1">
-      </div>
-      <div>${createLabel(createId('training.dataset_batch_size'), getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false)}
-        <div class="desc">${getDesc(trainingProps.dataset_batch_size)}</div>
-        <input type="number" id="${createId('training.dataset_batch_size')}" value="25000" min="1" step="1">
-      </div>
+      ${createFieldWrapper('training.max_samples', false,
+        createLabel(createId('training.max_samples'), getTitle(trainingProps.max_samples, 'Max Samples'), false) +
+        `<div class="desc">${getDesc(trainingProps.max_samples)}</div>` +
+        `<input type="number" id="${createId('training.max_samples')}" value="20000000" min="1" step="1">`)}
+      ${createFieldWrapper('training.dataset_batch_size', false,
+        createLabel(createId('training.dataset_batch_size'), getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false) +
+        `<div class="desc">${getDesc(trainingProps.dataset_batch_size)}</div>` +
+        `<input type="number" id="${createId('training.dataset_batch_size')}" value="25000" min="1" step="1">`)}
     </div>
   `);
 
-  // Optimizer
+  // Optimizer (optimizer_class required)
   const optSchema = trainingProps.optimizer;
   const optClassSchema = optSchema.properties.optimizer_class;
   html += createFieldGroup(t('optimizer'), false, '', `
-    <div class="section">
-      ${createLabel(createId('training.optimizer.optimizer_class'), getTitle(optClassSchema, 'Optimizer Class'), true)}
-      <div class="desc">${getDesc(optClassSchema)}</div>
-      <select id="${createId('training.optimizer.optimizer_class')}" onchange="onOptimizerChange()" required aria-required="true">
-        ${(optClassSchema.enum || ['adamw']).map(v => `<option value="${v}" ${v==='adamw'?'selected':''}>${v}</option>`).join('')}
-      </select>
-    </div>
+    ${createFieldWrapper('training.optimizer.optimizer_class', true,
+      createLabel(createId('training.optimizer.optimizer_class'), getTitle(optClassSchema, 'Optimizer Class'), true) +
+      `<div class="desc">${getDesc(optClassSchema)}</div>` +
+      `<select id="${createId('training.optimizer.optimizer_class')}" onchange="onOptimizerChange()" required aria-required="true">` +
+      (optClassSchema.enum || ['adamw']).map(v => `<option value="${v}" ${v==='adamw'?'selected':''}>${v}</option>`).join('') +
+      `</select>`)}
     <div id="optimizer-param-section" class="optimizer-params"></div>
   `);
 
@@ -1217,93 +1370,104 @@ function buildTrainingSection() {
   const schedTypeSchema = trainingProps.scheduler_type;
   html += createFieldGroup(t('scheduler'), false, '', `
     <div class="row">
-      <div>${createLabel(createId('training.scheduler_total_steps'), getTitle(trainingProps.scheduler_total_steps, 'Total Steps'), false)}
-        <div class="desc">${getDesc(trainingProps.scheduler_total_steps)}</div>
-        <input type="number" id="${createId('training.scheduler_total_steps')}" value="10000" min="1" step="1">
-      </div>
-      <div>${createLabel(createId('training.scheduler_warmup_ratio'), getTitle(trainingProps.scheduler_warmup_ratio, 'Warmup Ratio'), false)}
-        <div class="desc">${getDesc(trainingProps.scheduler_warmup_ratio)}</div>
-        <input type="number" id="${createId('training.scheduler_warmup_ratio')}" value="0.1" min="0" max="1" step="any">
-      </div>
+      ${createFieldWrapper('training.scheduler_total_steps', false,
+        createLabel(createId('training.scheduler_total_steps'), getTitle(trainingProps.scheduler_total_steps, 'Total Steps'), false) +
+        `<div class="desc">${getDesc(trainingProps.scheduler_total_steps)}</div>` +
+        `<input type="number" id="${createId('training.scheduler_total_steps')}" value="10000" min="1" step="1">`)}
+      ${createFieldWrapper('training.scheduler_warmup_ratio', false,
+        createLabel(createId('training.scheduler_warmup_ratio'), getTitle(trainingProps.scheduler_warmup_ratio, 'Warmup Ratio'), false) +
+        `<div class="desc">${getDesc(trainingProps.scheduler_warmup_ratio)}</div>` +
+        `<input type="number" id="${createId('training.scheduler_warmup_ratio')}" value="0.1" min="0" max="1" step="any">`)}
     </div>
-    <div>${createLabel(createId('training.scheduler_type'), getTitle(schedTypeSchema, 'Scheduler Type'), false)}
-      <div class="desc">${getDesc(schedTypeSchema)}</div>
-      <select id="${createId('training.scheduler_type')}">
-        ${(schedTypeSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('')}
-      </select>
-    </div>
+    ${createFieldWrapper('training.scheduler_type', false,
+      createLabel(createId('training.scheduler_type'), getTitle(schedTypeSchema, 'Scheduler Type'), false) +
+      `<div class="desc">${getDesc(schedTypeSchema)}</div>` +
+      `<select id="${createId('training.scheduler_type')}">` +
+      (schedTypeSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('') +
+      `</select>`)}
   `);
 
   // Gradient settings
   html += createFieldGroup(t('gradientSettings'), false, '', `
     <div class="row">
-      <div>${createLabel(createId('training.gradient_accumulation_steps'), getTitle(trainingProps.gradient_accumulation_steps, 'Grad Accum'), false)}
-        <div class="desc">${getDesc(trainingProps.gradient_accumulation_steps)}</div>
-        <input type="number" id="${createId('training.gradient_accumulation_steps')}" value="4" min="1" step="1">
-      </div>
-      <div>${createLabel(createId('training.grad_clip_max_norm'), getTitle(trainingProps.grad_clip_max_norm, 'Grad Clip'), false)}
-        <div class="desc">${getDesc(trainingProps.grad_clip_max_norm)}</div>
-        <input type="number" id="${createId('training.grad_clip_max_norm')}" value="5.0" min="0" step="any">
-      </div>
+      ${createFieldWrapper('training.gradient_accumulation_steps', false,
+        createLabel(createId('training.gradient_accumulation_steps'), getTitle(trainingProps.gradient_accumulation_steps, 'Grad Accum'), false) +
+        `<div class="desc">${getDesc(trainingProps.gradient_accumulation_steps)}</div>` +
+        `<input type="number" id="${createId('training.gradient_accumulation_steps')}" value="4" min="1" step="1">`)}
+      ${createFieldWrapper('training.grad_clip_max_norm', false,
+        createLabel(createId('training.grad_clip_max_norm'), getTitle(trainingProps.grad_clip_max_norm, 'Grad Clip'), false) +
+        `<div class="desc">${getDesc(trainingProps.grad_clip_max_norm)}</div>` +
+        `<input type="number" id="${createId('training.grad_clip_max_norm')}" value="5.0" min="0" step="any">`)}
     </div>
   `);
 
   // Checkpoint settings
   html += createFieldGroup(t('checkpointSettings'), false, '', `
     <div class="row">
-      <div>${createLabel(createId('training.checkpoint_every_n_steps'), getTitle(trainingProps.checkpoint_every_n_steps, 'Ckpt Every'), false)}
-        <div class="desc">${getDesc(trainingProps.checkpoint_every_n_steps)}</div>
-        <input type="number" id="${createId('training.checkpoint_every_n_steps')}" value="500" min="1" step="1">
-      </div>
-      <div>${createLabel(createId('training.max_rolling_checkpoints'), getTitle(trainingProps.max_rolling_checkpoints, 'Max Rolling'), false)}
-        <div class="desc">${getDesc(trainingProps.max_rolling_checkpoints)}</div>
-        <input type="number" id="${createId('training.max_rolling_checkpoints')}" value="3" min="1" step="1">
-      </div>
+      ${createFieldWrapper('training.checkpoint_every_n_steps', false,
+        createLabel(createId('training.checkpoint_every_n_steps'), getTitle(trainingProps.checkpoint_every_n_steps, 'Ckpt Every'), false) +
+        `<div class="desc">${getDesc(trainingProps.checkpoint_every_n_steps)}</div>` +
+        `<input type="number" id="${createId('training.checkpoint_every_n_steps')}" value="500" min="1" step="1">`)}
+      ${createFieldWrapper('training.max_rolling_checkpoints', false,
+        createLabel(createId('training.max_rolling_checkpoints'), getTitle(trainingProps.max_rolling_checkpoints, 'Max Rolling'), false) +
+        `<div class="desc">${getDesc(trainingProps.max_rolling_checkpoints)}</div>` +
+        `<input type="number" id="${createId('training.max_rolling_checkpoints')}" value="3" min="1" step="1">`)}
     </div>
-    <div>${createLabel(createId('training.num_best_checkpoints'), getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false)}
-      <div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>
-      <input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">
-    </div>
+    ${createFieldWrapper('training.num_best_checkpoints', false,
+      createLabel(createId('training.num_best_checkpoints'), getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false) +
+      `<div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>` +
+      `<input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">`)}
   `);
 
   // Logging
   html += createFieldGroup(t('loggingSettings'), false, '', `
-    <div>${createLabel(createId('training.csv_log_path'), getTitle(trainingProps.csv_log_path, 'CSV Log'), false)}
-      <div class="desc">${getDesc(trainingProps.csv_log_path)}</div>
-      <input type="text" id="${createId('training.csv_log_path')}" value="training_metrics.csv">
-    </div>
+    ${createFieldWrapper('training.csv_log_path', false,
+      createLabel(createId('training.csv_log_path'), getTitle(trainingProps.csv_log_path, 'CSV Log'), false) +
+      `<div class="desc">${getDesc(trainingProps.csv_log_path)}</div>` +
+      `<input type="text" id="${createId('training.csv_log_path')}" value="training_metrics.csv">`)}
     <div class="row">
-      <div class="checkbox-wrap">
-        <input type="checkbox" id="${createId('training.log_gradient_stats')}" checked>
-        <label for="${createId('training.log_gradient_stats')}">${getTitle(trainingProps.log_gradient_stats, 'Log Grad Stats')}</label>
-      </div>
-      <div>${createLabel(createId('training.gradient_log_interval'), getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false)}
-        <input type="number" id="${createId('training.gradient_log_interval')}" value="10" min="1" step="1">
-      </div>
+      ${createFieldWrapper('training.log_gradient_stats', false,
+        `<div class="checkbox-wrap">
+          <input type="checkbox" id="${createId('training.log_gradient_stats')}" checked>
+          <label for="${createId('training.log_gradient_stats')}">${getTitle(trainingProps.log_gradient_stats, 'Log Grad Stats')}</label>
+        </div>`)}
+      ${createFieldWrapper('training.gradient_log_interval', false,
+        createLabel(createId('training.gradient_log_interval'), getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false) +
+        `<input type="number" id="${createId('training.gradient_log_interval')}" value="10" min="1" step="1">`)}
     </div>
   `);
 
   // GPU Settings
   html += createFieldGroup(t('gpuSettings'), false, '', `<div id="gpu-settings-group" class="conditional-field">
-    <div class="checkbox-wrap">
-      <input type="checkbox" id="${createId('training.gpu_temp_guard_enabled')}" checked>
-      <label for="${createId('training.gpu_temp_guard_enabled')}">${getTitle(trainingProps.gpu_temp_guard_enabled, 'GPU Temp Guard')}</label>
-    </div>
+    ${createFieldWrapper('training.gpu_temp_guard_enabled', false,
+      `<div class="checkbox-wrap">
+        <input type="checkbox" id="${createId('training.gpu_temp_guard_enabled')}" checked>
+        <label for="${createId('training.gpu_temp_guard_enabled')}">${getTitle(trainingProps.gpu_temp_guard_enabled, 'GPU Temp Guard')}</label>
+      </div>`)}
     <div class="row">
-      <div>${createLabel(createId('training.gpu_temp_pause_threshold_c'), getTitle(trainingProps.gpu_temp_pause_threshold_c, 'Pause Temp'), false)}
-        <input type="number" id="${createId('training.gpu_temp_pause_threshold_c')}" value="90.0" min="0" step="any">
-      </div>
-      <div>${createLabel(createId('training.gpu_temp_resume_threshold_c'), getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false)}
-        <input type="number" id="${createId('training.gpu_temp_resume_threshold_c')}" value="80.0" min="0" step="any">
-      </div>
+      ${createFieldWrapper('training.gpu_temp_pause_threshold_c', false,
+        createLabel(createId('training.gpu_temp_pause_threshold_c'), getTitle(trainingProps.gpu_temp_pause_threshold_c, 'Pause Temp'), false) +
+        `<input type="number" id="${createId('training.gpu_temp_pause_threshold_c')}" value="90.0" min="0" step="any">`)}
+      ${createFieldWrapper('training.gpu_temp_resume_threshold_c', false,
+        createLabel(createId('training.gpu_temp_resume_threshold_c'), getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false) +
+        `<input type="number" id="${createId('training.gpu_temp_resume_threshold_c')}" value="80.0" min="0" step="any">`)}
     </div>
   </div>`);
 
   // AMP
-  html += `<div class="checkbox-wrap">
-    <input type="checkbox" id="${createId('training.use_amp')}">
-    <label for="${createId('training.use_amp')}">${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
-  </div>`;
+  html += createFieldWrapper('training.use_amp', false,
+    `<div class="checkbox-wrap">
+      <input type="checkbox" id="${createId('training.use_amp')}">
+      <label for="${createId('training.use_amp')}">${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
+    </div>`);
+
+  // SBERT (task-specific; conditionally required when task==sbert)
+  if (trainingProps.sbert) {
+    html += `<div id="sbert-section" class="conditional-field">` +
+      createFieldGroup(t('sbertConfig'), false, getDesc(trainingProps.sbert),
+        renderObject('sbert', trainingProps.sbert, 'training', 0)) +
+      `</div>`;
+  }
 
   trainingSection.innerHTML = html;
   onOptimizerChange();
@@ -1370,19 +1534,28 @@ function onOptimizerChange() {
 
 function onTaskChange() {
   const taskEl = document.getElementById(createId('training.task'));
-  const mlmField = document.getElementById('mlm-probability-field');
-  if (!taskEl || !mlmField) return;
+  if (!taskEl) return;
   const isMlm = taskEl.value === 'mlm';
-  mlmField.hidden = !isMlm;
+  const isSbert = taskEl.value === 'sbert';
+
+  const mlmField = document.getElementById('mlm-probability-field');
+  if (mlmField) mlmField.hidden = !isMlm;
   const mlmInput = document.getElementById(createId('training.mlm_probability'));
   if (mlmInput) {
-    if (isMlm) {
-      mlmInput.removeAttribute('disabled');
-    } else {
-      mlmInput.setAttribute('disabled', 'disabled');
-      clearFieldError(mlmInput);
-    }
+    if (isMlm) mlmInput.removeAttribute('disabled');
+    else { mlmInput.setAttribute('disabled', 'disabled'); clearFieldError(mlmInput); }
   }
+
+  const sbertSection = document.getElementById('sbert-section');
+  if (sbertSection) sbertSection.hidden = !isSbert;
+
+  // When switching to sbert, ensure the SBERT group is included so the
+  // conditional rule (task==sbert -> training.sbert) has its target.
+  if (isSbert) setFieldIncluded('training.sbert', true);
+
+  validateBuilder();
+  updateYamlOutput();
+  updateCmdPreview();
 }
 
 function getDefaultForGroup(group, param) {
@@ -1487,33 +1660,43 @@ function buildConfig() {
     config.model = readObjectValue('model', SCHEMA.properties.model, '');
   }
 
-  // Training
+  // Training — only emit keys whose include checkbox is checked (required keys
+  // are always included). Mirrors the per-field include/exclude toggle.
   const training = {};
-  training.task = readFieldValue('task', trainingProps.task, 'training');
+  const task = readFieldValue('task', trainingProps.task, 'training');
+  training.task = task;
   training.num_epochs = readFieldValue('num_epochs', trainingProps.num_epochs, 'training');
   training.batch_size = readFieldValue('batch_size', trainingProps.batch_size, 'training');
   training.max_length = readFieldValue('max_length', trainingProps.max_length, 'training');
-  training.mlm_probability = readFieldValue('mlm_probability', trainingProps.mlm_probability, 'training');
-  training.max_samples = readFieldValue('max_samples', trainingProps.max_samples, 'training');
-  training.dataset_batch_size = readFieldValue('dataset_batch_size', trainingProps.dataset_batch_size, 'training');
-  training.gradient_accumulation_steps = readFieldValue('gradient_accumulation_steps', trainingProps.gradient_accumulation_steps, 'training');
-  training.grad_clip_max_norm = readFieldValue('grad_clip_max_norm', trainingProps.grad_clip_max_norm, 'training');
-  training.checkpoint_every_n_steps = readFieldValue('checkpoint_every_n_steps', trainingProps.checkpoint_every_n_steps, 'training');
-  training.max_rolling_checkpoints = readFieldValue('max_rolling_checkpoints', trainingProps.max_rolling_checkpoints, 'training');
-  training.num_best_checkpoints = readFieldValue('num_best_checkpoints', trainingProps.num_best_checkpoints, 'training');
-  training.scheduler_total_steps = readFieldValue('scheduler_total_steps', trainingProps.scheduler_total_steps, 'training');
-  training.scheduler_warmup_ratio = readFieldValue('scheduler_warmup_ratio', trainingProps.scheduler_warmup_ratio, 'training');
-  training.scheduler_type = readFieldValue('scheduler_type', trainingProps.scheduler_type, 'training');
-  training.csv_log_path = readFieldValue('csv_log_path', trainingProps.csv_log_path, 'training');
-  training.log_gradient_stats = readFieldValue('log_gradient_stats', trainingProps.log_gradient_stats, 'training');
-  training.gradient_log_interval = readFieldValue('gradient_log_interval', trainingProps.gradient_log_interval, 'training');
-  training.use_amp = readFieldValue('use_amp', trainingProps.use_amp, 'training');
-  training.gpu_temp_guard_enabled = readFieldValue('gpu_temp_guard_enabled', trainingProps.gpu_temp_guard_enabled, 'training');
-  training.gpu_temp_pause_threshold_c = readFieldValue('gpu_temp_pause_threshold_c', trainingProps.gpu_temp_pause_threshold_c, 'training');
-  training.gpu_temp_resume_threshold_c = readFieldValue('gpu_temp_resume_threshold_c', trainingProps.gpu_temp_resume_threshold_c, 'training');
 
-  if (training.task !== 'mlm') {
-    delete training.mlm_probability;
+  const optTraining = (key) => {
+    if (!isFieldIncluded('training.' + key)) return;
+    training[key] = readFieldValue(key, trainingProps[key], 'training');
+  };
+  // mlm_probability only applies to the mlm task.
+  if (task === 'mlm') optTraining('mlm_probability');
+  optTraining('max_samples');
+  optTraining('dataset_batch_size');
+  optTraining('gradient_accumulation_steps');
+  optTraining('grad_clip_max_norm');
+  optTraining('checkpoint_every_n_steps');
+  optTraining('max_rolling_checkpoints');
+  optTraining('num_best_checkpoints');
+  optTraining('scheduler_total_steps');
+  optTraining('scheduler_warmup_ratio');
+  optTraining('scheduler_type');
+  optTraining('csv_log_path');
+  optTraining('log_gradient_stats');
+  optTraining('gradient_log_interval');
+  optTraining('use_amp');
+  optTraining('gpu_temp_guard_enabled');
+  optTraining('gpu_temp_pause_threshold_c');
+  optTraining('gpu_temp_resume_threshold_c');
+
+  // SBERT subsection (task-specific). Included only when its toggle is on.
+  if (trainingProps.sbert && isFieldIncluded('training.sbert')) {
+    const sbert = readObjectValue('sbert', trainingProps.sbert, 'training');
+    if (Object.keys(sbert).length > 0) training.sbert = sbert;
   }
 
   // Optimizer
@@ -1962,6 +2145,10 @@ function applyPreset(name) {
     }
   }
 
+  // Reflect loaded keys on the include/exclude toggles.
+  syncIncludesFromConfig(preset);
+  if (preset.training && preset.training.task) onTaskChange();
+
   updateYamlOutput();
   updateCmdPreview();
 }
@@ -2097,6 +2284,11 @@ function applyYamlConfig(config) {
     }
   }
 
+  // Reflect loaded keys on the include/exclude toggles, then re-evaluate task
+  // conditionals (mlm_probability / sbert visibility).
+  syncIncludesFromConfig(config);
+  if (config.training && config.training.task) onTaskChange();
+
   updateYamlOutput();
   updateCmdPreview();
 }
@@ -2185,6 +2377,9 @@ function restoreAllFormValues(saved, context) {
   if (main && context && typeof context.scrollTop === 'number') {
     main.scrollTop = context.scrollTop;
   }
+  // Re-sync include/exclude wrapper visuals and task-driven sections.
+  refreshIncludeStyles();
+  onTaskChange();
   updateYamlOutput();
   updateCmdPreview();
 }
