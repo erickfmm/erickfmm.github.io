@@ -1,0 +1,75 @@
+type: object
+title: "Tokenizer Settings"
+title_es: "Configuración del Tokenizador"
+description: |
+  Configuration for the tokenizer used when `base_model` is specified for MLM training.
+  Controls how raw text is tokenized into input IDs consumable by the pre-trained model.
+  Required when using `base_model` with the `mlm` task.
+
+  **Impact:** An incorrect tokenizer (one that doesn't match the base model) produces meaningless
+  embeddings and unrecoverable loss. Always verify that `name_or_path` matches the base model.
+description_es: |
+  Configuración del tokenizador utilizado cuando se especifica `base_model` para entrenamiento MLM.
+  Controla cómo el texto crudo se convierte en IDs de entrada consumibles por el modelo preentrenado.
+  Obligatorio al usar `base_model` con la tarea `mlm`.
+
+  **Impacto:** Un tokenizador incorrecto (que no coincida con el del modelo base) produce embeddings
+  sin sentido y pérdida irrecuperable. Siempre verificar que `name_or_path` coincida con el modelo base.
+additionalProperties: false
+properties:
+  name_or_path:
+    type: string
+    title: "Tokenizer Path"
+    title_es: "Ruta del Tokenizador"
+    description: |
+      HuggingFace tokenizer identifier or local path passed to `AutoTokenizer.from_pretrained()`.
+      Must match the tokenizer used to train the `base_model`. The tokenizer determines the vocabulary
+      and tokenization strategy used during training.
+
+      **Impact:** Si no coincide con el modelo base, los IDs de tokens no corresponderán a las
+      embeddings correctas, resultando en un modelo inutilizable.
+    description_es: |
+      Identificador de tokenizador de HuggingFace o ruta local pasado a `AutoTokenizer.from_pretrained()`.
+      Debe coincidir con el tokenizador usado para entrenar `base_model`. El tokenizador determina el
+      vocabulario y la estrategia de tokenización durante el entrenamiento.
+
+      **Impacto:** Si no coincide con el modelo base, los IDs de tokens no corresponderán a las
+      embeddings correctas, resultando en un modelo inutilizable.
+    examples:
+      - answerdotai/ModernBERT-base
+  use_fast:
+    type: boolean
+    title: "Use Fast Tokenizer"
+    title_es: "Usar Tokenizador Rápido"
+    description: |
+      Enable Rust-based fast tokenizer implementation for significantly faster tokenization
+      (5-10x vs Python). Recommended for training. Some custom tokenizers may not support it.
+
+      **Impact:** `true` reduce el tiempo de preprocesamiento drásticamente. Usar `false` solo
+      si el tokenizador no soporta la versión rápida o si hay problemas de compatibilidad.
+    description_es: |
+      Habilita la implementación rápida del tokenizador basada en Rust para una tokenización
+      significativamente más rápida (5-10x vs Python). Recomendado para entrenamiento. Algunos
+      tokenizadores personalizados pueden no soportarlo.
+
+      **Impacto:** `true` reduce el tiempo de preprocesamiento drásticamente. Usar `false` solo
+      si el tokenizador no soporta la versión rápida o si hay problemas de compatibilidad.
+    examples: [true]
+  trust_remote_code:
+    type: boolean
+    title: "Trust Remote Code"
+    title_es: "Confiar en Código Remoto"
+    description: |
+      Allow execution of custom code from the model/tokenizer repository. Required for some
+      models with custom tokenization logic (e.g., T5, FLAN-T5). **Security risk for untrusted sources.**
+
+      **Impact:** `false` es seguro pero puede causar errores con modelos que requieren código custom.
+      Solo activar con modelos de fuentes verificadas (HuggingFace oficial, repos propios).
+    description_es: |
+      Permite la ejecución de código personalizado desde el repositorio del modelo/tokenizador.
+      Necesario para algunos modelos con lógica de tokenización personalizada (ej. T5, FLAN-T5).
+      **Riesgo de seguridad para fuentes no confiables.**
+
+      **Impacto:** `false` es seguro pero puede causar errores con modelos que requieren código custom.
+      Solo activar con modelos de fuentes verificadas (HuggingFace oficial, repos propios).
+    examples: [false]

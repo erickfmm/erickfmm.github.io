@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Standard self-attention in Transformers computes pairwise interactions for all tokens, resulting in \(O(n^2)\) computational and memory complexity. This becomes prohibitive for long sequences. Sparse attention mechanisms address this by restricting the set of token interactions, exploiting the empirical observation that most learned attention weights are near zero. This report reviews seven prominent sparse attention blocks—from foundational methods like the Sparse Transformer to the latest approaches such as FASA and NSA—providing for each: a description, mathematical formulation, pros and cons, and PyTorch implementation code.[^1][^2][^3][^4]
+Standard self-attention in Transformers computes pairwise interactions for all tokens, resulting in \(O(n^2)\) computational and memory complexity. This becomes prohibitive for long sequences. Sparse attention mechanisms address this by restricting the set of token interactions, exploiting the empirical observation that most learned attention weights are near zero. This report reviews nine prominent sparse attention blocks—from foundational methods like the Sparse Transformer to the latest approaches such as FASA, NSA, MiniMax Sparse Attention (MSA), and SparDA—providing for each: a description, mathematical formulation, pros and cons, and PyTorch implementation code.[^1][^2][^3][^4]
 
 ***
 
@@ -820,6 +820,173 @@ class SpargeAttention(nn.Module):
 
 ***
 
+## MSA — MiniMax Sparse Attention (Lai et al., 2026)
+
+### Description
+
+MSA is a blockwise sparse attention built on Grouped Query Attention (GQA), proposed by MiniMax (Lai et al., 2026). A lightweight **Index Branch** scores key-value blocks and independently selects a Top-k subset for each GQA group, enabling group-specific sparse retrieval while maintaining efficient block-level execution; the **Main Branch** then performs exact block-sparse softmax attention over only the selected blocks. The Index Branch input is detached (stopgrad); a KL alignment loss trains the indexer. The block containing the query is always forced into the selected set. Deployed on a 109B-parameter natively multimodal model (MiniMax-M3), MSA performs on par with full GQA while reducing per-token attention compute by 28.4x at 1M context and delivering 14.2x prefill / 7.6x decode wall-clock speedups on H800. Cite as [arXiv:2606.13392](https://arxiv.org/abs/2606.13392).
+
+### Mathematical Formulation
+
+Tokens are partitioned into contiguous blocks of size `B_k` (default 128). The Index Branch computes `Q_idx = stopgrad(X) W_q^idx` (one index query head per GQA group, `H_kv` heads) and `K_idx = stopgrad(X) W_k^idx` (single shared index key head). Token-level scores `S^idx,(r)_{i,j} = (Q_idx)^(r)_i · (K_idx)_j^T / sqrt(d_idx)` are max-pooled within each block (causal) to give block scores `M^idx,(r)_{i,b}`. Per-group Top-k selection `I^(r)_i = TopK(M^idx,(r)_{i,·}, k)` with the local block forced in. The Main Branch runs standard scaled dot-product softmax attention restricted to causally visible tokens in selected blocks: `O^(h)_i = softmax(Q^(h)_i · K^(r)[I^(r)_i]^T / sqrt(d_h)) · V^(r)[I^(r)_i]`. Complexity: `O(H_kv · d_idx · N^2)` for the index branch + `O(H_q · d_h · N · k · B_k)` for the main branch; per-query budget fixed at `k · B_k` tokens regardless of N.
+
+### Pros and Cons
+
+| Pros | Cons |
+|------|------|
+| 28.4x per-token compute reduction at 1M context | Requires custom block-sparse kernels for full speedup |
+| 14.2x prefill, 7.6x decode speedup on H800 | Index Branch adds parameters (W_q^idx, W_k^idx) |
+| Per-group selection preserves GQA's KV-cache savings | KL alignment loss and indexer warmup add training complexity |
+| Forced local block prevents degenerate omission | Top-k selection is non-differentiable (trained via KL loss) |
+
+### PyTorch Implementation
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+
+class MSAAttention(nn.Module):
+    """MiniMax Sparse Attention (simplified): Index Branch + Main Branch."""
+    def __init__(self, d_model, n_heads, n_kv_heads=None, block_size=128,
+                 topk_blocks=16, index_dim=64):
+        super().__init__()
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.n_kv_heads = n_kv_heads or max(1, n_heads // 8)
+        self.group_size = n_heads // self.n_kv_heads
+        self.d_k = d_model // n_heads
+        self.block_size = block_size
+        self.topk_blocks = topk_blocks
+        self.index_dim = index_dim
+        kv_dim = self.n_kv_heads * self.d_k
+        self.Wq = nn.Linear(d_model, d_model, bias=False)
+        self.Wk = nn.Linear(d_model, kv_dim, bias=False)
+        self.Wv = nn.Linear(d_model, kv_dim, bias=False)
+        self.Wo = nn.Linear(d_model, d_model, bias=False)
+        self.q_idx = nn.Linear(d_model, self.n_kv_heads * index_dim, bias=False)
+        self.k_idx = nn.Linear(d_model, index_dim, bias=False)
+        self.scale = self.d_k ** -0.5
+        self.idx_scale = index_dim ** -0.5
+
+    def forward(self, x):
+        B, N, _ = x.shape
+        bs = self.block_size
+        num_blocks = (N + bs - 1) // bs
+        Q = self.Wq(x).view(B, N, self.n_heads, self.d_k).transpose(1, 2)
+        K = self.Wk(x).view(B, N, self.n_kv_heads, self.d_k).transpose(1, 2)
+        V = self.Wv(x).view(B, N, self.n_kv_heads, self.d_k).transpose(1, 2)
+        with torch.no_grad():
+            x_det = x.detach()
+        qi = self.q_idx(x_det).view(B, N, self.n_kv_heads, self.index_dim)
+        ki = self.k_idx(x_det).view(B, N, 1, self.index_dim)
+        token_scores = torch.einsum('bshd,btd->bsht', qi, ki.squeeze(2)) * self.idx_scale
+        pad = (bs - N % bs) % bs
+        if pad:
+            token_scores = F.pad(token_scores, (0, pad), value=float('-inf'))
+        padded = N + pad
+        blk_scores = token_scores.view(B, N, self.n_kv_heads, padded // bs, bs).max(dim=-1).values[:, :, :, :num_blocks]
+        k_sel = min(self.topk_blocks, num_blocks)
+        _, sel = torch.topk(blk_scores, k_sel, dim=-1)
+        G = self.group_size
+        K_exp = K.unsqueeze(2).expand(B, self.n_kv_heads, G, N, self.d_k).reshape(B, self.n_heads, N, self.d_k)
+        V_exp = V.unsqueeze(2).expand(B, self.n_kv_heads, G, N, self.d_k).reshape(B, self.n_heads, N, self.d_k)
+        out = torch.zeros_like(Q)
+        for b in range(num_blocks):
+            s, e = b * bs, min(b * bs + bs, N)
+            if e <= s: continue
+            kb, vb = K_exp[:, :, s:e, :], V_exp[:, :, s:e, :]
+            sc = torch.matmul(Q, kb.transpose(-2, -1)) * self.scale
+            sel_b = (sel == b).any(dim=-1).view(B, N, self.n_kv_heads, 1).expand(B, N, self.n_kv_heads, G).reshape(B, N, self.n_heads).transpose(0, 1).unsqueeze(-1)
+            attn = F.softmax(sc, dim=-1)
+            out = torch.where(sel_b, torch.matmul(attn, vb), out)
+        return self.Wo(out.transpose(1, 2).contiguous().view(B, N, self.d_model))
+```
+
+***
+
+## SparDA — Sparse Decoupled Attention (Fu et al., 2026)
+
+### Description
+
+SparDA (Fu et al., 2026, NVIDIA) is a decoupled sparse attention architecture that introduces a fourth per-layer projection — the **Forecast** — alongside Query, Key, and Value. The Forecast predicts the KV blocks needed by the next layer, enabling lookahead selection that overlaps CPU-to-GPU prefetch with current-layer execution. Because the Forecast is decoupled from the attention query, the GQA implementation uses one Forecast head per GQA group, reducing selection overhead versus the original multi-head selector. SparDA adds <0.5% parameters and trains only the Forecast projections by matching the original selector's attention distribution. On two sparse-pretrained 8B models, SparDA matches or slightly improves accuracy and delivers up to 1.25x prefill speedup and 1.7x decode speedup over the sparse-attention offload baseline; by enabling larger feasible batch sizes on a single GPU, SparDA reaches up to 5.3x higher decode throughput than the non-offload sparse baseline. Cite as [arXiv:2606.04511](https://arxiv.org/abs/2606.04511).
+
+### Mathematical Formulation
+
+The Forecast projection `F = W_F x` produces one head per GQA group (shape `N × H_kv × d_f`). Block-level scores are computed via `S[i, b] = F[i] · block_rep[b]` where `block_rep` is an average-pooled representation of the KV blocks. Top-k block selection per GQA group. The Main Branch then runs standard block-sparse softmax attention over selected blocks. Complexity: `O(H_kv · d_f · N · num_blocks)` for the forecast + `O(H_q · d_h · N · k · B_k)` for the main branch.
+
+### Pros and Cons
+
+| Pros | Cons |
+|------|------|
+| Lookahead selection overlaps CPU-GPU prefetch with compute | CPU-offload prefetch overlap is a runtime/kernel concern |
+| <0.5% added parameters; trains only Forecast projections | Requires sparse-pretrained backbone for best results |
+| Up to 5.3x decode throughput via larger feasible batch sizes | Block-level granularity may miss fine-grained patterns |
+| 1.25x prefill, 1.7x decode speedup over offload baseline | Top-k selection is non-differentiable (trained via distillation) |
+
+### PyTorch Implementation
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+
+class SparDAAttention(nn.Module):
+    """SparDA (simplified): Forecast projection + block-sparse attention."""
+    def __init__(self, d_model, n_heads, n_kv_heads=None, block_size=128,
+                 topk_blocks=16, forecast_dim=64):
+        super().__init__()
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.n_kv_heads = n_kv_heads or max(1, n_heads // 8)
+        self.group_size = n_heads // self.n_kv_heads
+        self.d_k = d_model // n_heads
+        self.block_size = block_size
+        self.topk_blocks = topk_blocks
+        self.forecast_dim = forecast_dim
+        kv_dim = self.n_kv_heads * self.d_k
+        self.Wq = nn.Linear(d_model, d_model, bias=False)
+        self.Wk = nn.Linear(d_model, kv_dim, bias=False)
+        self.Wv = nn.Linear(d_model, kv_dim, bias=False)
+        self.Wo = nn.Linear(d_model, d_model, bias=False)
+        self.forecast = nn.Linear(d_model, self.n_kv_heads * forecast_dim, bias=False)
+        self.scale = self.d_k ** -0.5
+        self.f_scale = forecast_dim ** -0.5
+
+    def forward(self, x):
+        B, N, _ = x.shape
+        bs = self.block_size
+        num_blocks = (N + bs - 1) // bs
+        Q = self.Wq(x).view(B, N, self.n_heads, self.d_k).transpose(1, 2)
+        K = self.Wk(x).view(B, N, self.n_kv_heads, self.d_k).transpose(1, 2)
+        V = self.Wv(x).view(B, N, self.n_kv_heads, self.d_k).transpose(1, 2)
+        f = self.forecast(x).view(B, N, self.n_kv_heads, self.forecast_dim)
+        block_rep = F.avg_pool1d(
+            f.transpose(1, 2).reshape(B * self.n_kv_heads, self.forecast_dim, N),
+            kernel_size=bs, stride=bs, ceil_mode=True,
+        ).reshape(B, self.n_kv_heads, self.forecast_dim, -1).permute(0, 3, 1, 2)
+        blk_scores = torch.einsum('bshd,bthd->bsht', f, block_rep) * self.f_scale
+        k_sel = min(self.topk_blocks, num_blocks)
+        _, sel = torch.topk(blk_scores, k_sel, dim=-1)
+        G = self.group_size
+        K_exp = K.unsqueeze(2).expand(B, self.n_kv_heads, G, N, self.d_k).reshape(B, self.n_heads, N, self.d_k)
+        V_exp = V.unsqueeze(2).expand(B, self.n_kv_heads, G, N, self.d_k).reshape(B, self.n_heads, N, self.d_k)
+        out = torch.zeros_like(Q)
+        for b in range(num_blocks):
+            s, e = b * bs, min(b * bs + bs, N)
+            if e <= s: continue
+            kb, vb = K_exp[:, :, s:e, :], V_exp[:, :, s:e, :]
+            sc = torch.matmul(Q, kb.transpose(-2, -1)) * self.scale
+            sel_b = (sel == b).any(dim=-1).view(B, N, self.n_kv_heads, 1).expand(B, N, self.n_kv_heads, G).reshape(B, N, self.n_heads).transpose(0, 1).unsqueeze(-1)
+            attn = F.softmax(sc, dim=-1)
+            out = torch.where(sel_b, torch.matmul(attn, vb), out)
+        return self.Wo(out.transpose(1, 2).contiguous().view(B, N, self.d_model))
+```
+
+***
+
 ## Summary Comparison Table
 
 | Method | Year | Complexity (per query) | Memory Footprint | Trainable | Training-Free | Key Innovation | Reference |
@@ -831,6 +998,8 @@ class SpargeAttention(nn.Module):
 | **NSA** | 2025 | \(O(t/d + n l' + w)\)[^21] | \(O(t/d + n l' + w)\) | Yes | No | Hierarchical compress + select + window; hardware-aligned | arXiv:2502.11089 / DOI: 10.48550/arXiv.2502.11089[^22] |
 | **SpargeAttn** | 2025 | \(O(n^2 \cdot s)\), \(s\) = sparsity[^28] | \(O(n)\) (FlashAttn-based) | No | Yes | Two-stage online filter: prediction + softmax-aware | arXiv:2502.18137 / DOI: 10.48550/arXiv.2502.18137[^28] |
 | **FASA** | 2026 | \(O(t \cdot N_{\text{tip}} + N_{\text{fac}} \cdot d)\)[^18] | \(O(N_{\text{fac}} \cdot d)\) per head | No | Yes | Frequency-chunk sparsity in RoPE; dominant FCs | arXiv:2602.03152 / DOI: 10.48550/arXiv.2602.03152[^18] |
+| **MSA** | 2026 | \(O(k \cdot B_k)\) fixed per query | \(O(n)\) GQA-sized KV cache | Yes | No | Block-sparse on GQA; per-group Top-k index branch; exp-free selection | arXiv:2606.13392 / DOI: 10.48550/arXiv.2606.13392 |
+| **SparDA** | 2026 | \(O(k \cdot B_k)\) fixed per query | \(O(n)\) GQA-sized KV cache | Yes | No | Decoupled Forecast projection; lookahead block selection; CPU-GPU prefetch overlap | arXiv:2606.04511 / DOI: 10.48550/arXiv.2606.04511 |
 
 > **Notes:** \(n\) = sequence length; \(w\) = window size; \(k\) = selected KV pairs; \(t\) = context length; \(d\) = head dimension; \(N_{\text{tip}}\) = number of dominant FCs; \(N_{\text{fac}}\) = number of selected tokens for focused attention; \(l'\) = selection block size; \(s\) = fraction of non-sparse blocks.
 
@@ -895,4 +1064,8 @@ class SpargeAttention(nn.Module):
 28. [Accurate and Training-free Sparse Attention Accelerating Any Model ...](https://arxiv.org/abs/2502.18137) - In this paper, we propose SpargeAttn, a universal sparse and quantized attention for any model. Our ...
 
 29. [Accurate Sparse Attention Accelerating Any Model Inference - arXiv](https://arxiv.org/html/2502.18137v1) - In this paper, we propose SpargeAttn, a universal sparse and quantized attention for any model. Our ...
+
+30. [MiniMax Sparse Attention - arXiv](https://arxiv.org/abs/2606.13392) - Blockwise sparse attention built on GQA with a lightweight Index Branch that scores KV blocks and independently selects a Top-k subset per GQA group.
+
+31. [SparDA: Sparse Decoupled Attention - arXiv](https://arxiv.org/abs/2606.04511) - Introduces a fourth per-layer projection (Forecast) alongside Q/K/V to predict KV blocks needed by the next layer, enabling lookahead selection that overlaps CPU-to-GPU prefetch.
 

@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The standard softmax attention mechanism in Transformers, while powerful, suffers from quadratic complexity in sequence length and lacks explicit mechanisms for memory management. Over 2023–2025, a family of **gated attention** architectures has emerged to address these limitations by incorporating data-dependent gating into the attention computation. These mechanisms draw inspiration from forget gates in recurrent neural networks (LSTMs, GRUs) and apply them to linear attention, state-space models, or even softmax attention itself. This review covers seven key architectures: **Gated Linear Attention (GLA)**, **DeltaNet**, **Gated DeltaNet**, **RetNet**, **HGRN2**, **Forgetting Transformer (FoX)**, and **Gated Attention (NeurIPS 2025)**. For each, we provide a description, the mathematical formulation, advantages and limitations, and a PyTorch-compatible reference implementation. A summary comparison table concludes the review.
+The standard softmax attention mechanism in Transformers, while powerful, suffers from quadratic complexity in sequence length and lacks explicit mechanisms for memory management. Over 2023–2025, a family of **gated attention** architectures has emerged to address these limitations by incorporating data-dependent gating into the attention computation. These mechanisms draw inspiration from forget gates in recurrent neural networks (LSTMs, GRUs) and apply them to linear attention, state-space models, or even softmax attention itself. This review covers eight key architectures: **Gated Linear Attention (GLA)**, **DeltaNet**, **Gated DeltaNet**, **RetNet**, **HGRN2**, **Forgetting Transformer (FoX)**, **Gated Attention (NeurIPS 2025)**, and **Kimi Delta Attention (KDA)**. For each, we provide a description, the mathematical formulation, advantages and limitations, and a PyTorch-compatible reference implementation. A summary comparison table concludes the review.
 
 ## 1. Gated Linear Attention (GLA)
 
@@ -265,6 +265,34 @@ The gate score shape is \(\mathbb{R}^{n \times q \times d_k}\) for elementwise g
 
 ***
 
+## 8. Kimi Delta Attention (KDA)
+
+### Description
+
+KDA is the core attention module of Kimi Linear (Kimi Team, 2025, arXiv:2510.26692). It extends Gated DeltaNet with a finer-grained gating mechanism: it replaces Gated DeltaNet's scalar per-head write gate `beta_t` with a **channel-wise** decay `alpha_t` (per key channel) computed via a log-decay parameterisation `g = a - softplus(delta)` and applied as a diagonal matrix `D_t = diag(alpha_t)` before the delta-rule update. The delta rule keeps a scalar write gate `beta_t` controlling the erase-write strength along the key axis. A bespoke chunkwise algorithm uses a specialised Diagonal-Plus-Low-Rank (DPLR) transition matrix variant for hardware efficiency, substantially reducing computation versus the general DPLR formulation while remaining consistent with the classical delta rule. KDA reduces to Gated DeltaNet when `alpha_t` collapses to a scalar per head. Kimi Linear — 3B activated / 48B total parameters, a layerwise hybrid of KDA and Multi-Head Latent Attention (MLA) — outperforms full MLA across all evaluated tasks (short-context, long-context, and RL scaling), while reducing KV cache usage by up to 75% and achieving up to 6x decoding throughput for a 1M context. Cite as [arXiv:2510.26692](https://arxiv.org/abs/2510.26692).
+
+### Mathematical Formulation
+
+The state update is
+
+```
+S_t = (I - beta_t k_t k_t^T) D_t S_{t-1} + beta_t v_t k_t^T
+o_t = S_t^T q_t
+```
+
+where `D_t = diag(alpha_t)`, `alpha_t = exp(a - softplus(delta))` (computed in fp32 to avoid precision loss over long cumulative products), `beta_t = sigmoid(W_beta x_t)` is the scalar per-head write gate, queries and keys are L2-normalised, and values are silu-activated. The chunkwise training algorithm extends DeltaNet's WY representation by absorbing the channel-wise decay into an asymmetric delta recurrence on a decay-normalised state, enabling matmul-rich parallelism on tensor cores. Because `beta_t` is per-channel diagonal varying per row, the scalar post-scaling shortcut of KDA breaks: the backward pass requires a gate-aware WY inversion.
+
+### Pros and Cons
+
+| Pros | Cons |
+|------|------|
+| Channel-wise decay gives finer-grained memory control than Gated DeltaNet | Requires a new gate-aware WY Triton backward kernel |
+| First linear attention to outperform full attention under fair comparisons | Slightly slower than Mamba-2 per-token due to richer transitions |
+| Up to 75% KV cache reduction; up to 6x decode throughput at 1M context | Two parameter families (alpha, beta) increase hyperparameter sensitivity |
+| Strong multi-key needle-in-a-haystack (RULER) recall | DPLR chunkwise algorithm adds engineering complexity |
+
+***
+
 ## Summary Comparison Table
 
 | Architecture | Year | Venue | Complexity (Training) | Complexity (Inference per step) | Memory (Inference) | Key Innovation | Reference |
@@ -276,6 +304,7 @@ The gate score shape is \(\mathbb{R}^{n \times q \times d_k}\) for elementwise g
 | **HGRN2** | 2024 | COLM 2024 | O(Ld²) sub-quadratic | O(d²) | O(d²) | Outer-product state expansion; hierarchical lower-bounded forget gates | [arXiv:2404.07904](https://arxiv.org/abs/2404.07904)[13] |
 | **FoX** | 2025 | ICLR 2025 | O(L²d) quadratic | O(Ld) | O(L) KV cache | Data-dependent forget gate in softmax attention (logit bias); FlashAttention-compatible | [arXiv:2503.02130](https://arxiv.org/abs/2503.02130)[18] |
 | **Gated Attention** | 2025 | NeurIPS 2025 | O(L²d) quadratic | O(Ld) | O(L) KV cache | Sigmoid gate after SDPA; non-linearity + sparsity; attention-sink-free | [arXiv:2505.06708](https://arxiv.org/abs/2505.06708)[24] |
+| **KDA** | 2025 | — | O(Ld²) sub-quadratic | O(d²) | O(d²) | Channel-wise decay + scalar write gate; DPLR chunkwise; first linear attn to beat full attention | [arXiv:2510.26692](https://arxiv.org/abs/2510.26692) |
 
 ### Additional Comparison Dimensions
 
@@ -288,10 +317,11 @@ The gate score shape is \(\mathbb{R}^{n \times q \times d_k}\) for elementwise g
 | **HGRN2** | Matrix \(d \times d\) | Diagonal with lower bounds | Hierarchical decay | None | Moderate |
 | **FoX** | Full attention (no fixed state) | Scalar per head per token | Logit-space decay on softmax | Not needed | Very strong (near-perfect) |
 | **Gated Attention** | Full attention (no fixed state) | Element/head-wise sigmoid | Sparse gating of SDPA output | RoPE (standard) | Strong (attention-sink-free) |
+| **KDA** | Matrix \(d \times d\) | Channel-wise diagonal decay + scalar β write | Channel-wise erase + scalar write | None (via L2 norm) | Very strong (RULER multi-key) |
 
 ## PyTorch Reference Implementations
 
-Simplified, pedagogical PyTorch (`nn.Module`) implementations of all seven architectures are provided in the attached code file. These use the recurrent form for clarity (production systems use chunkwise parallel algorithms). For optimized training kernels, refer to:
+Simplified, pedagogical PyTorch (`nn.Module`) implementations of all eight architectures are provided in the attached code file. These use the recurrent form for clarity (production systems use chunkwise parallel algorithms). For optimized training kernels, refer to:
 
 - **flash-linear-attention** (`fla-org/flash-linear-attention`): GLA, DeltaNet, Gated DeltaNet, RetNet, HGRN2[6]
 - **Gated DeltaNet official**: `NVlabs/GatedDeltaNet`[10]
@@ -305,7 +335,7 @@ The progression of gated attention blocks can be understood through three "gener
 
 1. **Generation 1 — Fixed/Simple Gating**: RetNet (fixed decay per head), RWKV (data-independent). Limited adaptivity but simple.
 2. **Generation 2 — Data-Dependent Gating**: GLA, Mamba2, HGRN2 (data-dependent diagonal gates). Better memory management but purely additive updates.
-3. **Generation 3 — Delta Rule + Gating**: DeltaNet, Gated DeltaNet (targeted erase-write with optional gating). Best recall and memory management but more complex transitions.
+3. **Generation 3 — Delta Rule + Gating**: DeltaNet, Gated DeltaNet, **KDA** (targeted erase-write with optional gating and channel-wise decay). Best recall and memory management but more complex transitions.
 
 Orthogonally, **FoX** and **Gated Attention** represent a parallel direction: rather than replacing softmax with linear recurrence, they enhance softmax attention with gating mechanisms, preserving its quadratic expressiveness while gaining forgetting/sparsity benefits.[16][21]
 
@@ -679,5 +709,67 @@ class GatedSoftmaxAttention(nn.Module):
         gated_out = sdpa_out * gate
 
         return self.o_proj(gated_out)
+
+
+# =========================================
+# 8. KDA: Kimi Delta Attention
+# =========================================
+class KDA(nn.Module):
+    """
+    Kimi Delta Attention (Kimi Team, 2025)
+    arXiv:2510.26692
+    S_t = (I - beta_t k_t k_t^T) D_t S_{t-1} + beta_t v_t k_t^T
+    where D_t = diag(alpha_t), alpha_t = exp(a - softplus(delta)).
+    Channel-wise decay (KDA-style) + scalar write gate (Gated DeltaNet-style).
+    """
+    def __init__(self, d_model, num_heads, head_dim=None):
+        super().__init__()
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.head_dim = head_dim or d_model // num_heads
+        total_dim = self.head_dim * num_heads
+
+        self.q_proj = nn.Linear(d_model, total_dim, bias=False)
+        self.k_proj = nn.Linear(d_model, total_dim, bias=False)
+        self.v_proj = nn.Linear(d_model, total_dim, bias=False)
+        self.beta_proj = nn.Linear(d_model, num_heads, bias=True)  # scalar write gate
+        # Channel-wise log-decay parameters (KDA-style)
+        self.log_decay_base = nn.Parameter(torch.zeros(total_dim))
+        self.log_decay_delta = nn.Parameter(torch.zeros(total_dim))
+        self.g_proj = nn.Linear(d_model, total_dim, bias=False)
+        self.o_proj = nn.Linear(total_dim, d_model, bias=False)
+        self.group_norm = nn.GroupNorm(num_heads, total_dim)
+
+    def forward(self, x):
+        B, L, _ = x.shape
+        q = F.normalize(self.q_proj(x).view(B, L, self.num_heads, self.head_dim), dim=-1)
+        k = F.normalize(self.k_proj(x).view(B, L, self.num_heads, self.head_dim), dim=-1)
+        v = F.silu(self.v_proj(x)).view(B, L, self.num_heads, self.head_dim)
+        beta = torch.sigmoid(self.beta_proj(x))  # [B, L, H]
+
+        # Channel-wise decay in fp32: g = base - softplus(delta); alpha = exp(g)
+        log_decay = (self.log_decay_base - F.softplus(self.log_decay_delta)).to(torch.float32)
+        alpha = torch.exp(log_decay).view(1, 1, self.num_heads, self.head_dim).to(x.dtype)
+
+        S = torch.zeros(B, self.num_heads, self.head_dim, self.head_dim, device=x.device, dtype=x.dtype)
+        outputs = []
+        for t in range(L):
+            b_t = beta[:, t, :, None, None]
+            k_t = k[:, t]
+            v_t = v[:, t]
+            a_t = alpha[0, 0]  # [H, dk]
+            # Decay state along key axis: D_t @ S
+            S = S * a_t.unsqueeze(0).unsqueeze(-1)
+            # Delta rule with scalar write gate
+            read = (S * k_t.unsqueeze(-1)).sum(-2)
+            S = S - b_t * k_t.unsqueeze(-1) * read.unsqueeze(-2)
+            S = S + b_t * k_t.unsqueeze(-1) * v_t.unsqueeze(-2)
+            o_t = (S * q[:, t].unsqueeze(-1)).sum(-2)
+            outputs.append(o_t)
+
+        o = torch.stack(outputs, dim=1).reshape(B, L, -1)
+        o = self.group_norm(o.reshape(B * L, -1)).reshape(B, L, -1)
+        o = o * F.silu(self.g_proj(x))
+        return self.o_proj(o)
 
 ```
