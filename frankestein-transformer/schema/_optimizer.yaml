@@ -1,0 +1,304 @@
+type: object
+title: "Optimizer Configuration"
+title_es: "Configuración del Optimizador"
+description: |
+  Optimizer type and hyperparameters with per-parameter-group settings. Parameters are prefixed
+  with the optimizer class name (e.g., `adamw-lr_embeddings`). Supports fine-grained control over
+  different parameter types.
+
+  **Impact:** The choice of optimizer significantly affects training dynamics
+  and final quality. `adamw` is the most proven and recommended option for most cases.
+description_es: |
+  Tipo de optimizador e hiperparámetros con configuraciones por grupo de parámetros.
+  Los parámetros usan prefijo del optimizador (ej., `adamw-lr_embeddings`). Permite control
+  detallado sobre diferentes tipos de parámetros.
+
+  **Impacto:** La elección del optimizador afecta significativamente la dinámica de entrenamiento
+  and final quality. `adamw` is the most proven and recommended option for most cases.
+additionalProperties: false
+required:
+  - optimizer_class
+properties:
+  optimizer_class:
+    type: string
+    title: "Optimizer Class"
+    title_es: "Clase de Optimizador"
+    description: |-
+      Optimizer algorithm. Summary by use case:
+
+      | Optimizer | Use Case | Notes |
+      |-----------|----------|-------|
+      | `adamw` | General purpose **(recommended)** | Decoupled weight decay, stable |
+      | `sgd_momentum` | Baselines, classic tasks | Simple, less adaptive |
+      | `adafactor` | Large models, low memory | Memory-efficient factored moments |
+      | `galore_adamw` | Memory-constrained large models | Gradient low-rank projection |
+      | `prodigy` | Minimal LR tuning | Adaptive, auto-LR |
+      | `lion` | Memory-efficient | Sign-based updates, reduced state |
+      | `sophia` | Robust training | Hessian-aware with diagonal preconditioning |
+      | `muon` | Stable training | Layer-wise momentum with orthogonalization |
+      | `turbo_muon` | Faster muon | Accelerated with Nesterov-spectral |
+      | `radam` | Adaptive warmup | Rectified Adam, automatic warmup |
+      | `adan` | Nesterov-accelerated | Adaptive with Nesterov, 3 buffers |
+      | `adopt` | Momentum-based | Decoupled gradient/variance, optimal convergence |
+      | `ademamix` | Dual-EMA mixing | Combines fast/slow momentum for data efficiency |
+      | `mars_adamw` | Variance reduction | Recursive momentum correction (SVRG-style) |
+      | `cautious_adamw` | Gradient masking | Masks conflicted gradient dimensions |
+      | `lamb` | Large batch training | LARS-style layer-wise adaptive |
+      | `schedulefree_adamw` | No LR schedule needed | Eliminates scheduler tuning |
+      | `shampoo` | Second-order | Kronecker-factored preconditioners |
+      | `soap` | Second-order + Adam | Adam in Shampoo eigenbasis |
+      | `anon` | Tunable adaptivity | gamma parameter (arXiv:2605.02317) |
+      | `apollo` | Low-rank scaling | Projected gradient scaling (SGD-like memory) |
+      | `apollo_mini` | Rank-1 APOLLO | Tensor-wise scaled, extreme memory savings |
+      | `q_apollo` | Quantized APOLLO | Quantized optimizer states |
+
+      **Examples explained:**
+      - `adamw`: Start here. Most reliable for transformer training. Works well with default hyperparameters (lr=2e-4, betas=[0.9,0.95], wd=0.01). Best general-purpose choice.
+      - `sgd_momentum`: Use for baselines or when you need maximum simplicity and reproducibility. Usually needs higher LR (1e-2 to 1e-1) and careful momentum tuning.
+      - `galore_adamw` or `apollo`: Use when training >1B param models with limited GPU memory. Reduces optimizer memory by projecting to low-rank subspace. Slight quality tradeoff for significant memory savings.
+      - `prodigy`: Use when you don't want to tune learning rate. Automatically adapts step size. Good for quick experiments or when hyperparameter search is impractical.
+      - `schedulefree_adamw`: Use when you want to eliminate LR scheduler tuning. The optimizer handles scheduling internally. Simplifies training pipeline.
+    description_es: |-
+      Algoritmo optimizador. Resumen por caso de uso:
+
+      | Optimizador | Caso de Uso | Notas |
+      |-------------|-------------|-------|
+      | `adamw` | Propósito general **(recomendado)** | Weight decay desacoplado, estable |
+      | `sgd_momentum` | Líneas base, tareas clásicas | Simple, menos adaptativo |
+      | `adafactor` | Modelos grandes, baja memoria | Eficiente en memoria |
+      | `galore_adamw` | Modelos grandes con memoria limitada | Proyección de gradiente de bajo rango |
+      | `prodigy` | Mínimo ajuste de LR | Adaptativo, LR automático |
+      | `lion` | Eficiencia de memoria | Actualizaciones basadas en signo |
+      | `sophia` | Entrenamiento robusto | Consciente del Hessiano |
+      | `muon` | Entrenamiento estable | Momentum por capa |
+      | `turbo_muon` | Muon acelerado | Acelerado con Nesterov-espectral |
+      | `radam` | Warmup adaptativo | Rectified Adam |
+      | `adan` | Acelerado con Nesterov | Adaptativo con Nesterov |
+      | `adopt` | Basado en momentum | Momentum adaptativo con convergencia óptima |
+      | `ademamix` | Mezcla de momentos | Combina EMAs de corto y largo plazo |
+      | `mars_adamw` | Regularizado con MARS | Reducción de varianza |
+      | `cautious_adamw` | Enmascaramiento de gradientes | Enmascara gradientes conflictivos |
+      | `lamb` | Entrenamiento con lotes grandes | Escalado por capa estilo LARS |
+      | `schedulefree_adamw` | Sin scheduler de LR | Elimina ajuste de scheduler |
+      | `shampoo` | Segundo orden | Gradientes precondicionados |
+      | `soap` | Optimización dispersa | Segundo orden eficiente en memoria |
+      | `anon` | Adaptividad ajustable | Parámetro gamma (arXiv:2605.02317) |
+      | `apollo` | Escalado de bajo rango | Escalado de gradiente proyectado |
+      | `apollo_mini` | APOLLO rango-1 | Proyección mínima tensorial |
+      | `q_apollo` | APOLLO cuantizado | Estados cuantizados |
+      **Ejemplos explicados:**
+      - `adamw`: Empezar aquí. El más confiable para entrenamiento de transformers. Funciona bien con hiperparámetros por defecto (lr=2e-4, betas=[0.9,0.95], wd=0.01). Mejor opción de propósito general.
+      - `sgd_momentum`: Usar para líneas base o cuando se necesita máxima simplicidad y reproducibilidad. Generalmente requiere LR más alto (1e-2 a 1e-1) y ajuste cuidadoso de momentum.
+      - `galore_adamw` o `apollo`: Usar al entrenar modelos >1B params con memoria GPU limitada. Reduce memoria del optimizador proyectando a subespacio de bajo rango. Ligero compromiso de calidad para ahorro significativo de memoria.
+      - `prodigy`: Usar cuando no se quiere ajustar el learning rate. Adapta automáticamente el tamaño de paso. Bueno para experimentos rápidos o cuando la búsqueda de hiperparámetros es impráctica.
+      - `schedulefree_adamw`: Usar cuando se quiere eliminar el ajuste de scheduler de LR. El optimizador maneja el scheduling internamente. Simplifica el pipeline de entrenamiento.
+      - `lamb`: Usar para entrenamiento con lotes muy grandes (efectivos > 1024). Escala adaptativamente por capa para mantener estabilidad.
+      - `shampoo` o `soap`: Usar cuando se necesita optimización de segundo orden para tareas que se benefician de precondicionamiento de curvatura. Mayor costo computacional por paso pero potencialmente mejor convergencia.
+    enum:
+      - sgd_momentum
+      - adamw
+      - adafactor
+      - galore_adamw
+      - prodigy
+      - lion
+      - sophia
+      - muon
+      - turbo_muon
+      - radam
+      - adan
+      - adopt
+      - ademamix
+      - mars_adamw
+      - cautious_adamw
+      - lamb
+      - schedulefree_adamw
+      - shampoo
+      - soap
+      - anon
+      - apollo
+      - apollo_mini
+      - q_apollo
+    examples: [adamw]
+  parameters:
+    type: object
+    title: "Optimizer Parameters"
+    title_es: "Parámetros del Optimizador"
+    description: |
+      Optimizer hyperparameters with per-parameter-group settings. All keys are prefixed
+      with the optimizer class name. Format: `<optimizer>-<param_group>_<hyperparam>=value`.
+
+      **Shared suffixes** (all optimizers):
+      - `lr_*`: Learning rate per group (embeddings, norms, ode, retnet, mamba, attention, other)
+      - `wd_*`: Weight decay per group
+      - `betas_*`: Adam-style beta1/beta2 per group
+      - `eps_*`: Epsilon per group
+
+      **Optimizer-specific suffixes** (see `x_parameter_reference.by_optimizer`):
+      - `sgd_momentum`: `momentum`, `nesterov`
+      - `adafactor`: `beta2_decay`, `clip_threshold`, `eps1`, `eps2`
+      - `galore_adamw`: `rank`, `update_proj_gap`
+      - `prodigy`: `d_coef`
+      - `sophia`: `rho`, `update_k`
+      - `muon`/`turbo_muon`: `momentum`, `nesterov`, `ns_steps`, `ns_eps`
+      - `cautious_adamw`: `cautious_clip`
+      - `anon`: `gamma`
+      - `apollo`: `rank`, `update_proj_gap`, `scale`, `scale_type`, `proj_type`, `scale_front`, `disable_nl`
+      - `apollo_mini`: `update_proj_gap`, `scale`, `proj_type`, `scale_front`, `disable_nl`
+      - `q_apollo`: `rank`, `update_proj_gap`, `scale`, `scale_type`, `proj_type`, `scale_front`, `disable_nl`, `quant_bits`
+      - Others: no specific suffixes (only shared ones)
+
+      **Impact:** Fine-grained per-group control. Example: lower LR for embeddings (2e-6),
+      higher for attention (3e-6). See `x_parameter_reference` for optimizer-specific
+      suffixes.
+    description_es: |-
+      Hiperparámetros con configuraciones por grupo de parámetros. Todas las claves llevan
+      prefijo de la clase del optimizador. Formato: `<optimizador>-<grupo>_<hiperparam>=valor`.
+
+      **Sufijos compartidos** (todos los optimizadores):
+      - `lr_*`: Learning rate por grupo (embeddings, norms, ode, retnet, mamba, attention, other)
+      - `wd_*`: Weight decay por grupo
+      - `betas_*`: Beta1/beta2 estilo Adam por grupo
+      - `eps_*`: Epsilon por grupo
+
+      **Grupos:** embeddings (embeddings de tokens), norms (capas de normalización),
+      ode (parámetros ODE), retnet (RetNet), mamba (Mamba), attention (atención),
+      other (resto: FFN, ruteo, etc.).
+
+      **Sufijos específicos por optimizador** (ver `x_parameter_reference.by_optimizer`):
+      - `sgd_momentum`: `momentum`, `nesterov`
+      - `adafactor`: `beta2_decay`, `clip_threshold`, `eps1`, `eps2`
+      - `galore_adamw`: `rank`, `update_proj_gap`
+      - `prodigy`: `d_coef`
+      - `sophia`: `rho`, `update_k`
+      - `muon`/`turbo_muon`: `momentum`, `nesterov`, `ns_steps`, `ns_eps`
+      - `cautious_adamw`: `cautious_clip`
+      - `anon`: `gamma`
+      - `apollo`: `rank`, `update_proj_gap`, `scale`, `scale_type`, `proj_type`, `scale_front`, `disable_nl`
+      - `apollo_mini`: `update_proj_gap`, `scale`, `proj_type`, `scale_front`, `disable_nl`
+      - `q_apollo`: `rank`, `update_proj_gap`, `scale`, `scale_type`, `proj_type`, `scale_front`, `disable_nl`, `quant_bits`
+      - Otros: sin sufijos específicos (solo los compartidos)
+    minProperties: 1
+    additionalProperties: true
+    x_parameter_reference:
+      shared_per_group_suffixes:
+        - lr_embeddings
+        - lr_norms
+        - lr_ode
+        - lr_retnet
+        - lr_mamba
+        - lr_attention
+        - lr_other
+        - wd_embeddings
+        - wd_norms
+        - wd_ode
+        - wd_retnet
+        - wd_mamba
+        - wd_attention
+        - wd_other
+        - betas_embeddings
+        - betas_norms
+        - betas_ode
+        - betas_retnet
+        - betas_mamba
+        - betas_attention
+        - betas_other
+        - eps_embeddings
+        - eps_norms
+        - eps_ode
+        - eps_retnet
+        - eps_mamba
+        - eps_attention
+        - eps_other
+      by_optimizer:
+        sgd_momentum:
+          prefix: "sgd_momentum-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [momentum, nesterov]
+        adamw:
+          prefix: "adamw-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        adafactor:
+          prefix: "adafactor-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [beta2_decay, clip_threshold, eps1, eps2]
+        galore_adamw:
+          prefix: "galore_adamw-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [rank, update_proj_gap]
+        prodigy:
+          prefix: "prodigy-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [d_coef]
+        lion:
+          prefix: "lion-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        sophia:
+          prefix: "sophia-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [rho, update_k]
+        muon:
+          prefix: "muon-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [momentum, nesterov, ns_steps, ns_eps]
+        turbo_muon:
+          prefix: "turbo_muon-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [momentum, nesterov, ns_steps, ns_eps]
+        radam:
+          prefix: "radam-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        adan:
+          prefix: "adan-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        adopt:
+          prefix: "adopt-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        ademamix:
+          prefix: "ademamix-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        mars_adamw:
+          prefix: "mars_adamw-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        cautious_adamw:
+          prefix: "cautious_adamw-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [cautious_clip]
+        lamb:
+          prefix: "lamb-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        schedulefree_adamw:
+          prefix: "schedulefree_adamw-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        shampoo:
+          prefix: "shampoo-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        soap:
+          prefix: "soap-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: []
+        anon:
+          prefix: "anon-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [gamma]
+        apollo:
+          prefix: "apollo-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [rank, update_proj_gap, scale, scale_type, proj_type, scale_front, disable_nl]
+        apollo_mini:
+          prefix: "apollo_mini-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [update_proj_gap, scale, proj_type, scale_front, disable_nl]
+        q_apollo:
+          prefix: "q_apollo-"
+          supports_shared_per_group_suffixes: true
+          specific_global_suffixes: [rank, update_proj_gap, scale, scale_type, proj_type, scale_front, disable_nl, quant_bits]

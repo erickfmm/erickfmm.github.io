@@ -1,0 +1,56 @@
+- anyOf:
+  - required:
+    - base_model
+  - required:
+    - model_class
+    - model
+- if:
+    properties:
+      training:
+        properties:
+          task:
+            const: mlm
+  then:
+    properties:
+      training:
+        required:
+        - optimizer
+- if:
+    properties:
+      training:
+        properties:
+          task:
+            const: sbert
+  then:
+    properties:
+      training:
+        required:
+        - sbert
+- if:
+    required:
+    - base_model
+  then:
+    properties:
+      training:
+        required:
+        - task
+    allOf:
+    - if:
+        properties:
+          training:
+            properties:
+              task:
+                const: mlm
+      then:
+        properties:
+          tokenizer:
+            required:
+            - name_or_path
+- if:
+    not:
+      required:
+      - base_model
+  then:
+    required:
+    - model_class
+    - model

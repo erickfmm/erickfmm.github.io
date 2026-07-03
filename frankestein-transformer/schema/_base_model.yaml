@@ -1,0 +1,24 @@
+type: string
+title: "Base Model"
+title_es: "Modelo Base"
+description: |
+  HuggingFace model identifier or local path for continual pretraining or SBERT fine-tuning.
+  When specified, an existing pre-trained model is used instead of building from scratch. This enables
+  transfer learning from models like ModernBERT, BERT, RoBERTa, etc. The model architecture is loaded
+  automatically from the provided path/id. When `base_model` is set, `model_class` and `model` are not
+  required (the architecture is inferred from the checkpoint).
+
+  **Impact:** Using a base model drastically accelerates convergence and reduces data requirements.
+  The model inherits the vocabulary and tokenizer from the original checkpoint.
+description_es: |
+  Identificador de modelo de HuggingFace o ruta local para preentrenamiento continuo o fine-tuning SBERT.
+  Cuando se especifica, se usa un modelo preentrenado existente en lugar de construir uno desde cero. Esto
+  permite el aprendizaje por transferencia desde modelos como ModernBERT, BERT, RoBERTa, etc. La arquitectura
+  del modelo se carga automáticamente desde la ruta/id proporcionada. Cuando `base_model` está configurado,
+  `model_class` y `model` no son obligatorios (la arquitectura se infiere del checkpoint).
+
+  **Impacto:** Usar un modelo base acelera drásticamente la convergencia y reduce los datos necesarios.
+  El modelo hereda el vocabulario y tokenizador del checkpoint original.
+examples:
+  - answerdotai/ModernBERT-base
+  - /path/to/local/model

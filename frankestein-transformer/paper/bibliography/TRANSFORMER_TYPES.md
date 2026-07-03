@@ -2,7 +2,7 @@
 
 The trajectory of sequence modeling in artificial intelligence has been inexorably shaped by a continuous tension between computational expressivity and resource efficiency. The advent of the standard attention mechanism fundamentally transformed natural language processing, computer vision, and computational biology by prioritizing global contextualization over the inductive biases of sequential recurrence. However, as the ambition of foundation models scales toward multimillion-token context windows—essential for genomic analysis, repository-level code comprehension, and long-term agentic planning—the quadratic computational complexity of traditional self-attention has emerged as a severe bottleneck. The industry's reliance on Key-Value (KV) caching during autoregressive decoding has further exposed the limitations of standard architectures, precipitating a memory bandwidth crisis on modern hardware accelerators.
 
-In response to these hardware and theoretical constraints, the research community has proposed a proliferation of alternative architectures. These models attempt to reconcile the "impossible triangle" of sequence modeling: achieving parallelizable training, constant-time inference, and uncompromising predictive performance. This exhaustive report provides a deep comparative analysis of six pivotal sequence modeling architectures: the Standard Attention mechanism, Sigmoid Attention, the Retentive Network (RetNet), the Selective State Space Model (Mamba), the Ordinary Differential Equation (ODE) Transformer, and the Titans Neural Memory architecture. By deconstructing their mathematical formulations, analyzing their computational complexities, and evaluating their second- and third-order implications on hardware utilization and representation learning, this document establishes a comprehensive framework for understanding the future of sequence modeling.
+In response to these hardware and theoretical constraints, the research community has proposed a proliferation of alternative architectures. These models attempt to reconcile the "impossible triangle" of sequence modeling: achieving parallelizable training, constant-time inference, and uncompromising predictive performance. This exhaustive report provides a deep comparative analysis of thirteen pivotal sequence modeling architectures: the Standard Attention mechanism, Sigmoid Attention, the Retentive Network (RetNet), the Selective State Space Model (Mamba), the Ordinary Differential Equation (ODE) Transformer, and the Titans Neural Memory architecture. It then extends the analysis to seven KV-compression and head-mixing variants that generalise Grouped-Query Attention (GQA): Multi-Head Latent Attention (MLA), Group-Query Latent Attention (GQLA), Multi-Head Low-Rank Attention (MLRA), Tucker Attention, Interleaved Head Attention (IHA), Grouped-head laTenT Attention (GTA), and Multi-head Temporal Latent Attention (MTLA). By deconstructing their mathematical formulations, analyzing their computational complexities, and evaluating their second- and third-order implications on hardware utilization and representation learning, this document establishes a comprehensive framework for understanding the future of sequence modeling.
 
 ## 1. Standard Attention: The Foundation of Global Contextualization
 
@@ -316,11 +316,192 @@ Empirical benchmarks highlight the extraordinary efficacy of this approach. By s
 | **Cons** | Implementing gradient-based backpropagation weight updates during inference introduces substantial systems engineering complexity. |
 | **Features** | MIRAS framework principles; momentum-based surprise metric ($\eta_t, \theta_t$); test-time associative parameter updates; distinct long/short-term memory bifurcation. |
 
-## 7. Synthesis and Systemic Insights: The Future of Sequence Architectures
+## 8. Multi-Head Latent Attention (MLA): Low-Rank KV Compression with RoPE
+
+Multi-Head Latent Attention (MLA) [arXiv:2506.09392, Mehta et al. 2025] jointly compresses keys and values into a single low-rank latent vector, decoupling the size of the KV cache from the hidden dimension. The authors show that the latent rank is Pareto-optimal at `hidden_size // 2` for small language models, where MLA halves the KV cache while preserving MHA-level quality. RoPE is applied to the decompressed Query and Key tensors, which the paper demonstrates is essential to recover MHA quality on small models. Empirically, MLA yields a 45% KV-cache reduction with only a 0.3% validation loss increase on a 30M-parameter GPT.
+
+### 8.1 Mathematical Foundation
+
+The core of MLA is a single down-projection that compresses the token embedding into a joint KV latent, followed by independent up-projections that reconstruct the keys and values:
+
+$$
+c_{KV} = W_{DKV}\, x, \qquad k = W_{UK}\, c_{KV}, \qquad v = W_{UV}\, c_{KV}
+$$
+
+Queries are obtained directly via $q = W_Q\, x$. Rotary Position Embeddings (RoPE) are then applied to the decompressed $q$ and $k$, after which the standard scaled dot-product attention is computed. The block is closed by a standard output projection.
+
+### 8.2 Computational Complexity and the Cache Reduction
+
+During training MLA retains the same $\mathcal{O}(n^2 \cdot d)$ time and $\mathcal{O}(n^2)$ space complexity as standard MHA — the latent compression does not change the quadratic attention core, it only shrinks the cached state. The benefit appears at inference: the per-token KV cache is reduced to $\mathcal{O}(r_{kv})$, halved at the Pareto-optimal $r_{kv} = d/2$. A100 benchmarks report a 1.4x decoding speedup over the full-rank MLA variant at $r = d/2$.
+
+### 8.3 Architectural Profile: MLA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Multi-Head Latent Attention (MLA + RoPE) |
+| **Authors / Year** | Mehta et al. / 2025 |
+| **Paper / DOI** | [Latent Multi-Head Attention for Small Language Models](https://arxiv.org/abs/2506.09342) / 10.48550/arXiv.2506.09342 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(r_{kv})$ (latent KV cache) |
+| **Pros** | Halves KV cache at $r_{kv} = d/2$ with negligible quality loss; RoPE essential for small models; surpasses vanilla attention by 2% with RoPE. |
+| **Cons** | Two-stage up/down projections add parameters; full-rank MLA is slower than $r=d/2$ variant. |
+| **Features** | Joint KV latent; RoPE on decompressed Q/K; Pareto-optimal at half-rank for small SLMs. |
+
+## 9. Group-Query Latent Attention (GQLA): Hardware-Adaptive Dual Decoding Paths
+
+Group-Query Latent Attention (GQLA) [arXiv:2605.15250, Meng 2026] is a minimal modification of MLA whose trained weights expose two algebraically equivalent decoding paths over the same parameters: an MQA-absorb path (identical to MLA's, which pins the H100 roofline at $s_q = 1$) and a GQA path with a per-group expanded cache (suited to commodity GPUs like the H20 with multi-token prediction, $s_q = 2$, and up to 8-way tensor parallelism). The accompanying `TransGQLA` recipe converts a pretrained GQA checkpoint into GQLA; on LLaMA-3-8B it compresses the per-token KV cache to 28.125% of the GQA baseline on the MQA-absorb path while structurally preserving GQA-level traffic on the per-group path.
+
+### 9.1 Mathematical Foundation
+
+The latent compression is identical to MLA. The algebraic equivalence that enables the dual path is $softmax(q_{absorbed} \cdot c_{KV}) = softmax((q \cdot W_{UK}) \cdot c_{KV})$, i.e. the query can either be absorbed into the latent space (MQA-absorb) or the keys can be expanded out and attended to as in GQA. The runtime selects whichever path best matches the target hardware.
+
+### 9.2 Computational Complexity and Hardware Adaptivity
+
+Training and inference complexities match MLA; the distinguishing feature is that path selection is a runtime/kernel concern — no retraining is required to switch hardware targets. The GQA-expanded path pays an $\mathcal{O}(\text{num\_groups} \cdot d_h \cdot n)$ cache, while the MQA-absorb path pays only $\mathcal{O}(r_{kv})$.
+
+### 9.3 Architectural Profile: GQLA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Group-Query Latent Attention (GQLA) |
+| **Authors / Year** | Meng / 2026 |
+| **Paper / DOI** | [GQLA: Group-Query Latent Attention for Hardware-Adaptive LLM Decoding](https://arxiv.org/abs/2605.15250) / 10.48550/arXiv.2605.15250 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Two paths: MQA-absorb $\mathcal{O}(r_{kv})$ cache; GQA-expanded $\mathcal{O}(\text{num\_groups} \cdot d_h \cdot n)$ cache |
+| **Pros** | Two algebraically equivalent decoding paths over one set of weights; no retraining to switch hardware; up to 8-way zero-redundancy TP on GQA path. |
+| **Cons** | Path selection is a runtime/kernel concern; adds modest parameter overhead vs pure MLA. |
+| **Features** | Dual-path decoding (MQA-absorb + GQA-expanded); TransGQLA conversion from pretrained GQA; hardware-adaptive roofline pinning. |
+
+## 10. Multi-Head Low-Rank Attention (MLRA): Partitionable Latent for Tensor-Parallel Decoding
+
+Multi-Head Low-Rank Attention (MLRA) [arXiv:2603.02188, Liu et al. 2026] addresses an overlooked limitation of MLA: the single monolithic latent forces every tensor-parallel rank to load the entire cache. MLRA splits the latent into $L$ disjoint sub-heads of rank $r/L$, enabling partitionable 4-way tensor-parallel decoding where each device loads only $1/L$ of the cache. This yields a 2.8x decoding speedup over MLA while achieving state-of-the-art perplexity and downstream task performance.
+
+### 10.1 Mathematical Foundation
+
+The KV latent is partitioned as $c_{KV} = [c_1, \dots, c_L]$ (concatenated). Each sub-head has its own up-projections $UK_i$, $UV_i$, and the reconstructed tensors are concatenated into the full $\text{num\_heads} \cdot \text{head\_dim}$ width before the standard softmax attention.
+
+### 10.2 Computational Complexity and TP Sharding
+
+Training remains $\mathcal{O}(n^2 \cdot d)$. At inference the $\mathcal{O}(r_{kv})$ cache is partitioned across $L$ devices, each loading $1/L$. This eliminates the redundant full-cache loads MLA forces and yields a 2.8x decode speedup over MLA.
+
+### 10.3 Architectural Profile: MLRA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Multi-Head Low-Rank Attention (MLRA) |
+| **Authors / Year** | Liu et al. / 2026 |
+| **Paper / DOI** | [Multi-Head Low-Rank Attention](https://arxiv.org/abs/2603.02188) / 10.48550/arXiv.2603.02188 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(r_{kv} / L)$ per device (partitionable) |
+| **Pros** | Partitionable latent enables efficient 4-way TP decoding; 2.8x decode speedup over MLA; SOTA perplexity. |
+| **Cons** | Per-sub-head up-projections add parameter count; requires $L$ to divide $\text{latent\_rank}$ and $\text{num\_heads} \cdot \text{head\_dim}$. |
+| **Features** | Disjoint latent sub-heads; tensor-parallel-friendly sharding; eliminates MLA's redundant full-cache loads. |
+
+## 11. Tucker Attention: A Generalised Low-Rank Factorisation
+
+Tucker Attention [arXiv:2603.30033, Klein et al. 2026] provides a unified low-rank view in which MHA, GQA, and MLA all appear as special cases of a Tucker-style factorisation of the Q/K/V weight tensors, parameterised by ranks $q_{\text{rank}}, k_{\text{rank}}, v_{\text{rank}}$. MHA corresponds to ranks equal to the hidden size, GQA to reduced (and shared) $k{=}v_{\text{rank}}$ with shared KV, and MLA to a joint KV latent of rank $k{=}v_{\text{rank}}$. Tucker Attention uses an order of magnitude fewer parameters than GQA and MLA for comparable validation metrics on both LLM and ViT, and is fully compatible with FlashAttention and RoPE.
+
+### 11.1 Mathematical Foundation
+
+Each of Q, K, V is factorised as a core tensor times a factor matrix, e.g. $Q = W_{Q,\text{core}} \cdot W_{Q,\text{factor}} \cdot x$, and analogously for K and V. The three ranks expose the actual ranks achieved by MHA, GQA, and MLA, framing them as points along a continuum rather than distinct mechanisms.
+
+### 11.2 Computational Complexity and Parameter Efficiency
+
+Training retains $\mathcal{O}(n^2 \cdot d)$ time (the same softmax attention core), but the parameter count is roughly 10x smaller than GQA/MLA for comparable validation metrics, because the factorised projections are far more compact than the per-head or per-latent matrices those architectures require.
+
+### 11.3 Architectural Profile: Tucker Attention
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Tucker Attention |
+| **Authors / Year** | Klein et al. / 2026 |
+| **Paper / DOI** | [Tucker Attention: A generalization of approximate attention mechanisms](https://arxiv.org/abs/2603.30033) / 10.48550/arXiv.2603.30033 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(k_{\text{rank}} + v_{\text{rank}})$ cache |
+| **Pros** | Generalises MHA/GQA/MLA as special cases; ~10x fewer params for comparable metrics; FlashAttention + RoPE compatible. |
+| **Cons** | Three independent ranks to tune; factorised projections can reduce expressiveness if ranks too small. |
+| **Features** | Tucker factorisation of Q/K/V weights; exposes actual ranks of MHA/GQA/MLA; enables simplifications for MLA. |
+
+## 12. Interleaved Head Attention (IHA): Cross-Head Mixing via Pseudo-Heads
+
+Interleaved Head Attention (IHA) [arXiv:2602.21371, Duvvuri et al. 2026] enables cross-head mixing by constructing $P$ pseudo-heads per head (typically $P = H$). Each pseudo Q/K/V is a learned linear combination of all $H$ original heads, inducing up to $P^2$ attention patterns per head with $\mathcal{O}(H^2 P)$ parameter overhead. Theoretically, IHA needs $\Theta(\sqrt{k}\, n^2)$ parameters versus $\Theta(k\, n^2)$ for MHA on the Polynomial task. Empirically it delivers $+10{-}20\%$ on RULER multi-key retrieval (4k–16k), $+5.8\%$ on GSM8K, and $+2.8\%$ on MATH-500 over full attention after reasoning fine-tuning.
+
+### 12.1 Mathematical Foundation
+
+For each pseudo-head $p$, the mixed tensors are $q_{\text{pseudo}}[p] = \sum_h \text{mix}_q[p, h] \cdot q[h]$, and analogously for K and V. Scaled dot-product attention is computed on the pseudo-heads, and the $P$ pseudo-outputs per original head are averaged to produce the final representation.
+
+### 12.2 Computational Complexity and Reasoning Gains
+
+Training time is $\mathcal{O}(P^2 \cdot n^2 \cdot d / H)$, reflecting up to $P^2$ attention patterns per head. The mixing matrices add a modest $\mathcal{O}(H^2 P)$ parameter overhead, which the authors show is theoretically backed by improved sample complexity on the Polynomial and CPM-3 tasks.
+
+### 12.3 Architectural Profile: IHA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Interleaved Head Attention (IHA) |
+| **Authors / Year** | Duvvuri et al. / 2026 |
+| **Paper / DOI** | [Interleaved Head Attention](https://arxiv.org/abs/2602.21371) / 10.48550/arXiv.2602.21371 |
+| **Training Complexity** | Time: $\mathcal{O}(P^2 \cdot n^2 \cdot d / H)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(n \cdot d)$ KV cache |
+| **Pros** | Cross-head mixing enables compositional multi-step reasoning; $+10{-}20\%$ RULER multi-key; $+5.8\%$ GSM8K; theory-backed parameter efficiency. |
+| **Cons** | $\mathcal{O}(H^2 P)$ mixing parameter overhead; $P^2$ attention patterns increase compute. |
+| **Features** | Pseudo-heads as learned linear combinations of original heads; up to $P^2$ patterns per head; theory on Polynomial and CPM-3 tasks. |
+
+## 13. Grouped-head laTenT Attention (GTA): Shared Maps + Latent Values
+
+Grouped-head laTenT Attention (GTA) [arXiv:2506.17286, Sun et al. 2025] combines two complementary compressions. First, a shared attention-map mechanism: one attention score tensor per group of heads, reused across all heads in the group, shrinking the key cache. Second, a nonlinear value decoder: the value cache is compressed to a latent by a down-projection and reconstructed by a SiLU decoder. Together these cut up to 62.5% of attention FLOPs versus GQA, shrink the KV cache by up to 70%, and yield a 2x end-to-end inference speedup.
+
+### 13.1 Mathematical Foundation
+
+The shared map is computed from group-averaged queries and keys: $q_g = \text{mean}(q[\text{group}])$, $k_g = \text{mean}(k[\text{group}])$, and $\text{attn}_g = \text{softmax}(q_g \cdot k_g^\top / \sqrt{d})$ is reused across the whole group. The values are latent: $v_{\text{latent}} = W_{DV}\, x$ and reconstructed as $v = \text{silu}(W_{UV}\, v_{\text{latent}})$. The block output is $\text{out} = \text{attn}_g \cdot v$.
+
+### 13.2 Computational Complexity and Cache Compression
+
+Training time for the shared map is $\mathcal{O}(n^2 \cdot d / \text{group\_size})$. Compared to GQA, GTA cuts up to 62.5% of attention FLOPs, shrinks the KV cache by up to 70%, and delivers a 2x end-to-end inference speedup, without the overhead MLA introduces.
+
+### 13.3 Architectural Profile: GTA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Grouped-head laTenT Attention (GTA) |
+| **Authors / Year** | Sun et al. / 2025 |
+| **Paper / DOI** | [GTA: Grouped-head latenT Attention](https://arxiv.org/abs/2506.17286) / 10.48550/arXiv.2506.17286 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d / \text{group\_size})$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(\text{value\_latent\_rank} + \text{key\_cache}/\text{group\_size})$ |
+| **Pros** | Up to 62.5% attention FLOPs cut vs GQA; up to 70% KV cache shrink; 2x end-to-end speedup; no MLA overhead. |
+| **Cons** | Shared map loses per-head diversity within a group; nonlinear value decoder adds parameters. |
+| **Features** | Shared attention map per group; latent value cache with SiLU decoder; exploits head similarity redundancy. |
+
+## 14. Multi-head Temporal Latent Attention (MTLA): Temporal KV Cache Merging
+
+Multi-head Temporal Latent Attention (MTLA) [arXiv:2505.13544, Deng & Woodland 2025] extends MLA along the temporal axis: a hyper-network dynamically merges $m$ temporally adjacent KV cache vectors into a single slot, shrinking the effective temporal length by a factor of $m$. A stride-aware causal mask keeps parallel training consistent with autoregressive inference. MTLA delivers a 5.3x decode speedup and an 8.3x GPU memory reduction versus MHA on En-De speech translation, and remains competitive across speech translation, recognition, understanding, and text summarisation.
+
+### 14.1 Mathematical Foundation
+
+The per-token KV latent is $c_{KV} = W_{DKV}\, x$ as in MLA. The novel step is temporal merging: latent vectors are combined via a gated average over windows of size $m$ with stride $s$, producing a shorter sequence of merged slots. Queries then attend over these merged slots under a stride-aware causal mask that preserves causality across the merge boundaries.
+
+### 14.2 Computational Complexity and Temporal Compression
+
+Training is effectively $\mathcal{O}(n^2 \cdot d / m)$ thanks to the temporal merging. At inference MTLA achieves a 5.3x decode speedup and an 8.3x GPU memory reduction compared to MHA, with the merged cache sized $\mathcal{O}(\text{latent\_rank} \cdot n / m)$.
+
+### 14.3 Architectural Profile: MTLA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Multi-head Temporal Latent Attention (MTLA) |
+| **Authors / Year** | Deng & Woodland / 2025 |
+| **Paper / DOI** | [Multi-head Temporal Latent Attention](https://arxiv.org/abs/2505.13544) / 10.48550/arXiv.2505.13544 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d / m)$ effective, Space: $\mathcal{O}(n^2 / m)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n / m)$, Space: $\mathcal{O}(\text{latent\_rank} \cdot n / m)$ (temporally merged cache) |
+| **Pros** | 5.3x decode speedup; 8.3x GPU memory reduction vs MHA; stride-aware mask keeps training consistent with inference. |
+| **Cons** | Hyper-network merge adds parameters; temporal merging is lossy for fine-grained per-token distinctions. |
+| **Features** | Temporal KV merging via hyper-network; stride-aware causal mask; extends MLA along the time axis. |
+
+## 15. Synthesis and Systemic Insights: The Future of Sequence Architectures
 
 The architectural diversity detailed above provides a unique vantage point from which to analyze the underlying trajectories driving sequence modeling. By evaluating the mechanical differences between these models, several profound third-order implications regarding hardware interplay, information theory, and network dynamics become apparent.
 
-### 7.1 The Expressivity versus Compression Duality
+### 15.1 The Expressivity versus Compression Duality
 
 The primary struggle defining modern architecture design is the trade-off between exact historical recall and structural state compression. The Standard Transformer operates as an uncompressed memory retrieval system; the KV cache ensures the lossless transmission of every historical state to the current token. However, this violates the fundamental computational requirements necessary for long-term operational scalability.
 
@@ -328,7 +509,7 @@ Models like Mamba and RetNet represent a definitive shift towards aggressive str
 
 The Titans architecture navigates this duality by fundamentally altering the medium of compression. Rather than compressing data into an activation state vector, Titans compress data into the physical parameters of a neural network using gradient descent. Parameter space offers a substantially higher, distributed capacity for structured, associative memory encoding than transient state space. This structural pivot grants Titans the $\mathcal{O}(1)$ memory benefits of linear RNNs while retaining the expressive recall of standard transformers.
 
-### 7.2 The Dictatorship of Hardware Substrates
+### 15.2 The Dictatorship of Hardware Substrates
 
 A crucial insight drawn from the evolution of these models is that mathematical complexity is an insufficient predictor of wall-clock latency. In the modern era, algorithmic efficiency is heavily subordinated to hardware topology, specifically the dichotomy between Static Random-Access Memory (SRAM) and High Bandwidth Memory (HBM).
 
@@ -336,13 +517,13 @@ The Standard Transformer's theoretical $\mathcal{O}(n)$ autoregressive decoding 
 
 Similarly, Sigmoid Attention demonstrates that algorithmic locality is paramount to speed. Despite sharing the exact $\mathcal{O}(n^2)$ FLOP count of standard attention, the element-wise mathematical nature of the sigmoid function eliminates the global synchronization barriers required by the softmax denominator. FlashSigmoid exploits this computational independence to process chunks of the attention matrix entirely in SRAM, yielding a 17% net speedup. The architecture that aligns best with the silicon hardware lottery will invariably outcompete those that merely minimize theoretical arithmetic operations.
 
-### 7.3 Continuous Dynamics and Geometrical Trajectories
+### 15.3 Continuous Dynamics and Geometrical Trajectories
 
 The introduction of the ODE Transformer highlights an intriguing philosophical shift: treating neural networks as continuous dynamical systems navigating a geometric space, rather than as discrete algebraic circuits. The recognition that a standard residual block is merely an Euler integration step exposes the vulnerability of transformers to compounding numerical truncation errors. By enforcing higher-order Runge-Kutta formulations, the ODE Transformer proves that deep representation spaces require careful, multi-step geometric traversing to yield high-fidelity output generation.
 
 This continuous-time perspective is deeply echoed in the Mamba architecture, which originates directly from the discretization of a continuous linear differential equation. The input-dependent $\Delta_t$ parameter essentially modulates the "time step" of the continuous system based on the semantic content of the input. When $\Delta_t$ is large, the system rapidly integrates new information; when small, the system state is frozen, perfectly mimicking a continuous memory hold. This architectural convergence suggests that the most effective way to process discrete, linguistic tokens may be to embed them within the continuous flow of simulated physical dynamics.
 
-### 7.4 The Convergence Towards Test-Time Adaptation and Hybridization
+### 15.4 The Convergence Towards Test-Time Adaptation and Hybridization
 
 Perhaps the most disruptive macro-trend is the impending dissolution of the boundary between the "training" phase and the "inference" phase. Standard attention, RetNet, Mamba, and ODE Transformers all operate with static parameters during inference; their learned weights are frozen, and any dynamic behavior is strictly a function of changing temporal activations.
 
