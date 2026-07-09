@@ -516,7 +516,7 @@ async function reanudarPorToken() {
 
 async function logApiTrace(message) {
   try {
-    const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const ts = formatNow();
     if (!CONFIG_IDS.API_TRACE_SHEET_ID) {
       CONFIG_IDS.API_TRACE_SHEET_ID = await ensureTraceSheet();
     }
@@ -696,7 +696,9 @@ function indiceALetraColumna(idx) {
 }
 
 function formatNow() {
-  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 function validarAlineacionColumnasMaestro(encabezadosMaestro, datosFormulario) {
@@ -768,7 +770,8 @@ function formatearFechaProgreso(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
-  return d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function refrescarBarraProgreso() {
