@@ -116,7 +116,7 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     <div id="output-resumen" class="cie-output"></div>
   </div>
 
-  <p>Seleccione un convenio para ver sus datos automáticamente</p>
+  <p>Selecciona un estado, y luego una REX del convenio CIE</p>
 
   <select id="dropdown-estado" class="cie-select" disabled>
     <option value="">Todos los estados</option>
@@ -579,7 +579,15 @@ function indiceAColumnaExcel(idx) {
 }
 
 function formatNow() {
-  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function formatDateLocal() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
 }
 
 const COLUMNAS_METADATA_COORD = [
@@ -625,7 +633,7 @@ function buildSheetsAppendUrl(spreadsheetId, sheetName, rangeA1, queryParams) {
 }
 
 function _log(nivel, msg, ...args) {
-  const ts = new Date().toISOString();
+  const ts = formatNow();
   const linea = `[CIE] ${ts} [${nivel}] ${msg}`;
   if (nivel === 'error') console.error(linea, ...args);
   else if (nivel === 'warn') console.warn(linea, ...args);
@@ -864,7 +872,8 @@ function obtenerUltimaFechaExtraccion(row) {
 function renderFechaExtraccion(dt) {
   if (!dt) return '<span class="cie-muted">(sin extracción)</span>';
   try {
-    return dt.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(dt.getDate())}-${pad(dt.getMonth() + 1)}-${dt.getFullYear()} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
   } catch (e) {
     return htmlEscape(dt.toISOString().replace('T', ' ').slice(0, 16));
   }
@@ -1274,7 +1283,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
     );
     await sleep(obtenerDelayMs());
 
-    const fechaObs = new Date().toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const fechaObs = formatNow();
     await apiFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
       {
@@ -1284,7 +1293,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
           data: [
             { range: `${nuevoNombre}!B1`, values: [[`⚠️ OBSERVACIONES RECIBIDAS - ${fechaObs}`]] },
             { range: `${nuevoNombre}!B2`, values: [[`📋 ${observacionTexto}`]] },
-            { range: `${nuevoNombre}!B3`, values: [['Por favor corrija los puntos observados en las celdas verdes']] },
+            { range: `${nuevoNombre}!B3`, values: [['Por favor sólo corrija los puntos observados en las celdas verdes correspondientes']] },
             { range: `${nuevoNombre}!B4`, values: [['Cuando termine, marque el checkbox de envío al final del formulario']] }
           ]
         })
@@ -1413,7 +1422,7 @@ async function crearHojaConObservaciones(spreadsheetUrl, observacionTexto) {
     ];
 
     const originalTitle = hojaEdit.title;
-    const tituloBloqueado = `🔒 ${originalTitle} (v${nuevaVersion - 1})`;
+    const tituloBloqueado = `🔒 ${originalTitle} (original)`;
     requests.push({ updateSheetProperties: { properties: { sheetId: hojaEdit.sheetId, title: tituloBloqueado }, fields: 'title' } });
 
     await apiFetch(
@@ -1583,41 +1592,41 @@ function construirEmailObservacion(row, observacionTexto) {
   const convenio = String(row['Convenio_REX'] || 'N/D').trim();
   const region = String(row['Sostenedor_Region'] || 'N/D').trim();
   const urlSheet = String(row['URL_Sheet'] || '').trim();
-  const fecha = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
+  const fecha = formatDateLocal();
   const sostenedor = String(row['Sostenedor_Institucion'] || 'N/D').trim();
 
   const asunto = `MINEDUC: Su Informe del Convenio de Informática Educativa REX ${convenio} ha sido observado`;
-  const cuerpo = `Estimado/a\n${sostenedor}\n_Presente_\n\n`
-    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informática Educativa (CIE) que mantiene vigente con la respectiva Secretaría Regional Ministerial de Educación, N° de REX '
-    + `${convenio} con fecha ${fecha}.\n\n`
-    + 'Le agradecemos que haya completado el Informe CIE y le informamos que se encuentra OBSERVADO, por el siguiente motivo:\n\n'
-    + `${observacionTexto}\n\n`
-    + 'Solicitamos que subsane o aclare las observaciones realizadas al Informe CIE a la brevedad, dado que el plazo es de diez (10) días hábiles.\n\n'
-    + `Para realizar las correcciones, usted debe ingresar a ${urlSheet} como la primera vez, y modificar los campos que fueron observados.\n\n`
-    + 'Cordialmente,\n\n'
-    + `Secretaría Regional Ministerial de Educación Región de ${region}`;
+  const cuerpo = `<p>Estimado/a<br>${htmlEscape(sostenedor)}<br><u>Presente</u></p>`
+    + '<p>Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informática Educativa (CIE) que mantiene vigente con la respectiva Secretaría Regional Ministerial de Educación, N° de REX '
+    + `${htmlEscape(convenio)} con fecha ${htmlEscape(fecha)}.</p>`
+    + '<p>Le agradecemos que haya completado el Informe CIE y le informamos que se encuentra OBSERVADO, por el siguiente motivo:</p>'
+    + `<p>${htmlEscape(observacionTexto)}</p>`
+    + '<p>Solicitamos que subsane o aclare las observaciones realizadas al Informe CIE a la brevedad, dado que el plazo es de diez (10) días hábiles.</p>'
+    + `<p>Para realizar las correcciones, usted debe ingresar a <a href="${htmlEscape(urlSheet)}">${htmlEscape(urlSheet)}</a> como la primera vez, y modificar los campos que fueron observados.</p>`
+    + '<p>Cordialmente,</p>'
+    + `<p>Secretaría Regional Ministerial de Educación Región de ${htmlEscape(region)}</p>`;
   return { asunto, cuerpo };
 }
 
 function construirEmailAprobacion(row) {
   const convenio = String(row['Convenio_REX'] || 'N/D').trim();
   const region = String(row['Sostenedor_Region'] || 'N/D').trim();
-  const fecha = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
+  const fecha = formatDateLocal();
   const sostenedor = String(row['Sostenedor_Institucion'] || 'N/D').trim();
 
   const asunto = `MINEDUC: Su Informe del Convenio de Informática Educativa REX ${convenio} ha sido aprobado`;
-  const cuerpo = `Estimado/a\n${sostenedor}\n_Presente_\n\n`
-    + 'Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informática Educativa (CIE) que mantiene vigente con la respectiva Secretaría Regional Ministerial de Educación, N° de REX '
-    + `${convenio} con fecha ${fecha}.\n\n`
-    + 'Le agradecemos que haya completado el Informe CIE y tenemos el agrado de informarle que ha sido revisado y APROBADO.\n\n'
-    + 'Cordialmente,\n\n'
-    + `Secretaría Regional Ministerial de Educación Región de ${region}`;
+  const cuerpo = `<p>Estimado/a<br>${htmlEscape(sostenedor)}<br><u>Presente</u></p>`
+    + '<p>Junto con saludar, nos dirigimos a usted en el marco del Convenio de Informática Educativa (CIE) que mantiene vigente con la respectiva Secretaría Regional Ministerial de Educación, N° de REX '
+    + `${htmlEscape(convenio)} con fecha ${htmlEscape(fecha)}.</p>`
+    + '<p>Le agradecemos que haya completado el Informe CIE y tenemos el agrado de informarle que ha sido revisado y APROBADO.</p>'
+    + '<p>Cordialmente,</p>'
+    + `<p>Secretaría Regional Ministerial de Educación Región de ${htmlEscape(region)}</p>`;
   return { asunto, cuerpo };
 }
 
 function construirMimeBase64({ to, subject, text }) {
   const subjectEncoded = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(subject))) + '?=';
-  const mime = `To: ${to}\r\nSubject: ${subjectEncoded}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n${text}`;
+  const mime = `To: ${to}\r\nSubject: ${subjectEncoded}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${text}`;
   let raw = btoa(unescape(encodeURIComponent(mime)));
   raw = raw.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   return raw;
