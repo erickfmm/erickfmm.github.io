@@ -387,6 +387,52 @@ function setLoginStatus(cls, msg) {
 const RETRIABLE = new Set([401, 408, 429, 500, 502, 503, 504]);
 let __lastApiCallTs = 0;
 
+const RETRY_DELAY_FIJO_MS = 5000;
+const RETRY_MAX_REINTENTOS = 3;
+
+const alarmState = { active: false, ctx: null, osc: null, gain: null, interval: null };
+
+function iniciarAlarmaError() {
+  if (alarmState.active) return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 1100;
+    gain.gain.value = 0.05;
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    let high = true;
+    const interval = setInterval(() => {
+      osc.frequency.value = high ? 1300 : 850;
+      high = !high;
+    }, 200);
+    alarmState.active = true;
+    alarmState.ctx = ctx;
+    alarmState.osc = osc;
+    alarmState.gain = gain;
+    alarmState.interval = interval;
+  } catch (e) { console.warn('No se pudo iniciar alarma', e); }
+}
+
+function detenerAlarmaError() {
+  if (!alarmState.active) return;
+  try {
+    if (alarmState.interval) clearInterval(alarmState.interval);
+    if (alarmState.osc) try { alarmState.osc.stop(); } catch (e) {}
+    if (alarmState.ctx) try { alarmState.ctx.close(); } catch (e) {}
+  } catch (e) {}
+  alarmState.active = false;
+  alarmState.ctx = null;
+  alarmState.osc = null;
+  alarmState.gain = null;
+  alarmState.interval = null;
+}
+
 async function esperarDelayApi(forzarEsperaCompleta = false) {
   const delayMs = obtenerDelayMs();
   const elapsed = Date.now() - __lastApiCallTs;
@@ -413,14 +459,12 @@ async function esperarReanudacion() {
 }
 
 async function apiFetch(url, init = {}, opts = {}) {
-  const maxRetries = opts.maxRetries ?? 4;
-  const baseDelay  = opts.baseDelay  ?? 15000;
   const skipRetry  = opts.skipRetry  ?? false;
   const enforceDelay = opts.enforceDelay !== false;
   let attempt = 0;
   let lastError = null;
 
-  while (attempt < maxRetries) {
+  while (attempt <= RETRY_MAX_REINTENTOS) {
     await esperarReanudacion();
     if (enforceDelay) await esperarDelayApi(true);
 
@@ -443,9 +487,9 @@ async function apiFetch(url, init = {}, opts = {}) {
     } catch (e) {
       lastError = new Error(`fetch failed: ${e.message}`);
       if (skipRetry) throw lastError;
-      const wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-      print(`⚠️ Error de red, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
-      await sleep(wait);
+      if (attempt >= RETRY_MAX_REINTENTOS) throw lastError;
+      print(`⚠️ Error de red, reintento ${attempt + 1}/${RETRY_MAX_REINTENTOS} en ${RETRY_DELAY_FIJO_MS / 1000}s`);
+      await sleep(RETRY_DELAY_FIJO_MS);
       attempt++;
       continue;
     }
@@ -464,32 +508,31 @@ async function apiFetch(url, init = {}, opts = {}) {
       const renovado = await renovarTokenSilencioso();
       if (renovado) {
         print('🔄 Token renovado silenciosamente tras 401, reintentando...');
-        attempt++;
         continue;
       } else {
         await pausarPorToken('Token expirado y no se pudo renovar. Pulse Reconectar.');
-        attempt++;
         continue;
       }
     }
 
-    if (skipRetry || !retriable || attempt === maxRetries - 1) {
+    if (skipRetry || !retriable || attempt >= RETRY_MAX_REINTENTOS) {
       const text = await resp.text().catch(() => '');
       throw new Error(`HTTP ${status}: ${text.slice(0, 500)}`);
     }
     let wait;
     const retryAfter = parseFloat(resp.headers.get('Retry-After') || '0');
     if (retryAfter > 0) {
-      wait = Math.min(retryAfter * 1000, 120000) + Math.random() * 500;
+      wait = Math.min(retryAfter * 1000, 120000);
     } else {
-      wait = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      wait = RETRY_DELAY_FIJO_MS;
     }
-    print(`⚠️ API retryable ${status}, intento ${attempt + 1}/${maxRetries} en ${(wait/1000).toFixed(1)}s`);
+    print(`⚠️ API retryable ${status}, reintento ${attempt + 1}/${RETRY_MAX_REINTENTOS} en ${wait / 1000}s`);
     await sleep(wait);
     attempt++;
     lastError = new Error(`HTTP ${status}`);
   }
-  if (lastError) throw lastError;
+  if (lastError) { iniciarAlarmaError(); throw lastError; }
+  iniciarAlarmaError();
   throw new Error('apiFetch: reintentos agotados');
 }
 
@@ -1813,6 +1856,9 @@ btnLeerSheets.addEventListener('click', async () => {
   } catch (e) {
     print(`❌ Error: ${e.message}`);
     console.error(e);
+    iniciarAlarmaError();
+    btnReconectar.style.display = '';
+    btnReconectar.disabled = false;
   } finally {
     appState.batchEnCurso = false;
     appState.batchPausado = false;
@@ -1835,6 +1881,7 @@ btnPausarBatch.addEventListener('click', () => {
 });
 
 btnReconectar.addEventListener('click', async () => {
+  detenerAlarmaError();
   setLoginStatus('warn', '🟡 Reconectando...');
   try {
     await initGis();
@@ -1872,6 +1919,9 @@ selectRegionFiltro.addEventListener('change', () => {
 // INITIALIZATION
 // =============================================================================
 async function init() {
+  detenerAlarmaError();
+  window.addEventListener('beforeunload', detenerAlarmaError);
+  window.addEventListener('pagehide', detenerAlarmaError);
   if (window.self !== window.top) {
     document.getElementById('iframe-warning').style.display = 'block';
     document.getElementById('btn-new-tab').addEventListener('click', () => {
