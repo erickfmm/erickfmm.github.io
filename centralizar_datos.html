@@ -108,9 +108,11 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     <h4 style="margin:0 0 6px 0;">📍 Progreso de la corrida</h4>
     <div id="progreso-info" class="cie-status">Sin progreso registrado.</div>
     <div class="cie-hbox" style="margin-top:8px;">
-      <button id="btn-reanudar" class="cie-btn cie-btn--success" disabled>▶️ Reanudar desde último</button>
-      <button id="btn-reiniciar-contador" class="cie-btn cie-btn--danger" disabled>🔄 Reiniciar contador</button>
+    <button id="btn-reanudar" class="cie-btn cie-btn--success" disabled>▶️ Reanudar desde último</button>
+    <button id="btn-reiniciar-contador" class="cie-btn cie-btn--danger" disabled>🔄 Reiniciar contador</button>
+    <button id="btn-recuperar-batch" class="cie-btn cie-btn--info" style="display:none;">♻️ Recuperar batch pendiente</button>
     </div>
+    <div id="batch-pendiente-info" class="cie-status cie-status--warn" style="margin-top:6px; display:none;"></div>
   </div>
 
   <hr>
@@ -239,6 +241,7 @@ const appState = {
   batchEnCurso: false,
   batchPausado: false,
   reanudarEsperado: false,
+  errorFatal: false,
   regionesDisponibles: [],
 };
 
@@ -250,6 +253,7 @@ const LS_KEYS = {
   TOKEN: 'cie_cent_access_token_persist',
   PROGRESSO: 'cie_cent_progreso',
   REGION_FILTRO: 'cie_cent_region_filtro',
+  BATCH_PENDIENTE: 'cie_cent_batch_pendiente',
 };
 
 function obtenerDelaySegundos() {
@@ -776,30 +780,81 @@ function validarAlineacionColumnasMaestro(encabezadosMaestro, datosFormulario) {
 // =============================================================================
 // PROGRESS PERSISTENCE
 // =============================================================================
+function _progresoVacio() {
+  return {
+    ultimo_indice_leido: 0,
+    ultimo_indice_confirmado: 0,
+    ultimo_id: '',
+    timestamp: '',
+    total_hojas: 0,
+    lote_size: 10,
+    region_filtro: '__TODAS__',
+    delay_segundos: DELAY_DEFAULT,
+  };
+}
+
 function cargarProgreso() {
   try {
     const raw = localStorage.getItem(LS_KEYS.PROGRESSO);
     if (!raw) return null;
     const p = JSON.parse(raw);
     if (!p || typeof p !== 'object') return null;
-    return p;
+    const base = _progresoVacio();
+    return Object.assign(base, p);
   } catch (e) { return null; }
 }
 
-function guardarProgreso(idxAbsoluto, idConvenio, totalHojas) {
+function _persistirProgreso(data) {
   try {
-    const data = {
-      ultimo_indice: idxAbsoluto,
-      ultimo_id: idConvenio || '',
-      timestamp: new Date().toISOString(),
-      total_hojas: totalHojas,
-      lote_size: parseInt(intBatchSize.value, 10) || 10,
-      region_filtro: selectRegionFiltro.value || '__TODAS__',
-      delay_segundos: obtenerDelaySegundos(),
-    };
     localStorage.setItem(LS_KEYS.PROGRESSO, JSON.stringify(data));
     refrescarBarraProgreso();
   } catch (e) { console.warn('No se pudo guardar progreso', e); }
+}
+
+function avanzarIndiceLeido(idxAbsoluto, idConvenio) {
+  const prev = cargarProgreso() || _progresoVacio();
+  const data = Object.assign({}, prev, {
+    ultimo_indice_leido: Math.max(prev.ultimo_indice_leido || 0, idxAbsoluto || 0),
+    ultimo_id: idConvenio || prev.ultimo_id || '',
+    timestamp: new Date().toISOString(),
+    total_hojas: prev.total_hojas || 0,
+    lote_size: parseInt(intBatchSize.value, 10) || 10,
+    region_filtro: selectRegionFiltro.value || '__TODAS__',
+    delay_segundos: obtenerDelaySegundos(),
+  });
+  _persistirProgreso(data);
+}
+
+function confirmarHastaIndice(idxAbsoluto) {
+  const prev = cargarProgreso() || _progresoVacio();
+  const data = Object.assign({}, prev, {
+    ultimo_indice_confirmado: Math.max(prev.ultimo_indice_confirmado || 0, idxAbsoluto || 0),
+    timestamp: new Date().toISOString(),
+  });
+  _persistirProgreso(data);
+}
+
+function sincronizarTotalHojas(total) {
+  const prev = cargarProgreso();
+  if (!prev) return;
+  if ((prev.total_hojas || 0) === total) return;
+  const data = Object.assign({}, prev, { total_hojas: total });
+  _persistirProgreso(data);
+}
+
+function guardarProgreso(idxAbsoluto, idConvenio, totalHojas) {
+  const prev = cargarProgreso() || _progresoVacio();
+  const data = Object.assign({}, prev, {
+    ultimo_indice_leido: idxAbsoluto,
+    ultimo_indice_confirmado: idxAbsoluto,
+    ultimo_id: idConvenio || '',
+    timestamp: new Date().toISOString(),
+    total_hojas: totalHojas || prev.total_hojas || 0,
+    lote_size: parseInt(intBatchSize.value, 10) || 10,
+    region_filtro: selectRegionFiltro.value || '__TODAS__',
+    delay_segundos: obtenerDelaySegundos(),
+  });
+  _persistirProgreso(data);
 }
 
 function limpiarProgreso() {
@@ -807,6 +862,63 @@ function limpiarProgreso() {
     localStorage.removeItem(LS_KEYS.PROGRESSO);
     refrescarBarraProgreso();
   } catch (e) {}
+}
+
+function persistirBatchPendiente(datos, idxInicioAbsoluto, idxFinAbsoluto) {
+  try {
+    if (!datos || datos.length === 0) { limpiarBatchPendiente(); return; }
+    const payload = {
+      ts: new Date().toISOString(),
+      idxInicioAbsoluto: idxInicioAbsoluto || 0,
+      idxFinAbsoluto: idxFinAbsoluto || 0,
+      datos: datos,
+    };
+    localStorage.setItem(LS_KEYS.BATCH_PENDIENTE, JSON.stringify(payload));
+    refrescarIndicadorBatchPendiente();
+  } catch (e) {
+    if (e && e.name === 'QuotaExceededError') {
+      console.warn('localStorage sin cuota para batch pendiente; se continúa sin persistir');
+    } else {
+      console.warn('No se pudo persistir batch pendiente', e);
+    }
+  }
+}
+
+function cargarBatchPendiente() {
+  try {
+    const raw = localStorage.getItem(LS_KEYS.BATCH_PENDIENTE);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p || !Array.isArray(p.datos) || p.datos.length === 0) return null;
+    return p;
+  } catch (e) { return null; }
+}
+
+function limpiarBatchPendiente() {
+  try {
+    localStorage.removeItem(LS_KEYS.BATCH_PENDIENTE);
+    refrescarIndicadorBatchPendiente();
+  } catch (e) {}
+}
+
+function refrescarIndicadorBatchPendiente() {
+  const bp = cargarBatchPendiente();
+  const info = document.getElementById('batch-pendiente-info');
+  const btn = document.getElementById('btn-recuperar-batch');
+  if (!info || !btn) return;
+  if (bp && bp.datos.length > 0) {
+    const total = bp.datos.length;
+    const hasta = bp.idxFinAbsoluto || 0;
+    const desde = bp.idxInicioAbsoluto || 0;
+    info.innerHTML = `⚠️ Hay <b>${total}</b> registros en buffer pendientes de flushear al maestro (sheets #${desde}–#${hasta}).`;
+    info.style.display = '';
+    btn.style.display = '';
+    btn.disabled = false;
+  } else {
+    info.style.display = 'none';
+    btn.style.display = 'none';
+    btn.disabled = true;
+  }
 }
 
 function formatearFechaProgreso(iso) {
@@ -823,28 +935,76 @@ function refrescarBarraProgreso() {
     progresoInfo.textContent = 'Sin progreso registrado.';
     btnReanudar.disabled = true;
     btnReiniciarContador.disabled = true;
+    refrescarIndicadorBatchPendiente();
     return;
   }
   const fecha = formatearFechaProgreso(p.timestamp);
-  const totalTxt = p.total_hojas ? ` de ${p.total_hojas}` : '';
-  progresoInfo.innerHTML = `Último informe procesado: <b>#${p.ultimo_indice}${totalTxt}</b>`
+  const total = p.total_hojas || 0;
+  const totalTxt = total ? ` de ${total}` : '';
+  const leido = p.ultimo_indice_leido || 0;
+  const confirmado = p.ultimo_indice_confirmado || 0;
+  const enBuffer = Math.max(0, leido - confirmado);
+  const bufferHtml = enBuffer > 0
+    ? ` <span class="cie-status cie-status--warn">⚠️ ${enBuffer} en buffer sin confirmar</span>`
+    : '';
+  progresoInfo.innerHTML = `Último sheet leído: <b>#${leido}${totalTxt}</b>`
     + (p.ultimo_id ? ` — <code>${htmlEscape(p.ultimo_id)}</code>` : '')
-    + ` — <span class="cie-muted">${fecha}</span>`;
+    + ` — <span class="cie-muted">${fecha}</span>`
+    + `<br>Confirmado en maestro: <b>#${confirmado}${totalTxt}</b>`
+    + bufferHtml;
   btnReanudar.disabled = false;
   btnReiniciarContador.disabled = false;
+  refrescarIndicadorBatchPendiente();
 }
 
 function reanudarDesdeUltimo() {
   const p = cargarProgreso();
   if (!p) { print('⚠️ No hay progreso guardado.'); return; }
-  const nuevoStart = (p.ultimo_indice || 0);
+  const nuevoStart = Math.max(p.ultimo_indice_confirmado || 0, p.ultimo_indice_leido || 0);
   intStartAt.value = String(nuevoStart);
-  print(`▶️ Reanudando desde el índice ${nuevoStart}. Pulse "Leer Informes CIE" para continuar.`);
+  print(`▶️ Reanudando desde el índice ${nuevoStart} (último confirmado en maestro). Pulse "Leer Informes CIE" para continuar.`);
+}
+
+async function ejecutarRecuperarBatchPendiente() {
+  const bp = cargarBatchPendiente();
+  if (!bp || bp.datos.length === 0) {
+    print('ℹ️ No hay batch pendiente que recuperar.');
+    return;
+  }
+  if (!appState.maestroId && !CONFIG_IDS.MAESTRO_ID) {
+    print('❌ No hay maestro configurado. Conéctese primero.');
+    return;
+  }
+  const maestroId = appState.maestroId || CONFIG_IDS.MAESTRO_ID;
+  const btn = document.getElementById('btn-recuperar-batch');
+  btn.disabled = true;
+  print(`♻️ Recuperando batch pendiente: ${bp.datos.length} registros (sheets #${bp.idxInicioAbsoluto}–#${bp.idxFinAbsoluto})...`);
+  try {
+    const agregados = await agregarDatosAMaestro(maestroId, bp.datos);
+    print(`   ✅ ${agregados} registros agregados al maestro`);
+    limpiarBatchPendiente();
+    if (bp.idxFinAbsoluto) confirmarHastaIndice(bp.idxFinAbsoluto);
+    print('✅ Batch pendiente recuperado. Puede continuar la corrida con "Reanudar desde último".');
+  } catch (e) {
+    print(`❌ Error al recuperar batch: ${e.message}`);
+    btn.disabled = false;
+  }
+}
+
+function reanudarLoopAutomatico() {
+  const p = cargarProgreso();
+  if (!p) { print('⚠️ No hay progreso para reanudar.'); return false; }
+  const nuevoStart = Math.max(p.ultimo_indice_confirmado || 0, p.ultimo_indice_leido || 0);
+  intStartAt.value = String(nuevoStart);
+  print(`🔁 Reanudando corrida automáticamente desde sheet #${nuevoStart}...`);
+  ejecutarLecturaSheets();
+  return true;
 }
 
 function reiniciarContador() {
-  if (!window.confirm('¿Reiniciar el contador de progreso? Esto NO borra el maestro, sólo olvida el último índice.')) return;
+  if (!window.confirm('¿Reiniciar el contador de progreso? Esto NO borra el maestro, sólo olvida el último índice y descarta cualquier batch pendiente.')) return;
   limpiarProgreso();
+  limpiarBatchPendiente();
   intStartAt.value = '0';
   print('🔄 Contador de progreso reiniciado.');
 }
@@ -1741,7 +1901,13 @@ btnConectar.addEventListener('click', async () => {
   }
 });
 
-btnLeerSheets.addEventListener('click', async () => {
+btnLeerSheets.addEventListener('click', () => ejecutarLecturaSheets());
+
+async function ejecutarLecturaSheets() {
+  if (appState.batchEnCurso) {
+    print('⚠️ Ya hay una corrida en curso. Espere a que termine o pause.');
+    return;
+  }
   clearOutput();
   btnLeerSheets.disabled = true;
   btnLeerSheets.textContent = '⏳ Procesando...';
@@ -1749,6 +1915,7 @@ btnLeerSheets.addEventListener('click', async () => {
   appState.batchEnCurso = true;
   appState.batchPausado = false;
   btnReconectar.style.display = 'none';
+  appState.errorFatal = false;
 
   try {
     const batchSize = Math.max(1, parseInt(intBatchSize.value, 10) || 10);
@@ -1762,6 +1929,20 @@ btnLeerSheets.addEventListener('click', async () => {
     print(`📋 Listando sheets en carpeta regiones...`);
     const sheetsList = await listarSheetsEnCarpeta(CARPETA_REGIONES_ID);
     print(`📊 ${sheetsList.length} sheets encontrados`);
+    sincronizarTotalHojas(sheetsList.length);
+
+    const bpExistente = cargarBatchPendiente();
+    if (bpExistente && bpExistente.datos.length > 0) {
+      print(`♻️ Detectado batch pendiente previo (${bpExistente.datos.length} registros). Se re-flusheará al inicio.`);
+      try {
+        const agregadosPrev = await agregarDatosAMaestro(maestroId, bpExistente.datos);
+        print(`   ✅ Batch previo drenado: ${agregadosPrev} agregados`);
+        if (bpExistente.idxFinAbsoluto) confirmarHastaIndice(bpExistente.idxFinAbsoluto);
+        limpiarBatchPendiente();
+      } catch (e) {
+        print(`   ⚠️ No se pudo drenar batch previo (${e.message}). Se continuará; los duplicados serán omitidos.`);
+      }
+    }
 
     const startIdx = startAt > 0 ? (startAt - 1) : 0;
     const listToProcess = sheetsList.slice(startIdx);
@@ -1772,6 +1953,7 @@ btnLeerSheets.addEventListener('click', async () => {
     let totalAgregadosBatches = 0;
     let saltadosPorRegion = 0;
     const reporteArchivos = [];
+    let batchInicioAbsoluto = null;
 
     for (let idx = 0; idx < total; idx++) {
       if (appState.batchPausado) {
@@ -1787,7 +1969,7 @@ btnLeerSheets.addEventListener('click', async () => {
       if (!regionCoincideFiltro(regionDetectada, regionFiltro)) {
         saltadosPorRegion++;
         print(`   ⏭️ #${idxAbsoluto} saltado por región (detectada: ${regionDetectada || 'desconocida'}): ${nombreSheet}`);
-        guardarProgreso(idxAbsoluto, idSheet, sheetsList.length);
+        avanzarIndiceLeido(idxAbsoluto, idSheet);
         continue;
       }
       if (regionFiltro !== '__TODAS__' && !regionDetectada) {
@@ -1804,6 +1986,7 @@ btnLeerSheets.addEventListener('click', async () => {
         for (const datos of datosLista) {
           todosLosDatos.push(datos);
           datosBatch.push(datos);
+          if (batchInicioAbsoluto === null) batchInicioAbsoluto = idxAbsoluto;
           if (datos.tiene_error) logItems.push(`Error (REX: ${(datos.formulario || {}).Convenio_REX || '?'})`);
           else if (datos.esta_enviado) logItems.push('Enviado');
           else if (datos.tiene_datos_encuesta) logItems.push(`${(datos.proyectos_evaluados || []).length} proyectos`);
@@ -1821,26 +2004,39 @@ btnLeerSheets.addEventListener('click', async () => {
 
         if (datosBatch.length >= batchSize) {
           batchContador++;
-          print(`🔄 Guardando batch #${batchContador} (${datosBatch.length} registros)...`);
+          const idxFinBatch = idxAbsoluto;
+          const idxInicioBatch = batchInicioAbsoluto || idxFinBatch;
+          print(`🔄 Guardando batch #${batchContador} (${datosBatch.length} registros, sheets #${idxInicioBatch}–#${idxFinBatch})...`);
+          persistirBatchPendiente(datosBatch.slice(), idxInicioBatch, idxFinBatch);
           const agregados = await agregarDatosAMaestro(maestroId, datosBatch);
           totalAgregadosBatches += agregados;
           print(`   ✅ Batch #${batchContador}: ${agregados} registros agregados`);
+          confirmarHastaIndice(idxFinBatch);
+          limpiarBatchPendiente();
           datosBatch.length = 0;
+          batchInicioAbsoluto = null;
         }
       } catch (e) {
         reporteArchivos.push({ archivo: nombreSheet, estado: 'ERROR', causa: String(e) });
         print(`   ❌ Error: ${e.message}`);
       }
 
-      guardarProgreso(idxAbsoluto, idSheet, sheetsList.length);
+      avanzarIndiceLeido(idxAbsoluto, idSheet);
     }
 
     if (datosBatch.length > 0) {
       batchContador++;
-      print(`🔄 Guardando batch final #${batchContador} (${datosBatch.length} registros)...`);
+      const idxFinBatch = (startIdx + total);
+      const idxInicioBatch = batchInicioAbsoluto || idxFinBatch;
+      print(`🔄 Guardando batch final #${batchContador} (${datosBatch.length} registros, sheets #${idxInicioBatch}–#${idxFinBatch})...`);
+      persistirBatchPendiente(datosBatch.slice(), idxInicioBatch, idxFinBatch);
       const agregados = await agregarDatosAMaestro(maestroId, datosBatch);
       totalAgregadosBatches += agregados;
       print(`   ✅ Batch final: ${agregados} registros agregados`);
+      confirmarHastaIndice(idxFinBatch);
+      limpiarBatchPendiente();
+      datosBatch.length = 0;
+      batchInicioAbsoluto = null;
     }
 
     await asegurarUnicidadFilasValidas(maestroId);
@@ -1857,17 +2053,28 @@ btnLeerSheets.addEventListener('click', async () => {
     print(`❌ Error: ${e.message}`);
     console.error(e);
     iniciarAlarmaError();
+    appState.errorFatal = true;
     btnReconectar.style.display = '';
     btnReconectar.disabled = false;
+    const bp = cargarBatchPendiente();
+    if (bp && bp.datos.length > 0) {
+      print(`💡 Hay ${bp.datos.length} registros en buffer. Pulse "Reconectar" para re-flushear y continuar.`);
+    }
   } finally {
-    appState.batchEnCurso = false;
-    appState.batchPausado = false;
-    btnLeerSheets.disabled = false;
-    btnLeerSheets.textContent = '📖 Leer Informes CIE';
-    btnPausarBatch.disabled = true;
-    btnReconectar.style.display = 'none';
+    if (!appState.errorFatal) {
+      appState.batchEnCurso = false;
+      appState.batchPausado = false;
+      btnLeerSheets.disabled = false;
+      btnLeerSheets.textContent = '📖 Leer Informes CIE';
+      btnPausarBatch.disabled = true;
+      btnReconectar.style.display = 'none';
+    } else {
+      btnLeerSheets.disabled = true;
+      btnLeerSheets.textContent = '⏸️ En pausa por error';
+      btnPausarBatch.disabled = true;
+    }
   }
-});
+}
 
 btnPausarBatch.addEventListener('click', () => {
   appState.batchPausado = !appState.batchPausado;
@@ -1889,6 +2096,32 @@ btnReconectar.addEventListener('click', async () => {
     setLoginStatus('ok', '🟢 Conectado');
     print('🔌 Reconexión exitosa.');
     await reanudarPorToken();
+
+    const bp = cargarBatchPendiente();
+    if (bp && bp.datos.length > 0) {
+      if (!CONFIG_IDS.MAESTRO_ID) {
+        print('❌ No hay maestro configurado. No se puede re-flushear el batch pendiente.');
+        return;
+      }
+      print(`♻️ Re-flusheando batch pendiente (${bp.datos.length} registros, sheets #${bp.idxInicioAbsoluto}–#${bp.idxFinAbsoluto})...`);
+      try {
+        const agregados = await agregarDatosAMaestro(CONFIG_IDS.MAESTRO_ID, bp.datos);
+        print(`   ✅ ${agregados} registros agregados al maestro`);
+        if (bp.idxFinAbsoluto) confirmarHastaIndice(bp.idxFinAbsoluto);
+        limpiarBatchPendiente();
+        print('✅ Batch pendiente drenado.');
+      } catch (e) {
+        print(`❌ Error al re-flushear batch pendiente: ${e.message}`);
+        iniciarAlarmaError();
+        return;
+      }
+    }
+
+    if (appState.batchEnCurso && appState.errorFatal) {
+      appState.errorFatal = false;
+      btnLeerSheets.textContent = '⏳ Procesando...';
+      reanudarLoopAutomatico();
+    }
   } catch (e) {
     setLoginStatus('err', '🔴 Error: ' + (e.message || String(e)));
     print('❌ Error de reconexión: ' + (e.message || String(e)));
@@ -1897,6 +2130,8 @@ btnReconectar.addEventListener('click', async () => {
 
 btnReanudar.addEventListener('click', reanudarDesdeUltimo);
 btnReiniciarContador.addEventListener('click', reiniciarContador);
+const btnRecuperarBatch = document.getElementById('btn-recuperar-batch');
+if (btnRecuperarBatch) btnRecuperarBatch.addEventListener('click', ejecutarRecuperarBatchPendiente);
 
 inputApiDelay.addEventListener('change', () => {
   let v = parseFloat(inputApiDelay.value);
@@ -1940,6 +2175,7 @@ async function init() {
 
   poblarDropdownRegiones();
   refrescarBarraProgreso();
+  refrescarIndicadorBatchPendiente();
 
   const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
   if (stored) {
