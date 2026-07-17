@@ -2,7 +2,7 @@
 
 The trajectory of sequence modeling in artificial intelligence has been inexorably shaped by a continuous tension between computational expressivity and resource efficiency. The advent of the standard attention mechanism fundamentally transformed natural language processing, computer vision, and computational biology by prioritizing global contextualization over the inductive biases of sequential recurrence. However, as the ambition of foundation models scales toward multimillion-token context windows—essential for genomic analysis, repository-level code comprehension, and long-term agentic planning—the quadratic computational complexity of traditional self-attention has emerged as a severe bottleneck. The industry's reliance on Key-Value (KV) caching during autoregressive decoding has further exposed the limitations of standard architectures, precipitating a memory bandwidth crisis on modern hardware accelerators.
 
-In response to these hardware and theoretical constraints, the research community has proposed a proliferation of alternative architectures. These models attempt to reconcile the "impossible triangle" of sequence modeling: achieving parallelizable training, constant-time inference, and uncompromising predictive performance. This exhaustive report provides a deep comparative analysis of thirteen pivotal sequence modeling architectures: the Standard Attention mechanism, Sigmoid Attention, the Retentive Network (RetNet), the Selective State Space Model (Mamba), the Ordinary Differential Equation (ODE) Transformer, and the Titans Neural Memory architecture. It then extends the analysis to seven KV-compression and head-mixing variants that generalise Grouped-Query Attention (GQA): Multi-Head Latent Attention (MLA), Group-Query Latent Attention (GQLA), Multi-Head Low-Rank Attention (MLRA), Tucker Attention, Interleaved Head Attention (IHA), Grouped-head laTenT Attention (GTA), and Multi-head Temporal Latent Attention (MTLA). By deconstructing their mathematical formulations, analyzing their computational complexities, and evaluating their second- and third-order implications on hardware utilization and representation learning, this document establishes a comprehensive framework for understanding the future of sequence modeling.
+In response to these hardware and theoretical constraints, the research community has proposed a proliferation of alternative architectures. These models attempt to reconcile the "impossible triangle" of sequence modeling: achieving parallelizable training, constant-time inference, and uncompromising predictive performance. This exhaustive report provides a deep comparative analysis of fifteen pivotal sequence modeling architectures: the Standard Attention mechanism, Sigmoid Attention, the Retentive Network (RetNet), the Selective State Space Model (Mamba), the Ordinary Differential Equation (ODE) Transformer, and the Titans Neural Memory architecture. It then extends the analysis to nine KV-compression and head-mixing variants that generalise Grouped-Query Attention (GQA): Multi-Head Latent Attention (MLA), Group-Query Latent Attention (GQLA), Multi-Head Low-Rank Attention (MLRA), Tucker Attention, Interleaved Head Attention (IHA), Grouped-head laTenT Attention (GTA), Multi-head Temporal Latent Attention (MTLA), Compressed Convolutional Attention (CCA), and Compressed Convolutional Grouped Query Attention (CCGQA). By deconstructing their mathematical formulations, analyzing their computational complexities, and evaluating their second- and third-order implications on hardware utilization and representation learning, this document establishes a comprehensive framework for understanding the future of sequence modeling.
 
 ## 1. Standard Attention: The Foundation of Global Contextualization
 
@@ -497,7 +497,99 @@ Training is effectively $\mathcal{O}(n^2 \cdot d / m)$ thanks to the temporal me
 | **Cons** | Hyper-network merge adds parameters; temporal merging is lossy for fine-grained per-token distinctions. |
 | **Features** | Temporal KV merging via hyper-network; stride-aware causal mask; extends MLA along the time axis. |
 
-## 15. Synthesis and Systemic Insights: The Future of Sequence Architectures
+## 15. Compressed Convolutional Attention (CCA): Attention in a Compressed Latent Space
+
+Compressed Convolutional Attention (CCA) [arXiv:2510.04476, Figliola et al. 2025] performs attention ENTIRELY within a compressed latent space. Unlike MLA, which down-projects K/V into a latent only to up-project them back before attention, CCA down-projects Q/K/V into a shared latent of dimension $\tilde{e} = E / C$ (where $E$ is the embedding dimension and $C \ge 1$ is the compression factor) and never up-projects Q/K/V — only the output projection $W_O$ maps back to $E$. Three inductive-bias tricks augment the latent: (1) two causal convolutions (depthwise along the sequence axis and grouped along the channel axis), (2) a query-key mean (qk-mean) that injects the average of the pre-convolution $q$ and $k$ into the post-convolution path, and (3) a value-shift that concatenates the current and previous token's value projections. Query-key L2-normalisation and a learnable temperature $\beta$ stabilise the softmax, and RoPE is applied natively in the latent.
+
+### 15.1 Mathematical Formulation and Latent Convolution Tricks
+
+The down-projected latent tensors are:
+
+$$
+\tilde{q} = W_Q\, x, \qquad \tilde{k} = W_K\, x \qquad (\text{both } E \times \tilde{e})
+$$
+
+The two causal convolutions (depthwise sequence + grouped channel) produce $\tilde{q}_{conv}$ and $\tilde{k}_{conv}$. The query-key mean injects the pre-convolution average into the post-convolution path:
+
+$$
+q_{mean} = \frac{\tilde{q}_{pre} + \tilde{k}_{pre}}{2}, \qquad q_{post} = \tilde{q}_{conv} + q_{mean}
+$$
+
+The value-shift concatenates the current and previous token's projections:
+
+$$
+v = [\,W_{V_1}\, x_t \;\|\; W_{V_2}\, x_{t-1}\,]
+$$
+
+Query-key L2-normalisation rescales the vectors to $\sqrt{d_h}$ and a learnable temperature $\beta$ scales the key:
+
+$$
+\hat{q} = \tilde{q}\,\frac{\sqrt{d_h}}{\|\tilde{q}\|}, \qquad \hat{k} = \tilde{k}\,\frac{\sqrt{d_h}}{\|\tilde{k}\|}\cdot\exp(\beta)
+$$
+
+RoPE is applied in the latent, after which the attention output is:
+
+$$
+\text{out} = \text{softmax}\!\left(\frac{\hat{q}\,\hat{k}^\top}{\sqrt{d_h}}\right) v
+$$
+
+Finally, the block output maps back to the full embedding dimension via $Y = W_O\, \text{out}$.
+
+### 15.2 Computational Complexity and the Compression Factor
+
+During training, CCA retains the $\mathcal{O}(n^2 \cdot d)$ scaling of standard MHA but with $C$× fewer FLOPs because every projection (and the convolutions) operate on $\tilde{e} = E/C$ instead of $E$. At inference the per-token KV cache is $\mathcal{O}(\tilde{e} \cdot n)$, and per-step decoding is $\mathcal{O}(n)$.
+
+### 15.3 Architectural Profile: CCA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Compressed Convolutional Attention (CCA) |
+| **Authors / Year** | Figliola et al. (Zyphra) / 2025 |
+| **Paper / DOI** | [Compressed Convolutional Attention: Efficient Attention in a Compressed Latent Space](https://arxiv.org/abs/2510.04476) / 10.48550/arXiv.2510.04476 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d / C)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(\tilde{e} \cdot n)$ (latent KV cache) |
+| **Pros** | Reduces params, KV cache, and FLOPs simultaneously; native RoPE in latent; >2× fewer params than MLA. |
+| **Cons** | Does not remove the quadratic $S^2$ term (divides by $C$); conv / qk-mean / value-shift add inductive bias; fused kernel needed for efficiency. |
+| **Features** | Attention entirely in compressed latent; dual causal convs; query-key mean; value-shift; QK L2-norm + learnable temperature; RoPE native. |
+
+## 16. Compressed Convolutional Grouped Query Attention (CCGQA): Decoupled Compression with Head Sharing
+
+Compressed Convolutional Grouped Query Attention (CCGQA) [arXiv:2510.04476, Figliola et al. 2025] extends CCA by incorporating GQA-style head-sharing inside the latent. The query and KV projections are decoupled with separate compression factors $C_1$ (query) and $C_2$ (KV), constrained by $C_2 \ge C_1$ and the ratio $C_2 / C_1 = \text{num\_heads} / \text{num\_kv\_heads}$. The qk-mean trick is adapted for grouped heads using two mixing matrices: $B_{group}$ replicates KV-side latent vectors into the query side, and $E_{group}$ averages query-side vectors into the KV side. The authors report the best loss at an 8× KV-cache reduction.
+
+### 16.1 Mathematical Formulation and Decoupled Compression
+
+Query projection uses $C_1$ and KV projections use $C_2$:
+
+$$
+\tilde{q} = W_Q\, x \;\;(E \times E/C_1), \qquad \tilde{k}, \tilde{v} = W_K, W_V\, x \;\;(E \times E/C_2)
+$$
+
+The qk-mean uses grouped mixing:
+
+$$
+q_{mean} = \frac{B_{group}\,\tilde{q}_{pre} + E_{group}\,\tilde{k}_{pre}}{2}
+$$
+
+The remaining pipeline (dual causal convs, value-shift, QK L2-norm + learnable $\beta$, RoPE, softmax attention, output projection $W_O$) is identical to CCA, but operating over the shared KV latent of dimension $\tilde{e}_{kv} = E/C_2$.
+
+### 16.2 Computational Complexity and Cache Reduction
+
+Training time scales as $\mathcal{O}(n^2 \cdot d / C_1)$, reflecting the query-side compression. At inference the per-token KV cache is $\mathcal{O}(\tilde{e}_{kv} \cdot n)$, and per-step decoding is $\mathcal{O}(n)$. CCGQA achieves the same arithmetic intensity as GQA while enjoying the compression benefits of the latent space.
+
+### 16.3 Architectural Profile: CCGQA
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Nomenclature** | Compressed Convolutional Grouped Query Attention (CCGQA) |
+| **Authors / Year** | Figliola et al. (Zyphra) / 2025 |
+| **Paper / DOI** | [Compressed Convolutional Attention: Efficient Attention in a Compressed Latent Space](https://arxiv.org/abs/2510.04476) / 10.48550/arXiv.2510.04476 |
+| **Training Complexity** | Time: $\mathcal{O}(n^2 \cdot d / C_1)$, Space: $\mathcal{O}(n^2)$ |
+| **Inference Complexity** | Time per step: $\mathcal{O}(n)$, Space: $\mathcal{O}(\tilde{e}_{kv} \cdot n)$ (latent KV cache) |
+| **Pros** | Decoupled Q/KV compression ($C_2 \ge C_1$); smooth Pareto frontier; same arithmetic intensity as GQA; best reported loss at 8× cache reduction. |
+| **Cons** | Still quadratic in $S^2$; fused kernel required; $C_2/C_1$ must equal $\text{num\_heads}/\text{num\_kv\_heads}$. |
+| **Features** | CCA + GQA head-sharing in latent; decoupled compression ($C_1$, $C_2$); $B_{group}$/$E_{group}$ grouped qk-mean; smooth Pareto over cache budgets. |
+
+## 17. Synthesis and Systemic Insights: The Future of Sequence Architectures
 
 The architectural diversity detailed above provides a unique vantage point from which to analyze the underlying trajectories driving sequence modeling. By evaluating the mechanical differences between these models, several profound third-order implications regarding hardware interplay, information theory, and network dynamics become apparent.
 
