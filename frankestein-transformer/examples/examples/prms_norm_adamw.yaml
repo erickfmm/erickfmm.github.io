@@ -1,0 +1,48 @@
+model_class: frankenstein
+model:
+  vocab_size: 50000
+  hidden_size: 512
+  num_layers: 6
+  num_loops: 1
+  num_heads: 8
+  retention_heads: 8
+  layer_pattern: [standard_attn]
+  use_bitnet: false
+  norm_type: prms_norm
+  prms_partial_ratio: 0.0625
+  use_embedding_conv: false
+  use_hope: false
+  use_moe: false
+  ffn_hidden_size: 2048
+  ffn_activation: silu
+training:
+  task: mlm
+  num_epochs: 4
+  batch_size: 8
+  dataloader_workers: 2
+  max_length: 512
+  mlm_probability: 0.15
+  max_samples: 1000000
+  dataset_batch_size: 15000
+  num_workers: 6
+  cache_dir: "./temp_data/prms_norm_cache"
+  gradient_accumulation_steps: 4
+  optimizer:
+    optimizer_class: adamw
+    parameters:
+      adamw-lr_embeddings: 1e-5
+      adamw-lr_norms: 5e-5
+      adamw-lr_attention: 3e-4
+      adamw-lr_other: 2e-4
+      adamw-wd_embeddings: 0.01
+      adamw-wd_norms: 0.001
+      adamw-wd_attention: 0.01
+      adamw-wd_other: 0.01
+      adamw-betas_attention: [0.9, 0.95]
+      adamw-betas_other: [0.9, 0.95]
+      adamw-eps_attention: 1e-8
+      adamw-eps_other: 1e-8
+  max_nan_retries: 4
+  gradient_log_interval: 10
+  csv_log_path: "training_metrics_prms_norm_adamw.csv"
+  telemetry_log_interval: 5
