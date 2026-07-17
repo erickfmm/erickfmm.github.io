@@ -3,7 +3,7 @@ description: |-
   UltraConfig model parameters. All architectural hyperparameters that define the model's
   structure, capacity, and behavior. Required when building a model from scratch (i.e., when
   `base_model` is not set). Includes dimensions (vocab_size, hidden_size, num_layers), layer
-  composition (layer_pattern with 20 mixer types), normalization (norm_type), and advanced
+  composition (layer_pattern with 22 mixer types), normalization (norm_type), and advanced
   features like MoE (use_moe, num_experts), factorized embeddings (use_factorized_embedding),
   positional encodings (positional_encoding: hope/rope), and ODE-style continuous depth blocks.
 
@@ -15,7 +15,7 @@ description_es: |-
   Parámetros UltraConfig del modelo. Todos los hiperparámetros arquitectónicos que definen
   la estructura, capacidad y comportamiento del modelo. Obligatorio al construir un modelo desde
   cero (cuando `base_model` no está configurado). Incluye dimensiones (vocab_size, hidden_size,
-  num_layers), composición de capas (layer_pattern con 19 tipos de mixer), normalización
+  num_layers),   composición de capas (layer_pattern con 21 tipos de mixer), normalización
   (norm_type) y características avanzadas como MoE (use_moe, num_experts), embeddings
   factorizados (use_factorized_embedding), codificaciones posicionales (positional_encoding:
   hope/rope) y bloques ODE de profundidad continua.
@@ -295,6 +295,8 @@ properties:
       | `iha_attn` | Interleaved Head Attention — cross-head pseudo-heads (arXiv:2602.21371) | ✅ | ✅ |
       | `gta_attn` | Grouped-head laTenT Attention — shared map + latent values (arXiv:2506.17286) | ✅ | ✅ |
       | `mtla_attn` | Multi-head Temporal Latent Attention — temporal KV merge (arXiv:2505.13544) | ✅ | ✅ |
+      | `cca_attn` | Compressed Convolutional Attention — latent-space attention + convs (arXiv:2510.04476) | ✅ | ✅ |
+      | `ccgqa_attn` | Compressed Convolutional Grouped Query Attention — CCA + GQA in latent (arXiv:2510.04476) | ✅ | ✅ |
 
       **Examples explained:**
       - `[standard_attn]` repeated 12 times: Classic BERT-like encoder. Simplest configuration, serves as a reliable baseline. All layers use full quadratic attention.
@@ -338,6 +340,8 @@ properties:
       | `iha_attn` | Interleaved Head Attention — pseudo-cabezas entre cabezas (arXiv:2602.21371) | ✅ | ✅ |
       | `gta_attn` | Grouped-head laTenT Attention — mapa compartido + valores latentes (arXiv:2506.17286) | ✅ | ✅ |
       | `mtla_attn` | Multi-head Temporal Latent Attention — fusión temporal de KV (arXiv:2505.13544) | ✅ | ✅ |
+      | `cca_attn` | Compressed Convolutional Attention — atención en espacio latente + convoluciones (arXiv:2510.04476) | ✅ | ✅ |
+      | `ccgqa_attn` | Compressed Convolutional Grouped Query Attention — CCA + GQA en latente (arXiv:2510.04476) | ✅ | ✅ |
       **Ejemplos explicados:**
       - `[standard_attn]` repetido 12 veces: Encoder clásico tipo BERT. Configuración más simple, sirve como línea base confiable. Todas las capas usan atención cuadrática completa.
       - `[retnet, titan_attn, retnet, mamba, titan_attn, ode]` con `num_layers=6`: Arquitectura mixta que combina retención recurrente (largo alcance eficiente), atención Titan con codificación posicional (atención local precisa), Mamba SSM (modelado de secuencias en tiempo lineal) y ODE de profundidad continua. Cada posición recibe un tipo diferente de cómputo, permitiendo representaciones diversas.
@@ -377,6 +381,8 @@ properties:
         - iha_attn
         - gta_attn
         - mtla_attn
+        - cca_attn
+        - ccgqa_attn
         - msa_attn
         - sparda_attn
         - kda_attn
@@ -426,22 +432,108 @@ properties:
     type: boolean
     title: "Enable BitNet"
     title_es: "Habilitar BitNet"
-    description: |
-      Enable BitLinear (binary quantization) layers using -1/+1 weights instead of float32.
-      Enables significant compression and speedup. **Experimental** — may affect model quality.
-      Best suited for inference deployment. Requires careful LR tuning (gradients flow through binary weights).
+    description: |-
+      Enable BitLinear (BitNet b1.58 ternary weight quantization) for all
+      primary and gate linear layers — Q/K/V/O projections, FFN up/down,
+      embeddings, LM head, and recurrent-state gates (alpha/beta/forget/
+      erase/write). Weights are quantized to ``{-1, 0, 1}`` via the
+      straight-through estimator (STE) and activations to int8.
 
-      **Impact:** Reduces memory ~32× for quantized weights but can significantly degrade quality.
-      Not recommended as an initial configuration; try first without BitNet and enable only for
-      inference optimization.
-    description_es: |
-      Habilita capas BitLinear (cuantización binaria) usando pesos -1/+1 en lugar de float32.
-      Permite compresión y aceleración significativas. **Experimental** — puede afectar calidad.
-      Ideal para despliegue de inferencia. Requiere ajuste cuidadoso del learning rate.
+      Routing/scoring projections (MoE router, Mixture-of-Depths router,
+      sparse block-index/forecast, top-k score nets) are governed separately
+      by ``bitnet_routers`` and are kept full-precision by default.
 
-      **Impacto:** Reduce memoria ~32× para pesos cuantizados pero puede degradar calidad significativamente.
-      Not recommended as an initial configuration; try first without BitNet and enable only for
-      inference optimization.
+      **Impact:** Reduces weight memory ~10x. Requires careful LR tuning.
+      Best enabled from the start of training; supports both encoder (MLM)
+      and decoder (autoregressive) modes.
+
+      Reference: Ma et al. (2024), "The Era of 1-bit LLMs", arXiv:2402.17764.
+    description_es: |-
+      Habilita BitLinear (cuantización ternaria BitNet b1.58) para todas las
+      capas lineales principales y de compuerta — proyecciones Q/K/V/O,
+      FFN up/down, embeddings, cabeza LM y compuertas de estado recurrente
+      (alpha/beta/forget/erase/write). Los pesos se cuantizan a ``{-1, 0, 1}``
+      mediante el estimador de paso directo (STE) y las activaciones a int8.
+
+      Las proyecciones de enrutamiento/scoring (router MoE, router de
+      Mixture-of-Depths, índices/forecast de bloques sparse, redes de score
+      top-k) se gobiernen por separado con ``bitnet_routers`` y se mantienen
+      en precisión completa por defecto.
+
+      **Impacto:** Reduce la memoria de pesos ~10x. Requiere ajuste cuidadoso
+      del learning rate. Se recomienda habilitar desde el inicio del
+      entrenamiento; soporta tanto modo encoder (MLM) como decoder
+      (autoregresivo).
+
+      Referencia: Ma et al. (2024), "The Era of 1-bit LLMs", arXiv:2402.17764.
+    examples: [false]
+  bitnet_routers:
+    type: boolean
+    title: "Quantize Routers/Scoring (BitNet)"
+    title_es: "Cuantizar Routers/Scoring (BitNet)"
+    description: |-
+      When ``use_bitnet`` is true, also quantize the routing/scoring linear
+      projections to BitLinear: the Mixture-of-Experts router, the
+      Mixture-of-Depths token router, the sparse block-index/forecast
+      projections (``msa_attn`` q/k index, ``sparda_attn`` forecast,
+      ``nsa_attn`` compress/gate), and the ``sparsek_attn`` top-k score net.
+
+      Default ``false`` keeps these projections full-precision. This is the
+      recommended setting: top-k routing decisions are sensitive to ternary
+      weight noise, which can flip expert/block selections and destabilize
+      training. Enable only for maximum compression when you accept the
+      routing-stability risk.
+
+      No effect when ``use_bitnet`` is false.
+    description_es: |-
+      Cuando ``use_bitnet`` es true, cuantiza también las proyecciones lineales
+      de enrutamiento/scoring a BitLinear: el router de Mixture-of-Experts, el
+      router de tokens de Mixture-of-Depths, las proyecciones de
+      índice/forecast de bloques sparse (índice q/k de ``msa_attn``, forecast
+      de ``sparda_attn``, compress/gate de ``nsa_attn``) y la red de score
+      top-k de ``sparsek_attn``.
+
+      Por defecto ``false`` mantiene estas proyecciones en precisión completa.
+      Es el ajuste recomendado: las decisiones de enrutamiento top-k son
+      sensibles al ruido de pesos ternarios, lo que puede alterar selecciones
+      de experto/bloque y desestabilizar el entrenamiento. Habilitar solo para
+      máxima compresión cuando se acepta el riesgo de estabilidad de routing.
+
+      Sin efecto cuando ``use_bitnet`` es false.
+    examples: [false]
+  use_bitnet_conv:
+    type: boolean
+    title: "Quantize Embedding Conv (BitNet)"
+    title_es: "Cuantizar Conv de Embedding (BitNet)"
+    description: |-
+      When ``use_bitnet`` is true and ``use_embedding_conv`` is true, also
+      replace the factorized-embedding Conv1d pre-projection with
+      ``BitConv1d`` (ternary weights + int8 activations, same scheme as
+      :class:`BitLinear`).
+
+      Default ``false`` keeps the Conv1d full-precision. The convolution
+      operates over the reduced embedding stream (``factorized_embedding_dim``)
+      where ternary quantization can be noisy; full precision is the safer
+      default. Enable for maximum compression when you accept the quality
+      trade-off on the embedding path.
+
+      No effect when ``use_bitnet`` is false or the embedding conv is
+      disabled.
+    description_es: |-
+      Cuando ``use_bitnet`` es true y ``use_embedding_conv`` es true, también
+      reemplaza la convolución Conv1d pre-proyección del embedding
+      factorizado por ``BitConv1d`` (pesos ternarios + activaciones int8, el
+      mismo esquema que :class:`BitLinear`).
+
+      Por defecto ``false`` mantiene el Conv1d en precisión completa. La
+      convolución opera sobre el flujo de embedding reducido
+      (``factorized_embedding_dim``) donde la cuantización ternaria puede ser
+      ruidosa; la precisión completa es el valor por defecto más seguro.
+      Habilitar para máxima compresión cuando se acepta el compromiso de
+      calidad en la ruta de embedding.
+
+      Sin efecto cuando ``use_bitnet`` es false o la convolución de embedding
+      está deshabilitada.
     examples: [false]
   norm_type:
     type: string
@@ -452,27 +544,63 @@ properties:
       - `layer_norm`: Standard Layer Normalization — subtracts mean, divides by std. Stable, widely used. **Recommended.**
       - `dynamic_tanh`: Dynamic tanh normalization (DyT) — replaces explicit normalization with a learned bounded map: `tanh(α·x)`. Normalization-free, experimental.
       - `derf`: Dynamic erf normalization — extends DyT with erf function: `erf(α·x + s)`. Normalization-free, experimental, may improve over DyT.
-
-      ⚠️ `rms_norm` is NOT a valid schema value.
+      - `rms_norm`: Root Mean Square Layer Normalization — rescales by RMS magnitude only, without mean subtraction. Computationally simpler than LayerNorm; widely used in Llama, GPT-NeoX, and T5. Has a learnable per-dimension scale `g` (no bias). (arXiv:1910.07467)
+      - `prms_norm`: Partial RMSNorm — estimates the RMS statistic from only the first `p`% of hidden dimensions (controlled by `prms_partial_ratio`, default 6.25%). Same re-scaling invariance as `rms_norm` with reduced computation. (arXiv:1910.07467, §5)
 
       **Examples explained:**
       - `layer_norm`: Safest choice. Used in BERT, GPT, and most transformer architectures. Well-understood behavior, no tuning needed. Start here for new models.
       - `dynamic_tanh`: Experimental alternative. Removes per-token statistics computation. May converge faster in some settings but requires the model to learn α (initialized near 1.0). Useful for exploring normalization-free architectures.
       - `derf`: Most experimental option. Reported to outperform DyT in some benchmarks. Has learnable scale α and shift s. Use only if exploring cutting-edge normalization research and willing to tune additional parameters.
+      - `rms_norm`: Efficient choice for large models. Drops mean-centering (7%–64% faster than LayerNorm per the paper). Standard in Llama-family models. Use when normalization overhead matters and mean re-centering is not needed.
+      - `prms_norm`: Most efficient RMS variant. Uses only the first `prms_partial_ratio` fraction of dims for RMS estimation. The paper reports competitive results with as little as 6.25%. Best for extreme throughput; may show gradient instability with very small ratios.
     description_es: |-
       Estrategia de normalización usada en todo el modelo.
       - `layer_norm`: Layer Normalization estándar — resta la media, divide por la desviación estándar. Estable, ampliamente usada. **Recomendada.**
       - `dynamic_tanh`: Normalización tanh dinámica (DyT) — reemplaza la normalización explícita con un mapa acotado aprendido: `tanh(α·x)`. Libre de normalización, experimental.
       - `derf`: Normalización erf dinámica — extiende DyT con función erf: `erf(α·x + s)`. Libre de normalización, experimental, puede mejorar sobre DyT.
-
-      ⚠️ `rms_norm` NO es un valor válido en el esquema.
+      - `rms_norm`: Root Mean Square Layer Normalization — reescala por la magnitud RMS únicamente, sin resta de media. Computacionalmente más simple que LayerNorm; ampliamente usada en Llama, GPT-NeoX y T5. Tiene una escala `g` aprendible por dimensión (sin bias). (arXiv:1910.07467)
+      - `prms_norm`: Partial RMSNorm — estima la estadística RMS de solo el primer `p`% de dimensiones ocultas (controlado por `prms_partial_ratio`, por defecto 6.25%). Misma invariancia de re-escalamiento que `rms_norm` con menor cómputo. (arXiv:1910.07467, §5)
 
       **Ejemplos explicados:**
       - `layer_norm`: Opción más segura. Usada en BERT, GPT y la mayoría de arquitecturas transformer. Comportamiento bien comprendido, no requiere ajuste. Empezar aquí para nuevos modelos.
       - `dynamic_tanh`: Alternativa experimental. Elimina el cómputo de estadísticas por token. Puede converger más rápido en algunos contextos pero requiere que el modelo aprenda α (inicializado cerca de 1.0). Útil para explorar arquitecturas libres de normalización.
       - `derf`: Opción más experimental. Reportado como superior a DyT en algunos benchmarks. Tiene escala α y desplazamiento s aprendibles. Usar solo si se exploran investigaciones de normalización de vanguardia y se está dispuesto a ajustar parámetros adicionales.
-    enum: [layer_norm, dynamic_tanh, derf]
+      - `rms_norm`: Opción eficiente para modelos grandes. Elimina la centralización de media (7%–64% más rápido que LayerNorm según el paper). Estándar en modelos tipo Llama. Usar cuando la sobrecarga de normalización importa y no se necesita re-centrar la media.
+      - `prms_norm`: Variante RMS más eficiente. Usa solo la fracción `prms_partial_ratio` de dimensiones para la estimación RMS. El paper reporta resultados competitivos con tan solo 6.25%. Mejor para rendimiento extremo; puede mostrar inestabilidad de gradiente con razones muy pequeñas.
+    enum: [layer_norm, dynamic_tanh, derf, rms_norm, prms_norm]
     examples: [layer_norm]
+  prms_partial_ratio:
+    type: number
+    title: "pRMSNorm Partial Ratio"
+    title_es: "Razón Parcial pRMSNorm"
+    description: |-
+      Fraction of hidden dimensions used for RMS estimation when
+      `norm_type=prms_norm`. The RMS is computed over the first
+      `ceil(hidden_size * prms_partial_ratio)` elements.
+
+      The paper (arXiv:1910.07467) reports competitive results with as little
+      as 6.25%. Must be in (0, 1]. Ignored when `norm_type` is not `prms_norm`.
+
+      **Impact:** Smaller values = faster RMS computation but a noisier (biased)
+      estimate, which can cause gradient instability at very small ratios.
+      Values approaching 1.0 converge to standard `rms_norm`. The paper's
+      recommended default is 6.25% (0.0625).
+    description_es: |-
+      Fracción de dimensiones ocultas usadas para la estimación RMS cuando
+      `norm_type=prms_norm`. El RMS se calcula sobre los primeros
+      `ceil(hidden_size * prms_partial_ratio)` elementos.
+
+      El paper (arXiv:1910.07467) reporta resultados competitivos con tan solo
+      6.25%. Debe estar en (0, 1]. Se ignora cuando `norm_type` no es `prms_norm`.
+
+      **Impacto:** Valores más pequeños = cómputo de RMS más rápido pero una
+      estimación más ruidosa (sesgada), lo que puede causar inestabilidad de
+      gradiente con razones muy pequeñas. Valores cercanos a 1.0 convergen al
+      `rms_norm` estándar. El valor por defecto recomendado por el paper es
+      6.25% (0.0625).
+    exclusiveMinimum: 0
+    maximum: 1
+    examples: [0.0625]
   use_factorized_embedding:
     type: boolean
     title: "Factorized Embeddings"
@@ -782,21 +910,163 @@ properties:
     title: "FFN Activation"
     title_es: "Activación de FFN"
     description: |
-      Non-linear activation for feed-forward networks.
-      - `silu`: Sigmoid Linear Unit — smoother, used in Llama/PaLM. **Recommended for new models.**
+      Non-linear activation for feed-forward networks. Grouped by family:
+
+      **Common / classical** (survey: Lederer arXiv:2101.09957; Dubey et al. arXiv:2109.14545):
+      - `silu`: Sigmoid Linear Unit / Swish₁ — smoother, used in Llama/PaLM. **Recommended default for new models.**
       - `gelu`: Gaussian Error Linear Unit — classic, used in BERT/GPT-2/GPT-3. More stable for very small models.
+      - `gelu_tanh`: GELU with the tanh approximation (faster; GPT-2/BERT original).
+      - `relu`: Rectified Linear Unit.
+      - `sigmoid`, `tanh`, `arctan`, `softsign`, `elliott`, `identity`, `softplus`, `mish`.
 
-      **Impact:** The difference is subtle in practice. `silu` tends to converge faster.
-      With BitNet or quantization, `silu` may be more robust.
+      **Rectified family** (survey §4): `leaky_relu`, `relu6`, `hardswish`, `prelu` (learnable),
+      `abs_relu` (ABReLU), `nl_relu`, `brelu`, `vrelu`, `hexpo`, `ptanh`, `dis_relu`, `lisht`.
+
+      **Exponential / ELU family** (survey §5): `elu`, `selu`, `celu`, `pelu`, `mpelu`, `felu`,
+      `eelu`, `pdelu`, `preu`, `softexp`, `elish`, `hardelish`.
+
+      **Learnable / adaptive**: `swish` (β-hyperparam), `swish_trainable` (β-trainable), `maxout`,
+      `raf` (**Rational Activation Function**, learnable Padé polynomial ratio, Fang et al.
+      arXiv:2208.14111). Configure via `ffn_activation_config`.
+
+      **Gated FFN variants** (own their projections, replace the FFN block): `swiglu`, `geglu`, `reglu`.
+
+      **Impact:** `silu`/`gelu` tend to converge well. With BitNet or quantization, `silu` may be
+      more robust. Learnable activations (`raf`, `prelu`, `swish_trainable`) add parameters but can
+      adapt per-task, especially in low-data regimes.
     description_es: |
-      Activación no lineal para redes feed-forward.
-      - `silu`: Sigmoid Linear Unit — más suave, usada en Llama/PaLM. **Recomendada para nuevos modelos.**
-      - `gelu`: Gaussian Error Linear Unit — clásica, usada en BERT/GPT-2/GPT-3. Más estable para modelos muy pequeños.
+      Activación no lineal para redes feed-forward, agrupada por familia:
 
-      **Impacto:** La diferencia es sutil en la práctica. `silu` tiende a converger más rápido.
-      With BitNet or quantization, `silu` may be more robust.
-    enum: [silu, gelu]
+      **Comunes / clásicas** (survey: Lederer arXiv:2101.09957; Dubey et al. arXiv:2109.14545):
+      - `silu`: Sigmoid Linear Unit / Swish₁ — más suave, usada en Llama/PaLM. **Recomendada por defecto.**
+      - `gelu`: Gaussian Error Linear Unit — clásica, usada en BERT/GPT-2/GPT-3.
+      - `gelu_tanh`: GELU con aproximación tanh (más rápida; GPT-2/BERT original).
+      - `relu`: Rectified Linear Unit.
+      - `sigmoid`, `tanh`, `arctan`, `softsign`, `elliott`, `identity`, `softplus`, `mish`.
+
+      **Familia rectificada** (survey §4): `leaky_relu`, `relu6`, `hardswish`, `prelu` (aprendible),
+      `abs_relu` (ABReLU), `nl_relu`, `brelu`, `vrelu`, `hexpo`, `ptanh`, `dis_relu`, `lisht`.
+
+      **Familia exponencial / ELU** (survey §5): `elu`, `selu`, `celu`, `pelu`, `mpelu`, `felu`,
+      `eelu`, `pdelu`, `preu`, `softexp`, `elish`, `hardelish`.
+
+      **Aprendibles / adaptativas**: `swish` (β hiperparámetro), `swish_trainable` (β entrenable),
+      `maxout`, `raf` (**Rational Activation Function**, razón polinómica Padé aprendible, Fang et al.
+      arXiv:2208.14111). Configurar vía `ffn_activation_config`.
+
+      **Variantes FFN con compuerta** (tienen sus proyecciones, reemplazan el bloque FFN): `swiglu`, `geglu`, `reglu`.
+    enum: [silu, gelu, gelu_tanh, relu, sigmoid, tanh, arctan, softsign, elliott, identity, softplus, mish, leaky_relu, relu6, hardswish, prelu, abs_relu, nl_relu, brelu, vrelu, hexpo, ptanh, dis_relu, lisht, elu, selu, celu, pelu, mpelu, felu, eelu, pdelu, preu, softexp, elish, hardelish, swish, swish_trainable, maxout, raf, swiglu, geglu, reglu]
     examples: [gelu]
+  ffn_activation_config:
+    type: object
+    title: "FFN Activation Configuration"
+    title_es: "Configuración de Activación de FFN"
+    description: |
+      Optional nested parameters for learnable / parametric activations. Ignored for
+      stateless activations. All keys are optional.
+
+      **RAF (Rational Activation Function, arXiv:2208.14111):**
+      - `raf_degrees`: `[m, n]` Padé numerator/denominator degrees (ints ≥ 1). Default `[5, 4]`.
+      - `raf_version`: denominator form, one of `A` (default, "safe"), `B`, `C`, `D`, `N`.
+      - `raf_approx_func`: init target — `gelu` (default), `relu`, `leaky_relu`, `leaky_relu_0.1`,
+        `sigmoid`, `tanh`, `swish`, `silu`, `identity`.
+      - `raf_trainable`: freeze the rational coefficients when `false`. Default `true`.
+      - `raf_input_scaling`: per-token min-max scaling to `[-3, 3]` before the RAF (RAFT
+        preprocessing). Default `false`.
+
+      **Parametric activations:** `prelu_init` (default `0.25`), `elu_alpha` (`1.0`),
+      `celu_alpha`, `swish_beta` (`1.0`), `leaky_relu_slope` (`0.01`), `pelu_alpha`, `mpelu_alpha`,
+      `mpelu_beta`, `felu_alpha`, `eelu_alpha`, `eelu_beta`, `pdelu_alpha`, `preu_alpha`,
+      `preu_beta`, `softexp_alpha`, `maxout_pieces` (int ≥ 1, default `2`).
+    description_es: |
+      Parámetros anidados opcionales para activaciones aprendibles / paramétricas. Se ignoran para
+      activaciones sin estado. Todas las claves son opcionales.
+
+      **RAF (Rational Activation Function, arXiv:2208.14111):**
+      - `raf_degrees`: grados `[m, n]` del numerador/denominador Padé (ints ≥ 1). Por defecto `[5, 4]`.
+      - `raf_version`: forma del denominador, uno de `A` (por defecto, "segura"), `B`, `C`, `D`, `N`.
+      - `raf_approx_func`: objetivo de inicialización — `gelu` (por defecto), `relu`, `leaky_relu`,
+        `leaky_relu_0.1`, `sigmoid`, `tanh`, `swish`, `silu`, `identity`.
+      - `raf_trainable`: congela los coeficientes racionales cuando es `false`. Por defecto `true`.
+      - `raf_input_scaling`: escalado min-max por token a `[-3, 3]` antes del RAF (preprocesamiento
+        RAFT). Por defecto `false`.
+
+      **Activaciones paramétricas:** `prelu_init` (`0.25`), `elu_alpha` (`1.0`), `celu_alpha`,
+      `swish_beta` (`1.0`), `leaky_relu_slope` (`0.01`), `pelu_alpha`, `mpelu_alpha`, `mpelu_beta`,
+      `felu_alpha`, `eelu_alpha`, `eelu_beta`, `pdelu_alpha`, `preu_alpha`, `preu_beta`,
+      `softexp_alpha`, `maxout_pieces` (int ≥ 1, `2`).
+    additionalProperties: false
+    properties:
+      raf_degrees:
+        type: array
+        items: {type: integer, minimum: 1}
+        minItems: 2
+        maxItems: 2
+        default: [5, 4]
+        examples: [[5, 4]]
+      raf_version:
+        type: string
+        enum: [A, B, C, D, N]
+        default: A
+      raf_approx_func:
+        type: string
+        enum: [gelu, relu, leaky_relu, leaky_relu_0.1, sigmoid, tanh, swish, silu, identity]
+        default: gelu
+      raf_trainable:
+        type: boolean
+        default: true
+      raf_input_scaling:
+        type: boolean
+        default: false
+      prelu_init:
+        type: number
+        default: 0.25
+      elu_alpha:
+        type: number
+        default: 1.0
+      celu_alpha:
+        type: number
+        default: 1.0
+      swish_beta:
+        type: number
+        default: 1.0
+      leaky_relu_slope:
+        type: number
+        default: 0.01
+      pelu_alpha:
+        type: number
+        default: 1.0
+      mpelu_alpha:
+        type: number
+        default: 1.0
+      mpelu_beta:
+        type: number
+        default: 1.0
+      felu_alpha:
+        type: number
+        default: 1.0
+      eelu_alpha:
+        type: number
+        default: 1.0
+      eelu_beta:
+        type: number
+        default: 1.0
+      pdelu_alpha:
+        type: number
+        default: 1.0
+      preu_alpha:
+        type: number
+        default: 1.0
+      preu_beta:
+        type: number
+        default: 1.0
+      softexp_alpha:
+        type: number
+        default: 0.0
+      maxout_pieces:
+        type: integer
+        minimum: 1
+        default: 2
   mode:
     type: string
     title: "Transformer Mode"
@@ -1136,6 +1406,221 @@ properties:
       por defecto es `mtla_merge_factor`. Stride menor = ventanas
       superpuestas; stride mayor = no superpuestas.
     examples: [2]
+
+  # =====================================================================
+  # Compressed Convolutional Attention (CCA) and CCGQA (arXiv:2510.04476)
+  # =====================================================================
+  cca_latent_rank:
+    type: integer
+    title: "CCA Latent Rank"
+    title_es: "Rango Latente CCA"
+    description: |-
+      Latent width ẽ for `cca_attn` (Compressed Convolutional Attention,
+      arXiv:2510.04476). CCA down-projects q/k/v into this shared latent
+      and performs attention entirely inside it (no up-projections),
+      reducing parameters, KV-cache, AND FLOPs by the compression factor
+      C = hidden_size / cca_latent_rank. `null` defaults to
+      `hidden_size // 4` (C=4). Must be divisible by `num_heads`.
+
+      **Examples explained:**
+      - `cca_latent_rank=128` with `hidden_size=512`: C=4 compression.
+        Latent head dim = 128/8 = 16 (with num_heads=8).
+      - `cca_latent_rank=64` with `hidden_size=512`: C=8 compression.
+        More aggressive; ~8x fewer attention FLOPs and KV-cache.
+      - `cca_latent_rank=null`: defaults to `hidden_size // 4`.
+    description_es: |-
+      Ancho latente ẽ para `cca_attn` (Compressed Convolutional Attention,
+      arXiv:2510.04476). CCA proyecta q/k/v a este latente compartido y
+      realiza la atención enteramente en él (sin up-proyecciones),
+      reduciendo parámetros, caché KV Y FLOPs por el factor de compresión
+      C = hidden_size / cca_latent_rank. `null` por defecto es
+      `hidden_size // 4` (C=4). Debe ser divisible por `num_heads`.
+    examples: [128]
+  cca_num_conv_layers:
+    type: integer
+    title: "CCA Conv Layers"
+    title_es: "Capas de Convolución CCA"
+    description: |-
+      Number of convolution layers applied to the packed q/k tensor in
+      `cca_attn` (0, 1, or 2). The paper's ablation shows 2 layers (a
+      depth-wise causal sequence conv + a head-wise grouped channel conv)
+      is optimal. 0 disables convolutions entirely. Default: 2.
+    description_es: |-
+      Número de capas de convolución aplicadas al tensor empaquetado q/k
+      en `cca_attn` (0, 1 o 2). La ablacición del paper muestra que 2
+      capas (una convolución causal depth-wise de secuencia + una
+      convolución agrupada de canales por cabeza) es óptima. 0 desactiva
+      las convoluciones. Por defecto: 2.
+    enum: [0, 1, 2]
+    examples: [2]
+  cca_conv_kernel_seq:
+    type: integer
+    title: "CCA Seq Conv Kernel"
+    title_es: "Kernel Conv Secuencia CCA"
+    description: |-
+      Kernel size `k_seq` of the depth-wise causal sequence convolution
+      in `cca_attn`. Mixes information across positions within the
+      compressed latent. Only applies when `cca_num_conv_layers >= 1`.
+      Default: 4.
+    description_es: |-
+      Tamaño de kernel `k_seq` de la convolución causal depth-wise de
+      secuencia en `cca_attn`. Mezcla información entre posiciones dentro
+      del latente comprimido. Solo aplica cuando `cca_num_conv_layers >= 1`.
+      Por defecto: 4.
+    examples: [4]
+  cca_conv_kernel_ch:
+    type: integer
+    title: "CCA Channel Conv Kernel"
+    title_es: "Kernel Conv Canales CCA"
+    description: |-
+      Kernel size `k_ch` of the head-wise grouped channel convolution in
+      `cca_attn`. Mixes information across channels within each head.
+      Only applies when `cca_num_conv_layers >= 2`. Default: 3.
+    description_es: |-
+      Tamaño de kernel `k_ch` de la convolución agrupada de canales por
+      cabeza en `cca_attn`. Mezcla información entre canales dentro de
+      cada cabeza. Solo aplica cuando `cca_num_conv_layers >= 2`.
+      Por defecto: 3.
+    examples: [3]
+  cca_qk_mean:
+    type: boolean
+    title: "CCA QK-Mean"
+    title_es: "QK-Mean CCA"
+    description: |-
+      Enable the q-k-mean bias in `cca_attn`: adds the pre-convolution
+      mean of q and k to the post-convolution values, increasing
+      attention-diagonal sparsity when combined with QK-norm. Default:
+      True (recommended by the paper's ablation).
+    description_es: |-
+      Habilita el sesgo q-k-mean en `cca_attn`: añade la media
+      pre-convolución de q y k a los valores post-convolución,
+      aumentando la dispersión de la diagonal de atención cuando se
+      combina con QK-norm. Por defecto: True.
+    examples: [true]
+  cca_value_shift:
+    type: boolean
+    title: "CCA Value-Shift"
+    title_es: "Value-Shift CCA"
+    description: |-
+      Enable value-shift in `cca_attn`: each attention head receives half
+      its values from the current token and half from the *previous* token
+      (a token-shift inductive bias borrowed from RWKV), implemented via
+      two independent value projections. Requires `num_heads` even and
+      `cca_latent_rank` even. Default: True.
+    description_es: |-
+      Habilita value-shift en `cca_attn`: cada cabeza de atención recibe
+      la mitad de sus valores del token actual y la mitad del token
+      *anterior* (un sesgo inductivo de token-shift tomado de RWKV),
+      implementado con dos proyecciones de valor independientes. Requiere
+      `num_heads` par y `cca_latent_rank` par. Por defecto: True.
+    examples: [true]
+  ccgqa_query_latent_rank:
+    type: integer
+    title: "CCGQA Query Latent Rank"
+    title_es: "Rango Latente de Query CCGQA"
+    description: |-
+      Query latent width `E / C₁` for `ccgqa_attn` (Compressed
+      Convolutional Grouped Query Attention, arXiv:2510.04476). CCGQA
+      decouples query and KV compression: queries are compressed by `C₁`
+      and keys/values by `C₂` (≥ `C₁`). `null` defaults to
+      `hidden_size // 2` (C₁=2). Must be divisible by `num_heads`.
+    description_es: |-
+      Ancho latente de query `E / C₁` para `ccgqa_attn` (Compressed
+      Convolutional Grouped Query Attention, arXiv:2510.04476). CCGQA
+      desacopla la compresión de query y KV: las consultas se comprimen
+      por `C₁` y las claves/valores por `C₂` (≥ `C₁`). `null` por
+      defecto es `hidden_size // 2` (C₁=2). Debe ser divisible por
+      `num_heads`.
+    examples: [256]
+  ccgqa_kv_latent_rank:
+    type: integer
+    title: "CCGQA KV Latent Rank"
+    title_es: "Rango Latente de KV CCGQA"
+    description: |-
+      KV latent width `E / C₂` for `ccgqa_attn`. The constraint
+      `ccgqa_query_latent_rank / num_heads == ccgqa_kv_latent_rank /
+      ccgqa_num_kv_heads` must hold (same per-head latent dim `d_h`).
+      `null` defaults to `hidden_size // 8` (C₂=8). Must be ≤
+      `ccgqa_query_latent_rank`.
+    description_es: |-
+      Ancho latente de KV `E / C₂` para `ccgqa_attn`. La restricción
+      `ccgqa_query_latent_rank / num_heads == ccgqa_kv_latent_rank /
+      ccgqa_num_kv_heads` debe cumplirse (misma dimensión latente por
+      cabeza `d_h`). `null` por defecto es `hidden_size // 8` (C₂=8).
+      Debe ser ≤ `ccgqa_query_latent_rank`.
+    examples: [64]
+  ccgqa_num_kv_heads:
+    type: integer
+    title: "CCGQA KV Heads"
+    title_es: "Cabezas KV CCGQA"
+    description: |-
+      Number of KV (group) heads for `ccgqa_attn`. Must divide
+      `num_heads`. The group size is `num_heads / ccgqa_num_kv_heads`,
+      which also equals `C₂ / C₁`. `null` defaults to `num_heads // 4`.
+    description_es: |-
+      Número de cabezas KV (grupo) para `ccgqa_attn`. Debe dividir
+      `num_heads`. El tamaño de grupo es `num_heads /
+      ccgqa_num_kv_heads`, que también iguala `C₂ / C₁`. `null` por
+      defecto es `num_heads // 4`.
+    examples: [2]
+  ccgqa_num_conv_layers:
+    type: integer
+    title: "CCGQA Conv Layers"
+    title_es: "Capas de Convolución CCGQA"
+    description: |-
+      Number of convolution layers for `ccgqa_attn` (0, 1, or 2). Same
+      semantics as `cca_num_conv_layers`. Default: 2.
+    description_es: |-
+      Número de capas de convolución para `ccgqa_attn` (0, 1 o 2).
+      Mismas semánticas que `cca_num_conv_layers`. Por defecto: 2.
+    enum: [0, 1, 2]
+    examples: [2]
+  ccgqa_conv_kernel_seq:
+    type: integer
+    title: "CCGQA Seq Conv Kernel"
+    title_es: "Kernel Conv Secuencia CCGQA"
+    description: |-
+      Kernel size of the depth-wise causal sequence convolution in
+      `ccgqa_attn`. Default: 4.
+    description_es: |-
+      Tamaño de kernel de la convolución causal depth-wise de secuencia
+      en `ccgqa_attn`. Por defecto: 4.
+    examples: [4]
+  ccgqa_conv_kernel_ch:
+    type: integer
+    title: "CCGQA Channel Conv Kernel"
+    title_es: "Kernel Conv Canales CCGQA"
+    description: |-
+      Kernel size of the head-wise grouped channel convolution in
+      `ccgqa_attn`. Default: 3.
+    description_es: |-
+      Tamaño de kernel de la convolución agrupada de canales por cabeza
+      en `ccgqa_attn`. Por defecto: 3.
+    examples: [3]
+  ccgqa_qk_mean:
+    type: boolean
+    title: "CCGQA QK-Mean"
+    title_es: "QK-Mean CCGQA"
+    description: |-
+      Enable the q-k-mean bias with B_group/E_group for `ccgqa_attn`.
+      Default: True.
+    description_es: |-
+      Habilita el sesgo q-k-mean con B_group/E_group para `ccgqa_attn`.
+      Por defecto: True.
+    examples: [true]
+  ccgqa_value_shift:
+    type: boolean
+    title: "CCGQA Value-Shift"
+    title_es: "Value-Shift CCGQA"
+    description: |-
+      Enable value-shift for `ccgqa_attn`. Requires
+      `ccgqa_num_kv_heads` even and `ccgqa_kv_latent_rank` even.
+      Default: True.
+    description_es: |-
+      Habilita value-shift para `ccgqa_attn`. Requiere
+      `ccgqa_num_kv_heads` par y `ccgqa_kv_latent_rank` par.
+      Por defecto: True.
+    examples: [true]
 
   # =====================================================================
   # MiniMax Sparse Attention (arXiv:2606.13392) and SparDA (arXiv:2606.04511)

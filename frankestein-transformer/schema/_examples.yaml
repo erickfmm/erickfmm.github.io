@@ -13,6 +13,8 @@
     ode_solver: rk4
     ode_steps: 2
     use_bitnet: false
+    bitnet_routers: false
+    use_bitnet_conv: false
     norm_type: layer_norm
     use_factorized_embedding: false
     factorized_embedding_dim: 128
