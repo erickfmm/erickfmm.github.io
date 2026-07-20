@@ -1,0 +1,69 @@
+type: object
+additionalProperties: false
+properties:
+  type:
+    type: string
+    title: "Normalization Type"
+    title_es: "Tipo de Normalización"
+    description: |-
+      Normalization strategy used throughout the model.
+      - `layer_norm`: Standard Layer Normalization — subtracts mean, divides by std. Stable, widely used. **Recommended.**
+      - `dynamic_tanh`: Dynamic tanh normalization (DyT) — replaces explicit normalization with a learned bounded map: `tanh(α·x)`. Normalization-free, experimental.
+      - `derf`: Dynamic erf normalization — extends DyT with erf function: `erf(α·x + s)`. Normalization-free, experimental, may improve over DyT.
+      - `rms_norm`: Root Mean Square Layer Normalization — rescales by RMS magnitude only, without mean subtraction. Computationally simpler than LayerNorm; widely used in Llama, GPT-NeoX, and T5. Has a learnable per-dimension scale `g` (no bias). (arXiv:1910.07467)
+      - `prms_norm`: Partial RMSNorm — estimates the RMS statistic from only the first `p`% of hidden dimensions (controlled by `prms_partial_ratio`, default 6.25%). Same re-scaling invariance as `rms_norm` with reduced computation. (arXiv:1910.07467, §5)
+
+      **Examples explained:**
+      - `layer_norm`: Safest choice. Used in BERT, GPT, and most transformer architectures. Well-understood behavior, no tuning needed. Start here for new models.
+      - `dynamic_tanh`: Experimental alternative. Removes per-token statistics computation. May converge faster in some settings but requires the model to learn α (initialized near 1.0). Useful for exploring normalization-free architectures.
+      - `derf`: Most experimental option. Reported to outperform DyT in some benchmarks. Has learnable scale α and shift s. Use only if exploring cutting-edge normalization research and willing to tune additional parameters.
+      - `rms_norm`: Efficient choice for large models. Drops mean-centering (7%–64% faster than LayerNorm per the paper). Standard in Llama-family models. Use when normalization overhead matters and mean re-centering is not needed.
+      - `prms_norm`: Most efficient RMS variant. Uses only the first `prms_partial_ratio` fraction of dims for RMS estimation. The paper reports competitive results with as little as 6.25%. Best for extreme throughput; may show gradient instability with very small ratios.
+    description_es: |-
+      Estrategia de normalización usada en todo el modelo.
+      - `layer_norm`: Layer Normalization estándar — resta la media, divide por la desviación estándar. Estable, ampliamente usada. **Recomendada.**
+      - `dynamic_tanh`: Normalización tanh dinámica (DyT) — reemplaza la normalización explícita con un mapa acotado aprendido: `tanh(α·x)`. Libre de normalización, experimental.
+      - `derf`: Normalización erf dinámica — extiende DyT con función erf: `erf(α·x + s)`. Libre de normalización, experimental, puede mejorar sobre DyT.
+      - `rms_norm`: Root Mean Square Layer Normalization — reescala por la magnitud RMS únicamente, sin resta de media. Computacionalmente más simple que LayerNorm; ampliamente usada en Llama, GPT-NeoX y T5. Tiene una escala `g` aprendible por dimensión (sin bias). (arXiv:1910.07467)
+      - `prms_norm`: Partial RMSNorm — estima la estadística RMS de solo el primer `p`% de dimensiones ocultas (controlado por `prms_partial_ratio`, por defecto 6.25%). Misma invariancia de re-escalamiento que `rms_norm` con menor cómputo. (arXiv:1910.07467, §5)
+
+      **Ejemplos explicados:**
+      - `layer_norm`: Opción más segura. Usada en BERT, GPT y la mayoría de arquitecturas transformer. Comportamiento bien comprendido, no requiere ajuste. Empezar aquí para nuevos modelos.
+      - `dynamic_tanh`: Alternativa experimental. Elimina el cómputo de estadísticas por token. Puede converger más rápido en algunos contextos pero requiere que el modelo aprenda α (inicializado cerca de 1.0). Útil para explorar arquitecturas libres de normalización.
+      - `derf`: Opción más experimental. Reportado como superior a DyT en algunos benchmarks. Tiene escala α y desplazamiento s aprendibles. Usar solo si se exploran investigaciones de normalización de vanguardia y se está dispuesto a ajustar parámetros adicionales.
+      - `rms_norm`: Opción eficiente para modelos grandes. Elimina la centralización de media (7%–64% más rápido que LayerNorm según el paper). Estándar en modelos tipo Llama. Usar cuando la sobrecarga de normalización importa y no se necesita re-centrar la media.
+      - `prms_norm`: Variante RMS más eficiente. Usa solo la fracción `prms_partial_ratio` de dimensiones para la estimación RMS. El paper reporta resultados competitivos con tan solo 6.25%. Mejor para rendimiento extremo; puede mostrar inestabilidad de gradiente con razones muy pequeñas.
+    enum: [layer_norm, dynamic_tanh, derf, rms_norm, prms_norm]
+    examples: [layer_norm]
+  partial_ratio:
+    type: number
+    title: "pRMSNorm Partial Ratio"
+    title_es: "Razón Parcial pRMSNorm"
+    description: |-
+      Fraction of hidden dimensions used for RMS estimation when
+      `norm_type=prms_norm`. The RMS is computed over the first
+      `ceil(hidden_size * prms_partial_ratio)` elements.
+
+      The paper (arXiv:1910.07467) reports competitive results with as little
+      as 6.25%. Must be in (0, 1]. Ignored when `norm_type` is not `prms_norm`.
+
+      **Impact:** Smaller values = faster RMS computation but a noisier (biased)
+      estimate, which can cause gradient instability at very small ratios.
+      Values approaching 1.0 converge to standard `rms_norm`. The paper's
+      recommended default is 6.25% (0.0625).
+    description_es: |-
+      Fracción de dimensiones ocultas usadas para la estimación RMS cuando
+      `norm_type=prms_norm`. El RMS se calcula sobre los primeros
+      `ceil(hidden_size * prms_partial_ratio)` elementos.
+
+      El paper (arXiv:1910.07467) reporta resultados competitivos con tan solo
+      6.25%. Debe estar en (0, 1]. Se ignora cuando `norm_type` no es `prms_norm`.
+
+      **Impacto:** Valores más pequeños = cómputo de RMS más rápido pero una
+      estimación más ruidosa (sesgada), lo que puede causar inestabilidad de
+      gradiente con razones muy pequeñas. Valores cercanos a 1.0 convergen al
+      `rms_norm` estándar. El valor por defecto recomendado por el paper es
+      6.25% (0.0625).
+    exclusiveMinimum: 0
+    maximum: 1
+    examples: [0.0625]

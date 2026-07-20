@@ -13,6 +13,7 @@ var FTDiagram = (function () {
         gla_attn: { c: 'attn', l: 'GLA Attention' },
         deltanet_attn: { c: 'recur', l: 'DeltaNet Attn' },
         gated_deltanet_attn: { c: 'recur', l: 'Gated DeltaNet' },
+        gated_deltanet2_attn: { c: 'recur', l: 'Gated DeltaNet-2' },
         hgrn2_attn: { c: 'recur', l: 'HGRN2' },
         fox_attn: { c: 'attn', l: 'FoX Attention' },
         nsa_attn: { c: 'sparse', l: 'Native Sparse Attn' },
@@ -22,7 +23,21 @@ var FTDiagram = (function () {
         sparse_transformer_attn: { c: 'sparse', l: 'Sparse Transformer' },
         sparsek_attn: { c: 'sparse', l: 'SparseK Attn' },
         sparge_attn: { c: 'eval', l: 'SpargeAttn' },
-        fasa_attn: { c: 'eval', l: 'FASA' }
+        fasa_attn: { c: 'eval', l: 'FASA' },
+        // Newer mixers added in the restructured schema (schema/_model/_dims.yaml).
+        gqa_attn: { c: 'attn', l: 'Grouped-Query Attn' },
+        mla_attn: { c: 'attn', l: 'Multi-Head Latent Attn' },
+        gqla_attn: { c: 'attn', l: 'Group-Query Latent Attn' },
+        mlra_attn: { c: 'attn', l: 'Multi-Head Low-Rank Attn' },
+        tucker_attn: { c: 'attn', l: 'Tucker Attn' },
+        iha_attn: { c: 'attn', l: 'Interleaved Head Attn' },
+        gta_attn: { c: 'attn', l: 'Grouped-head laTenT Attn' },
+        mtla_attn: { c: 'attn', l: 'Temporal Latent Attn' },
+        cca_attn: { c: 'attn', l: 'Compressed Conv Attn' },
+        ccgqa_attn: { c: 'attn', l: 'Compressed Conv GQA' },
+        msa_attn: { c: 'sparse', l: 'MiniMax Sparse Attn' },
+        sparda_attn: { c: 'sparse', l: 'SparDA Attn' },
+        kda_attn: { c: 'recur', l: 'Kimi Delta Attn' }
     };
 
     var STYLES = {
@@ -69,6 +84,30 @@ var FTDiagram = (function () {
         return r;
     }
 
+    // Read a dotted path from a plain object; returns undefined if any link
+    // is missing. Used to pull values from the hierarchical model schema
+    // (m.dims.hidden_size, m.norm.type, m.embedding.factorized.enabled, ...).
+    function getDeep(obj, dotted) {
+        if (!obj || !dotted) return undefined;
+        var cur = obj;
+        var parts = dotted.split('.');
+        for (var i = 0; i < parts.length; i++) {
+            if (cur === null || cur === undefined || typeof cur !== 'object') return undefined;
+            cur = cur[parts[i]];
+        }
+        return cur;
+    }
+
+    // Resolve a model value trying the new hierarchical path first, then the
+    // legacy flat path, finally falling back to a default. Keeps the diagram
+    // working for both the restructured schema (m.dims.*, m.norm.*, ...) and
+    // older YAMLs on disk that still use the flat shape (m.vocab_size, ...).
+    function pick(m, newPath, legacyPath, dflt) {
+        var v = getDeep(m, newPath);
+        if (v === undefined) v = getDeep(m, legacyPath);
+        return v === undefined ? dflt : v;
+    }
+
     function generate(config) {
         _id = 0;
         var L = ['graph TD'];
@@ -109,31 +148,39 @@ var FTDiagram = (function () {
         var m = cfg.model || {};
         var tr = cfg.training || {};
         var mc = cfg.model_class || '';
-        var dec = mc === 'frankesteindecoder' || m.mode === 'decoder';
-        var pat = m.layer_pattern || ['standard_attn'];
+        // mode field is now under dims.* in the restructured schema; keep the
+        // legacy m.mode fallback for YAMLs that still use the flat shape.
+        var dec = mc === 'frankesteindecoder' || pick(m, 'dims.mode', 'mode', '') === 'decoder';
+        var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard_attn']);
         if (typeof pat === 'string') pat = [pat];
-        var nL = m.num_layers || 1;
-        var loops = m.num_loops || 1;
-        var H = m.hidden_size || 768;
-        var V = m.vocab_size || 50000;
-        var nH = m.num_heads || 12;
-        var rH = m.retention_heads || nH;
-        var fact = m.use_factorized_embedding;
-        var fD = m.factorized_embedding_dim || 128;
-        var conv = m.use_embedding_conv;
-        var cK = m.embedding_conv_kernel || 3;
-        var hope = m.use_hope;
-        var pe = m.positional_encoding || (hope ? 'hope' : '');
+        var nL = pick(m, 'dims.num_layers', 'num_layers', 1);
+        var loops = pick(m, 'dims.num_loops', 'num_loops', 1);
+        var H = pick(m, 'dims.hidden_size', 'hidden_size', 768);
+        var V = pick(m, 'dims.vocab_size', 'vocab_size', 50000);
+        var nH = pick(m, 'dims.num_heads', 'num_heads', 12);
+        var rH = pick(m, 'dims.retention_heads', 'retention_heads', nH);
+        var fact = pick(m, 'embedding.factorized.enabled', 'use_factorized_embedding', false);
+        var fD = pick(m, 'embedding.factorized.dim', 'factorized_embedding_dim', 128);
+        var conv = pick(m, 'embedding.conv.enabled', 'use_embedding_conv', false);
+        var cK = pick(m, 'embedding.conv.kernel', 'embedding_conv_kernel', 3);
+        // Positional encoding moved under attention.titan.*; legacy fields
+        // (positional_encoding, use_hope, hope_base, hope_damping) remain
+        // available as fallbacks for older configurations on disk.
+        var legacyHope = pick(m, 'attention.titan.use_hope', 'use_hope', false);
+        var pe = pick(m, 'attention.titan.positional_encoding', 'positional_encoding', legacyHope ? 'hope' : '');
+        var hopeBase = pick(m, 'attention.titan.hope.base', 'hope_base', null);
+        var hopeDamping = pick(m, 'attention.titan.hope.damping', 'hope_damping', null);
+        // These keys stayed flat in the restructured schema (model.* top level).
         var moe = m.use_moe;
         var nE = m.num_experts || 4;
         var tK = m.top_k_experts || 2;
         var fH = m.ffn_hidden_size || 3072;
         var fA = m.ffn_activation || 'gelu';
-        var nrm = m.norm_type || 'layer_norm';
+        var nrm = pick(m, 'norm.type', 'norm_type', 'layer_norm');
         var bit = m.use_bitnet;
         var oS = m.ode_solver || 'rk4';
         var oSt = m.ode_steps || 2;
-        var drp = m.dropout || 0;
+        var drp = pick(m, 'dims.dropout', 'dropout', 0);
         var task = tr.task || 'mlm';
 
         var layers = expand(pat, nL);
@@ -164,8 +211,8 @@ var FTDiagram = (function () {
         if (pe === 'hope') {
             var nP = nid();
             var pLbl = 'HoPE';
-            if (m.hope_base) pLbl += ' base:' + m.hope_base;
-            if (m.hope_damping) pLbl += ' d:' + m.hope_damping;
+            if (hopeBase !== null) pLbl += ' base:' + hopeBase;
+            if (hopeDamping !== null) pLbl += ' d:' + hopeDamping;
             L.push('        ' + nP + '["' + esc(pLbl) + '"]:::emb');
             chain.push(nP);
         } else if (pe === 'rope') {
@@ -310,9 +357,10 @@ var FTDiagram = (function () {
     function getInfo(cfg) {
         var m = cfg.model || {};
         var tr = cfg.training || {};
-        var pat = m.layer_pattern || [];
+        var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', []);
         if (typeof pat === 'string') pat = [pat];
-        var nL = m.num_layers || 0;
+        var nL = pick(m, 'dims.num_layers', 'num_layers', 0);
+        var loops = pick(m, 'dims.num_loops', 'num_loops', 1);
         var expanded = expand(pat, nL);
         var counts = {};
         expanded.forEach(function (t) { counts[t] = (counts[t] || 0) + 1; });
@@ -320,15 +368,15 @@ var FTDiagram = (function () {
             modelClass: cfg.model_class || cfg.base_model || 'unknown',
             isBase: !!cfg.base_model,
             isDecoder: cfg.model_class === 'frankesteindecoder',
-            hiddenSize: m.hidden_size,
+            hiddenSize: pick(m, 'dims.hidden_size', 'hidden_size', undefined),
             numLayers: nL,
-            numLoops: m.num_loops || 1,
-            logicalLayers: nL * (m.num_loops || 1),
-            numHeads: m.num_heads,
+            numLoops: loops,
+            logicalLayers: nL * loops,
+            numHeads: pick(m, 'dims.num_heads', 'num_heads', undefined),
             useMoe: m.use_moe || false,
             numExperts: m.num_experts || 0,
             topK: m.top_k_experts || 0,
-            normType: m.norm_type || 'layer_norm',
+            normType: pick(m, 'norm.type', 'norm_type', 'layer_norm'),
             useBitnet: m.use_bitnet || false,
             task: tr.task || 'mlm',
             layerTypes: counts,
