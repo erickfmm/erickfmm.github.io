@@ -966,7 +966,9 @@ async function loadSchema() {
 // Recursively resolve every $ref in a schema node, inlining the referenced
 // file's contents in place. Refs are resolved relative to the directory of the
 // file that contains them (baseDir is an absolute URL ending in '/'), matching
-// schema_loader.py's _resolve_refs(node, base_dir).
+// schema_loader.py's _resolve_refs(node, base_dir). Supports local JSON-pointer
+// fragments of the form ``sub/file.yaml#/path/to/field`` — the loaded document
+// is navigated along the slash-separated path and the pointed sub-node returned.
 async function resolveSchemaRefs(node, baseDir) {
   if (Array.isArray(node)) {
     const out = [];
@@ -975,12 +977,18 @@ async function resolveSchemaRefs(node, baseDir) {
   }
   if (node && typeof node === 'object') {
     if (Object.prototype.hasOwnProperty.call(node, '$ref')) {
-      const refUrl = new URL(node['$ref'], baseDir).href;
+      const rawRef = node['$ref'];
+      const hashIdx = rawRef.indexOf('#');
+      const filePart = hashIdx >= 0 ? rawRef.substring(0, hashIdx) : rawRef;
+      const fragment = hashIdx >= 0 ? rawRef.substring(hashIdx + 1) : '';
+      const refUrl = new URL(filePart, baseDir).href;
       const refDir = refUrl.substring(0, refUrl.lastIndexOf('/') + 1);
       const resp = await fetch(refUrl);
       if (!resp.ok) throw new Error('HTTP ' + resp.status + ' for ' + refUrl);
       const resolved = jsyaml.load(await resp.text()) || {};
-      return await resolveSchemaRefs(resolved, refDir);
+      const traversed = await resolveSchemaRefs(resolved, refDir);
+      if (fragment) return navigateJsonPointer(traversed, fragment);
+      return traversed;
     }
     const result = {};
     for (const [key, value] of Object.entries(node)) {
@@ -989,6 +997,22 @@ async function resolveSchemaRefs(node, baseDir) {
     return result;
   }
   return node;
+}
+
+// Navigate a loaded document along a slash-separated JSON-pointer path
+// (the part after ``#`` in a ``$ref`` fragment). Mirrors schema_loader.py's
+// _navigate_fragment(doc, fragment).
+function navigateJsonPointer(doc, fragment) {
+  let target = doc;
+  for (const part of fragment.split('/')) {
+    if (part === '') continue;
+    if (target === null || target === undefined || typeof target !== 'object') {
+      throw new Error("Cannot navigate fragment '" + fragment + "'");
+    }
+    if (Array.isArray(target)) target = target[parseInt(part, 10)];
+    else target = target[part];
+  }
+  return target;
 }
 
 function switchTab(name, options) {
@@ -1771,10 +1795,11 @@ function onOptimizerChange() {
   const container = document.getElementById('optimizer-param-section');
   if (!container) return;
 
-  const groups = ['embeddings', 'norms', 'ode', 'retnet', 'mamba', 'attention', 'other'];
+  // Groups match schema/_optimizer.yaml's shared_per_group_suffixes:
+  // embeddings, norms, attention, other. (ode/retnet/mamba were removed.)
+  const groups = ['embeddings', 'norms', 'attention', 'other'];
   const groupLabels = {
     embeddings: t('embeddingsGroup'), norms: t('normGroup'),
-    ode: 'ODE', retnet: 'RetNet', mamba: 'Mamba',
     attention: t('attnGroup'), other: t('otherGroup')
   };
   const descRef = getLoc(SCHEMA.properties.training.properties.optimizer.properties.parameters, 'description', '');
@@ -1849,9 +1874,12 @@ function onTaskChange() {
 }
 
 function getDefaultForGroup(group, param) {
+  // Only embeddings/norms/attention/other are emitted now; ode/retnet/mamba
+  // groups were removed from schema/_optimizer.yaml. Defaults retained for
+  // backward-compat if a legacy group is requested elsewhere.
   const defaults = {
-    lr: { embeddings:'1e-6', norms:'5e-6', ode:'1e-7', retnet:'5e-6', mamba:'2e-6', attention:'3e-6', other:'2e-6' },
-    wd: { embeddings:'0.01', norms:'0.001', ode:'0.01', retnet:'0.01', mamba:'0.01', attention:'0.01', other:'0.01' }
+    lr: { embeddings:'1e-6', norms:'5e-6', attention:'3e-6', other:'2e-6' },
+    wd: { embeddings:'0.01', norms:'0.001', attention:'0.01', other:'0.01' }
   };
   return (defaults[param] && defaults[param][group]) ? defaults[param][group] : '0.01';
 }
@@ -1993,7 +2021,9 @@ function buildConfig() {
   const optClass = readFieldValue('optimizer_class', trainingProps.optimizer.properties.optimizer_class, 'training.optimizer');
   const optParams = {};
   const pref = optClass + '-';
-  const groups = ['embeddings', 'norms', 'ode', 'retnet', 'mamba', 'attention', 'other'];
+  // Groups match schema/_optimizer.yaml's shared_per_group_suffixes
+  // (embeddings, norms, attention, other — ode/retnet/mamba were removed).
+  const groups = ['embeddings', 'norms', 'attention', 'other'];
   const sharedKeys = ['lr', 'wd', 'betas', 'eps'];
   groups.forEach(g => {
     sharedKeys.forEach(k => {
@@ -2325,14 +2355,24 @@ function onModelModeChange() {
 }
 
 // ====== PRESETS ======
+// Model keys use the new hierarchical schema shape (schema/_model/_*.yaml):
+//   model.dims.*, model.norm.*, model.embedding.*, model.attention.titan.*
+//   + flat keys (use_moe, num_experts, top_k_experts, ffn_*, ode_*, use_bitnet, ...)
+// We use dotted keys at the model level so applyPreset() — which builds ids
+// like createId('model.' + key) — produces the same ids renderObject emits
+// when walking the nested schema (e.g. 'model.dims.vocab_size').
 const PRESETS = {
   mini: {
     model_mode: 'custom', model_class: 'mini',
-    model: { vocab_size:50000, hidden_size:128, num_layers:4, num_loops:1, num_heads:1, retention_heads:1,
-      num_experts:2, top_k_experts:1, dropout:0.1, layer_pattern:['standard_attn'], ode_solver:'rk4', ode_steps:2,
-      use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:true, factorized_embedding_dim:16,
-      use_embedding_conv:true, embedding_conv_kernel:32, use_hope:false, use_moe:false, ffn_hidden_size:512,
-      ffn_activation:'gelu' },
+    model: {
+      'dims.vocab_size': 50000, 'dims.hidden_size': 128, 'dims.num_layers': 4, 'dims.num_loops': 1,
+      'dims.num_heads': 1, 'dims.retention_heads': 1, 'dims.dropout': 0.1, 'dims.layer_pattern': ['standard_attn'],
+      'norm.type': 'layer_norm',
+      'embedding.factorized.enabled': true, 'embedding.factorized.dim': 16,
+      'embedding.conv.enabled': true, 'embedding.conv.kernel': 32,
+      num_experts: 2, top_k_experts: 1, ode_solver: 'rk4', ode_steps: 2,
+      use_bitnet: false, use_moe: false, ffn_hidden_size: 512, ffn_activation: 'gelu'
+    },
     training: { task:'mlm', batch_size:64, max_length:512, mlm_probability:0.15, max_samples:20000000,
       dataset_batch_size:25000, gradient_accumulation_steps:2, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:50, max_rolling_checkpoints:3,
@@ -2342,11 +2382,15 @@ const PRESETS = {
   },
   standard: {
     model_mode: 'custom', model_class: 'frankenstein',
-    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:12,
-      num_experts:4, top_k_experts:2, dropout:0.1, layer_pattern:['standard_attn'], ode_solver:'rk4', ode_steps:2,
-      use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false, factorized_embedding_dim:128,
-      use_embedding_conv:false, embedding_conv_kernel:3, use_hope:false, use_moe:false, ffn_hidden_size:3072,
-      ffn_activation:'gelu' },
+    model: {
+      'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
+      'dims.num_heads': 12, 'dims.retention_heads': 12, 'dims.dropout': 0.1, 'dims.layer_pattern': ['standard_attn'],
+      'norm.type': 'layer_norm',
+      'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
+      'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
+      num_experts: 4, top_k_experts: 2, ode_solver: 'rk4', ode_steps: 2,
+      use_bitnet: false, use_moe: false, ffn_hidden_size: 3072, ffn_activation: 'gelu'
+    },
     training: { task:'mlm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
       dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
@@ -2356,11 +2400,17 @@ const PRESETS = {
   },
   frankenstein: {
     model_mode: 'custom', model_class: 'frankenstein',
-    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:12,
-      num_experts:4, top_k_experts:2, dropout:0.1, layer_pattern:['retnet','titan_attn','retnet','mamba','titan_attn','ode'],
-      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false,
-      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:true, use_moe:true,
-      ffn_hidden_size:3072, ffn_activation:'silu' },
+    model: {
+      'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
+      'dims.num_heads': 12, 'dims.retention_heads': 12, 'dims.dropout': 0.1,
+      'dims.layer_pattern': ['retnet','titan_attn','retnet','mamba','titan_attn','ode'],
+      'norm.type': 'layer_norm',
+      'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
+      'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
+      'attention.titan.positional_encoding': 'hope',
+      num_experts: 4, top_k_experts: 2, ode_solver: 'rk4', ode_steps: 2,
+      use_bitnet: false, use_moe: true, ffn_hidden_size: 3072, ffn_activation: 'silu'
+    },
     training: { task:'mlm', batch_size:2, max_length:256, mlm_probability:0.15, max_samples:6000000,
       dataset_batch_size:15000, gradient_accumulation_steps:12, grad_clip_max_norm:5.0, scheduler_total_steps:12000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
@@ -2370,11 +2420,17 @@ const PRESETS = {
   },
   hybrid: {
     model_mode: 'custom', model_class: 'frankenstein',
-    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:12,
-      num_experts:4, top_k_experts:2, dropout:0.1, layer_pattern:['retnet','titan_attn','mamba','ode'],
-      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false,
-      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:true, use_moe:false,
-      ffn_hidden_size:3072, ffn_activation:'silu' },
+    model: {
+      'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
+      'dims.num_heads': 12, 'dims.retention_heads': 12, 'dims.dropout': 0.1,
+      'dims.layer_pattern': ['retnet','titan_attn','mamba','ode'],
+      'norm.type': 'layer_norm',
+      'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
+      'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
+      'attention.titan.positional_encoding': 'hope',
+      num_experts: 4, top_k_experts: 2, ode_solver: 'rk4', ode_steps: 2,
+      use_bitnet: false, use_moe: false, ffn_hidden_size: 3072, ffn_activation: 'silu'
+    },
     training: { task:'mlm', batch_size:2, max_length:256, mlm_probability:0.15, max_samples:6000000,
       dataset_batch_size:15000, gradient_accumulation_steps:12, grad_clip_max_norm:5.0, scheduler_total_steps:12000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
@@ -2384,11 +2440,17 @@ const PRESETS = {
   },
   gpt_like: {
     model_mode: 'custom', model_class: 'decoder_gpt_like',
-    model: { vocab_size:50000, hidden_size:768, num_layers:12, num_loops:1, num_heads:12, retention_heads:1,
-      num_experts:1, top_k_experts:1, dropout:0.1, layer_pattern:['standard_attn'],
-      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'layer_norm', use_factorized_embedding:false,
-      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:false, use_moe:false,
-      ffn_hidden_size:3072, ffn_activation:'gelu' },
+    model: {
+      'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
+      'dims.num_heads': 12, 'dims.retention_heads': 1, 'dims.dropout': 0.1,
+      'dims.layer_pattern': ['standard_attn'], 'dims.mode': 'decoder',
+      'norm.type': 'layer_norm',
+      'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
+      'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
+      'attention.titan.positional_encoding': 'rope',
+      num_experts: 1, top_k_experts: 1, ode_solver: 'rk4', ode_steps: 2,
+      use_bitnet: false, use_moe: false, ffn_hidden_size: 3072, ffn_activation: 'gelu'
+    },
     training: { task:'causal_lm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
       dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
@@ -2398,11 +2460,17 @@ const PRESETS = {
   },
   llama_like: {
     model_mode: 'custom', model_class: 'decoder_llama_like',
-    model: { vocab_size:50000, hidden_size:4096, num_layers:32, num_loops:1, num_heads:32, retention_heads:1,
-      num_experts:1, top_k_experts:1, dropout:0.0, layer_pattern:['standard_attn'],
-      ode_solver:'rk4', ode_steps:2, use_bitnet:false, norm_type:'rms_norm', use_factorized_embedding:false,
-      factorized_embedding_dim:128, use_embedding_conv:false, embedding_conv_kernel:3, use_hope:false, use_moe:false,
-      ffn_hidden_size:11008, ffn_activation:'silu' },
+    model: {
+      'dims.vocab_size': 50000, 'dims.hidden_size': 4096, 'dims.num_layers': 32, 'dims.num_loops': 1,
+      'dims.num_heads': 32, 'dims.retention_heads': 1, 'dims.dropout': 0.0,
+      'dims.layer_pattern': ['standard_attn'], 'dims.mode': 'decoder',
+      'norm.type': 'rms_norm',
+      'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
+      'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
+      'attention.titan.positional_encoding': 'rope',
+      num_experts: 1, top_k_experts: 1, ode_solver: 'rk4', ode_steps: 2,
+      use_bitnet: false, use_moe: false, ffn_hidden_size: 11008, ffn_activation: 'silu'
+    },
     training: { task:'causal_lm', batch_size:2, max_length:2048, mlm_probability:0.15, max_samples:10000000,
       dataset_batch_size:15000, gradient_accumulation_steps:8, grad_clip_max_norm:5.0, scheduler_total_steps:20000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
@@ -2435,7 +2503,9 @@ function applyPreset(name) {
     if (el && preset.model_class) el.value = preset.model_class;
   }
 
-  // Model fields
+  // Model fields. Supports both flat keys ('use_moe') and dotted keys
+  // ('dims.vocab_size') — the new hierarchical schema uses nested objects,
+  // and dotted keys produce the same ids renderObject emits.
   if (preset.model) {
     for (const [key, val] of Object.entries(preset.model)) {
       const id = createId('model.' + key);
@@ -2599,9 +2669,14 @@ function applyYamlConfig(config) {
     if (bmEl) bmEl.value = config.base_model;
   }
 
-  // Apply model fields
+  // Apply model fields. Existing YAMLs on disk still use the legacy flat
+  // model shape (vocab_size, norm_type, use_factorized_embedding, ...); the
+  // schema was restructured into nested sub-objects (dims.*, norm.*,
+  // embedding.*, attention.titan.*). Normalize before applying so both
+  // shapes populate the same rendered form controls.
   if (config.model) {
-    for (const [key, val] of Object.entries(config.model)) {
+    const flat = normalizeModelFlat(config.model);
+    for (const [key, val] of Object.entries(flat)) {
       const id = createId('model.' + key);
       const el = document.getElementById(id);
       if (!el) continue;
@@ -2654,6 +2729,62 @@ function applyYamlConfig(config) {
 
   updateYamlOutput();
   updateCmdPreview();
+}
+
+// Flatten a model object into dotted keys matching the rendered form ids,
+// bridging the legacy flat schema (vocab_size, norm_type, use_hope, ...) and
+// the current hierarchical schema (dims.*, norm.*, embedding.*, attention.titan.*).
+// Returns an object like { 'dims.vocab_size': 50000, 'norm.type': 'layer_norm', ... }
+// so applyPreset/applyYamlConfig can reuse the same id-building path.
+function normalizeModelFlat(model) {
+  if (!model || typeof model !== 'object') return {};
+  // Already-new shape: flatten nested objects one level (plus titan's nested
+  // hope/rope sub-objects) into dotted keys.
+  const out = {};
+  const walk = (prefix, obj) => {
+    for (const [k, v] of Object.entries(obj)) {
+      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+        walk(prefix ? prefix + '.' + k : k, v);
+      } else {
+        out[prefix ? prefix + '.' + k : k] = v;
+      }
+    }
+  };
+  walk('', model);
+
+  // Legacy aliases (old flat key -> new dotted key). Only applied when the
+  // legacy key is present and the new key isn't.
+  const alias = {
+    vocab_size: 'dims.vocab_size',
+    hidden_size: 'dims.hidden_size',
+    num_layers: 'dims.num_layers',
+    num_loops: 'dims.num_loops',
+    num_heads: 'dims.num_heads',
+    num_kv_heads: 'dims.num_kv_heads',
+    retention_heads: 'dims.retention_heads',
+    dropout: 'dims.dropout',
+    layer_pattern: 'dims.layer_pattern',
+    mode: 'dims.mode',
+    norm_type: 'norm.type',
+    prms_partial_ratio: 'norm.partial_ratio',
+    use_factorized_embedding: 'embedding.factorized.enabled',
+    factorized_embedding_dim: 'embedding.factorized.dim',
+    use_embedding_conv: 'embedding.conv.enabled',
+    embedding_conv_kernel: 'embedding.conv.kernel',
+    positional_encoding: 'attention.titan.positional_encoding',
+    use_hope: 'attention.titan.use_hope',
+    hope_base: 'attention.titan.hope.base',
+    hope_damping: 'attention.titan.hope.damping',
+    rope_base: 'attention.titan.rope.base',
+    rope_scaling: 'attention.titan.rope.scaling'
+  };
+  for (const [legacy, modern] of Object.entries(alias)) {
+    if (Object.prototype.hasOwnProperty.call(out, legacy) && !Object.prototype.hasOwnProperty.call(out, modern)) {
+      out[modern] = out[legacy];
+      delete out[legacy];
+    }
+  }
+  return out;
 }
 
 // ====== REACTIVE LANGUAGE SWITCH ======

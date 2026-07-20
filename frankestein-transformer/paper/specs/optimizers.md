@@ -28,11 +28,11 @@ All optimizer parameters use the prefix format: **`<optimizer_class>-<group>_<pa
 |---|---|---|---|---|
 | Embeddings | `lr_embeddings` | `wd_embeddings` | `betas_embeddings` | `eps_embeddings` |
 | Normalizations | `lr_norms` | `wd_norms` | `betas_norms` | `eps_norms` |
-| ODE blocks | `lr_ode` | `wd_ode` | `betas_ode` | `eps_ode` |
-| RetNet blocks | `lr_retnet` | `wd_retnet` | `betas_retnet` | `eps_retnet` |
-| Mamba blocks | `lr_mamba` | `wd_mamba` | `betas_mamba` | `eps_mamba` |
 | Attention blocks | `lr_attention` | `wd_attention` | `betas_attention` | `eps_attention` |
 | Other parameters | `lr_other` | `wd_other` | `betas_other` | `eps_other` |
+
+> ODE / RetNet / Mamba mixer parameters are routed into the **attention** group
+> (their dedicated groups were removed).
 
 ### Optimizer-Specific Global Suffixes
 

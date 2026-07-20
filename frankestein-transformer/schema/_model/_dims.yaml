@@ -1,0 +1,339 @@
+type: object
+additionalProperties: false
+properties:
+  vocab_size:
+    type: integer
+    title: "Vocabulary Size"
+    title_es: "Tamaño de Vocabulario"
+    description: |-
+      Number of unique tokens in the model's vocabulary. Must match the tokenizer's vocab size.
+      Typical values: 30k–100k. Larger vocabularies improve language coverage but increase embedding
+      parameters (`vocab_size × hidden_size`).
+
+      **Examples explained:**
+      - `vocab_size=30000`: Common for English-only models (BERT). Smaller vocab = fewer embedding params, faster lookup. May struggle with rare words or multilingual text.
+      - `vocab_size=50000`: Multilingual BERT-style. Good coverage for 100+ languages with shared subword units. ~38M embedding params with hidden_size=768.
+      - `vocab_size=100000`: Very large vocab for code or highly multilingual models. ~77M embedding params — strongly consider `use_factorized_embedding=true` to reduce this cost.
+      - With `use_factorized_embedding=true` and `factorized_embedding_dim=128`: vocab_size=50k, hidden=768 → embedding params drop from 38.4M to ~8.4M (4.5× reduction). Quality impact is typically negligible for vocabs > 10k.
+      - If using `base_model`: vocab_size must exactly match the pretrained model's vocabulary. Mismatch causes token ID corruption and unrecoverable training failure.
+    description_es: |-
+      Número de tokens únicos en el vocabulario del modelo. Debe coincidir con el tamaño del
+      vocabulario del tokenizador. Valores típicos: 30k–100k. Vocabularios más grandes mejoran la
+      cobertura lingüística pero aumentan los parámetros de embedding (`vocab_size × hidden_size`).
+
+      **Ejemplos explicados:**
+      - `vocab_size=30000`: Común para modelos solo en inglés (BERT). Vocab más pequeño = menos params de embedding, inferencia más rápida. Puede tener problemas con palabras raras o texto multilingüe.
+      - `vocab_size=50000`: Estilo BERT multilingüe. Buena cobertura para 100+ idiomas con unidades sub-palabra compartidas. ~38M params de embedding con hidden_size=768.
+      - `vocab_size=100000`: Vocabulario muy grande para código o modelos altamente multilingües. ~77M params de embedding — considerar seriamente `use_factorized_embedding=true` para reducir este costo.
+      - Con `use_factorized_embedding=true` y `factorized_embedding_dim=128`: vocab_size=50k, hidden=768 → params de embedding bajan de 38.4M a ~8.4M (reducción 4.5×). El impacto en calidad es típicamente insignificante para vocabularios > 10k.
+      - Si se usa `base_model`: vocab_size debe coincidir exactamente con el vocabulario del modelo preentrenado. Una discrepancia causa corrupción de IDs de token y falla de entrenamiento irrecuperable.
+    examples: [50000]
+  hidden_size:
+    type: integer
+    title: "Hidden Dimension"
+    title_es: "Dimensión Oculta"
+    description: |-
+      Dimension of the model's hidden representations. Key size parameter affecting capacity
+      and memory. Typical: 512 (small), 768 (BERT-base), 1024 (BERT-large), 2048+ (large models).
+      **Must be divisible by `num_heads`.**
+
+      **Examples explained:**
+      - `hidden_size=768` with `num_heads=12` → 64 dimensions per head. Standard BERT-base configuration, good balance of capacity and memory (~110M total params with 12 layers).
+      - `hidden_size=512` with `num_heads=8` → 64 dimensions per head. Compact model for resource-constrained environments or fast prototyping (~40M params).
+      - `hidden_size=1024` with `num_heads=16` → 64 dimensions per head. BERT-large scale, higher capacity for complex tasks (~340M params).
+      - `hidden_size=2048` with `num_heads=32` → 64 dimensions per head. Large model scale, requires significant GPU memory. Consider factorized embeddings and MoE to manage parameter count.
+      - Golden rule: per-head dimension should be ≥ 64. Values below 48 degrade attention quality. Use `hidden_size / num_heads >= 64` as a design constraint.
+    description_es: |-
+      Dimensión de las representaciones ocultas del modelo. Parámetro clave de tamaño que afecta
+      capacidad y memoria. Típico: 512 (pequeño), 768 (BERT-base), 1024 (BERT-large), 2048+
+      (modelos grandes). **Debe ser divisible por `num_heads`.**
+
+      **Ejemplos explicados:**
+      - `hidden_size=768` con `num_heads=12` → 64 dimensiones por cabeza. Configuración BERT-base estándar, buen balance de capacidad y memoria (~110M params totales con 12 capas).
+      - `hidden_size=512` con `num_heads=8` → 64 dimensiones por cabeza. Modelo compacto para entornos con recursos limitados o prototipado rápido (~40M params).
+      - `hidden_size=1024` con `num_heads=16` → 64 dimensiones por cabeza. Escala BERT-large, mayor capacidad para tareas complejas (~340M params).
+      - `hidden_size=2048` con `num_heads=32` → 64 dimensiones por cabeza. Escala de modelo grande, requiere memoria GPU significativa. Considerar embeddings factorizados y MoE para manejar el conteo de parámetros.
+      - Regla de oro: dimensión por cabeza debe ser ≥ 64. Valores por debajo de 48 degradan calidad de atención. Usar `hidden_size / num_heads >= 64` como restricción de diseño.
+    examples: [768]
+  num_layers:
+    type: integer
+    title: "Number of Layers"
+    title_es: "Número de Capas"
+    description: |-
+      Number of physical transformer layers in the model stack. Typical: 6 (small), 12 (BERT-base), 24 (BERT-large).
+      More layers increase depth and capacity for hierarchical representations but make training harder (gradient flow).
+
+      **Examples explained:**
+      - `num_layers=6` with `num_loops=1`: 6 physical layers. Compact model, fast training. Good for small datasets (<10M tokens) or rapid experimentation.
+      - `num_layers=6` with `num_loops=2`: 6 physical, 12 logical layers. Same parameter count as 6 layers but 2× compute depth. Each layer in `layer_pattern` runs twice. Useful when you want more sequential computation without adding parameters.
+      - `num_layers=12` with `num_loops=1`: Standard BERT-base depth. 12 distinct layers each with their own weights. Good balance for most tasks.
+      - `num_layers=24` with `num_loops=1`: BERT-large depth. Requires careful training (Pre-LN, gradient clipping, warmup). Use for large datasets and complex tasks.
+      - Relationship with `num_loops`: Logical depth = `num_layers × num_loops`. Use loops to increase effective depth without parameter explosion. Loops share weights across iterations, trading capacity for compute.
+    description_es: |-
+      Número de capas físicas del transformer. Típico: 6 (pequeño), 12 (BERT-base), 24 (BERT-large).
+      Más capas aumentan la profundidad y capacidad para representaciones jerárquicas pero dificultan el entrenamiento (flujo de gradientes).
+
+      **Ejemplos explicados:**
+      - `num_layers=6` con `num_loops=1`: 6 capas físicas. Modelo compacto, entrenamiento rápido. Bueno para datasets pequeños (<10M tokens) o experimentación rápida.
+      - `num_layers=6` con `num_loops=2`: 6 capas físicas, 12 capas lógicas. Mismos parámetros que 6 capas pero 2× profundidad de cómputo. Cada capa en `layer_pattern` se ejecuta dos veces. Útil cuando se quiere más cómputo secuencial sin agregar parámetros.
+      - `num_layers=12` con `num_loops=1`: Profundidad BERT-base estándar. 12 capas distintas cada una con sus propios pesos. Buen balance para la mayoría de tareas.
+      - `num_layers=24` con `num_loops=1`: Profundidad BERT-large. Requiere entrenamiento cuidadoso (Pre-LN, gradient clipping, warmup). Usar para datasets grandes y tareas complejas.
+      - Relación con `num_loops`: Profundidad lógica = `num_layers × num_loops`. Usar loops para aumentar profundidad efectiva sin explosión de parámetros. Los loops comparten pesos entre iteraciones, intercambiando capacidad por cómputo.
+    examples: [12]
+  num_loops:
+    type: integer
+    title: "Logical Loops"
+    title_es: "Bucles Lógicos"
+    description: |
+      Number of times to loop through the `layer_pattern` during a single forward pass. When >1,
+      creates logical layers without increasing parameters. `num_loops=2` with `num_layers=6` behaves
+      like 12 layers but with 6-layer parameters. Increases training time linearly.
+
+      **Impact:** Increases compute cost without increasing parameter memory. Ideal for compensating
+      models with few physical layers. Doesn't improve representation capacity as much as additional physical layers
+      (weights are shared across loop iterations by position).
+    description_es: |
+      Número de veces que se recorre `layer_pattern` en una pasada hacia adelante. Cuando >1,
+      crea capas lógicas sin aumentar parámetros. `num_loops=2` con `num_layers=6` se comporta como
+      12 capas pero con parámetros de 6. Aumenta el tiempo de entrenamiento linealmente.
+
+      **Impacto:** Aumenta el costo de cómputo sin aumentar memoria de parámetros. Ideal para compensar
+      models with few physical layers. Doesn't improve representation capacity as much as additional physical layers
+      (weights are shared across loop iterations by position).
+    examples: [1, 2]
+  num_heads:
+    type: integer
+    title: "Attention Heads"
+    title_es: "Cabezas de Atención"
+    description: |
+      Number of parallel attention heads. Must divide `hidden_size` evenly. Typical: 8 (small),
+      12 (BERT-base), 16 (BERT-large), 32 (large). Each head learns different attention patterns.
+
+      **Impact:** Per-head dimension = `hidden_size / num_heads`. Values <64 per head can degrade
+      quality. Too many heads with small dimensions fragment the representation. Rule of thumb:
+      keep per-head dimension between 64 and 128. With `hidden_size=768`, `num_heads=12` gives 64/head.
+    description_es: |
+      Número de cabezas de atención paralelas. Debe dividir `hidden_size` exactamente. Típico:
+      8 (pequeño), 12 (BERT-base), 16 (BERT-large), 32 (grande). Cada cabeza aprende patrones de atención distintos.
+
+      **Impacto:** Per-head dimension = `hidden_size / num_heads`. Valores <64 por cabeza pueden degradar
+      quality. Too many heads with small dimensions fragment the representation. Rule of thumb:
+      keep per-head dimension between 64 and 128. With `hidden_size=768`, `num_heads=12` gives 64/head.
+    examples: [12]
+  num_kv_heads:
+    type: integer
+    title: "Key-Value Heads (GQA)"
+    title_es: "Cabezas Clave-Valor (GQA)"
+    description: |
+      Number of key-value heads for Grouped-Query Attention (``gqa_attn``).
+      Must divide ``num_heads`` evenly. Values range from 1 (equivalent to
+      multi-query attention) to ``num_heads`` (equivalent to multi-head
+      attention). The paper suggests 8 as a favorable middle ground for
+      typical model sizes.
+    description_es: |
+      Número de cabezas clave-valor para Grouped-Query Attention
+      (``gqa_attn``). Debe dividir ``num_heads`` exactamente. Los valores
+      van de 1 (equivalente a multi-query attention) a ``num_heads``
+      (equivalente a multi-head attention). El paper sugiere 8 como un
+      punto medio favorable para tamaños de modelo típicos.
+    examples: [1, 8]
+  retention_heads:
+    type: integer
+    title: "Retention Heads"
+    title_es: "Cabezas de Retención"
+    description: |
+      Number of heads for RetentionNet/RetNet layers. Similar to `num_heads` but governs
+      retention mechanisms that blend RNN and transformer properties. Must divide `hidden_size` evenly.
+
+      **Impact:** Only affects `retnet`/`retnet_attn` layers in `layer_pattern`. Generally set equal
+      to `num_heads` for simplicity. More heads enable diverse retention contexts but
+      reduce per-head capacity.
+    description_es: |
+      Número de cabezas para capas RetentionNet/RetNet. Similar a `num_heads` pero gobierna
+      mecanismos de retención que combinan propiedades de RNN y transformer. Debe dividir `hidden_size` exactamente.
+
+      **Impacto:** Solo afecta capas `retnet`/`retnet_attn` en `layer_pattern`. Generalmente se iguala
+      to `num_heads` for simplicity. More heads enable diverse retention contexts but
+      reduce per-head capacity.
+    examples: [12]
+  dropout:
+    type: integer
+    title: "Dropout Probability"
+    title_es: "Probabilidad de Dropout"
+    description: |-
+      Global dropout rate applied throughout the model (attention, FFN, embeddings). Typical:
+      0.1 (BERT), 0.3 (small datasets). Higher = more regularization, lower = less. Tune based on
+      overfitting: increase if validation loss >> train loss.
+
+      **Examples explained:**
+      - `0.1`: BERT standard. Good default for mid-size models and datasets (>1M samples). Provides moderate regularization without slowing convergence too much.
+      - `0.05`: Light regularization. For very large datasets (>100M tokens) or large models where overfitting is less of a concern. Faster convergence.
+      - `0.2–0.3`: Strong regularization. For small datasets (<10M tokens) where overfitting is likely. Slows training but improves generalization.
+      - `0.0`: No dropout. Only for debugging or when using other regularization (weight decay, data augmentation). Models typically overfit without it.
+      - Overfitting diagnosis: If train loss keeps decreasing while validation loss plateaus or increases, raise dropout by 0.05–0.1. If both losses are flat (underfitting), lower dropout.
+    description_es: |-
+      Tasa global de dropout aplicada en todo el modelo (atención, FFN, embeddings). Típico:
+      0.1 (BERT), 0.3 (datasets pequeños). Mayor = más regularización, menor = menos. Ajustar según
+      sobreajuste: aumentar si pérdida de validación >> pérdida de entrenamiento.
+
+      **Ejemplos explicados:**
+      - `0.1`: Estándar BERT. Buen valor por defecto para modelos de tamaño medio y datasets (>1M muestras). Proporciona regularización moderada sin ralentizar demasiado la convergencia.
+      - `0.05`: Regularización ligera. Para datasets muy grandes (>100M tokens) o modelos grandes donde el sobreajuste preocupa menos. Convergencia más rápida.
+      - `0.2–0.3`: Regularización fuerte. Para datasets pequeños (<10M tokens) donde el sobreajuste es probable. Ralentiza el entrenamiento pero mejora la generalización.
+      - `0.0`: Sin dropout. Solo para debugging o cuando se usan otros regularizadores (weight decay, data augmentation). Los modelos típicamente sobreajustan sin él.
+      - Diagnóstico de sobreajuste: Si la pérdida de entrenamiento sigue bajando mientras la de validación se estanca o sube, aumentar dropout en 0.05–0.1. Si ambas pérdidas están planas (subajuste), bajar dropout.
+    examples: [0.1]
+  layer_pattern:
+    type: array
+    title: "Layer Pattern"
+    title_es: "Patrón de Capas"
+    description: |-
+      Ordered sequence of layer types stacked in the model. Each element defines one
+      physical layer. Pattern length must equal `num_layers`. Available types:
+
+      | Type | Description | Training | Inference |
+      |------|-------------|----------|-----------|
+      | `standard_attn` | Classic multi-head self-attention (like BERT) | ✅ | ✅ |
+      | `sigmoid_attn` | Sigmoid-gated attention | ✅ | ✅ |
+      | `gated_softmax_attn` | Gated softmax attention with post-SDPA sigmoid | ✅ | ✅ |
+      | `titan_attn` | Titan attention with positional encoding (`hope`/`rope`) | ✅ | ✅ |
+      | `retnet` / `retnet_attn` | Retention Network (RNN+transformer hybrid) | ✅ | ✅ |
+      | `mamba` | Selective state-space model (SSM) | ✅ | ✅ |
+      | `ode` | Continuous-depth ODE layer (uses `ode_solver`/`ode_steps`) | ✅ | ✅ |
+      | `gla_attn` | Gated Linear Attention with multiplicative decay | ✅ | ✅ |
+      | `deltanet_attn` / `gated_deltanet_attn` | DeltaNet with corrective delta rule | ✅ | ✅ |
+      | `gated_deltanet2_attn` | Gated DeltaNet-2 with decoupled channel-wise erase/write gates (arXiv:2605.22791) | ✅ | ✅ |
+      | `hgrn2_attn` | HGRN2 with hierarchical forget gates | ✅ | ✅ |
+      | `fox_attn` | Forgetting Transformer (FoX) with forget bias in logits | ✅ | ✅ |
+      | `nsa_attn` | Native Sparse Attention (three-branch) | ✅ | ✅ |
+      | `engram_attn` | N-gram conditional memory lookup (arXiv:2601.07372) | ✅ | ✅ |
+      | `gqa_attn` | Grouped-Query Attention — configurable KV heads (arXiv:2305.13245) | ✅ | ✅ |
+      | `longformer_attn` | Longformer: sliding windows + global tokens | ✅ | ✅ |
+      | `bigbird_attn` | BigBird: local + random + global attention | ✅ | ✅ |
+      | `sparse_transformer_attn` | Sparse Transformer: factorized patterns | ✅ | ✅ |
+      | `sparsek_attn` | SparseK: differentiable top-k KV selection | ✅ | ✅ |
+      | `sparge_attn` ⚠️ | SpargeAttn — **eval-only**, two-stage block pruning | ❌ | ✅ |
+      | `fasa_attn` ⚠️ | FASA — **eval-only**, frequency-aware token selection | ❌ | ✅ |
+      | `msa_attn` | MiniMax Sparse Attention — block-sparse on GQA (arXiv:2606.13392) | ✅ | ✅ |
+      | `sparda_attn` | SparDA — decoupled sparse attention with a Forecast projection (arXiv:2606.04511) | ✅ | ✅ |
+      | `kda_attn` | Kimi Delta Attention — channel-wise decay + scalar write gate (arXiv:2510.26692) | ✅ | ✅ |
+      | `mla_attn` | Multi-Head Latent Attention + RoPE (arXiv:2506.09342) | ✅ | ✅ |
+      | `gqla_attn` | Group-Query Latent Attention — two decoding paths (arXiv:2605.15250) | ✅ | ✅ |
+      | `mlra_attn` | Multi-Head Low-Rank Attention — partitionable latent (arXiv:2603.02188) | ✅ | ✅ |
+      | `tucker_attn` | Tucker Attention — generalised low-rank factorisation (arXiv:2603.30033) | ✅ | ✅ |
+      | `iha_attn` | Interleaved Head Attention — cross-head pseudo-heads (arXiv:2602.21371) | ✅ | ✅ |
+      | `gta_attn` | Grouped-head laTenT Attention — shared map + latent values (arXiv:2506.17286) | ✅ | ✅ |
+      | `mtla_attn` | Multi-head Temporal Latent Attention — temporal KV merge (arXiv:2505.13544) | ✅ | ✅ |
+      | `cca_attn` | Compressed Convolutional Attention — latent-space attention + convs (arXiv:2510.04476) | ✅ | ✅ |
+      | `ccgqa_attn` | Compressed Convolutional Grouped Query Attention — CCA + GQA in latent (arXiv:2510.04476) | ✅ | ✅ |
+
+      **Examples explained:**
+      - `[standard_attn]` repeated 12 times: Classic BERT-like encoder. Simplest configuration, serves as a reliable baseline. All layers use full quadratic attention.
+      - `[retnet, titan_attn, retnet, mamba, titan_attn, ode]` with `num_layers=6`: Mixed architecture combining recurrent retention (efficient long-range), Titan attention with positional encoding (precise local attention), Mamba SSM (linear-time sequence modeling), and ODE continuous depth. Each position gets a different type of computation, enabling diverse representations.
+      - `[standard_attn, standard_attn, longformer_attn]` with `num_layers=3`: Hybrid dense + sparse. Start with 2 dense attention layers for fine-grained interactions, then use Longformer for efficient long-sequence processing. Good for documents > 512 tokens.
+      - Mixing recurrent (retnet, mamba) with attention (standard_attn, titan_attn): Recurrent layers provide memory and long-range context at O(1) inference cost, while attention layers provide high-precision local interactions. This is the recommended pattern for models that need both efficiency and quality.
+    description_es: |-
+      Secuencia ordenada de tipos de capa apilados en el modelo. Cada elemento define una
+      capa física. La longitud del patrón debe igualar `num_layers`. Tipos disponibles:
+
+      | Tipo | Descripción | Entrenamiento | Inferencia |
+      |------|-------------|---------------|------------|
+      | `standard_attn` | Atención multi-cabeza clásica (tipo BERT) | ✅ | ✅ |
+      | `sigmoid_attn` | Atención con compuerta sigmoide | ✅ | ✅ |
+      | `gated_softmax_attn` | Atención softmax con compuerta post-SDPA | ✅ | ✅ |
+      | `titan_attn` | Atención Titan con codificación posicional (`hope`/`rope`) | ✅ | ✅ |
+      | `retnet` / `retnet_attn` | Retention Network (híbrido RNN+transformer) | ✅ | ✅ |
+      | `mamba` | Modelo de espacio de estados (SSM) selectivo | ✅ | ✅ |
+      | `ode` | Capa ODE de profundidad continua (usa `ode_solver`/`ode_steps`) | ✅ | ✅ |
+      | `gla_attn` | Gated Linear Attention con decaimiento multiplicativo | ✅ | ✅ |
+      | `deltanet_attn` / `gated_deltanet_attn` | DeltaNet con regla delta correctiva | ✅ | ✅ |
+      | `gated_deltanet2_attn` | Gated DeltaNet-2 con compuertas erase/write canalizadas decoupladas (arXiv:2605.22791) | ✅ | ✅ |
+      | `hgrn2_attn` | HGRN2 con compuertas de olvido jerárquicas | ✅ | ✅ |
+      | `fox_attn` | Forgetting Transformer (FoX) con sesgo de olvido en logits | ✅ | ✅ |
+      | `nsa_attn` | Native Sparse Attention de tres ramas | ✅ | ✅ |
+      | `engram_attn` | Memoria condicional por N-gramas (arXiv:2601.07372) | ✅ | ✅ |
+      | `gqa_attn` | Grouped-Query Attention — cabezas KV configurables (arXiv:2305.13245) | ✅ | ✅ |
+      | `longformer_attn` | Longformer: ventanas deslizantes + tokens globales | ✅ | ✅ |
+      | `bigbird_attn` | BigBird: local + aleatorio + global | ✅ | ✅ |
+      | `sparse_transformer_attn` | Sparse Transformer: patrones factorizados | ✅ | ✅ |
+      | `sparsek_attn` | SparseK: selección top-k diferenciable | ✅ | ✅ |
+      | `sparge_attn` ⚠️ | SpargeAttn — **solo evaluación** | ❌ | ✅ |
+      | `fasa_attn` ⚠️ | FASA — **solo evaluación** | ❌ | ✅ |
+      | `msa_attn` | MiniMax Sparse Attention — bloques dispersos sobre GQA (arXiv:2606.13392) | ✅ | ✅ |
+      | `sparda_attn` | SparDA — atención dispersa desacoplada con proyección Forecast (arXiv:2606.04511) | ✅ | ✅ |
+      | `kda_attn` | Kimi Delta Attention — decaimiento canalizado + compuerta escalar (arXiv:2510.26692) | ✅ | ✅ |
+      | `mla_attn` | Multi-Head Latent Attention + RoPE (arXiv:2506.09342) | ✅ | ✅ |
+      | `gqla_attn` | Group-Query Latent Attention — dos rutas de decodificación (arXiv:2605.15250) | ✅ | ✅ |
+      | `mlra_attn` | Multi-Head Low-Rank Attention — latente particionable (arXiv:2603.02188) | ✅ | ✅ |
+      | `tucker_attn` | Tucker Attention — factorización de bajo rango generalizada (arXiv:2603.30033) | ✅ | ✅ |
+      | `iha_attn` | Interleaved Head Attention — pseudo-cabezas entre cabezas (arXiv:2602.21371) | ✅ | ✅ |
+      | `gta_attn` | Grouped-head laTenT Attention — mapa compartido + valores latentes (arXiv:2506.17286) | ✅ | ✅ |
+      | `mtla_attn` | Multi-head Temporal Latent Attention — fusión temporal de KV (arXiv:2505.13544) | ✅ | ✅ |
+      | `cca_attn` | Compressed Convolutional Attention — atención en espacio latente + convoluciones (arXiv:2510.04476) | ✅ | ✅ |
+      | `ccgqa_attn` | Compressed Convolutional Grouped Query Attention — CCA + GQA en latente (arXiv:2510.04476) | ✅ | ✅ |
+      **Ejemplos explicados:**
+      - `[standard_attn]` repetido 12 veces: Encoder clásico tipo BERT. Configuración más simple, sirve como línea base confiable. Todas las capas usan atención cuadrática completa.
+      - `[retnet, titan_attn, retnet, mamba, titan_attn, ode]` con `num_layers=6`: Arquitectura mixta que combina retención recurrente (largo alcance eficiente), atención Titan con codificación posicional (atención local precisa), Mamba SSM (modelado de secuencias en tiempo lineal) y ODE de profundidad continua. Cada posición recibe un tipo diferente de cómputo, permitiendo representaciones diversas.
+      - `[standard_attn, standard_attn, longformer_attn]` con `num_layers=3`: Híbrido denso + disperso. Empieza con 2 capas de atención densa para interacciones detalladas, luego usa Longformer para procesamiento eficiente de secuencias largas. Bueno para documentos > 512 tokens.
+      - Mezcla de recurrente (retnet, mamba) con atención (standard_attn, titan_attn): Las capas recurrentes proporcionan memoria y contexto de largo alcance a costo O(1) en inferencia, mientras que las capas de atención proporcionan interacciones locales de alta precisión. Este es el patrón recomendado para modelos que necesitan tanto eficiencia como calidad.
+      - ⚠️ `sparge_attn` y `fasa_attn` son bloques **solo de evaluación** — lanzan error en tiempo de ejecución si se usan durante entrenamiento. No incluirlos en el patrón para entrenamiento desde cero.
+    items:
+      type: string
+      enum:
+        - retnet
+        - retnet_attn
+        - mamba
+        - ode
+        - titan_attn
+        - standard_attn
+        - sigmoid_attn
+        - sparse_transformer_attn
+        - longformer_attn
+        - bigbird_attn
+        - sparsek_attn
+        - nsa_attn
+        - sparge_attn
+        - fasa_attn
+        - gla_attn
+        - deltanet_attn
+        - gated_deltanet_attn
+        - gated_deltanet2_attn
+        - hgrn2_attn
+        - fox_attn
+        - gated_softmax_attn
+        - engram_attn
+        - gqa_attn
+        - mla_attn
+        - gqla_attn
+        - mlra_attn
+        - tucker_attn
+        - iha_attn
+        - gta_attn
+        - mtla_attn
+        - cca_attn
+        - ccgqa_attn
+        - msa_attn
+        - sparda_attn
+        - kda_attn
+    examples:
+      - [retnet, titan_attn, retnet, mamba, titan_attn, ode]
+      - [standard_attn]
+  mode:
+    type: string
+    title: "Transformer Mode"
+    title_es: "Modo Transformer"
+    description: |
+      Controls attention masking. `encoder` = bidirectional attention. `decoder` = causal masking
+      for autoregressive next-token prediction. When `model_class=frankesteindecoder`, runtime forces `decoder`.
+
+      **Impact:** `encoder` allows each token to attend to all others (BERT-style). `decoder` only
+      allows attending to previous tokens (GPT-style). Changing modes fundamentally changes the task.
+    description_es: |
+      Controla el enmascaramiento de atención. `encoder` = atención bidireccional. `decoder` = máscara
+      causal para predicción autorregresiva de siguiente token. Con `model_class=frankesteindecoder`,
+      se fuerza `decoder` en ejecución.
+
+      **Impacto:** `encoder` permite que cada token atienda a todos los demás (tipo BERT). `decoder` solo
+      allows attending to previous tokens (GPT-style). Changing modes fundamentally changes the task.
+    enum: [encoder, decoder]
+    examples: [encoder, decoder]

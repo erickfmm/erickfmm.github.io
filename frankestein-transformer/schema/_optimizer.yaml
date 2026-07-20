@@ -128,7 +128,7 @@ properties:
       with the optimizer class name. Format: `<optimizer>-<param_group>_<hyperparam>=value`.
 
       **Shared suffixes** (all optimizers):
-      - `lr_*`: Learning rate per group (embeddings, norms, ode, retnet, mamba, attention, other)
+      - `lr_*`: Learning rate per group (embeddings, norms, attention, other)
       - `wd_*`: Weight decay per group
       - `betas_*`: Adam-style beta1/beta2 per group
       - `eps_*`: Epsilon per group
@@ -155,14 +155,13 @@ properties:
       prefijo de la clase del optimizador. Formato: `<optimizador>-<grupo>_<hiperparam>=valor`.
 
       **Sufijos compartidos** (todos los optimizadores):
-      - `lr_*`: Learning rate por grupo (embeddings, norms, ode, retnet, mamba, attention, other)
+      - `lr_*`: Learning rate por grupo (embeddings, norms, attention, other)
       - `wd_*`: Weight decay por grupo
       - `betas_*`: Beta1/beta2 estilo Adam por grupo
       - `eps_*`: Epsilon por grupo
 
       **Grupos:** embeddings (embeddings de tokens), norms (capas de normalización),
-      ode (parámetros ODE), retnet (RetNet), mamba (Mamba), attention (atención),
-      other (resto: FFN, ruteo, etc.).
+      attention (atención), other (resto: FFN, ruteo, etc.).
 
       **Sufijos específicos por optimizador** (ver `x_parameter_reference.by_optimizer`):
       - `sgd_momentum`: `momentum`, `nesterov`
@@ -183,30 +182,18 @@ properties:
       shared_per_group_suffixes:
         - lr_embeddings
         - lr_norms
-        - lr_ode
-        - lr_retnet
-        - lr_mamba
         - lr_attention
         - lr_other
         - wd_embeddings
         - wd_norms
-        - wd_ode
-        - wd_retnet
-        - wd_mamba
         - wd_attention
         - wd_other
         - betas_embeddings
         - betas_norms
-        - betas_ode
-        - betas_retnet
-        - betas_mamba
         - betas_attention
         - betas_other
         - eps_embeddings
         - eps_norms
-        - eps_ode
-        - eps_retnet
-        - eps_mamba
         - eps_attention
         - eps_other
       by_optimizer:
