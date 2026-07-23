@@ -87,7 +87,7 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   <p>Configure el batch y, si lo necesita, use <b>Start at</b> para comenzar desde una posicion especifica.</p>
 
   <div class="cie-hbox">
-    <label>Tamaño de lote <input type="number" id="int-batch-size" class="cie-input cie-input--small" value="10" min="1"></label>
+    <label>Tamaño de lote <input type="number" id="int-batch-size" class="cie-input cie-input--small" value="100" min="1"></label>
     <label>Empezar en <input type="number" id="int-start-at" class="cie-input cie-input--small" value="0" min="0"></label>
     <label>Región
       <select id="select-region-filtro" class="cie-select" style="width: 220px;">
@@ -375,7 +375,7 @@ async function ensureToken({ interactive = false } = {}) {
     tokenExpiresAt = persist.tokenExpiresAt;
     return accessToken;
   }
-  if (!interactive) throw new Error('No hay token valido. Pulse Conectar.');
+  if (!interactive) throw new Error('No hay token valido. Pulse Reconectar.');
   await requestToken(true);
   return accessToken;
 }
@@ -393,6 +393,8 @@ let __lastApiCallTs = 0;
 
 const RETRY_DELAY_FIJO_MS = 5000;
 const RETRY_MAX_REINTENTOS = 3;
+const LLAMADAS_POR_ARCHIVO = 2;
+const LLAMADAS_POR_BATCH = 4;
 
 const alarmState = { active: false, ctx: null, osc: null, gain: null, interval: null };
 
@@ -406,15 +408,25 @@ function iniciarAlarmaError() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
-    osc.frequency.value = 1100;
-    gain.gain.value = 0.05;
+    gain.gain.value = 0.12;
     osc.connect(gain).connect(ctx.destination);
     osc.start();
-    let high = true;
-    const interval = setInterval(() => {
-      osc.frequency.value = high ? 1300 : 850;
-      high = !high;
-    }, 200);
+    const F_SIRENA_BAJA = 700;
+    const F_SIRENA_ALTA = 1050;
+    const RAMP_SIRENA_MS = 750;
+    osc.frequency.setValueAtTime(F_SIRENA_BAJA, ctx.currentTime);
+    let subiendo = true;
+    const cicloSirena = () => {
+      const ahora = ctx.currentTime;
+      const desde = subiendo ? F_SIRENA_BAJA : F_SIRENA_ALTA;
+      const hacia = subiendo ? F_SIRENA_ALTA : F_SIRENA_BAJA;
+      osc.frequency.cancelScheduledValues(ahora);
+      osc.frequency.setValueAtTime(desde, ahora);
+      osc.frequency.linearRampToValueAtTime(hacia, ahora + RAMP_SIRENA_MS / 1000);
+      subiendo = !subiendo;
+    };
+    cicloSirena();
+    const interval = setInterval(cicloSirena, RAMP_SIRENA_MS);
     alarmState.active = true;
     alarmState.ctx = ctx;
     alarmState.osc = osc;
@@ -748,6 +760,31 @@ function formatNow() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+function formatDuracion(ms) {
+  if (!ms || ms < 0 || !isFinite(ms)) return '?';
+  const totalSeg = Math.round(ms / 1000);
+  const h = Math.floor(totalSeg / 3600);
+  const m = Math.floor((totalSeg % 3600) / 60);
+  const s = totalSeg % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function imprimirEstadisticasTiempo(archivosRestantes, batchSize, delaySeg, runStartMs, archivosProcesados, lastFileMs) {
+  const partes = [];
+  partes.push(`Último archivo: ${(lastFileMs / 1000).toFixed(1)}s`);
+  partes.push(`Restantes: ${archivosRestantes}`);
+  const batchesRestantes = batchSize > 0 ? Math.ceil(archivosRestantes / batchSize) : 0;
+  const llamadasRestantes = archivosRestantes * LLAMADAS_POR_ARCHIVO + batchesRestantes * LLAMADAS_POR_BATCH;
+  const etaTeoricoMs = llamadasRestantes * delaySeg * 1000;
+  partes.push(`ETA teórico: ${formatDuracion(etaTeoricoMs)}`);
+  const avgPorArchivoMs = archivosProcesados > 0 ? (Date.now() - runStartMs) / archivosProcesados : 0;
+  const etaEmpiricoMs = avgPorArchivoMs * archivosRestantes;
+  partes.push(`ETA empírico: ${formatDuracion(etaEmpiricoMs)}`);
+  print(`⏱️ ${partes.join(' | ')}`);
+}
+
 function validarAlineacionColumnasMaestro(encabezadosMaestro, datosFormulario) {
   const problemas = [];
   const esperado = obtenerEncabezadosMaestro();
@@ -787,7 +824,7 @@ function _progresoVacio() {
     ultimo_id: '',
     timestamp: '',
     total_hojas: 0,
-    lote_size: 10,
+    lote_size: 100,
     region_filtro: '__TODAS__',
     delay_segundos: DELAY_DEFAULT,
   };
@@ -818,7 +855,7 @@ function avanzarIndiceLeido(idxAbsoluto, idConvenio) {
     ultimo_id: idConvenio || prev.ultimo_id || '',
     timestamp: new Date().toISOString(),
     total_hojas: prev.total_hojas || 0,
-    lote_size: parseInt(intBatchSize.value, 10) || 10,
+    lote_size: parseInt(intBatchSize.value, 10) || 100,
     region_filtro: selectRegionFiltro.value || '__TODAS__',
     delay_segundos: obtenerDelaySegundos(),
   });
@@ -831,6 +868,7 @@ function confirmarHastaIndice(idxAbsoluto) {
     ultimo_indice_confirmado: Math.max(prev.ultimo_indice_confirmado || 0, idxAbsoluto || 0),
     timestamp: new Date().toISOString(),
   });
+  intStartAt.value = String(idxAbsoluto || 0);
   _persistirProgreso(data);
 }
 
@@ -850,7 +888,7 @@ function guardarProgreso(idxAbsoluto, idConvenio, totalHojas) {
     ultimo_id: idConvenio || '',
     timestamp: new Date().toISOString(),
     total_hojas: totalHojas || prev.total_hojas || 0,
-    lote_size: parseInt(intBatchSize.value, 10) || 10,
+    lote_size: parseInt(intBatchSize.value, 10) || 100,
     region_filtro: selectRegionFiltro.value || '__TODAS__',
     delay_segundos: obtenerDelaySegundos(),
   });
@@ -962,7 +1000,7 @@ function reanudarDesdeUltimo() {
   if (!p) { print('⚠️ No hay progreso guardado.'); return; }
   const nuevoStart = Math.max(p.ultimo_indice_confirmado || 0, p.ultimo_indice_leido || 0);
   intStartAt.value = String(nuevoStart);
-  print(`▶️ Reanudando desde el índice ${nuevoStart} (último confirmado en maestro). Pulse "Leer Informes CIE" para continuar.`);
+  print(`▶️ Reanudando desde el índice ${nuevoStart} (último confirmado en maestro). Pulse "Reconectar" para continuar.`);
 }
 
 async function ejecutarRecuperarBatchPendiente() {
@@ -1918,7 +1956,7 @@ async function ejecutarLecturaSheets() {
   appState.errorFatal = false;
 
   try {
-    const batchSize = Math.max(1, parseInt(intBatchSize.value, 10) || 10);
+    const batchSize = Math.max(1, parseInt(intBatchSize.value, 10) || 100);
     const startAt = Math.max(0, parseInt(intStartAt.value, 10) || 0);
     const regionFiltro = selectRegionFiltro.value || '__TODAS__';
     const maestroId = CONFIG_IDS.MAESTRO_ID;
@@ -1954,6 +1992,9 @@ async function ejecutarLecturaSheets() {
     let saltadosPorRegion = 0;
     const reporteArchivos = [];
     let batchInicioAbsoluto = null;
+    const runStart = Date.now();
+    let archivosProcesados = 0;
+    let lastFileMs = 0;
 
     for (let idx = 0; idx < total; idx++) {
       if (appState.batchPausado) {
@@ -1977,7 +2018,8 @@ async function ejecutarLecturaSheets() {
       }
 
       try {
-        setProgress(idxAbsoluto, sheetsList.length, `Procesando: ${nombreSheet}`);
+        const fileStart = Date.now();
+        setProgress(idxAbsoluto, sheetsList.length, `Procesando: ${nombreSheet} — Restantes: ${sheetsList.length - idxAbsoluto}`);
         const [datosLista, diag] = await extraerDatosInforme(idSheet, null, null, nombreSheet, true);
         const estadoArchivo = diag.omitido ? 'OMITIDO' : (diag.registros_error > 0 && diag.registros_error === diag.registros_extraidos ? 'ERROR' : 'LEIDO');
         reporteArchivos.push({ archivo: nombreSheet, estado: estadoArchivo });
@@ -2002,6 +2044,9 @@ async function ejecutarLecturaSheets() {
           }
         }
 
+        lastFileMs = Date.now() - fileStart;
+        archivosProcesados++;
+
         if (datosBatch.length >= batchSize) {
           batchContador++;
           const idxFinBatch = idxAbsoluto;
@@ -2013,6 +2058,7 @@ async function ejecutarLecturaSheets() {
           print(`   ✅ Batch #${batchContador}: ${agregados} registros agregados`);
           confirmarHastaIndice(idxFinBatch);
           limpiarBatchPendiente();
+          imprimirEstadisticasTiempo(total - (idx + 1), batchSize, obtenerDelaySegundos(), runStart, archivosProcesados, lastFileMs);
           datosBatch.length = 0;
           batchInicioAbsoluto = null;
         }
@@ -2035,6 +2081,7 @@ async function ejecutarLecturaSheets() {
       print(`   ✅ Batch final: ${agregados} registros agregados`);
       confirmarHastaIndice(idxFinBatch);
       limpiarBatchPendiente();
+      imprimirEstadisticasTiempo(0, batchSize, obtenerDelaySegundos(), runStart, archivosProcesados, lastFileMs);
       datosBatch.length = 0;
       batchInicioAbsoluto = null;
     }
