@@ -395,6 +395,8 @@ const RETRY_DELAY_FIJO_MS = 5000;
 const RETRY_MAX_REINTENTOS = 3;
 const LLAMADAS_POR_ARCHIVO = 2;
 const LLAMADAS_POR_BATCH = 4;
+const UMBRAL_FALLOS_CONSECUTIVOS = 3;
+let fallosConsecutivos = 0;
 
 const alarmState = { active: false, ctx: null, osc: null, gain: null, interval: null };
 
@@ -447,6 +449,24 @@ function detenerAlarmaError() {
   alarmState.osc = null;
   alarmState.gain = null;
   alarmState.interval = null;
+}
+
+function registrarFalloConsecutivo() {
+  fallosConsecutivos++;
+  if (fallosConsecutivos >= UMBRAL_FALLOS_CONSECUTIVOS) {
+    iniciarAlarmaError();
+    print(`🚨 ${fallosConsecutivos} fallos consecutivos: alarma activada. Revise conexión/token y pulse "Reconectar".`);
+  } else {
+    print(`⚠️ Fallo consecutivo ${fallosConsecutivos}/${UMBRAL_FALLOS_CONSECUTIVOS}.`);
+  }
+}
+
+function registrarExito() {
+  if (fallosConsecutivos > 0) {
+    print(`✅ Recuperado tras ${fallosConsecutivos} fallo(s) consecutivo(s).`);
+  }
+  fallosConsecutivos = 0;
+  if (alarmState.active) detenerAlarmaError();
 }
 
 async function esperarDelayApi(forzarEsperaCompleta = false) {
@@ -547,8 +567,7 @@ async function apiFetch(url, init = {}, opts = {}) {
     attempt++;
     lastError = new Error(`HTTP ${status}`);
   }
-  if (lastError) { iniciarAlarmaError(); throw lastError; }
-  iniciarAlarmaError();
+  if (lastError) throw lastError;
   throw new Error('apiFetch: reintentos agotados');
 }
 
@@ -1954,6 +1973,8 @@ async function ejecutarLecturaSheets() {
   appState.batchPausado = false;
   btnReconectar.style.display = 'none';
   appState.errorFatal = false;
+  fallosConsecutivos = 0;
+  detenerAlarmaError();
 
   try {
     const batchSize = Math.max(1, parseInt(intBatchSize.value, 10) || 100);
@@ -2062,9 +2083,13 @@ async function ejecutarLecturaSheets() {
           datosBatch.length = 0;
           batchInicioAbsoluto = null;
         }
+
+        if (datosLista.some(d => d.tiene_error)) registrarFalloConsecutivo();
+        else registrarExito();
       } catch (e) {
         reporteArchivos.push({ archivo: nombreSheet, estado: 'ERROR', causa: String(e) });
         print(`   ❌ Error: ${e.message}`);
+        registrarFalloConsecutivo();
       }
 
       avanzarIndiceLeido(idxAbsoluto, idSheet);
