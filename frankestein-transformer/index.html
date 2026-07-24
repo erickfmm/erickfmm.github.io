@@ -278,6 +278,74 @@ input[type="checkbox"] { width: auto; margin-right: 6px; accent-color: var(--acc
   border-color: rgba(88, 166, 255, 0.55);
   background: rgba(88, 166, 255, 0.1);
 }
+/* Parameter-count estimate banner — prominent, shown above the model section. */
+.param-estimate-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin: 0 0 20px;
+  background: linear-gradient(135deg, rgba(88,166,255,0.14), rgba(88,166,255,0.04));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow);
+  font-size: 14px;
+}
+.param-estimate-banner[hidden] { display: none !important; }
+.param-estimate-banner .pe-total {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.param-estimate-banner .pe-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+}
+.param-estimate-banner .pe-note {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.param-estimate-banner .pe-note code {
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+.param-estimate-banner details {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.param-estimate-banner details > summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12px;
+}
+.param-estimate-banner details ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 2px 24px;
+  margin: 8px 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.param-estimate-banner details li {
+  font-variant-numeric: tabular-nums;
+}
+.param-estimate-banner details li span {
+  color: var(--text);
+  font-weight: 600;
+}
 .is-invalid {
   border-color: var(--danger) !important;
 }
@@ -741,6 +809,7 @@ pre {
   <div class="tab-content active" id="tab-builder" role="tabpanel" aria-labelledby="tab-button-builder">
     <div id="builder-status" class="info" aria-live="polite"></div>
     <div id="validation-summary" class="error-summary" role="alert" aria-live="assertive"></div>
+    <div id="param-estimate" class="param-estimate-banner" aria-live="polite" hidden></div>
     <div id="model-section"></div>
     <div id="training-section"></div>
   </div>
@@ -1589,9 +1658,6 @@ function buildAll() {
   modelClassEnm.forEach(v => html += `<option value="${v}">${v}</option>`);
   html += `</select></div>`;
 
-  // Parameter-count estimate (custom models only).
-  html += `<div id="param-estimate" class="info" style="margin:6px 0 14px;padding:9px 12px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-soft);display:none"></div>`;
-
   const modelSchema = props.model;
   const modelTitle = getTitle(modelSchema, 'Model');
   const modelDesc = getDesc(modelSchema);
@@ -2084,33 +2150,32 @@ function updateParamEstimate() {
   if (!el) return;
   const modeEl = document.querySelector('input[name="model_mode"]:checked');
   const mode = modeEl ? modeEl.value : 'custom';
-  if (mode !== 'custom' || !window.FTParamEstimator) { el.style.display = 'none'; return; }
+  if (mode !== 'custom' || !window.FTParamEstimator) { el.hidden = true; return; }
   let cfg;
   try { cfg = buildConfig(); } catch (e) {
-    el.style.display = 'block';
-    el.innerHTML = '<span style="color:var(--text-muted)">≈ params: <em>(fix validation errors)</em></span>';
+    el.hidden = false;
+    el.innerHTML = '<span class="pe-label">Estimated parameters</span>' +
+      '<span class="pe-total" style="color:var(--warning)">fix validation errors</span>';
     return;
   }
-  if (!cfg || cfg.base_model) { el.style.display = 'none'; return; }
+  if (!cfg || cfg.base_model) { el.hidden = true; return; }
   const est = FTParamEstimator.estimate(cfg);
-  if (est.total < 0) { el.style.display = 'none'; return; }
+  if (est.total < 0) { el.hidden = true; return; }
   const b = est.breakdown || {};
-  const note = est.note ? ' <span style="color:var(--text-muted)">(' + escHtml(est.note) + ')</span>' : '';
-  el.style.display = 'block';
+  const note = est.note ? ' <span class="pe-note">(' + escHtml(est.note) + ')</span>' : '';
+  el.hidden = false;
   el.innerHTML =
-    '<strong>≈ ' + FTParamEstimator.format(est.total) + ' params</strong>' +
-    ' <span style="color:var(--text-muted);font-size:11px">(estimated)</span>' + note +
-    ' <details style="margin-top:4px;font-size:11px;color:var(--text-muted)">' +
-      '<summary style="cursor:pointer;color:var(--accent)">Breakdown</summary>' +
-      '<ul style="margin:4px 0 0 18px">' +
-        '<li>Embeddings: ' + FTParamEstimator.format(b.embeddings||0) + '</li>' +
-        '<li>Attention: ' + FTParamEstimator.format(b.attention||0) + '</li>' +
-        '<li>FFN: ' + FTParamEstimator.format(b.ffn||0) + '</li>' +
-        '<li>Norm: ' + FTParamEstimator.format(b.norm||0) + '</li>' +
-        '<li>Head: ' + FTParamEstimator.format(b.head||0) + '</li>' +
-        (b.other ? '<li>Other: ' + FTParamEstimator.format(b.other) + '</li>' : '') +
-      '</ul>' +
-    '</details>';
+    '<span class="pe-label">Estimated parameters</span>' +
+    '<span class="pe-total">≈ ' + FTParamEstimator.format(est.total) + '</span>' +
+    '<span class="pe-note">structural estimate</span>' + note +
+    '<details><summary>Breakdown</summary><ul>' +
+      '<li>Embeddings: <span>' + FTParamEstimator.format(b.embeddings||0) + '</span></li>' +
+      '<li>Attention: <span>' + FTParamEstimator.format(b.attention||0) + '</span></li>' +
+      '<li>FFN: <span>' + FTParamEstimator.format(b.ffn||0) + '</span></li>' +
+      '<li>Norm: <span>' + FTParamEstimator.format(b.norm||0) + '</span></li>' +
+      '<li>Head: <span>' + FTParamEstimator.format(b.head||0) + '</span></li>' +
+      (b.other ? '<li>Other: <span>' + FTParamEstimator.format(b.other) + '</span></li>' : '') +
+    '</ul></details>';
 }
 
 // ====== YAML GENERATION ======
