@@ -10,12 +10,13 @@ model:
     dropout: 0.1
     layer_pattern:
     - standard_attn
-    - retnet_attn
+    - ode
     mode: encoder
   num_experts: 4
   top_k_experts: 2
   norm:
-    type: rms_norm
+    type: flash_norm
+    flashnorm_partial_ratio: 0.0
   use_bitnet: false
   bitnet_routers: false
   use_bitnet_conv: false
@@ -28,17 +29,17 @@ model:
       kernel: 3
   use_moe: false
   ffn_hidden_size: 1024
-  ffn_activation: swiglu
+  ffn_activation: gelu
   attention:
     titan:
-      positional_encoding: rope
+      positional_encoding: hope
       hope:
         base: 10000.0
         damping: 0.01
       rope:
         base: 10000.0
         scaling: 1.0
-      use_hope: false
+      use_hope: true
 training:
   task: mlm
   batch_size: 4
@@ -48,7 +49,7 @@ training:
   max_samples: 1000000
   dataset_batch_size: 25000
   num_workers: 8
-  cache_dir: ./temp_data/activation_swiglu_cache
+  cache_dir: ./temp_data/flashnorm_cache
   use_amp: false
   gradient_accumulation_steps: 4
   optimizer:
@@ -82,7 +83,7 @@ training:
   nan_check_interval: 10
   log_gradient_stats: true
   gradient_log_interval: 10
-  csv_log_path: training_metrics_activation_swiglu.csv
+  csv_log_path: training_metrics_flashnorm.csv
   csv_rotate_on_schema_change: true
   gpu_metrics_backend: nvml
   nvml_device_index: 0

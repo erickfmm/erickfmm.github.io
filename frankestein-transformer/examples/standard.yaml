@@ -1,20 +1,27 @@
 model_class: frankenstein
 model:
-  vocab_size: 50000
-  hidden_size: 768
-  num_layers: 12
-  num_loops: 1
-  num_heads: 12
-  use_bitnet: false
-  norm_type: layer_norm
-  layer_pattern:
+  dims:
+    vocab_size: 50000
+    hidden_size: 768
+    num_layers: 12
+    num_loops: 1
+    num_heads: 12
+    layer_pattern:
     - standard_attn
-  use_factorized_embedding: false
-  use_embedding_conv: false
-  use_hope: false
+  use_bitnet: false
+  norm:
+    type: layer_norm
+  embedding:
+    factorized:
+      enabled: false
+    conv:
+      enabled: false
   use_moe: false
   ffn_hidden_size: 3072
   ffn_activation: gelu
+  attention:
+    titan:
+      use_hope: false
 training:
   task: mlm
   batch_size: 4
@@ -24,7 +31,7 @@ training:
   max_samples: 20000000
   dataset_batch_size: 25000
   num_workers: 8
-  cache_dir: "./temp_data/v2_dataset_cache"
+  cache_dir: ./temp_data/v2_dataset_cache
   use_amp: false
   gradient_accumulation_steps: 4
   optimizer:
@@ -32,30 +39,26 @@ training:
     parameters:
       adamw-lr_embeddings: 1e-6
       adamw-lr_norms: 5e-6
-      adamw-lr_ode: 1e-7
-      adamw-lr_retnet: 5e-6
-      adamw-lr_mamba: 2e-6
       adamw-lr_attention: 3e-6
       adamw-lr_other: 2e-6
       adamw-wd_embeddings: 0.01
       adamw-wd_norms: 0.001
-      adamw-wd_ode: 0.01
-      adamw-wd_retnet: 0.01
-      adamw-wd_mamba: 0.01
       adamw-wd_attention: 0.01
       adamw-wd_other: 0.01
-      adamw-betas_embeddings: [0.9, 0.95]
-      adamw-betas_norms: [0.9, 0.95]
-      adamw-betas_ode: [0.9, 0.95]
-      adamw-betas_retnet: [0.9, 0.95]
-      adamw-betas_mamba: [0.9, 0.95]
-      adamw-betas_attention: [0.9, 0.95]
-      adamw-betas_other: [0.9, 0.95]
+      adamw-betas_embeddings:
+      - 0.9
+      - 0.95
+      adamw-betas_norms:
+      - 0.9
+      - 0.95
+      adamw-betas_attention:
+      - 0.9
+      - 0.95
+      adamw-betas_other:
+      - 0.9
+      - 0.95
       adamw-eps_embeddings: 1e-8
       adamw-eps_norms: 1e-8
-      adamw-eps_ode: 1e-8
-      adamw-eps_retnet: 1e-8
-      adamw-eps_mamba: 1e-8
       adamw-eps_attention: 1e-8
       adamw-eps_other: 1e-8
   scheduler_total_steps: 10000

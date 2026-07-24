@@ -1,33 +1,43 @@
 model_class: frankesteindecoder
 model:
-  vocab_size: 50000
-  hidden_size: 512
-  num_layers: 6
-  num_loops: 1
-  num_heads: 8
-  retention_heads: 8
+  dims:
+    vocab_size: 50000
+    hidden_size: 512
+    num_layers: 6
+    num_loops: 1
+    num_heads: 8
+    retention_heads: 8
+    dropout: 0.1
+    layer_pattern:
+    - standard_attn
+    mode: decoder
   num_experts: 4
   top_k_experts: 2
-  dropout: 0.1
-  layer_pattern: [standard_attn]
-  norm_type: layer_norm
+  norm:
+    type: layer_norm
   use_bitnet: true
   bitnet_routers: false
   use_bitnet_conv: false
-  use_factorized_embedding: true
-  factorized_embedding_dim: 128
-  use_embedding_conv: false
-  embedding_conv_kernel: 3
-  positional_encoding: rope
-  hope_base: 10000.0
-  hope_damping: 0.01
-  rope_base: 10000.0
-  rope_scaling: 1.0
-  use_hope: false
+  embedding:
+    factorized:
+      enabled: true
+      dim: 128
+    conv:
+      enabled: false
+      kernel: 3
   use_moe: true
   ffn_hidden_size: 1024
   ffn_activation: silu
-  mode: decoder
+  attention:
+    titan:
+      positional_encoding: rope
+      hope:
+        base: 10000.0
+        damping: 0.01
+      rope:
+        base: 10000.0
+        scaling: 1.0
+      use_hope: false
 training:
   task: mlm
   batch_size: 4
@@ -37,7 +47,7 @@ training:
   max_samples: 1000000
   dataset_batch_size: 25000
   num_workers: 8
-  cache_dir: "./temp_data/bitnet_decoder_cache"
+  cache_dir: ./temp_data/bitnet_decoder_cache
   use_amp: false
   gradient_accumulation_steps: 4
   optimizer:
@@ -51,8 +61,12 @@ training:
       adamw-wd_norms: 0.001
       adamw-wd_attention: 0.01
       adamw-wd_other: 0.01
-      adamw-betas_attention: [0.9, 0.95]
-      adamw-betas_other: [0.9, 0.95]
+      adamw-betas_attention:
+      - 0.9
+      - 0.95
+      adamw-betas_other:
+      - 0.9
+      - 0.95
       adamw-eps_attention: 1e-8
       adamw-eps_other: 1e-8
   scheduler_total_steps: 10000
@@ -67,7 +81,7 @@ training:
   nan_check_interval: 10
   log_gradient_stats: true
   gradient_log_interval: 10
-  csv_log_path: "training_metrics_bitnet_decoder.csv"
+  csv_log_path: training_metrics_bitnet_decoder.csv
   csv_rotate_on_schema_change: true
   gpu_metrics_backend: nvml
   nvml_device_index: 0

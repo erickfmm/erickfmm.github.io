@@ -57,6 +57,186 @@ var FTDiagram = (function () {
         info: 'fill:#161b22,stroke:#30363d,color:#c9d1d9'
     };
 
+    // Per-attention-type tensor substructure templates, derived from the paper
+    // (sections/04-architecture-taxonomy + annexes 2-5). Each entry is an ordered
+    // list of {n: label, c: cat, e?: edgeLabelFromPrev}. The master node becomes
+    // a Mermaid subgraph containing these tensor nodes chained with labelled edges.
+    var SUBSTRUCT = {
+        // Dense baselines: Q,K,V -> scores -> softmax/sigmoid -> output.
+        standard_attn: [
+            {n:'Q [B,n,H]', c:'attn'}, {n:'K [B,n,H]', c:'attn'}, {n:'V [B,n,H]', c:'attn'},
+            {n:'scores=QKᵀ/√d [B,nH,n]', c:'attn', e:'QKᵀ'}, {n:'softmax', c:'attn', e:'norm'},
+            {n:'O=W·V [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        sigmoid_attn: [
+            {n:'Q [B,n,H]', c:'attn'}, {n:'K [B,n,H]', c:'attn'}, {n:'V [B,n,H]', c:'attn'},
+            {n:'scores=QKᵀ [B,nH,n]', c:'attn', e:'QKᵀ'}, {n:'σ (sigmoid)', c:'attn', e:'sigmoid'},
+            {n:'O=σ·V [B,n,H]', c:'attn', e:'σ·V'}
+        ],
+        gated_softmax_attn: [
+            {n:'Q [B,n,H]', c:'attn'}, {n:'K [B,n,H]', c:'attn'}, {n:'V [B,n,H]', c:'attn'},
+            {n:'scores=QKᵀ/√d', c:'attn', e:'QKᵀ'}, {n:'softmax', c:'attn', e:'softmax'},
+            {n:'gate σ(Wg·x)', c:'attn', e:'gate'}, {n:'O=gate·(W·V)', c:'attn', e:'gate·V'}
+        ],
+        gqa_attn: [
+            {n:'Q [B,n,H]', c:'attn'}, {n:'K shared [B,n,Hkv]', c:'attn', e:'shared K'},
+            {n:'V shared [B,n,Hkv]', c:'attn', e:'shared V'}, {n:'scores=QKᵀ/√d', c:'attn', e:'QKᵀ'},
+            {n:'softmax', c:'attn', e:'softmax'}, {n:'O=W·V [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        // Recurrent / retentive: state update + output.
+        retnet: [
+            {n:'x [B,n,H]', c:'recur'}, {n:'retention heads', c:'recur', e:'project'},
+            {n:'Sₜ₋₁ [r,H]', c:'recur', e:'prev state'}, {n:'decay + cumsum', c:'recur', e:'parallel'},
+            {n:'Sₜ [r,H]', c:'recur', e:'update'}, {n:'O=W·Sₜ [B,n,H]', c:'recur', e:'project'}
+        ],
+        retnet_attn: 'retnet',
+        mamba: [
+            {n:'x [B,n,H]', c:'ssm'}, {n:'select Δ,B,C', c:'ssm', e:'select'},
+            {n:'discretize Ā,B̄', c:'ssm', e:'ZOH'}, {n:'conv1d', c:'ssm', e:'conv'},
+            {n:'state hₜ [H]', c:'ssm', e:'scan'}, {n:'O=C·hₜ [B,n,H]', c:'ssm', e:'output'}
+        ],
+        ode: [
+            {n:'x₀ [B,n,H]', c:'ode'}, {n:'f(θ) step 1', c:'ode', e:'euler/rk4'},
+            {n:'… integrate', c:'ode', e:'step'}, {n:'xₜ [B,n,H]', c:'ode', e:'integrate'}
+        ],
+        gla_attn: [
+            {n:'Q,K,V [B,n,H]', c:'attn'}, {n:'gate αₜ [B,n,H]', c:'attn', e:'gate'},
+            {n:'Sₜ=αₜ⊗Sₜ₋₁+(1-αₜ)V', c:'attn', e:'update'}, {n:'O=Q·Sₜ', c:'attn', e:'read'}
+        ],
+        deltanet_attn: [
+            {n:'Q,K,V [B,n,H]', c:'recur'}, {n:'βₜ [B,n,H]', c:'recur', e:'beta'},
+            {n:'Sₜ=βₜ⊗Sₜ₋₁+(1-βₜ)V', c:'recur', e:'correct'}, {n:'O=Q·Sₜ', c:'recur', e:'read'}
+        ],
+        gated_deltanet_attn: 'deltanet_attn',
+        gated_deltanet2_attn: [
+            {n:'Q,K,V [B,n,H]', c:'recur'}, {n:'erase gate βₜ', c:'recur', e:'erase'},
+            {n:'write gate αₜ', c:'recur', e:'write'}, {n:'Sₜ=βₜ⊗Sₜ₋₁+αₜ⊗V', c:'recur', e:'update'},
+            {n:'O=Q·Sₜ', c:'recur', e:'read'}
+        ],
+        hgrn2_attn: [
+            {n:'Q,K,V [B,n,H]', c:'recur'}, {n:'forget gate fₜ', c:'recur', e:'forget'},
+            {n:'Sₜ=fₜ⊗Sₜ₋₁+fₜV', c:'recur', e:'outer'}, {n:'O=Q·Sₜ', c:'recur', e:'read'}
+        ],
+        fox_attn: [
+            {n:'Q,K,V [B,n,H]', c:'attn'}, {n:'forget fₜ in logit', c:'attn', e:'forget'},
+            {n:'scores=fₜ⊗QKᵀ', c:'attn', e:'gate'}, {n:'softmax', c:'attn', e:'softmax'},
+            {n:'O=W·V', c:'attn', e:'W·V'}
+        ],
+        kda_attn: [
+            {n:'Q,K (kernel)', c:'recur'}, {n:'bandwidth gate', c:'recur', e:'bandwidth'},
+            {n:'kernel(Q,K)', c:'recur', e:'kernel'}, {n:'V [B,n,H]', c:'recur'},
+            {n:'O=kernel·V', c:'recur', e:'read'}
+        ],
+        // Sparse: Q,K,V + mask/selector + blocked scores.
+        sparse_transformer_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'strided pattern', c:'sparse', e:'pattern'},
+            {n:'blocked scores', c:'sparse', e:'QKᵀ'}, {n:'softmax', c:'sparse', e:'softmax'},
+            {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        longformer_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'sliding window', c:'sparse', e:'local'},
+            {n:'+ global tokens', c:'sparse', e:'global'}, {n:'blocked scores', c:'sparse', e:'QKᵀ'},
+            {n:'softmax', c:'sparse', e:'softmax'}, {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        bigbird_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'local + random', c:'sparse', e:'graph'},
+            {n:'+ global', c:'sparse', e:'global'}, {n:'blocked scores', c:'sparse', e:'QKᵀ'},
+            {n:'softmax', c:'sparse', e:'softmax'}, {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        sparsek_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'top-k selector', c:'sparse', e:'top-k'},
+            {n:'top-k scores', c:'sparse', e:'select'}, {n:'softmax', c:'sparse', e:'softmax'},
+            {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        nsa_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'block scoring', c:'sparse', e:'score'},
+            {n:'block selection', c:'sparse', e:'select'}, {n:'sparse scores', c:'sparse', e:'QKᵀ'},
+            {n:'softmax', c:'sparse', e:'softmax'}, {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        msa_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'block-sparse mask', c:'sparse', e:'mask'},
+            {n:'blocked scores', c:'sparse', e:'QKᵀ'}, {n:'softmax', c:'sparse', e:'softmax'},
+            {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        sparda_attn: [
+            {n:'Q,K,V [B,n,H]', c:'sparse'}, {n:'forecast proj', c:'sparse', e:'forecast'},
+            {n:'sparse scores', c:'sparse', e:'QKᵀ'}, {n:'softmax', c:'sparse', e:'softmax'},
+            {n:'O=W·V', c:'sparse', e:'W·V'}
+        ],
+        sparge_attn: [
+            {n:'Q,K,V [B,n,H]', c:'eval'}, {n:'sparse predictor (eval)', c:'eval', e:'predict'},
+            {n:'pruned scores', c:'eval', e:'QKᵀ'}, {n:'softmax', c:'eval', e:'softmax'},
+            {n:'O=W·V', c:'eval', e:'W·V'}
+        ],
+        fasa_attn: [
+            {n:'Q,K,V [B,n,H]', c:'eval'}, {n:'freq-aware prune (eval)', c:'eval', e:'frequency'},
+            {n:'sparse scores', c:'eval', e:'QKᵀ'}, {n:'softmax', c:'eval', e:'softmax'},
+            {n:'O=W·V', c:'eval', e:'W·V'}
+        ],
+        // Latent: down-project -> latent KV -> up-project -> attention.
+        mla_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'W_down → c_KV [B,n,r]', c:'attn', e:'W_down'},
+            {n:'W_up → K,V [B,n,H]', c:'attn', e:'W_up'}, {n:'Q [B,n,H]', c:'attn', e:'W_Q'},
+            {n:'RoPE', c:'attn', e:'RoPE'}, {n:'softmax(QKᵀ)V', c:'attn', e:'QKᵀ'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        gqla_attn: 'mla_attn',
+        mlra_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'W_down → c_KV', c:'attn', e:'W_down'},
+            {n:'partition L sub-heads', c:'attn', e:'split'}, {n:'W_up^(i) → Kᵢ,Vᵢ', c:'attn', e:'W_up'},
+            {n:'concat K,V', c:'attn', e:'concat'}, {n:'softmax(QKᵀ)V', c:'attn', e:'QKᵀ'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        tucker_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'Tucker factor Q', c:'attn', e:'q_rank'},
+            {n:'Tucker factor K,V', c:'attn', e:'kv_rank'}, {n:'reconstruct Q,K,V', c:'attn', e:'recon'},
+            {n:'softmax(QKᵀ)V', c:'attn', e:'QKᵀ'}, {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        iha_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'interleave heads', c:'attn', e:'interleave'},
+            {n:'latent K,V', c:'attn', e:'latent'}, {n:'softmax(QKᵀ)V', c:'attn', e:'QKᵀ'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        gta_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'shared map', c:'attn', e:'map'},
+            {n:'latent values', c:'attn', e:'latent'}, {n:'softmax(QKᵀ)V', c:'attn', e:'QKᵀ'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        mtla_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'temporal compress', c:'attn', e:'temporal'},
+            {n:'latent K,V', c:'attn', e:'latent'}, {n:'softmax(QKᵀ)V', c:'attn', e:'QKᵀ'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        cca_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'1D conv', c:'attn', e:'conv'},
+            {n:'W_down → latent', c:'attn', e:'W_down'}, {n:'latent attn', c:'attn', e:'QKᵀ'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        ccgqa_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'1D conv', c:'attn', e:'conv'},
+            {n:'W_down → latent', c:'attn', e:'W_down'}, {n:'GQA on latent', c:'attn', e:'GQA'},
+            {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        // Memory: dense QKV/O + memory bank read/write.
+        titan_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'memory M [slots,dim]', c:'attn', e:'M'},
+            {n:'read/write gates', c:'attn', e:'gates'}, {n:'retrieved ctx', c:'attn', e:'retrieve'},
+            {n:'attn over M', c:'attn', e:'QKᵀ'}, {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ],
+        engram_attn: [
+            {n:'x [B,n,H]', c:'attn'}, {n:'memory bank', c:'attn', e:'M'},
+            {n:'learned read', c:'attn', e:'read'}, {n:'learned write', c:'attn', e:'write'},
+            {n:'retrieved ctx', c:'attn', e:'retrieve'}, {n:'O [B,n,H]', c:'attn', e:'W·V'}
+        ]
+    };
+
+    // Resolve a substructure entry that is a string alias to another entry.
+    function resolveSub(t) {
+        var s = SUBSTRUCT[t];
+        if (typeof s === 'string') return resolveSub(s);
+        return s || SUBSTRUCT.standard_attn;
+    }
+
     var _id = 0;
     function nid() { return 'nd' + (_id++); }
     function esc(s) { return String(s).replace(/"/g, '#quot;'); }
@@ -295,23 +475,60 @@ var FTDiagram = (function () {
         }
 
         L.push('');
-        L.push('    subgraph SG_DETAIL ["Per-Layer Detail"]');
-        var nLbl = 'LayerNorm';
-        if (nrm === 'dynamic_tanh') nLbl = 'DynamicTanh';
-        else if (nrm === 'derf') nLbl = 'DynamicErf';
-        var d1 = nid(), d2 = nid(), d3 = nid(), d4 = nid();
-        L.push('        ' + d1 + '["' + esc(nLbl) + ' pre"]:::norm');
-        L.push('        ' + d2 + '["Mixer Block"]:::attn');
-        L.push('        ' + d3 + '["' + esc(nLbl) + ' post"]:::norm');
+        // Per-layer detail: one master subgraph per distinct attention type in the
+        // layer pattern, each containing the tensor flow for that mixer (Q,K,V,
+        // latent projections, gates, memory, etc.) with labelled edges. Replaces
+        // the old single static "Mixer Block" node.
+        var distinctTypes = [];
+        layers.forEach(function (t) {
+            if (distinctTypes.indexOf(t) === -1) distinctTypes.push(t);
+        });
+        var normLbl = 'LayerNorm';
+        if (nrm === 'dynamic_tanh') normLbl = 'DynamicTanh';
+        else if (nrm === 'derf') normLbl = 'DynamicErf';
+        else if (nrm === 'rms_norm') normLbl = 'RMSNorm';
+        else if (nrm === 'prms_norm') normLbl = 'pRMSNorm';
+        else if (nrm === 'flash_norm') normLbl = 'FlashNorm';
+        var detailNodes = [];
+        distinctTypes.forEach(function (t, ti) {
+            var sub = resolveSub(t);
+            var fam = catOf(t);
+            var sgName = 'SG_MIXER_' + ti;
+            var sgLbl = esc(lblOf(t)) + ' (' + fam + ')';
+            L.push('    subgraph ' + sgName + ' ["' + sgLbl + '"]');
+            var prev = null;
+            for (var si = 0; si < sub.length; si++) {
+                var nd = sub[si];
+                var nId = nid();
+                var role = nd.c || fam;
+                L.push('        ' + nId + '["' + esc(nd.n) + '"]:::' + role);
+                if (prev && nd.e) {
+                    L.push('        ' + prev + ' --"' + esc(nd.e) + '"--> ' + nId);
+                } else if (prev) {
+                    L.push('        ' + prev + ' --> ' + nId);
+                }
+                prev = nId;
+            }
+            L.push('    end');
+            L.push('');
+            // Norm pre/post wrap each mixer block (shared visual cue).
+            var nPre = nid(), nPost = nid();
+            L.push('    ' + nPre + '["' + esc(normLbl) + ' pre"]:::norm');
+            L.push('    ' + nPost + '["' + esc(normLbl) + ' post"]:::norm');
+            // Link mixer subgraph to norm wrappers so the master node reads in order.
+            L.push('    ' + nPre + ' ~~~ ' + nOut);
+            detailNodes.push({pre: nPre, post: nPost});
+        });
+        // FFN detail (shared).
         var fLbl = 'FFN: ' + H + ' -> ' + fH + ' -> ' + H;
         fLbl += '<br/>' + fA;
         if (bit) fLbl += '<br/>BitNet: on';
         if (drp > 0) fLbl += '<br/>dropout: ' + drp;
-        L.push('        ' + d4 + '["' + esc(fLbl) + '"]:::ffn');
-        L.push('        ' + d1 + ' --> ' + d2 + ' --> ' + d3 + ' --> ' + d4);
+        var nFfn = nid();
+        L.push('    subgraph SG_FFN ["Feed-Forward"]');
+        L.push('        ' + nFfn + '["' + esc(fLbl) + '"]:::ffn');
         L.push('    end');
         L.push('');
-        L.push('    ' + nOut + ' ~~~ ' + d1);
 
         if (moe) {
             L.push('');
@@ -330,7 +547,7 @@ var FTDiagram = (function () {
                 L.push('        ' + nR + ' --> ' + nM);
             }
             L.push('    end');
-            L.push('    ' + d4 + ' ~~~ ' + nR);
+            L.push('    ' + nFfn + ' ~~~ ' + nR);
         }
 
         _trainBlock(L, tr);

@@ -1,31 +1,38 @@
 model_class: frankenstein
 model:
-  vocab_size: 50000
-  hidden_size: 1024
-  num_layers: 12
-  num_loops: 2
-  num_heads: 16
-  retention_heads: 8
-  num_experts: 4
-  top_k_experts: 2
-  dropout: 0.1
-  ode_solver: rk4
-  ode_steps: 4
-  use_bitnet: true
-  norm_type: dynamic_tanh
-  layer_pattern:
+  dims:
+    vocab_size: 50000
+    hidden_size: 1024
+    num_layers: 12
+    num_loops: 2
+    num_heads: 16
+    retention_heads: 8
+    dropout: 0.1
+    layer_pattern:
     - retnet
     - titan_attn
     - retnet
     - mamba
     - titan_attn
     - ode
-  use_factorized_embedding: false
-  use_embedding_conv: false
-  use_hope: true
+  num_experts: 4
+  top_k_experts: 2
+  ode_solver: rk4
+  ode_steps: 4
+  use_bitnet: true
+  norm:
+    type: dynamic_tanh
+  embedding:
+    factorized:
+      enabled: false
+    conv:
+      enabled: false
   use_moe: true
   ffn_hidden_size: 2048
   ffn_activation: silu
+  attention:
+    titan:
+      use_hope: true
 training:
   task: mlm
   batch_size: 2
@@ -35,7 +42,7 @@ training:
   max_samples: 20000000
   dataset_batch_size: 25000
   num_workers: 8
-  cache_dir: "./temp_data/v2_dataset_cache"
+  cache_dir: ./temp_data/v2_dataset_cache
   use_amp: false
   gradient_accumulation_steps: 4
   optimizer:
@@ -43,30 +50,26 @@ training:
     parameters:
       adamw-lr_embeddings: 1e-6
       adamw-lr_norms: 5e-6
-      adamw-lr_ode: 1e-7
-      adamw-lr_retnet: 5e-6
-      adamw-lr_mamba: 2e-6
       adamw-lr_attention: 3e-6
       adamw-lr_other: 2e-6
       adamw-wd_embeddings: 0.01
       adamw-wd_norms: 0.001
-      adamw-wd_ode: 0.01
-      adamw-wd_retnet: 0.01
-      adamw-wd_mamba: 0.01
       adamw-wd_attention: 0.01
       adamw-wd_other: 0.01
-      adamw-betas_embeddings: [0.9, 0.95]
-      adamw-betas_norms: [0.9, 0.95]
-      adamw-betas_ode: [0.9, 0.95]
-      adamw-betas_retnet: [0.9, 0.95]
-      adamw-betas_mamba: [0.9, 0.95]
-      adamw-betas_attention: [0.9, 0.95]
-      adamw-betas_other: [0.9, 0.95]
+      adamw-betas_embeddings:
+      - 0.9
+      - 0.95
+      adamw-betas_norms:
+      - 0.9
+      - 0.95
+      adamw-betas_attention:
+      - 0.9
+      - 0.95
+      adamw-betas_other:
+      - 0.9
+      - 0.95
       adamw-eps_embeddings: 1e-8
       adamw-eps_norms: 1e-8
-      adamw-eps_ode: 1e-8
-      adamw-eps_retnet: 1e-8
-      adamw-eps_mamba: 1e-8
       adamw-eps_attention: 1e-8
       adamw-eps_other: 1e-8
   scheduler_total_steps: 10000

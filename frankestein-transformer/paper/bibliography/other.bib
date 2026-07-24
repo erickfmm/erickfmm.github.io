@@ -683,3 +683,17 @@
   eprint    = {1704.04861},
 }
 
+@misc{graef2026flashnorm,
+	title        = {{FlashNorm}: Fast Normalization for Transformers},
+	url          = {http://arxiv.org/abs/2407.09577},
+	doi          = {10.48550/arXiv.2407.09577},
+	shorttitle   = {{FlashNorm}},
+	abstract     = {Normalization layers are ubiquitous in large language models (LLMs) yet represent a compute bottleneck: on hardware with distinct vector and matrix execution units, the RMS calculation blocks the subsequent matrix multiplication, preventing parallel execution. We present FlashNorm, an exact reformulation of RMSNorm followed by a linear layer that (i) eliminates the normalization weights by folding them into the subsequent linear layer, and (ii) defers the scalar RMS normalization to the output of the matrix multiplication, enabling the two operations to execute in parallel. Additionally, by the scale invariance of RMS, an RMSNorm followed by a linear layer followed by another RMSNorm allows the first RMSNorm to be eliminated entirely. The same techniques extend to LayerNorm, Dynamic Tanh (DyT), feed-forward networks with GLU variants, and RoPE-based attention. On an NVIDIA T4 GPU, FlashNorm achieves 33--35\% lower latency on the norm-then-project operation at SmolLM2-135M scale, and 12--14\% at Llama-7B scale.},
+	number       = {{arXiv}:2407.09577},
+	author       = {Graef, Nils and Makraduli, Filip and Wasielewski, Andrew and Clapp, Matthew},
+	urldate      = {2026-07-21},
+	date         = {2026-04-24},
+	eprinttype   = {arxiv},
+	eprint       = {2407.09577 [cs]},
+}
+

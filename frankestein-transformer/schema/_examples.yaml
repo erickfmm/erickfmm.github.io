@@ -93,6 +93,8 @@
     gpu_temp_resume_threshold_c: 80.0
     gpu_temp_critical_threshold_c:
     gpu_temp_poll_interval_seconds: 30.0
+    gpu_temp_checkpoint_grace_seconds: 30.0
+    resume_from_checkpoint:
     use_galore: false
     galore_rank: 64
     galore_update_interval: 1

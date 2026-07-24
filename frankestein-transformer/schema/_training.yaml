@@ -759,13 +759,19 @@ properties:
     type: boolean
     title: GPU Temp Guard
     title_es: Guardia de Temperatura GPU
-    description: 'Strict GPU temperature monitoring (CUDA only). Pauses/resumes training based on thresholds. Requires `gpu_metrics_backend=nvml`.
+    description: 'Enable the CPU-side GPU temperature supervisor (CUDA only). When the GPU
+      reaches `gpu_temp_pause_threshold_c` the supervisor checkpoints the training
+      subprocess, kills it to free VRAM, waits for cooldown, and re-launches it resuming
+      from the latest rolling checkpoint. Requires `gpu_metrics_backend=nvml`.
 
 
       **Impact:** Critical to prevent overheating under sustained loads. `true` for safety.
 
       '
-    description_es: 'Monitoreo estricto de temperatura GPU (solo CUDA). Pausa/reanuda entrenamiento según umbrales. Requiere `gpu_metrics_backend=nvml`.
+    description_es: 'Habilita el supervisor de temperatura GPU en CPU (solo CUDA). Cuando la GPU
+      alcanza `gpu_temp_pause_threshold_c` el supervisor hace checkpoint del subproceso
+      de entrenamiento, lo mata para liberar VRAM, espera el enfriamiento y lo re-lanza
+      reanudando desde el último checkpoint rodante. Requiere `gpu_metrics_backend=nvml`.
 
 
       **Impacto:** Crítico para prevenir sobrecalentamiento en cargas sostenidas. `true` para seguridad.
@@ -777,16 +783,25 @@ properties:
     type: boolean
     title: Switch on Thermal
     title_es: Cambiar en Evento Térmico
-    description: '`true` = critical temp triggers GPU→CPU fallback, auto-resume on cooldown. `false` = pause only.
+    description: 'When `gpu_temp_critical_threshold_c` is reached: `true` = the supervisor
+      checkpoints the GPU child, kills it, and re-launches it on CPU (training continues
+      on CPU instead of aborting). `false` = the supervisor kills the child and aborts
+      training permanently (hardware is unsafe).
 
 
-      **Impact:** `true` maximizes progress but may cause corrupt states. `false` is safer.
+      **Impact:** `true` keeps training progressing at CPU speed after a critical thermal
+      event. `false` stops training immediately on critical temp.
 
       '
-    description_es: '`true` = temp crítica activa fallback GPU→CPU, auto-reanudación al enfriar. `false` = solo pausa.
+    description_es: 'Cuando se alcanza `gpu_temp_critical_threshold_c`: `true` = el supervisor hace
+      checkpoint del hijo en GPU, lo mata y lo re-lanza en CPU (el entrenamiento continúa
+      en CPU en lugar de abortar). `false` = el supervisor mata al hijo y aborta el
+      entrenamiento permanentemente (hardware inseguro).
 
 
-      **Impacto:** `true` maximiza progreso pero puede causar estados corruptos. `false` más seguro.
+      **Impacto:** `true` mantiene el entrenamiento a velocidad de CPU tras un evento
+      térmico crítico. `false` detiene el entrenamiento inmediatamente al alcanzar la
+      temperatura crítica.
 
       '
     examples:
@@ -819,11 +834,12 @@ properties:
   gpu_temp_critical_threshold_c:
     type: number
     title: GPU Critical Temp
-    title_es: Temp Crítica GPU (°C) — logging only
-    description: 'Informational logging marker for severe thermal events. Null = disabled. Set > `gpu_temp_pause_threshold_c`.
+    title_es: Temp Crítica GPU (°C)
+    description: 'Permanent-abort (or CPU-switch) threshold in Celsius. Behaviour depends on `switch_on_thermal`:
+      `true` = re-launch the training child on CPU (continues training); `false` = kill the child and abort training permanently. Null = disabled (no critical action, pause-only). Must be > `gpu_temp_pause_threshold_c`.
 
       '
-    description_es: 'Marcador informativo para eventos térmicos severos. Null = deshabilitado. Poner > `gpu_temp_pause_threshold_c`.
+    description_es: 'Umbral en Celsius de aborto permanente (o cambio a CPU). El comportamiento depende de `switch_on_thermal`: `true` = re-lanza el hijo en CPU (continúa entrenando); `false` = mata al hijo y aborta permanentemente. Null = deshabilitado (solo pausa). Debe ser > `gpu_temp_pause_threshold_c`.
 
       '
     examples:
@@ -832,14 +848,38 @@ properties:
     type: number
     title: GPU Temp Poll Interval
     title_es: Intervalo de Sondeo de Temp GPU (s)
-    description: 'Seconds between temp checks during cooldown wait. Typical: 10–60. Shorter = faster resume but more overhead.
+    description: 'Seconds between temperature polls while the GPU child is running and during cooldown wait. Typical: 10–60. Shorter = faster reaction but more overhead.
 
       '
-    description_es: 'Segundos entre verificaciones de temp durante espera de enfriamiento. Típico: 10–60. Más corto = reanudación más rápida pero más overhead.
+    description_es: 'Segundos entre verificaciones de temp mientras el hijo en GPU corre y durante la espera de enfriamiento. Típico: 10–60. Más corto = reacción más rápida pero más overhead.
 
       '
     examples:
     - 30.0
+  gpu_temp_checkpoint_grace_seconds:
+    type: number
+    title: GPU Temp Checkpoint Grace
+    title_es: Gracia de Checkpoint Térmico (s)
+    description: 'Seconds the supervisor waits after sending SIGUSR1 to the training child for it to flush a rolling checkpoint before SIGKILL. Typical: 15–60. Must be > 0.
+
+      '
+    description_es: 'Segundos que el supervisor espera tras enviar SIGUSR1 al hijo de entrenamiento para que vacíe un checkpoint rodante antes de SIGKILL. Típico: 15–60. Debe ser > 0.
+
+      '
+    examples:
+    - 30.0
+  resume_from_checkpoint:
+    type: string
+    title: Resume From Checkpoint
+    title_es: Reanudar Desde Checkpoint
+    description: 'Resume training from a checkpoint. `auto` = pick the latest rolling checkpoint in the checkpoints directory; an absolute/relative path = load that specific checkpoint. Null = start from scratch.
+
+      '
+    description_es: 'Reanuda el entrenamiento desde un checkpoint. `auto` = usa el último checkpoint rodante en el directorio de checkpoints; una ruta absoluta/relativa = carga ese checkpoint específico. Null = empieza desde cero.
+
+      '
+    examples:
+    - auto
   use_galore:
     type: boolean
     title: Enable GaLore
