@@ -766,11 +766,6 @@ pre {
     <button class="btn btn-sm" onclick="loadExample('mini')">Mini</button>
     <button class="btn btn-sm" onclick="loadExample('standard')">Standard</button>
     <button class="btn btn-sm" onclick="loadExample('frankenstein')" style="margin-top:4px">Frankenstein</button>
-    <button class="btn btn-sm" onclick="loadExample('hybrid')" style="margin-top:4px">Hybrid (turbo_muon)</button>
-    <button class="btn btn-sm" onclick="loadLocalExample('examples/decoder_gpt_like.yaml')" style="margin-top:4px">GPT-like</button>
-    <button class="btn btn-sm" onclick="loadLocalExample('examples/decoder_llama_like.yaml')" style="margin-top:4px">LLaMA-like</button>
-    <button class="btn btn-sm" onclick="loadLocalExample('examples/decoder_retnet_mamba_like.yaml')" style="margin-top:4px">RetNet+Mamba</button>
-    <button class="btn btn-sm" onclick="loadLocalExample('examples/decoder_gated_mixed_adamw.yaml')" style="margin-top:4px">Gated Mixed</button>
   </div>
 
   <div id="sidebar-repo-examples">
@@ -2667,44 +2662,21 @@ function fmtLabel(filename) {
   return filename.replace(/_/g, ' ').replace(/\.yaml$/, '');
 }
 
-// Example presets live in two locations:
-// - Top-level:  /frankestein-transformer/examples/<file>      (10 legacy presets)
-// - Subfolder:  /frankestein-transformer/examples/examples/<file> (57 newer presets)
+// Example presets live in /frankestein-transformer/examples/<file> (top-level only).
 const EXAMPLE_BASE_URL = '/frankestein-transformer/examples/';
 const EXAMPLE_SUB_URL = EXAMPLE_BASE_URL + 'examples/';
 
 const EXAMPLE_FILES_TOP = [
-  'embbert.yaml','frankenstein.yaml','frankesteindecoder.yaml','mini.yaml',
-  'modernbert_continual.yaml','modernbert_sbert.yaml','modernbert_sbert_continual.yaml',
-  'standard.yaml','standard_hope.yaml','tinybert.yaml'
+  'mini.yaml','standard.yaml','standard_hope.yaml','frankenstein.yaml','frankesteindecoder.yaml','tinybert.yaml','embbert.yaml',
+  'bert_base_uncased.yaml','bert_large_uncased.yaml',
+  'modernbert_base.yaml','modernbert_large.yaml','modernbert_continual.yaml','modernbert_sbert.yaml','modernbert_sbert_continual.yaml',
+  'gpt1_117m.yaml','gpt2_small.yaml','gpt2_medium.yaml','gpt2_large.yaml','gpt2_xl.yaml',
+  'llama1_7b.yaml','llama2_7b.yaml','llama2_13b.yaml','llama2_70b.yaml','llama3_8b.yaml',
+  'gemma_2b.yaml','gemma_7b.yaml','gemma2_2b.yaml','gemma2_9b.yaml','gemma2_27b.yaml',
+  'deepseek_v2.yaml','deepseek_v3.yaml','kimi_k2.yaml','minimax_text01.yaml'
 ];
 
-const EXAMPLE_FILES_SUB = [
-  // Decoder autoregressive presets
-  'decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml','decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml',
-  // BitNet / activation / norm presets
-  'activation_mish_pre_adamw.yaml','activation_raf_adamw.yaml','activation_swiglu_adamw.yaml',
-  'bitnet_decoder.yaml','prms_norm_adamw.yaml','rms_norm_adamw.yaml','norm_flashnorm.yaml',
-  // Spanish adaptation — custom architectures (es_arch_*)
-  'es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml','es_arch_bitnet_factorized_mars_adamw.yaml',
-  'es_arch_cca_adamw.yaml','es_arch_ccgqa_adamw.yaml','es_arch_gated_deltanet2_lion.yaml',
-  'es_arch_gla_deltanet_lion.yaml','es_arch_gqa_adamw.yaml','es_arch_gqla_adamw.yaml',
-  'es_arch_gta_adamw.yaml','es_arch_hgrn2_fox_gated_softmax_adamw.yaml','es_arch_hybrid_turbo_muon.yaml',
-  'es_arch_iha_adamw.yaml','es_arch_kda_adamw.yaml','es_arch_mini_cautious_adamw.yaml',
-  'es_arch_mla_adamw.yaml','es_arch_mlra_adamw.yaml','es_arch_moe_titan_ademamix.yaml',
-  'es_arch_msa_adamw.yaml','es_arch_mtla_adamw.yaml','es_arch_nsa_retnet_radam.yaml',
-  'es_arch_sigmoid_derf_muon.yaml','es_arch_sparda_adamw.yaml','es_arch_sparse_longformer_adamw.yaml',
-  'es_arch_standard_layer_norm_prodigy.yaml','es_arch_standard_sigmoid_adopt.yaml',
-  'es_arch_titan_dynamic_tanh_sgd_momentum.yaml','es_arch_titan_hope_adan.yaml','es_arch_tucker_adamw.yaml',
-  // Spanish adaptation — base-model MLM (es_mlm_*)
-  'es_mlm_albert_sophia.yaml','es_mlm_bertin_apollo.yaml','es_mlm_bertin_lion.yaml','es_mlm_beto_adamw.yaml',
-  'es_mlm_deberta_soap.yaml','es_mlm_distilmbert_lamb.yaml','es_mlm_maria_roberta_adafactor.yaml',
-  'es_mlm_mbert_apollo_mini.yaml','es_mlm_mbert_schedulefree_adamw.yaml','es_mlm_mdeberta_shampoo.yaml',
-  'es_mlm_modernbert_galore_adamw.yaml','es_mlm_modernbert_q_apollo.yaml','es_mlm_xlmr_radam.yaml',
-  // Spanish adaptation — SBERT (es_sbert_*)
-  'es_sbert_bertin_cls.yaml','es_sbert_beto_mean.yaml','es_sbert_maria_max.yaml',
-  'es_sbert_modernbert_mean.yaml','es_sbert_xlmr_mean.yaml'
-];
+const EXAMPLE_FILES_SUB = [];
 
 function populateRepoExamples() {
   const sel = document.getElementById('repo-examples-select');
