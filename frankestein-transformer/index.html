@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <script src="ft-diagram.js"></script>
+<script src="ft-param-estimator.js"></script>
 <script>
   // Apply persisted/sytem theme before first paint to avoid a flash.
   (function () {
@@ -481,7 +482,8 @@ pre {
 .sidebar-paper-toc-item:hover { color: var(--text); background: rgba(88,166,255,0.06); }
 .sidebar-paper-toc-item.toc-active { color: var(--accent); border-left-color: var(--accent); }
 .sidebar-paper-toc-item.toc-h2 { padding-left: 18px; font-size: 11px; }
-.sidebar-paper-toc-item.toc-h3 { padding-left: 28px; font-size: 11px; }
+.sidebar-paper-toc-item.toc-h3 { padding-left: 32px; font-size: 11px; }
+.sidebar-paper-toc-item.toc-h4 { padding-left: 46px; font-size: 10.5px; }
 
 .paper-inline-toc {
   background: var(--surface);
@@ -494,6 +496,9 @@ pre {
 .paper-inline-toc ol { list-style: none; margin: 0; padding-left: 0; }
 .paper-inline-toc ol ol { padding-left: 20px; }
 .paper-inline-toc li { margin: 2px 0; }
+.paper-inline-toc li.toc-h2 > a { padding-left: 24px; }
+.paper-inline-toc li.toc-h3 > a { padding-left: 48px; }
+.paper-inline-toc li.toc-h4 > a { padding-left: 72px; }
 .paper-inline-toc a { color: var(--text-muted); text-decoration: none; font-size: 13px; display: block; padding: 2px 0; transition: .1s; }
 .paper-inline-toc a:hover { color: var(--accent); }
 
@@ -1058,6 +1063,7 @@ function switchTab(name, options) {
   if (name === 'yaml') updateYamlOutput();
   if (name === 'command') updateCmdPreview();
   if (name === 'diagram') renderDiagram();
+  if (name === 'builder') updateParamEstimate();
 }
 
 function initTabs() {
@@ -1345,6 +1351,7 @@ function onFieldIncludeChange(dottedPath) {
   validateBuilder();
   updateYamlOutput();
   updateCmdPreview();
+  updateParamEstimate();
 }
 
 function isFieldIncluded(dottedPath) {
@@ -1581,6 +1588,9 @@ function buildAll() {
   html += `<select id="${createId('model_class')}" required aria-required="true">`;
   modelClassEnm.forEach(v => html += `<option value="${v}">${v}</option>`);
   html += `</select></div>`;
+
+  // Parameter-count estimate (custom models only).
+  html += `<div id="param-estimate" class="info" style="margin:6px 0 14px;padding:9px 12px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-soft);display:none"></div>`;
 
   const modelSchema = props.model;
   const modelTitle = getTitle(modelSchema, 'Model');
@@ -2068,6 +2078,41 @@ function buildConfig() {
   return config;
 }
 
+// ====== PARAMETER-COUNT ESTIMATE (custom models only) ======
+function updateParamEstimate() {
+  const el = document.getElementById('param-estimate');
+  if (!el) return;
+  const modeEl = document.querySelector('input[name="model_mode"]:checked');
+  const mode = modeEl ? modeEl.value : 'custom';
+  if (mode !== 'custom' || !window.FTParamEstimator) { el.style.display = 'none'; return; }
+  let cfg;
+  try { cfg = buildConfig(); } catch (e) {
+    el.style.display = 'block';
+    el.innerHTML = '<span style="color:var(--text-muted)">≈ params: <em>(fix validation errors)</em></span>';
+    return;
+  }
+  if (!cfg || cfg.base_model) { el.style.display = 'none'; return; }
+  const est = FTParamEstimator.estimate(cfg);
+  if (est.total < 0) { el.style.display = 'none'; return; }
+  const b = est.breakdown || {};
+  const note = est.note ? ' <span style="color:var(--text-muted)">(' + escHtml(est.note) + ')</span>' : '';
+  el.style.display = 'block';
+  el.innerHTML =
+    '<strong>≈ ' + FTParamEstimator.format(est.total) + ' params</strong>' +
+    ' <span style="color:var(--text-muted);font-size:11px">(estimated)</span>' + note +
+    ' <details style="margin-top:4px;font-size:11px;color:var(--text-muted)">' +
+      '<summary style="cursor:pointer;color:var(--accent)">Breakdown</summary>' +
+      '<ul style="margin:4px 0 0 18px">' +
+        '<li>Embeddings: ' + FTParamEstimator.format(b.embeddings||0) + '</li>' +
+        '<li>Attention: ' + FTParamEstimator.format(b.attention||0) + '</li>' +
+        '<li>FFN: ' + FTParamEstimator.format(b.ffn||0) + '</li>' +
+        '<li>Norm: ' + FTParamEstimator.format(b.norm||0) + '</li>' +
+        '<li>Head: ' + FTParamEstimator.format(b.head||0) + '</li>' +
+        (b.other ? '<li>Other: ' + FTParamEstimator.format(b.other) + '</li>' : '') +
+      '</ul>' +
+    '</details>';
+}
+
 // ====== YAML GENERATION ======
 function objToYaml(obj, indent) {
   indent = indent || 0;
@@ -2352,6 +2397,7 @@ function onModelModeChange() {
   const mode = document.querySelector('input[name="model_mode"]:checked').value;
   document.getElementById('custom-model-div').style.display = mode === 'custom' ? 'block' : 'none';
   document.getElementById('base-model-div').style.display = mode === 'base' ? 'block' : 'none';
+  updateParamEstimate();
 }
 
 // ====== PRESETS ======
@@ -2486,7 +2532,7 @@ function loadExample(name) {
   configData = preset;
   if (SCHEMA) buildAll();
   // Apply preset values after DOM renders
-  setTimeout(() => applyPreset(name), 100);
+  setTimeout(() => { applyPreset(name); updateParamEstimate(); }, 100);
 }
 
 function applyPreset(name) {
@@ -2573,7 +2619,7 @@ const EXAMPLE_FILES_SUB = [
   'decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml','decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml',
   // BitNet / activation / norm presets
   'activation_mish_pre_adamw.yaml','activation_raf_adamw.yaml','activation_swiglu_adamw.yaml',
-  'bitnet_decoder.yaml','prms_norm_adamw.yaml','rms_norm_adamw.yaml',
+  'bitnet_decoder.yaml','prms_norm_adamw.yaml','rms_norm_adamw.yaml','norm_flashnorm.yaml',
   // Spanish adaptation — custom architectures (es_arch_*)
   'es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml','es_arch_bitnet_factorized_mars_adamw.yaml',
   'es_arch_cca_adamw.yaml','es_arch_ccgqa_adamw.yaml','es_arch_gated_deltanet2_lion.yaml',
@@ -2729,6 +2775,7 @@ function applyYamlConfig(config) {
 
   updateYamlOutput();
   updateCmdPreview();
+  updateParamEstimate();
 }
 
 // Flatten a model object into dotted keys matching the rendered form ids,
@@ -3179,7 +3226,7 @@ function buildPaperToc() {
         html += '</li>';
       }
 
-      html += `<li><a href="#${id}">${numStr}. ${text}</a>`;
+      html += `<li class="toc-h${level}"><a href="#${id}">${numStr}. ${text}</a>`;
       prevLevel = level;
     });
     for (let i = prevLevel; i >= 1; i--) html += '</li></ol>';

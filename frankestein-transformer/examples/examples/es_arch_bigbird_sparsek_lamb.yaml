@@ -1,13 +1,13 @@
 model_class: frankenstein
 model:
-  vocab_size: 50000
-  hidden_size: 768
-  num_layers: 8
-  num_loops: 1
-  num_heads: 12
-  retention_heads: 12
-  # BigBird and SparseK for block-random sparse attention
-  layer_pattern:
+  dims:
+    vocab_size: 50000
+    hidden_size: 768
+    num_layers: 8
+    num_loops: 1
+    num_heads: 12
+    retention_heads: 12
+    layer_pattern:
     - bigbird_attn
     - sparsek_attn
     - bigbird_attn
@@ -17,8 +17,11 @@ model:
     - bigbird_attn
     - sparsek_attn
   use_bitnet: false
-  norm_type: layer_norm
-  use_embedding_conv: false
+  norm:
+    type: layer_norm
+  embedding:
+    conv:
+      enabled: false
   ffn_hidden_size: 3072
   ffn_activation: gelu
 training:
@@ -31,8 +34,8 @@ training:
   max_samples: 6000000
   dataset_batch_size: 15000
   num_workers: 6
-  cache_dir: "./temp_data/v2_dataset_cache"
-  local_parquet_dir: "/home/erickfmm/.cache/huggingface/hub/datasets--erickfmm--red_pajama_es_hq_35/snapshots/bd7286c289a95dc3803c375bc36aaaeb138b1eab/train/"
+  cache_dir: ./temp_data/v2_dataset_cache
+  local_parquet_dir: /home/erickfmm/.cache/huggingface/hub/datasets--erickfmm--red_pajama_es_hq_35/snapshots/bd7286c289a95dc3803c375bc36aaaeb138b1eab/train/
   prefer_local_cache: true
   stream_local_parquet: true
   join_temp_data_context_window: 0
@@ -49,12 +52,16 @@ training:
       lamb-wd_norms: 0.001
       lamb-wd_attention: 0.01
       lamb-wd_other: 0.01
-      lamb-betas_attention: [0.9, 0.999]
-      lamb-betas_other: [0.9, 0.999]
+      lamb-betas_attention:
+      - 0.9
+      - 0.999
+      lamb-betas_other:
+      - 0.9
+      - 0.999
       lamb-eps_attention: 1e-6
       lamb-eps_other: 1e-6
   scheduler_total_steps: 12000
   max_nan_retries: 4
   gradient_log_interval: 10
-  csv_log_path: "training_metrics_es_arch_bigbird_sparsek_lamb.csv"
+  csv_log_path: training_metrics_es_arch_bigbird_sparsek_lamb.csv
   telemetry_log_interval: 5

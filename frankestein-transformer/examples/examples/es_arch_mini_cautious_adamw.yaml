@@ -1,18 +1,28 @@
 model_class: mini
 model:
-  vocab_size: 50000
-  hidden_size: 384
-  num_layers: 6
-  num_loops: 1
-  num_heads: 6
-  retention_heads: 6
+  dims:
+    vocab_size: 50000
+    hidden_size: 384
+    num_layers: 6
+    num_loops: 1
+    num_heads: 6
+    retention_heads: 6
+    layer_pattern:
+    - retnet
+    - titan_attn
+    - mamba
+    - ode
+    - standard_attn
+    - sigmoid_attn
   num_experts: 4
   top_k_experts: 2
-  layer_pattern: [retnet, titan_attn, mamba, ode, standard_attn, sigmoid_attn]
   ode_solver: rk4
   ode_steps: 2
-  norm_type: layer_norm
-  use_factorized_embedding: true
+  norm:
+    type: layer_norm
+  embedding:
+    factorized:
+      enabled: true
   ffn_hidden_size: 1536
 training:
   task: mlm
@@ -24,8 +34,8 @@ training:
   max_samples: 6000000
   dataset_batch_size: 15000
   num_workers: 6
-  cache_dir: "./temp_data/v2_dataset_cache"
-  local_parquet_dir: "/home/erickfmm/.cache/huggingface/hub/datasets--erickfmm--red_pajama_es_hq_35/snapshots/bd7286c289a95dc3803c375bc36aaaeb138b1eab/train/"
+  cache_dir: ./temp_data/v2_dataset_cache
+  local_parquet_dir: /home/erickfmm/.cache/huggingface/hub/datasets--erickfmm--red_pajama_es_hq_35/snapshots/bd7286c289a95dc3803c375bc36aaaeb138b1eab/train/
   prefer_local_cache: true
   stream_local_parquet: true
   join_temp_data_context_window: 0
@@ -36,35 +46,31 @@ training:
     parameters:
       cautious_adamw-lr_embeddings: 1e-6
       cautious_adamw-lr_norms: 5e-6
-      cautious_adamw-lr_ode: 1e-7
-      cautious_adamw-lr_retnet: 5e-6
-      cautious_adamw-lr_mamba: 2e-6
       cautious_adamw-lr_attention: 3e-6
       cautious_adamw-lr_other: 2e-6
       cautious_adamw-wd_embeddings: 0.01
       cautious_adamw-wd_norms: 0.001
-      cautious_adamw-wd_ode: 0.01
-      cautious_adamw-wd_retnet: 0.01
-      cautious_adamw-wd_mamba: 0.01
       cautious_adamw-wd_attention: 0.01
       cautious_adamw-wd_other: 0.01
-      cautious_adamw-betas_embeddings: [0.9, 0.95]
-      cautious_adamw-betas_norms: [0.9, 0.95]
-      cautious_adamw-betas_ode: [0.9, 0.95]
-      cautious_adamw-betas_retnet: [0.9, 0.95]
-      cautious_adamw-betas_mamba: [0.9, 0.95]
-      cautious_adamw-betas_attention: [0.9, 0.95]
-      cautious_adamw-betas_other: [0.9, 0.95]
+      cautious_adamw-betas_embeddings:
+      - 0.9
+      - 0.95
+      cautious_adamw-betas_norms:
+      - 0.9
+      - 0.95
+      cautious_adamw-betas_attention:
+      - 0.9
+      - 0.95
+      cautious_adamw-betas_other:
+      - 0.9
+      - 0.95
       cautious_adamw-eps_embeddings: 1e-8
       cautious_adamw-eps_norms: 1e-8
-      cautious_adamw-eps_ode: 1e-8
-      cautious_adamw-eps_retnet: 1e-8
-      cautious_adamw-eps_mamba: 1e-8
       cautious_adamw-eps_attention: 1e-8
       cautious_adamw-eps_other: 1e-8
       cautious_adamw-cautious_clip: 0.5
   scheduler_total_steps: 9000
   max_nan_retries: 4
   gradient_log_interval: 10
-  csv_log_path: "training_metrics_es_arch_mini_cautious_adamw.csv"
+  csv_log_path: training_metrics_es_arch_mini_cautious_adamw.csv
   telemetry_log_interval: 5

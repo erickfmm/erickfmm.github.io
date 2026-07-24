@@ -1,19 +1,26 @@
 model_class: frankenstein
 model:
-  vocab_size: 50000
-  hidden_size: 768
-  num_layers: 10
-  num_loops: 1
-  num_heads: 12
-  retention_heads: 12
-  layer_pattern: [standard_attn]
+  dims:
+    vocab_size: 50000
+    hidden_size: 768
+    num_layers: 10
+    num_loops: 1
+    num_heads: 12
+    retention_heads: 12
+    layer_pattern:
+    - standard_attn
   use_bitnet: false
-  norm_type: layer_norm
-  use_embedding_conv: false
-  use_hope: false
+  norm:
+    type: layer_norm
+  embedding:
+    conv:
+      enabled: false
   use_moe: false
   ffn_hidden_size: 3072
   ffn_activation: gelu
+  attention:
+    titan:
+      use_hope: false
 training:
   task: mlm
   num_epochs: 4
@@ -24,8 +31,8 @@ training:
   max_samples: 6000000
   dataset_batch_size: 15000
   num_workers: 6
-  cache_dir: "./temp_data/v2_dataset_cache"
-  local_parquet_dir: "/home/erickfmm/.cache/huggingface/hub/datasets--erickfmm--red_pajama_es_hq_35/snapshots/bd7286c289a95dc3803c375bc36aaaeb138b1eab/train/"
+  cache_dir: ./temp_data/v2_dataset_cache
+  local_parquet_dir: /home/erickfmm/.cache/huggingface/hub/datasets--erickfmm--red_pajama_es_hq_35/snapshots/bd7286c289a95dc3803c375bc36aaaeb138b1eab/train/
   prefer_local_cache: true
   stream_local_parquet: true
   join_temp_data_context_window: 0
@@ -36,34 +43,30 @@ training:
     parameters:
       prodigy-lr_embeddings: 1e-6
       prodigy-lr_norms: 5e-6
-      prodigy-lr_ode: 1e-7
-      prodigy-lr_retnet: 5e-6
-      prodigy-lr_mamba: 2e-6
       prodigy-lr_attention: 3e-6
       prodigy-lr_other: 2e-6
       prodigy-wd_embeddings: 0.01
       prodigy-wd_norms: 0.001
-      prodigy-wd_ode: 0.01
-      prodigy-wd_retnet: 0.01
-      prodigy-wd_mamba: 0.01
       prodigy-wd_attention: 0.01
       prodigy-wd_other: 0.01
-      prodigy-betas_embeddings: [0.9, 0.95]
-      prodigy-betas_norms: [0.9, 0.95]
-      prodigy-betas_ode: [0.9, 0.95]
-      prodigy-betas_retnet: [0.9, 0.95]
-      prodigy-betas_mamba: [0.9, 0.95]
-      prodigy-betas_attention: [0.9, 0.95]
-      prodigy-betas_other: [0.9, 0.95]
+      prodigy-betas_embeddings:
+      - 0.9
+      - 0.95
+      prodigy-betas_norms:
+      - 0.9
+      - 0.95
+      prodigy-betas_attention:
+      - 0.9
+      - 0.95
+      prodigy-betas_other:
+      - 0.9
+      - 0.95
       prodigy-eps_embeddings: 1e-8
       prodigy-eps_norms: 1e-8
-      prodigy-eps_ode: 1e-8
-      prodigy-eps_retnet: 1e-8
-      prodigy-eps_mamba: 1e-8
       prodigy-eps_attention: 1e-8
       prodigy-eps_other: 1e-8
       prodigy-d_coef: 0.8
   max_nan_retries: 4
   gradient_log_interval: 10
-  csv_log_path: "training_metrics_es_arch_standard_layer_norm_prodigy.csv"
+  csv_log_path: training_metrics_es_arch_standard_layer_norm_prodigy.csv
   telemetry_log_interval: 5
