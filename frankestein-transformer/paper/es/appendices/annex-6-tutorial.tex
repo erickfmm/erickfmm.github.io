@@ -1,0 +1,156 @@
+\section{Introducción Conceptual---Transformers y Atención para Principiantes}
+\label{sec:annex-tutorial}
+
+Este apéndice proporciona una introducción accesible a los conceptos fundamentales de los transformers y el mecanismo de atención, dirigido a lectores sin conocimientos profundos previos en aprendizaje profundo. Los transformers son el motor detrás de los sistemas modernos de inteligencia artificial como ChatGPT, pero su funcionamiento puede entenderse mediante analogías del mundo real.
+
+\subsection{¿Qué es un Transformer?}
+
+Un transformer es una arquitectura neuronal que procesa texto o secuencias de datos interpretando el significado de cada palabra mientras considera todas las demás palabras en contexto. Imagina que lees una oración:
+
+\begin{center}
+\textit{``El banco estaba lleno de gente esperando. María fue al banco.''}
+\end{center}
+
+¿Qué significa ``banco'' en cada caso? En la primera oración, se refiere a una institución financiera (o un asiento). En la segunda, no está claro sin contexto. Un transformer resuelve esto automáticamente al mirar todas las palabras circundantes. En la segunda oración, al ver ``María fue'', el modelo comprende mejor que probablemente se trata de una ribera (donde va a nadar) o una institución financiera (donde va a realizar una transacción).
+
+Esta capacidad de entender el significado completo de una palabra considerando toda la oración se llama \emph{contextualización}, y es el corazón de cómo funcionan los transformers modernos.
+
+\subsection{El Mecanismo de Atención: Una Analogía}
+
+El mecanismo de atención es el ``truco mágico'' que permite a los transformers entender el contexto. Piensa en ello como participar en una conversación importante en una habitación ruidosa:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Mucho ruido}: Alguien está hablando y es muy importante para ti.
+    \item \textbf{Ignoras el resto}: Tu cerebro automáticamente enfoca la atención en esa persona, ignorando otros sonidos.
+    \item \textbf{Entiendes mejor}: Al concentrarte, captas cada palabra claramente.
+\end{enumerate}
+
+El mecanismo de atención neuronal funciona de la misma manera: cada palabra ``pregunta'' qué tan importante es cada otra palabra para entender su significado, luego ``enfoca'' su atención en las más relevantes.
+
+\subsection{Ejemplo Práctico Paso a Paso}
+
+Veamos cómo un transformer entiende la palabra ``come'' en dos contextos diferentes:
+
+\subsubsection{Contexto 1: ``El gato come pescado''}
+
+El transformer, al procesar ``come'', pregunta internamente:
+\begin{itemize}[leftmargin=*]
+    \item ¿Qué tan relevante es ``El''? Poco (es solo un artículo). \textbf{Atención baja}.
+    \item ¿Qué tan relevante es ``gato''? Muy relevante (es el sujeto, quien come). \textbf{Atención alta}.
+    \item ¿Qué tan relevante es ``pescado''? Muy relevante (es lo que se come). \textbf{Atención alta}.
+\end{itemize}
+
+Por lo tanto, la representación mental de ``come'' se enfoca principalmente en ``gato'' y ``pescado''.
+
+\subsubsection{Contexto 2: ``El restaurante come los márgenes de beneficio''}
+
+Aquí el transformer pregunta en un contexto diferente:
+\begin{itemize}[leftmargin=*]
+    \item ¿Qué tan relevante es ``restaurante''? Muy relevante (es el sujeto). \textbf{Atención alta}.
+    \item ¿Qué tan relevante es ``beneficio''? Muy relevante (se ve afectado). \textbf{Atención alta}.
+    \item ¿Qué tan relevante es ``márgenes''? Muy relevante (es lo que se consume). \textbf{Atención alta}.
+\end{itemize}
+
+La palabra ``come'' obtiene una representación completamente diferente porque ``atiende'' a palabras distintas en contextos distintos.
+
+\subsection{Cómo Funciona la Atención Matemáticamente (Versión Simple)}
+
+Detrás del cambio de atención hay matemáticas. Aquí está la versión simplificada sin demasiado detalle técnico:
+
+\subsubsection{Paso 1: Consultas, Claves y Valores}
+
+Cada palabra en la oración se transforma en tres versiones:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Consulta}: ``¿Qué información necesito saber?''
+    \item \textbf{Clave}: ``¿Qué información tengo?''
+    \item \textbf{Valor}: ``Aquí está mi información importante.''
+\end{itemize}
+
+Imagina en una biblioteca, cada visitante es una ``consulta'', cada libro es una ``clave'' y el contenido es el ``valor''. El bibliotecario (atención) empareja las consultas con las claves más relevantes para acceder al valor correcto.
+
+\subsubsection{Paso 2: Compatibilidad}
+
+El sistema examina qué tan \emph{compatible} es cada consulta con cada clave. Las consultas similares a las claves obtienen un puntaje de compatibilidad \emph{alto}. Esto se calcula multiplicando la consulta por la clave (matemáticamente, el producto punto).
+
+\subsubsection{Paso 3: Enfoque}
+
+Los puntajes de compatibilidad se convierten en ``pesos de enfoque''. Las compatibilidades altas significan ``enfocar atención aquí'', y las bajas significan ``ignorar esto''. Matemáticamente, una función llamada \texttt{softmax} convierte los puntajes en porcentajes (como: 40\% atención aquí, 35\% aquí, 25\% allá).
+
+\subsubsection{Paso 4: Combinar}
+
+Finalmente, el sistema combina todos los valores, ponderados por los pesos de enfoque. Si una palabra tiene un 80\% de atención en el sujeto, el 80\% de la información del sujeto se mezcla en la representación de esa palabra.
+
+\subsection{Múltiples Cabezas de Atención: Múltiples Perspectivas}
+
+Una característica clave es que los transformers no usan una única atención sino \emph{múltiples cabezas de atención} en paralelo. Es como si tuvieras 8 personas analizando la oración \emph{simultáneamente}, cada una prestando atención a diferentes aspectos:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Persona 1}: ``Me enfoco en las relaciones sujeto-verbo.''
+    \item \textbf{Persona 2}: ``Busco el objeto directo.''
+    \item \textbf{Persona 3}: ``Sigo la información sobre el tiempo verbal.''
+    \item \textbf{Persona 4}: ``Busco modificadores y adjetivos.''
+\end{itemize}
+
+Cada ``cabeza'' aprende a enfocarse en diferentes patrones del lenguaje. Juntas, capturan una comprensión mucho más rica que una sola cabeza.
+
+\subsection{Apilar Capas}
+
+Los transformers procesan información en \emph{múltiples capas} (generalmente de 12 a 48 para modelos prácticos). Imagina editar un ensayo:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Primera pasada}: Corriges ortografía y gramática básica.
+    \item \textbf{Segunda pasada}: Mejoras la claridad y la estructura de las oraciones.
+    \item \textbf{Tercera pasada}: Aseguras consistencia y flujo narrativo.
+\end{enumerate}
+
+Los transformers funcionan de la misma manera: cada capa refina la comprensión del texto. La primera capa captura características básicas (palabras simples, géneros), mientras que las capas posteriores entienden conceptos complejos (relaciones entre palabras, significados abstractos).
+
+\subsection{¿Por Qué es Importante?}
+
+El mecanismo de atención fue revolucionario porque:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Paralelismo}: Encuentra contexto para \emph{cualquier palabra con cualquier otra palabra}, sin procesarlas secuencialmente (a diferencia de sistemas anteriores). Esto lo hace muy rápido.
+    \item \textbf{Flexibilidad}: Aprende qué patrones buscar automáticamente a partir de los datos, sin necesidad de programar reglas manualmente.
+    \item \textbf{Escalabilidad}: Funciona desde textos pequeños hasta contextos con millones de palabras.
+    \item \textbf{Capacidades generales}: El mismo mecanismo funciona para traducción, resumen, preguntas-respuestas, generación de texto, visión por computadora y más.
+\end{enumerate}
+
+\subsection{Desafíos Prácticos}
+
+A pesar del extraordinario éxito de los transformers, presentan desafíos:
+
+\subsubsection{Complejidad Computacional}
+
+Si una oración tiene 1,000 palabras, el mecanismo de atención estándar debe comparar cada palabra con las otras 1,000 palabras. Eso es $1,000 \times 1,000 = 1,000,000$ de comparaciones. Para documentos largos con millones de palabras, esto se vuelve prohibitivamente costoso en tiempo y memoria.
+
+\subsubsection{Requisitos de Memoria}
+
+Especialmente durante la inferencia (cuando se usan modelos entrenados), almacenar la matriz de atención completa puede consumir enormes cantidades de RAM o memoria de GPU, limitando las longitudes de secuencia que se pueden procesar.
+
+\subsubsection{Eficiencia del Dispositivo}
+
+Los transformers fueron diseñados para TPUs y GPUs potentes. Ejecutarlos en teléfonos o dispositivos integrados es un desafío.
+
+\subsection{Soluciones Modernas}
+
+Para resolver estos desafíos, la investigación ha propuesto muchas variantes:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Atención Dispersa}: En lugar de comparar cada palabra con TODAS las demás, compara solo con un subconjunto estratégico (vecinos cercanos, patrones periódicos). Reduce la complejidad de $\mathcal{O}(n^2)$ a $\mathcal{O}(n \log n)$ o $\mathcal{O}(n)$.
+    \item \textbf{Modelos Recurrentes}: Como Mamba, incorporan aspectos de las antiguas redes neuronales recurrentes pero con mejor eficiencia moderna.
+    \item \textbf{Atención con Compuerta}: Mecanismos que aprenden selectivamente qué información pasar hacia adelante, reduciendo las necesidades de almacenamiento.
+    \item \textbf{Cuantización}: Usar números más pequeños (enteros en lugar de decimales) para reducir la memoria sin perder demasiada precisión.
+\end{itemize}
+
+Estas innovaciones son lo que este kit de herramientas (Frankenstein) te permite experimentar fácilmente.
+
+\subsection{Conclusiones Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item Un \textbf{transformer} es una red neuronal que entiende el contexto del lenguaje muy bien.
+    \item El \textbf{mecanismo de atención} permite que cada palabra ``se enfoque'' en qué otras palabras son relevantes para entender su significado.
+    \item La atención funciona calculando la \textbf{compatibilidad} entre cada palabra (consulta) y todas las demás (claves), luego combinando información basada en esa compatibilidad (valores).
+    \item \textbf{Múltiples cabezas} de atención exploran diferentes patrones en paralelo.
+    \item \textbf{Múltiples capas} refinan progresivamente la comprensión.
+    \item El principal desafío es que la atención estándar tiene complejidad cuadrática, lo que es costoso para textos largos.
+    \item Muchas \textbf{soluciones modernas} (atención dispersa, modelos recurrentes, cuantización) abordan estos desafíos, y este kit de herramientas te permite explorarlas todas.
+\end{itemize}

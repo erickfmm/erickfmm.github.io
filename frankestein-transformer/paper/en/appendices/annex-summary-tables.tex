@@ -1,0 +1,317 @@
+\section{Comprehensive Summary Tables}
+\label{sec:annex-summary-tables}
+
+This appendix provides a complete reference of all components implemented in the Frankenstein Transformer codebase: 35 sequence mixers across six families, 23 optimizers, 6 normalization variants, 43 activation functions, and 4 embedding methods. Each table is self-contained and cross-references the bibliography.
+
+\subsection{Sequence Mixer Summary}
+
+Table~\ref{tab:all-mixers} enumerates every sequence mixer supported by the \texttt{layer\_pattern} schema field, organized by architectural family. Training and inference complexity are expressed in terms of sequence length $n$, hidden dimension $d$, and family-specific parameters.
+
+\footnotesize
+\begin{longtable}{p{2.0cm}p{1.3cm}p{2.2cm}p{2.2cm}p{4.0cm}p{2.5cm}}
+\toprule
+\textbf{Name} & \textbf{Family} & \textbf{Training} & \textbf{Inference} & \textbf{Key Characteristic} & \textbf{Reference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Name} & \textbf{Family} & \textbf{Training} & \textbf{Inference} & \textbf{Key Characteristic} & \textbf{Reference} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Complete sequence mixer catalog. $n$ = sequence length, $d$ = hidden size, $w$ = window size, $r$ = low-rank dimension, $k$ = sparsity parameter, $C$ = compression ratio. Family-specific parameters are defined in the corresponding annex.}
+\label{tab:all-mixers}
+\endlastfoot
+
+\multicolumn{6}{c}{\textbf{Dense (3)}} \\
+\midrule
+standard\_attn & Dense & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(n)$ cache & Full global context; KV bottleneck at long sequences & \citep{vaswani_attention_2017} \\
+sigmoid\_attn & Dense & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(n)$ cache & Element-wise gating; hardware-efficient replacement for softmax & \citep{ramapuram_theory_2024} \\
+gqa & Dense & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(n)$ cache & Tunable KV compression; $G\times$ cache reduction via shared heads & \citep{ainslie_gqa_2023} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Recurrent (5)}} \\
+\midrule
+retnet\_attn & Recurrent & $\mathcal{O}(n^2 d)$ parallel & $\mathcal{O}(1)$ & Multi-scale decay; triple computation mode (parallel/recurrent/chunkwise) & \citep{sun_retentive_2023} \\
+mamba & Recurrent & $\mathcal{O}(n d)$ & $\mathcal{O}(1)$ & Selective state-space model; hardware-aware parallel scan & \citep{gu_mamba_2023} \\
+ode & Recurrent & $\mathcal{O}(k \cdot n^2 d)$ & $\mathcal{O}(k n)$ & Continuous-depth RK4 integration; adaptive step solver & \citep{zhang_continuous_2021} \\
+titan\_attn & Recurrent & $\mathcal{O}(c^2 + n f)$ & $\mathcal{O}(c^2 + 1)$ & Test-time memory adaptation; surprise-driven write dynamics & \citep{behrouz_titans_2025} \\
+engram\_attn & Memory & $\mathcal{O}(n \cdot N \cdot H)$ & $\mathcal{O}(1)$ lookup & Conditional N-gram memory; hash-based scalable retrieval & \citep{cheng2026conditionalmemoryscalablelookup} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Sparse (9)}} \\
+\midrule
+sparse\_transformer\_attn & Sparse & $\mathcal{O}(n \sqrt{n} \cdot d)$ & $\mathcal{O}(n)$ & Factorized strided + fixed masks; $\sqrt{n}$ sparsity pattern & \citep{child_sparse_transformer_2019} \\
+longformer\_attn & Sparse & $\mathcal{O}(n \cdot w \cdot d)$ & $\mathcal{O}(n)$ & Sliding window + dilation + global tokens; linear in $n$ & \citep{beltagy_longformer_2020} \\
+bigbird\_attn & Sparse & $\mathcal{O}(n)$ & $\mathcal{O}(n)$ & Random + local + global; Turing complete attention & \citep{zaheer_bigbird_2020} \\
+sparsek\_attn & Sparse & $\mathcal{O}(n \cdot d)$ & $\mathcal{O}(k)$ & Differentiable top-$k$ selection; learned sparsity mask & \citep{lou_sparsek_2024} \\
+nsa\_attn & Sparse & $\mathcal{O}((t/d + n_l + w)d)$ & $\mathcal{O}(n)$ & Hardware-aligned 3-branch design; token/neighbor/window & \citep{yuan_nsa_2025} \\
+sparge\_attn & Sparse & $\mathcal{O}(n^2 \cdot s \cdot d)$ & $\mathcal{O}(n)$ & Two-stage block filtering; eval-only (no training) & \citep{zhang_spargeattn_2025} \\
+fasa\_attn & Sparse & $\mathcal{O}(t \cdot N_{\text{tip}} + N_{\text{fac}} \cdot d)$ & $\mathcal{O}(n)$ & RoPE frequency-aware sparse; eval-only & \citep{wang_fasa_2026} \\
+msa\_attn & Sparse & $\mathcal{O}(H_{\text{kv}} \cdot d_{\text{idx}} \cdot N^2 + H_q \cdot d_h \cdot N \cdot k \cdot B_k)$ & $\mathcal{O}(n)$ & Index-branch block sparse; deployed at 109B scale & \citep{lai_minimax_2026} \\
+sparda\_attn & Sparse & $\mathcal{O}(H_{\text{kv}} \cdot d_f \cdot N \cdot N_b + H_q \cdot d_h \cdot N \cdot k \cdot B_k)$ & $\mathcal{O}(n)$ & Forecast-guided lookahead prefetch; predictive sparsity & \citep{fu_sparda_2026} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Gated (8)}} \\
+\midrule
+gla\_attn & Gated & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Data-dependent diagonal decay; linear attention with gating & \citep{yang_gla_2023} \\
+deltanet\_attn & Gated & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Delta rule; error-correcting linear attention & \citep{yang_deltanet_2024} \\
+gated\_deltanet\_attn & Gated & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Decay + write gating synthesis; unified delta framework & \citep{yang_gated_deltanet_2024} \\
+gated\_deltanet2\_attn & Gated & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Decoupled channel-wise erase/write; improved gating & \citep{hatamizadeh_gated_deltanet2_2026} \\
+hgrn2\_attn & Gated & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Hierarchical bounded forget gates; multi-scale recurrence & \citep{qin_hgrn2_2024} \\
+fox\_attn & Gated & $\mathcal{O}(L^2 d)$ & $\mathcal{O}(L)$ KV & Logit-space recency bias; FlashAttn compatible & \citep{lin_forgetting_transformer_2025} \\
+gated\_softmax\_attn & Gated & $\mathcal{O}(L^2 d)$ & $\mathcal{O}(L)$ KV & Post-SDPA sigmoid gating; attention-sink mitigation & \citep{qiu_gated_attention_2025} \\
+kda\_attn & Gated & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Channel-wise decay + scalar write; Kimi Linear design & \citep{kimi_kda_2025} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Latent (9)}} \\
+\midrule
+mla\_attn & Latent & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(r_{\text{kv}} \cdot n)$ & KV latent of rank $r_{\text{kv}} \approx d/2$; DeepSeek-style & \citep{mehta_mla_2025} \\
+gqla\_attn & Latent & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(r_{\text{kv}} \cdot n)$ & Hardware-adaptive dual decode paths; GQA + latent fusion & \citep{meng_gqla_2026} \\
+mlra\_attn & Latent & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(r_{\text{kv}} \cdot n)$ & $L$ sub-heads; 4-way tensor-parallel compatible & \citep{liu_mlra_2026} \\
+tucker\_attn & Latent & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(k_{\text{rank}} \cdot n)$ & Tucker factorization; unifies MHA/GQA/MLA & \citep{klein_tucker_2026} \\
+iha\_attn & Latent & $\mathcal{O}(n^2 H^2)$ & $\mathcal{O}(H \cdot n \cdot d_h)$ & Pseudo-heads; $\Theta(\sqrt{k})$ parameter scaling & \citep{duvvuri_iha_2026} \\
+gta\_attn & Latent & $\mathcal{O}(n^2 \cdot G \cdot d_h)$ & $\mathcal{O}(r_v \cdot n)$ & Shared map + SiLU decoder; 62.5\% FLOP reduction & \citep{sun_gta_2025} \\
+mtla\_attn & Latent & $\mathcal{O}(n^2 d / m)$ & $\mathcal{O}(r_{\text{kv}} \cdot n / m)$ & Temporal merge; $5.3\times$ decode speedup & \citep{deng_mtla_2025} \\
+cca\_attn & Latent & $\mathcal{O}(n^2 d / C)$ & $\mathcal{O}(\tilde{e} \cdot n)$ & Full attention in compressed latent; $C\times$ fewer FLOPs & \citep{figliola_cca_2025} \\
+ccgqa\_attn & Latent & $\mathcal{O}(n^2 d / C_1)$ & $\mathcal{O}(\tilde{e}_{\text{kv}} \cdot n)$ & CCA + decoupled GQA; best loss at $8\times$ cache reduction & \citep{figliola_cca_2025} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Optimizer Summary}
+
+Table~\ref{tab:all-optimizers} catalogs all 23 supported optimizers with their memory footprint, per-step computational cost, and key hyperparameters. State buffers are expressed as the number of optimizer-owned tensors per parameter; per-step cost focuses on the dominant term beyond gradient computation.
+
+\footnotesize
+\begin{longtable}{p{2.0cm}p{2.0cm}p{2.2cm}p{2.0cm}p{3.8cm}p{2.5cm}}
+\toprule
+\textbf{Optimizer} & \textbf{Family} & \textbf{State Buffers} & \textbf{Per-Step Cost} & \textbf{Key Hyperparams} & \textbf{Reference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Optimizer} & \textbf{Family} & \textbf{State Buffers} & \textbf{Per-Step Cost} & \textbf{Key Hyperparams} & \textbf{Reference} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Complete optimizer catalog. $n$ = number of parameters, $d$ = tensor dimensionality, $r$ = low-rank dimension, $k$ = Newton--Schulz iteration count. State buffers lists the number of optimizer state tensors maintained per parameter group.}
+\label{tab:all-optimizers}
+\endlastfoot
+
+\multicolumn{6}{c}{\textbf{Classical \& Adaptive Baselines}} \\
+\midrule
+SGD+Momentum & Classical & 1 ($m$) & $\mathcal{O}(n)$ & lr, momentum, wd & \citep{polyak_1964} \\
+AdamW & Adaptive & 2 ($m$, $v$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{loshchilov_decoupled_2017} \\
+RAdam & Adaptive & 2 ($m$, $v$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{liu_variance_2019} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Variance Reduction \& Advanced Momentum}} \\
+\midrule
+Adan & Variance reduction & 3 ($m$, $v$, $s$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, $\beta_3$, eps, wd & \citep{xie_adan_2022} \\
+ADOPT & Adam variant & 2 ($m$, $v$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{taniguchi_adopt_2024} \\
+AdEMAMix & Multi-EMA & 3 ($m_1$, $m_2$, $v$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, $\beta_3$, eps, wd & \citep{pagliardini_ademamix_2024} \\
+MARS & Variance-reduced & 3 ($m$, $v$, $z$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd, $\gamma$ & \citep{yuan_mars_2024} \\
+Cautious AdamW & Masked momentum & 2 ($m$, $v$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{liang_cautious_2024} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Large-Batch, Memory-Efficient \& Parameter-Free}} \\
+\midrule
+LAMB & Layer-wise adaptive & 2 ($m$, $v$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{you_largebatch_2020} \\
+Schedule-Free & Scheduler-free & 3 ($z$, $x$, $n$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, wd & \citep{defazio_road_2024} \\
+Adafactor & Memory-efficient & 1--2 (row/col) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{shazeer_adafactor_2018} \\
+GaLore & Low-rank projection & 2 ($m$, $v$) + SVD & $\mathcal{O}(n r)$ & lr, rank $r$, $\beta_1$, $\beta_2$, eps, wd & \citep{zhao_galore_2024} \\
+Prodigy & Parameter-free & 3 ($m$, $v$, $d$) & $\mathcal{O}(n)$ & $\beta_1$, $\beta_2$, eps, wd, $d_0$ & \citep{mishchenko_prodigy_2023} \\
+Lion & Sign momentum & 1 ($m$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, wd & \citep{chen_symbolic_2023} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Second-Order, Geometric \& Orthogonality}} \\
+\midrule
+Shampoo & Second-order & $2d$ ($L_i$, $R_i$) & $\mathcal{O}(n^{1+2/d})$ & lr, eps, wd & \citep{gupta_shampoo_2018} \\
+SOAP & Second-order & $2d + 2$ ($m$, $v$) & $\mathcal{O}(n^{1+1/d})$ & lr, $\beta_1$, $\beta_2$, eps, wd & \citep{vyas_soap_2024} \\
+Sophia & Curvature-aware & 3 ($m$, $v$, $h$) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd, $k$ & \citep{liu_sophia_2023} \\
+Muon & Orthogonality & 2 ($m$, $v$) & $\mathcal{O}(n \cdot k)$ & lr, momentum, wd, NS steps $k$ & \citep{shen_convergence_2025} \\
+Turbo-Muon & Orthogonality & 2 ($m$, $v$) & $\mathcal{O}(n \cdot k)$ & lr, momentum, wd, NS steps $k$ & \citep{boissin_turbo-muon_2025} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Low-Rank Adaptive \& Tunable Adaptivity}} \\
+\midrule
+APOLLO & Low-rank adaptive & 2 low-rank + proj & $\mathcal{O}(n r)$ & lr, rank $r$, update gap, scale, betas, eps, wd & \citep{zhu2025apollosgdlikememoryadamwlevel} \\
+APOLLO-Mini & Low-rank adaptive & 2 rank-1 + proj & $\mathcal{O}(n)$ & lr, update gap, scale, betas, eps, wd & \citep{zhu2025apollosgdlikememoryadamwlevel} \\
+Q-APOLLO & Quantized low-rank & 2 quantized + proj & $\mathcal{O}(n r)$ & lr, rank $r$, update gap, scale, quant bits, betas, eps, wd & \citep{zhu2025apollosgdlikememoryadamwlevel} \\
+Anon & Adaptivity-tunable & 3 ($m$, $v$, fixed\_lr) & $\mathcal{O}(n)$ & lr, $\beta_1$, $\beta_2$, eps, wd, $\gamma$ & \citep{anon2026anon} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Normalization Variants}
+
+Table~\ref{tab:all-norms} summarizes the six normalization methods available through the \texttt{norm\_type} schema field, ranging from classical statistics-based approaches to normalization-free bounded transforms and weightless RMSNorm with fused norm-then-project execution.
+
+\small
+\begin{longtable}{p{2.5cm}p{5.5cm}p{2.5cm}p{3.5cm}}
+\toprule
+\textbf{Method} & \textbf{Formula} & \textbf{Stats Needed} & \textbf{Reference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Method} & \textbf{Formula} & \textbf{Stats Needed} & \textbf{Reference} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Normalization variants. $d$ = hidden dimension, $k = \lceil d \cdot p \rceil$ for partial ratio $p$, $\alpha$ and $s$ are learnable parameters. FlashNorm is weightless (no learnable parameters); the per-dim scale is folded into the subsequent linear layer per Prop.~1 of \citep{graef2026flashnorm}.}
+\label{tab:all-norms}
+\endlastfoot
+LayerNorm & $\gamma_i (x_i - \mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i$ & mean + variance & \citep{ba2016layer} \\
+RMSNorm & $\gamma_i x_i / \sqrt{\frac{1}{d}\sum_j x_j^2 + \epsilon}$ & RMS only & \citep{zhang_root_2019} \\
+pRMSNorm & $\gamma_i x_i / \sqrt{\frac{1}{k}\sum_{j \le k} x_j^2 + \epsilon}$ & Partial RMS ($p$\,\%) & \citep{zhang_root_2019} \\
+Dynamic Tanh (DyT) & $\tanh(\alpha x)$ & none & \citep{zhu_transformers_2025} \\
+Dynamic Erf (Derf) & $\operatorname{erf}(\alpha x + s)$ & none & \citep{chen_stronger_2025} \\
+FlashNorm & $x_i / \sqrt{\frac{1}{d}\sum_j x_j^2 + \epsilon}$ & RMS only (weightless) & \citep{graef2026flashnorm} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Residual Connections}
+
+Table~\ref{tab:all-residuals} compares the residual-connection schemes available in the codebase: the standard identity residual and the manifold-constrained n-stream residual (mHC) \citep{xie_mhc_2025}. $n$ is the stream expansion factor, $C$ the hidden dimension, $t_{\max}$ the Sinkhorn--Knopp iteration count, and $\alpha$ the gating scalars. HC (unconstrained Hyper-Connections) is listed for reference but is \emph{not} exposed in this codebase.
+
+\small
+\begin{longtable}{p{2.2cm}p{4.6cm}p{3.2cm}p{3.0cm}}
+\toprule
+\textbf{Scheme} & \textbf{Stream Update} & \textbf{Constraint} & \textbf{Reference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Scheme} & \textbf{Stream Update} & \textbf{Constraint} & \textbf{Reference} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Residual-connection schemes. $x_l \in \mathbb{R}^{C}$ (standard) or $\mathbb{R}^{n \times C}$ (HC/mHC) is the stream at layer $l$, $F$ the layer function, $H^{\text{pre}}, H^{\text{post}}, H^{\text{res}}$ the learned read/write/mix mappings. mHC is controlled by the \texttt{model.mhc} schema fields; full details in Annex~9.}
+\label{tab:all-residuals}
+\endlastfoot
+Standard residual & $x_{l+1} = x_l + F(x_l, W_l)$ & Identity mapping (by construction) & \citep{he_deep_2016} \\
+Hyper-Connections (HC) & $x_{l+1} = H^{\text{res}}_l x_l + (H^{\text{post}}_l)^{\top} F(H^{\text{pre}}_l x_l, W_l)$ & Unconstrained & \citep{xie_mhc_2025} \\
+mHC (this codebase) & same update as HC & $H^{\text{res}}_l$ doubly stochastic via Sinkhorn--Knopp ($t_{\max} = 20$), $H^{\text{pre}} = \sigma(\cdot)$, $H^{\text{post}} = 2\sigma(\cdot)$, $\alpha$-init $0.01$ & \citep{xie_mhc_2025} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Activation Functions}
+
+Table~\ref{tab:all-activations} catalogs the 43 feed-forward activation functions available through the \texttt{ffn\_activation} schema field (40 elementwise plus 3 gated-FFN variants), grouped by family. ``Learn.'' marks activations with trainable parameters; the full formulas are in Annex~8.
+
+\scriptsize
+\begin{longtable}{p{2.6cm}p{1.4cm}p{5.2cm}p{0.9cm}p{2.0cm}}
+\toprule
+\textbf{Name} & \textbf{Family} & \textbf{Formula} & \textbf{Learn.} & \textbf{Reference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Name} & \textbf{Family} & \textbf{Formula} & \textbf{Learn.} & \textbf{Reference} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Activation function catalog. ``Learn.'' indicates the presence of trainable parameters. RAF = Rational Activation Function (learnable Padé ratio). $\sigma$ is the logistic sigmoid.}
+\label{tab:all-activations}
+\endlastfoot
+\multicolumn{5}{c}{\textbf{Classical / Sigmoid--Tanh (12)}} \\
+\midrule
+silu / swish & Classical & $x\,\sigma(\beta x)$ & no / $\beta$ & \citep{ramachandran2017swish} \\
+gelu & Classical & $x\,\Phi(x)$ & no & \citep{hendrycks2016gelu} \\
+gelu\_tanh & Classical & $\tfrac{x}{2}\big(1+\tanh\!\sqrt{\tfrac{2}{\pi}}(x{+}0.044715x^3)\big)$ & no & \citep{hendrycks2016gelu} \\
+relu & Classical & $\max(0,x)$ & no & \citep{nair2010relu} \\
+sigmoid & Classical & $1/(1+e^{-x})$ & no & \citep{lederer2021activations} \\
+tanh & Classical & $(e^x-e^{-x})/(e^x+e^{-x})$ & no & \citep{lederer2021activations} \\
+arctan & Classical & $\arctan(x)$ & no & \citep{lederer2021activations} \\
+softsign / elliott & Classical & $x/(1+|x|)$ & no & \citep{lederer2021activations} \\
+identity & Classical & $x$ & no & (internal) \\
+softplus & Classical & $\log(1+e^x)$ & no & \citep{glorot2011softplus} \\
+mish & Classical & $x\tanh(\log(1+e^x))$ & no & \citep{misra2019mish} \\
+\midrule
+
+\multicolumn{5}{c}{\textbf{Rectified family (12)}} \\
+\midrule
+leaky\_relu & Rectified & $\max(0,x)+a\min(0,x)$, $a{=}0.01$ & no & \citep{maas2013leakyrelu} \\
+relu6 & Rectified & $\min(\max(0,x),6)$ & no & \citep{howard2019hardswish} \\
+hardswish & Rectified & $x\,\text{ReLU6}(x{+}3)/6$ & no & \citep{howard2019hardswish} \\
+prelu & Rectified & $\max(0,x)+\mathbf{p}\odot\min(0,x)$ & \textbf{yes} & \citep{he2015prelu} \\
+abs\_relu & Rectified & $\max(0,x)-\max(0,-x)$ & no & \citep{dubey2021activations} \\
+nl\_relu & Rectified & $\beta\log(1+\max(0,x))$ & no & \citep{dubey2021activations} \\
+brelu & Rectified & $\min(\max(0,x),t)$ & no & \citep{dubey2021activations} \\
+vrelu & Rectified & $|x|$ & no & \citep{dubey2021activations} \\
+hexpo & Rectified & $a\max(0,x)-c\max(0,-x)$ & no & \citep{dubey2021activations} \\
+ptanh & Rectified & $\max(0,\tanh(x))$ & no & \citep{dubey2021activations} \\
+dis\_relu & Rectified & $\max(0,x-\delta)$ & no & \citep{dubey2021activations} \\
+lisht & Rectified & $x\tanh(x)$ & no & \citep{roy2019lisht} \\
+\midrule
+
+\multicolumn{5}{c}{\textbf{Exponential / ELU family (12)}} \\
+\midrule
+elu & Exponential & $x$ if $x\ge0$ else $\alpha(e^x{-}1)$ & no & \citep{clevert2016elu} \\
+selu & Exponential & $\lambda\,\text{ELU}_{\alpha'}(x)$ & no & \citep{klambauer2017selu} \\
+celu & Exponential & $x$ if $x\ge0$ else $\alpha(e^{x/\alpha}{-}1)$ & no & \citep{barron2017celu} \\
+pelu & Exponential & $\tfrac{\alpha}{\beta}x$ / $\alpha(e^{x/\beta}{-}1)$ & \textbf{yes} & \citep{dubey2021activations} \\
+mpelu & Exponential & ELU + learnable $\alpha,\beta$ & \textbf{yes} & \citep{dubey2021activations} \\
+felu / eelu / pdelu / preu & Exponential & ELU variants w/ learnable params & \textbf{yes} & \citep{dubey2021activations} \\
+softexp & Exponential & exp/linear/log interpolation & \textbf{yes} & \citep{dubey2021activations} \\
+elish / hardelish & Exponential & Swish $\cup$ ELU gated branches & no & \citep{basirat2019elish} \\
+\midrule
+
+\multicolumn{5}{c}{\textbf{Learnable / Adaptive (4)}} \\
+\midrule
+swish\_trainable & Learnable & $x\,\sigma(\beta x)$, $\beta$ trainable & \textbf{yes} & \citep{ramachandran2017swish} \\
+maxout & Learnable & $\max_{i}(W_i x+b_i)$ & \textbf{yes} & \citep{goodfellow2013maxout} \\
+raf & Learnable & $P(x)/Q(x)$ Padé$(5,4)$, version A & \textbf{yes} & \citep{fang2023raft} \\
+\midrule
+
+\multicolumn{5}{c}{\textbf{Gated FFN variants (3)}} \\
+\midrule
+swiglu & Gated & $\text{SiLU}(xW_g)\odot(xW_u)\,W_d$ & \textbf{yes} & \citep{shazeer2020glu} \\
+geglu & Gated & $\text{GELU}(xW_g)\odot(xW_u)\,W_d$ & \textbf{yes} & \citep{shazeer2020glu} \\
+reglu & Gated & $\text{ReLU}(xW_g)\odot(xW_u)\,W_d$ & \textbf{yes} & \citep{shazeer2020glu} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Embedding Variants}
+
+Table~\ref{tab:all-embeddings} catalogs the four embedding methods supported by the codebase: two positional encoding schemes and two structural embedding optimizations.
+
+\small
+\begin{longtable}{p{3.0cm}p{7.5cm}p{3.5cm}}
+\toprule
+\textbf{Method} & \textbf{Description} & \textbf{Reference} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Method} & \textbf{Description} & \textbf{Reference} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Embedding variants. $V$ = vocabulary size, $H$ = hidden size, $R$ = factorized intermediate dimension.}
+\label{tab:all-embeddings}
+\endlastfoot
+RoPE & Rotary Position Embedding; applies frequency-based rotation to query and key vectors, encoding relative position through inner product geometry & \citep{su_rope_2024} \\
+HoPE & Hyperbolic Rotary Positional Encoding; Lorentz-inspired rotation using hyperbolic functions; enforces monotonic attention decay with distance; RoPE is a special case & \citep{dai_hope_2025} \\
+Factorized Embeddings & Decomposes $V \times H$ embedding matrix into $V \times R$ and $R \times H$ factors; reduces parameters from $\mathcal{O}(VH)$ to $\mathcal{O}(V R + R H)$; controlled by \texttt{factorized\_embedding\_dim} & (internal) \\
+Embedding Convolution & Depthwise Conv1d applied over the embedding stream before the first transformer block; provides lightweight local-context filtering; controlled by \texttt{embedding\_conv\_kernel} & (internal) \\
+\bottomrule
+\end{longtable}
+\normalsize

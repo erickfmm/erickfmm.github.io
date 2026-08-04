@@ -763,7 +763,6 @@ pre {
 
   <div id="sidebar-examples">
     <h2>📁 Load Example</h2>
-    <button class="btn btn-sm" onclick="loadExample('mini')">Mini</button>
     <button class="btn btn-sm" onclick="loadExample('standard')">Standard</button>
     <button class="btn btn-sm" onclick="loadExample('frankenstein')" style="margin-top:4px">Frankenstein</button>
   </div>
@@ -2169,7 +2168,8 @@ function updateParamEstimate() {
       '<li>FFN: <span>' + FTParamEstimator.format(b.ffn||0) + '</span></li>' +
       '<li>Norm: <span>' + FTParamEstimator.format(b.norm||0) + '</span></li>' +
       '<li>Head: <span>' + FTParamEstimator.format(b.head||0) + '</span></li>' +
-      (b.other ? '<li>Other: <span>' + FTParamEstimator.format(b.other) + '</span></li>' : '') +
+      (b.mhc ? '<li>mHC: <span>' + FTParamEstimator.format(b.mhc) + '</span></li>' : '') +
+      (b.router ? '<li>Router: <span>' + FTParamEstimator.format(b.router) + '</span></li>' : '') +
     '</ul></details>';
 }
 
@@ -2468,24 +2468,6 @@ function onModelModeChange() {
 // like createId('model.' + key) — produces the same ids renderObject emits
 // when walking the nested schema (e.g. 'model.dims.vocab_size').
 const PRESETS = {
-  mini: {
-    model_mode: 'custom', model_class: 'mini',
-    model: {
-      'dims.vocab_size': 50000, 'dims.hidden_size': 128, 'dims.num_layers': 4, 'dims.num_loops': 1,
-      'dims.num_heads': 1, 'dims.retention_heads': 1, 'dims.dropout': 0.1, 'dims.layer_pattern': ['standard_attn'],
-      'norm.type': 'layer_norm',
-      'embedding.factorized.enabled': true, 'embedding.factorized.dim': 16,
-      'embedding.conv.enabled': true, 'embedding.conv.kernel': 32,
-      num_experts: 2, top_k_experts: 1, ode_solver: 'rk4', ode_steps: 2,
-      use_bitnet: false, use_moe: false, ffn_hidden_size: 512, ffn_activation: 'gelu'
-    },
-    training: { task:'mlm', batch_size:64, max_length:512, mlm_probability:0.15, max_samples:20000000,
-      dataset_batch_size:25000, gradient_accumulation_steps:2, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
-      scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:50, max_rolling_checkpoints:3,
-      num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:true, gpu_temp_guard_enabled:true,
-      gpu_temp_pause_threshold_c:90, gpu_temp_resume_threshold_c:80, log_gradient_stats:true, gradient_log_interval:1,
-      optimizer:'lamb' }
-  },
   standard: {
     model_mode: 'custom', model_class: 'frankenstein',
     model: {
@@ -2545,7 +2527,7 @@ const PRESETS = {
       optimizer:'turbo_muon' }
   },
   gpt_like: {
-    model_mode: 'custom', model_class: 'decoder_gpt_like',
+    model_mode: 'custom', model_class: 'frankensteindecoder',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
       'dims.num_heads': 12, 'dims.retention_heads': 1, 'dims.dropout': 0.1,
@@ -2565,7 +2547,7 @@ const PRESETS = {
       optimizer:'adamw' }
   },
   llama_like: {
-    model_mode: 'custom', model_class: 'decoder_llama_like',
+    model_mode: 'custom', model_class: 'frankensteindecoder',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 4096, 'dims.num_layers': 32, 'dims.num_loops': 1,
       'dims.num_heads': 32, 'dims.retention_heads': 1, 'dims.dropout': 0.0,
@@ -2667,7 +2649,7 @@ const EXAMPLE_BASE_URL = '/frankestein-transformer/examples/';
 const EXAMPLE_SUB_URL = EXAMPLE_BASE_URL + 'examples/';
 
 const EXAMPLE_FILES_TOP = [
-  'mini.yaml','standard.yaml','standard_hope.yaml','frankenstein.yaml','frankesteindecoder.yaml','tinybert.yaml','embbert.yaml',
+  'mini.yaml','standard.yaml','standard_hope.yaml','frankenstein.yaml','frankensteindecoder.yaml','tinybert.yaml','embbert.yaml',
   'bert_base_uncased.yaml','bert_large_uncased.yaml',
   'modernbert_base.yaml','modernbert_large.yaml','modernbert_continual.yaml','modernbert_sbert.yaml','modernbert_sbert_continual.yaml',
   'gpt1_117m.yaml','gpt2_small.yaml','gpt2_medium.yaml','gpt2_large.yaml','gpt2_xl.yaml',

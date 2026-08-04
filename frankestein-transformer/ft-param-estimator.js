@@ -89,6 +89,24 @@ var FTParamEstimator = (function () {
     }
   }
 
+  // Resolve the latent rank for a latent-family mixer from the appropriate
+  // schema path. Each latent variant stores its rank under its own
+  // sub-object (mla/gqla/mlra/mtla/tucker/cca/ccgqa). Defaults to H/2
+  // (the Pareto-optimal rank per the paper) when not specified.
+  function latentRank(t, m, H) {
+    var r;
+    if (t === 'mla_attn') r = getDeep(m, 'attention.mla.latent_rank');
+    else if (t === 'gqla_attn') r = getDeep(m, 'attention.gqla.latent_rank');
+    else if (t === 'mlra_attn') r = getDeep(m, 'attention.mlra.latent_rank');
+    else if (t === 'mtla_attn') r = getDeep(m, 'attention.mtla.latent_rank');
+    else if (t === 'tucker_attn') r = getDeep(m, 'attention.tucker.key_rank');
+    else if (t === 'cca_attn') r = getDeep(m, 'attention.cca.latent_rank');
+    else if (t === 'ccgqa_attn') r = getDeep(m, 'attention.ccgqa.latent_rank');
+    else if (t === 'iha_attn' || t === 'gta_attn') r = getDeep(m, 'attention.' + t.replace('_attn', '') + '.latent_rank');
+    if (r === undefined || r === null) return Math.floor(H / 2);
+    return toNum(r, Math.floor(H / 2));
+  }
+
   // Attention projection params for one layer, by family.
   function attnParams(family, t, H, nH, m) {
     var head = H / nH;
@@ -96,10 +114,11 @@ var FTParamEstimator = (function () {
     var extra = 0;
     switch (family) {
       case 'dense':
-        // QKV = 3*(H*H) + 3H, output = H*H + H. GQA shares K,V across groups -> fewer KV params.
+        // QKV = 3*(H*H) + 3H, output = H*H + H. GQA shares K,V across groups
+        // -> fewer KV params. Reads num_kv_heads from the schema (default nH
+        // = MHA when unset; the paper suggests 8 as a favorable middle).
         if (t === 'gqa_attn') {
-          // Heuristic: assume n_kv = nH/2 (schema default group size 2).
-          var nKv = Math.max(1, Math.floor(nH / 2));
+          var nKv = toNum(pick(m, 'dims.num_kv_heads', 'num_kv_heads', nH), nH);
           var Hkv = head * nKv;
           qkv = H * H + 2 * (H * Hkv) + 3 * H;
         } else {
@@ -109,13 +128,18 @@ var FTParamEstimator = (function () {
         if (t === 'gated_softmax_attn') extra += H; // post-SDPA gate bias
         return qkv + out + extra;
       case 'latent': {
-        // Down/up projections for K,V into latent of rank r ~ H/2 (Pareto-optimal per paper).
-        var r = getDeep(m, 'attention.mla.latent_rank') || getDeep(m, 'attention.tucker.k_rank') || Math.floor(H / 2);
+        var r = latentRank(t, m, H);
         qkv = H * H + 3 * H; // Q full + K,V up-proj share latent
         extra = 2 * (H * r + r * H); // W_down (H->r) and W_up (r->H) for K and V
         out = H * H + H;
-        // MLRA partitions into L sub-heads: same total params, counted once.
-        if (t === 'cca_attn' || t === 'ccgqa_attn') extra += 2 * (3 * r); // 1D conv kernel ~3 per latent channel
+        // CCA/CCGQA add a 1D conv kernel (~3 taps per latent channel).
+        if (t === 'cca_attn' || t === 'ccgqa_attn') extra += 2 * (3 * r);
+        // Tucker factorises Q with query_rank and K,V with key/value_rank.
+        if (t === 'tucker_attn') {
+          var qR = toNum(getDeep(m, 'attention.tucker.query_rank'), H);
+          var kvR = toNum(getDeep(m, 'attention.tucker.key_rank'), r);
+          return (H * qR + qR * H) + 2 * (H * kvR + kvR * H) + out + 3 * H;
+        }
         return qkv + out + extra;
       }
       case 'recur': {
@@ -137,7 +161,7 @@ var FTParamEstimator = (function () {
         // Dense QKV/O + memory bank + read/write projections.
         qkv = 3 * (H * H) + 3 * H;
         out = H * H + H;
-        // titan: persistent memory of ~256 slots * H, engram: similar.
+        // titan/engram: persistent memory of ~256 slots * H, read/write gates.
         extra = 256 * H + 2 * (H * H);
         return qkv + out + extra;
       }
@@ -155,6 +179,25 @@ var FTParamEstimator = (function () {
     return body;
   }
 
+  // mHC (Manifold-Constrained Hyper-Connections) params per layer:
+  //  - mhc_in_proj  : H -> n*H      (n*H*H + n*H)
+  //  - mhc_out_proj : n*H -> H      (H*n*H + H)
+  //  - H[res]       : n*n matrix    (learned, doubly-stochastic via Sinkhorn)
+  //  - φ_l          : n*H -> n*H    ((n*H)*(n*H) + n*H)  [coef projection]
+  // Returns 0 when mHC is disabled.
+  function mhcParamsPerLayer(m, H) {
+    var n = toNum(pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4), 4);
+    var nH_ = n * H;
+    var inProj  = nH_ * H + nH_;
+    var outProj = H * nH_ + H;
+    var hRes    = n * n;
+    var phi     = nH_ * nH_ + nH_;
+    return inProj + outProj + hRes + phi;
+  }
+
+  // MoE router params: a linear gate H -> nE (+ nE bias).
+  function moeRouterParams(H, nE) { return H * nE + nE; }
+
   function headParams(H, V, dec) {
     // Untied LM/MLM head (weight tying not detected in schema -> count it).
     return H * V + V;
@@ -170,13 +213,14 @@ var FTParamEstimator = (function () {
     var nL = toNum(pick(m, 'dims.num_layers', 'num_layers', 12), 12);
     var loops = toNum(pick(m, 'dims.num_loops', 'num_loops', 1), 1);
     var nH = toNum(pick(m, 'dims.num_heads', 'num_heads', 12), 12);
+    var rH = toNum(pick(m, 'dims.retention_heads', 'retention_heads', nH), nH);
     var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard_attn']);
     if (typeof pat === 'string') pat = [pat];
     var fact = toBool(pick(m, 'embedding.factorized.enabled', 'use_factorized_embedding', false), false);
     var fD = toNum(pick(m, 'embedding.factorized.dim', 'factorized_embedding_dim', 128), 128);
     var conv = toBool(pick(m, 'embedding.conv.enabled', 'use_embedding_conv', false), false);
     var cK = toNum(pick(m, 'embedding.conv.kernel', 'embedding_conv_kernel', 3), 3);
-    var dec = pick(m, 'dims.mode', 'mode', '') === 'decoder' || config.model_class === 'frankesteindecoder';
+    var dec = pick(m, 'dims.mode', 'mode', '') === 'decoder' || config.model_class === 'frankensteindecoder';
 
     var normType = pick(m, 'norm.type', 'norm_type', 'layer_norm');
     var moe = toBool(m.use_moe, false);
@@ -186,6 +230,7 @@ var FTParamEstimator = (function () {
     var fA = m.ffn_activation || 'gelu';
     var bit = toBool(m.use_bitnet, false);
     var mod = toBool(m.use_mixture_of_depths, false);
+    var mhcEnabled = toBool(pick(m, 'mhc.enabled', 'use_mhc', false), false);
 
     // Expand pattern to num_layers (each layer sees its mixer type).
     var expanded = [];
@@ -193,24 +238,27 @@ var FTParamEstimator = (function () {
 
     var emb = embParams(m, V, H, fD, fact, conv, cK, dec);
     var normPer = normParamsPerLayer(normType, H);
-    var pAttn = 0, pFfn = 0, pNorm = 0;
+    var pAttn = 0, pFfn = 0, pNorm = 0, pMhc = 0, pRouter = 0, pModRouter = 0;
     for (var li = 0; li < nL; li++) {
-      var fam = familyOf(expanded[li]);
-      pAttn += attnParams(fam, expanded[li], H, nH, m);
+      var t = expanded[li];
+      pAttn += attnParams(familyOf(t), t, H, nH, m);
       pFfn += ffnParams(m, H, fH, fA, moe, nE);
       pNorm += normPer * 2; // pre + post
+      if (mhcEnabled) pMhc += mhcParamsPerLayer(m, H);
+      if (moe)        pRouter += moeRouterParams(H, nE);
+      if (mod)        pModRouter += H; // MoD router per layer
     }
     // Logical depth multiplies compute, not params (weights reused). Params counted once.
     var head = headParams(H, V, dec);
-    var modRouter = mod ? H * nL : 0; // MoD router per layer
 
-    var total = emb + pAttn + pFfn + pNorm + head + modRouter;
+    var total = emb + pAttn + pFfn + pNorm + head + pMhc + pRouter + pModRouter;
 
     var notes = [];
     if (bit) notes.push('BitNet ternary (1.58 bit)');
     if (moe) notes.push('MoE: ' + nE + ' experts, top-' + tK + ' active');
     if (loops > 1) notes.push(loops + ' loops (params reused)');
-    if (fH === 0 || !fH) notes.push('FFN size missing — used default');
+    if (mhcEnabled) notes.push('mHC enabled (n=' + pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4) + ')');
+    if (!fH) notes.push('FFN size missing — used default');
 
     return {
       total: total,
@@ -220,7 +268,8 @@ var FTParamEstimator = (function () {
         ffn: pFfn,
         norm: pNorm,
         head: head,
-        other: modRouter
+        mhc: pMhc,
+        router: pRouter + pModRouter
       },
       note: notes.length ? notes.join('; ') : ''
     };

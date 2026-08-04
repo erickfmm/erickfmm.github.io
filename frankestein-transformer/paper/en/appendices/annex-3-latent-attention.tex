@@ -1,0 +1,335 @@
+\section{Latent and Low-Rank Attention Families}
+\label{sec:annex-latent}
+
+This annex covers the latent / low-rank KV compression family of attention mechanisms. These architectures compress the per-token key--value state into a low-rank latent vector that is the only quantity materialised in the KV cache during decoding, then reconstruct full multi-head keys and values on the fly. The family unifies grouped-query, latent, factorised, and temporal-latent designs under a common low-rank bottleneck.
+
+\subsection{Multi-Head Latent Attention (MLA)}
+Multi-Head Latent Attention (MLA) \citep{mehta_mla_2025} compresses the per-token key--value state into a single low-rank latent vector $c_{KV}$ of rank $r_{kv}$, which is the only quantity materialised in the KV cache during decoding. A pair of up-projection matrices reconstructs the full multi-head keys and values on the fly, while RoPE is applied to the decompressed query and key tensors so that positional structure is preserved. The authors show that the Pareto-optimal latent width sits near $r_{kv} = d_{\text{hidden}} / 2$, at which point MLA halves the KV cache yet matches multi-head attention (MHA) quality on small models.
+
+\subsubsection{Mathematical Formulation}
+\[
+c_{KV} = W_{DKV}\, x \in \mathbb{R}^{r_{kv}}, \qquad
+k = W_{UK}\, c_{KV}, \qquad
+v = W_{UV}\, c_{KV}, \qquad
+q = W_{Q}\, x.
+\]
+\[
+\tilde q = \text{RoPE}(q), \quad \tilde k = \text{RoPE}(k), \qquad
+\text{attn} = \texttt{softmax}\!\left(\frac{\tilde q\, \tilde k^\top}{\sqrt{d_h}}\right) v.
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} hidden state $x \in \mathbb{R}^{n \times d}$, rank $r_{kv}$, projections $W_{DKV}, W_{UK}, W_{UV}, W_{Q}$
+\State $c_{KV} \gets W_{DKV}\, x$ \Comment{down-project to latent of rank $r_{kv}$ (cached at inference)}
+\State $k \gets W_{UK}\, c_{KV}$, \quad $v \gets W_{UV}\, c_{KV}$ \Comment{up-project to full heads}
+\State $q \gets W_{Q}\, x$
+\State $\tilde q \gets \text{RoPE}(q)$, \quad $\tilde k \gets \text{RoPE}(k)$ \Comment{apply rotary embeddings}
+\State $\text{weights} \gets \texttt{softmax}(\tilde q\, \tilde k^\top / \sqrt{d_h})$
+\State \textbf{Output:} $\mathbf{Y} = \text{weights} \cdot v$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$ (full attention on decompressed heads).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token, $\mathcal{O}(r_{kv} \cdot n)$ KV-cache space (latent only).
+    \item \textbf{Trainable}: fully trainable; $r_{kv}$ is a hyperparameter (Pareto-optimal $\approx d/2$).
+    \item \textbf{Strengths}: Halves KV cache versus MHA at matched quality; RoPE-compatible; clean latent bottleneck.
+    \item \textbf{Limitations}: Up-projection adds decode FLOPs; latent rank is a fixed global budget shared across heads.
+\end{itemize}
+
+\subsection{Group-Query Latent Attention (GQLA)}
+Group-Query Latent Attention (GQLA) \citep{meng_gqla_2026} is a minimal modification of MLA that exposes two algebraically equivalent decoding paths over the same trained weights: an MQA-absorb path (fusing the up-projection into the query, optimal on H100-class hardware) and a GQA-expanded path (materialising full keys/values, optimal on H20 / multi-token-prediction hardware). The two paths are mathematically identical because the up-projection is linear, so $\texttt{softmax}(q_{\text{absorbed}} \cdot c_{KV}^\top) = \texttt{softmax}((q \cdot W_{UK}^\top) \cdot c_{KV}^\top)$, allowing hardware-adaptive dispatch with no retraining.
+
+\subsubsection{Mathematical Formulation}
+Same latent as MLA:
+\[
+c_{KV} = W_{DKV}\, x, \qquad k = W_{UK}\, c_{KV}, \qquad v = W_{UV}\, c_{KV}, \qquad q = W_{Q}\, x.
+\]
+\[
+\text{Path A (MQA-absorb): } \text{attn} = \texttt{softmax}\!\left(\frac{(q\, W_{UK}^\top)\, c_{KV}^\top}{\sqrt{d_h}}\right) (W_{UV}\, c_{KV}).
+\]
+\[
+\text{Path B (GQA-expanded): } \text{attn} = \texttt{softmax}\!\left(\frac{q\, k^\top}{\sqrt{d_h}}\right) v, \quad k = W_{UK} c_{KV},\ v = W_{UV} c_{KV}.
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $x$, weights $W_{DKV}, W_{UK}, W_{UV}, W_{Q}$, hardware flag $\text{hw} \in \{\text{H100}, \text{H20}\}$
+\State $c_{KV} \gets W_{DKV}\, x$ \Comment{shared latent, cached}
+\State $q \gets W_{Q}\, x$
+\If{$\text{hw} == \text{H100}$} \Comment{MQA-absorb path}
+    \State $q_{\text{abs}} \gets q\, W_{UK}^\top$ \Comment{absorb up-projection into query}
+    \State $\text{weights} \gets \texttt{softmax}(q_{\text{abs}}\, c_{KV}^\top / \sqrt{d_h})$
+    \State $\mathbf{Y} \gets \text{weights} \cdot (W_{UV}\, c_{KV})$
+\Else \Comment{GQA-expanded path}
+    \State $k \gets W_{UK}\, c_{KV}$, \quad $v \gets W_{UV}\, c_{KV}$
+    \State $\text{weights} \gets \texttt{softmax}(q\, k^\top / \sqrt{d_h})$
+    \State $\mathbf{Y} \gets \text{weights} \cdot v$
+\EndIf
+\State \textbf{Output:} $\mathbf{Y}$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$, identical to MLA.
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token, $\mathcal{O}(r_{kv} \cdot n)$ latent state; path chosen by hardware.
+    \item \textbf{Trainable}: trained once; the two decoding paths reuse the same weights.
+    \item \textbf{Strengths}: Hardware-adaptive decode with no quality loss; algebraic equivalence guarantees consistency.
+    \item \textbf{Limitations}: Same latent-rank tradeoffs as MLA; path selection is a deployment-time heuristic.
+\end{itemize}
+
+\subsection{Multi-Head Low-Rank Attention (MLRA)}
+Multi-Head Low-Rank Attention (MLRA) \citep{liu_mlra_2026} refactors the single MLA latent into $L$ disjoint sub-heads each of rank $r/L$, so that the KV cache can be partitioned across $L$ devices for 4-way tensor-parallel decoding (each device loads only $1/L$ of the cache). Per-sub-head up-projections reconstruct the corresponding slice of the full heads and are concatenated, yielding a 2.8$\times$ decode speedup over MLA while preserving the global latent budget.
+
+\subsubsection{Mathematical Formulation}
+\[
+c_{KV} = [c_1, c_2, \ldots, c_L], \quad c_i \in \mathbb{R}^{r/L}, \qquad c_{KV} = W_{DKV}\, x.
+\]
+\[
+k_i = W_{UK}^{(i)}\, c_i, \quad v_i = W_{UV}^{(i)}\, c_i, \qquad
+k = [k_1; \ldots; k_L], \quad v = [v_1; \ldots; v_L].
+\]
+\[
+\text{attn} = \texttt{softmax}\!\left(\frac{q\, k^\top}{\sqrt{d_h}}\right) v.
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $x$, sub-head count $L$, per-sub-head projections $W_{UK}^{(i)}, W_{UV}^{(i)}$
+\State $c_{KV} \gets W_{DKV}\, x = [c_1, \ldots, c_L]$ \Comment{partition latent into $L$ blocks}
+\For{$i = 1, \ldots, L$ (parallel across $L$ devices)}
+    \State $k_i \gets W_{UK}^{(i)}\, c_i$, \quad $v_i \gets W_{UV}^{(i)}\, c_i$
+\EndFor
+\State $k \gets \texttt{concat}(k_1, \ldots, k_L)$, \quad $v \gets \texttt{concat}(v_1, \ldots, v_L)$
+\State $\text{weights} \gets \texttt{softmax}(q\, k^\top / \sqrt{d_h})$
+\State \textbf{Output:} $\mathbf{Y} = \text{weights} \cdot v$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$ (full attention on concatenated heads).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token, $\mathcal{O}(r_{kv} \cdot n)$ state partitioned across $L$ devices.
+    \item \textbf{Trainable}: fully trainable; $L$ controls partition granularity.
+    \item \textbf{Strengths}: 2.8$\times$ decode speedup; clean 4-way tensor-parallel cache sharding; preserves total latent budget.
+    \item \textbf{Limitations}: Requires $L$ to divide $r_{kv}$; more projection matrices than MLA; inter-device all-reduce on output.
+\end{itemize}
+
+\subsection{Tucker Attention}
+Tucker Attention \citep{klein_tucker_2026} unifies MHA, GQA and MLA under a single Tucker-style factorisation of the query/key/value weight tensors with independent ranks $q_{\text{rank}}, k_{\text{rank}}, v_{\text{rank}}$. MHA is recovered when all ranks equal the hidden size, GQA when $k_{\text{rank}} = v_{\text{rank}} < d$, and MLA when $k_{\text{rank}} = v_{\text{rank}}$ equals the latent rank. Because the factorisation is a pure linear reparameterisation, the method is fully compatible with FlashAttention and RoPE, and yields an order of magnitude fewer parameters for comparable metrics.
+
+\subsubsection{Mathematical Formulation}
+\[
+\mathbf{Q} = W_{Q,\text{core}}\, W_{Q,\text{factor}}\, x, \qquad
+\mathbf{K} = W_{K,\text{core}}\, W_{K,\text{factor}}\, x, \qquad
+\mathbf{V} = W_{V,\text{core}}\, W_{V,\text{factor}}\, x.
+\]
+\[
+\text{attn} = \texttt{softmax}\!\left(\frac{\mathbf{Q}\, \mathbf{K}^\top}{\sqrt{d_h}}\right) \mathbf{V}.
+\]
+Special cases: MHA $\Leftrightarrow q_{\text{rank}} = k_{\text{rank}} = v_{\text{rank}} = d$; GQA $\Leftrightarrow k_{\text{rank}} = v_{\text{rank}} < d$; MLA $\Leftrightarrow k_{\text{rank}} = v_{\text{rank}} = r_{kv}$.
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $x$, ranks $q_{\text{rank}}, k_{\text{rank}}, v_{\text{rank}}$, core/factor matrices
+\State $\mathbf{Q} \gets W_{Q,\text{core}}\, W_{Q,\text{factor}}\, x$ \Comment{rank-$q_{\text{rank}}$ factorised query}
+\State $\mathbf{K} \gets W_{K,\text{core}}\, W_{K,\text{factor}}\, x$ \Comment{rank-$k_{\text{rank}}$ factorised key}
+\State $\mathbf{V} \gets W_{V,\text{core}}\, W_{V,\text{factor}}\, x$ \Comment{rank-$v_{\text{rank}}$ factorised value}
+\State \textbf{Apply RoPE to $\mathbf{Q}, \mathbf{K}$ if positional encoding is used}
+\State $\text{weights} \gets \texttt{softmax}(\mathbf{Q}\, \mathbf{K}^\top / \sqrt{d_h})$ \Comment{FlashAttention-compatible}
+\State \textbf{Output:} $\mathbf{Y} = \text{weights} \cdot \mathbf{V}$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$ on the reconstructed tensors.
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token; cache size governed by $k_{\text{rank}}$.
+    \item \textbf{Trainable}: ranks are hyperparameters; the factorisation is a drop-in weight reparameterisation.
+    \item \textbf{Strengths}: Unifies MHA/GQA/MLA; order-of-magnitude parameter reduction at matched metrics; FlashAttention/RoPE compatible.
+    \item \textbf{Limitations}: Two matmuls per projection add latency; rank selection is a per-task tuning problem.
+\end{itemize}
+
+\subsection{Interleaved Head Attention (IHA)}
+Interleaved Head Attention (IHA) \citep{duvvuri_iha_2026} constructs $P$ pseudo-heads per original head (typically $P = H$) where each pseudo query/key/value is a learned linear combination of all $H$ original heads. This induces up to $P^2$ distinct attention patterns per head at an $\mathcal{O}(H^2 P)$ overhead. Theoretically, IHA needs only $\Theta(\sqrt{k}\, n^2)$ parameters versus $\Theta(k\, n^2)$ for MHA on the Polynomial task; empirically it delivers $+10$--$20\%$ on RULER multi-key retrieval, $+5.8\%$ on GSM8K and $+2.8\%$ on MATH-500.
+
+\subsubsection{Mathematical Formulation}
+\[
+q_{\text{pseudo}}[p] = \sum_{h=1}^{H} \text{mix}_q[p, h]\, q[h], \quad
+k_{\text{pseudo}}[p] = \sum_{h} \text{mix}_k[p, h]\, k[h], \quad
+v_{\text{pseudo}}[p] = \sum_{h} \text{mix}_v[p, h]\, v[h].
+\]
+\[
+\text{attn}_p = \texttt{softmax}\!\left(\frac{q_{\text{pseudo}}[p]\, k_{\text{pseudo}}[p]^\top}{\sqrt{d_h}}\right) v_{\text{pseudo}}[p],
+\qquad
+\mathbf{Y}[h] = \frac{1}{P} \sum_{p} \text{attn}_p[h].
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} per-head $q[h], k[h], v[h]$, mixing matrices $\text{mix}_q, \text{mix}_k, \text{mix}_v \in \mathbb{R}^{P \times H}$
+\For{$p = 1, \ldots, P$}
+    \State $q_p \gets \sum_h \text{mix}_q[p,h]\, q[h]$ \Comment{learned mix across heads}
+    \State $k_p \gets \sum_h \text{mix}_k[p,h]\, k[h]$, \quad $v_p \gets \sum_h \text{mix}_v[p,h]\, v[h]$
+    \State $\text{attn}_p \gets \texttt{softmax}(q_p\, k_p^\top / \sqrt{d_h})\, v_p$
+\EndFor
+\State \textbf{Output:} $\mathbf{Y}[h] \gets \frac{1}{P} \sum_p \text{attn}_p[h]$ \Comment{average pseudo-head outputs per head}
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot H \cdot P)$ with $P \approx H$, i.e.\ $\mathcal{O}(n^2 \cdot H^2)$.
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token with KV cache; extra $\mathcal{O}(H^2 P)$ mixing overhead.
+    \item \textbf{Trainable}: mixing matrices are learned; $P$ is a hyperparameter.
+    \item \textbf{Strengths}: $\Theta(\sqrt{k})$ parameter efficiency on Polynomial; large gains on retrieval and reasoning benchmarks.
+    \item \textbf{Limitations}: Quadratic-in-heads mixing cost; more attention patterns to compute; added latency at large $H$.
+\end{itemize}
+
+\subsection{Grouped-head laTenT Attention (GTA)}
+Grouped-head laTenT Attention (GTA) \citep{sun_gta_2025} combines two compressions: (1) a \emph{shared attention map} --- one attention-score tensor per group of heads, reused across all heads in the group, shrinking the key cache; and (2) a \emph{nonlinear value decoder} --- the value cache is compressed to a latent by a down-projection and reconstructed by a SiLU-gated up-projection before the output projection. GTA cuts attention FLOPs by up to 62.5\% versus GQA, shrinks the KV cache by up to 70\%, and yields a 2$\times$ end-to-end inference speedup.
+
+\subsubsection{Mathematical Formulation}
+\[
+q_g = \texttt{mean}(q[\text{group } g]), \quad k_g = \texttt{mean}(k[\text{group } g]), \quad
+\text{attn}_g = \texttt{softmax}\!\left(\frac{q_g\, k_g^\top}{\sqrt{d_h}}\right) \text{ (reused across the group)}.
+\]
+\[
+v_{\text{latent}} = W_{DV}\, x, \qquad v = \text{SiLU}(W_{UV}\, v_{\text{latent}}), \qquad
+\mathbf{Y} = \text{attn}_g \cdot v.
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $q, k$ per head, hidden $x$, group partition $\{g\}$
+\State $v_{\text{latent}} \gets W_{DV}\, x$ \Comment{compress values to latent (cached)}
+\State $v \gets \text{SiLU}(W_{UV}\, v_{\text{latent}})$ \Comment{nonlinear value decode}
+\For{each group $g$}
+    \State $q_g \gets \texttt{mean}(q[g])$, \quad $k_g \gets \texttt{mean}(k[g])$ \Comment{shared per-group queries/keys}
+    \State $\text{attn}_g \gets \texttt{softmax}(q_g\, k_g^\top / \sqrt{d_h})$
+    \State $\mathbf{Y}[g] \gets \text{attn}_g \cdot v[g]$ \Comment{one map reused for all heads in $g$}
+\EndFor
+\State \textbf{Output:} $\mathbf{Y}$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot G \cdot d_h)$ where $G$ is the number of groups (vs $H$ heads for GQA).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token; value cache $\mathcal{O}(r_v \cdot n)$, key cache reduced by group sharing.
+    \item \textbf{Trainable}: group assignment and latent rank are trainable/hyperparameters.
+    \item \textbf{Strengths}: up to 62.5\% attention-FLOP reduction, 70\% KV-cache shrink, 2$\times$ end-to-end speedup.
+    \item \textbf{Limitations}: Shared map reduces per-head diversity; nonlinear decoder adds latency; grouping must be chosen carefully.
+\end{itemize}
+
+\subsection{Multi-head Temporal Latent Attention (MTLA)}
+Multi-head Temporal Latent Attention (MTLA) \citep{deng_mtla_2025} extends MLA along the temporal axis: a hyper-network dynamically merges $m$ temporally adjacent KV-cache vectors into a single slot, shrinking the temporal length by a factor of $m$. A stride-aware causal mask keeps parallel training consistent with autoregressive inference, yielding a 5.3$\times$ decode speedup and 8.3$\times$ GPU-memory reduction versus MHA on En--De speech translation.
+
+\subsubsection{Mathematical Formulation}
+\[
+c_{KV}^{(t)} = W_{DKV}\, x^{(t)} \in \mathbb{R}^{r_{kv}} \text{ (per-token latent)}.
+\]
+\[
+\bar c_{KV}^{(j)} = \sum_{i=0}^{m-1} \alpha_i\, c_{KV}^{(s j + i)}, \qquad \alpha_i = \texttt{sigmoid}(\text{HyperNet}(c_{KV}^{(s j + i)})),
+\]
+where $s$ is the stride and $m$ the merge window. Queries attend over merged slots $\bar c_{KV}$ with a stride-aware causal mask $M_{\text{stride}}$:
+\[
+\text{attn} = \texttt{softmax}\!\left(\frac{q\, \bar k^\top}{\sqrt{d_h}} + M_{\text{stride}}\right) \bar v, \quad \bar k = W_{UK}\, \bar c_{KV},\ \bar v = W_{UV}\, \bar c_{KV}.
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} per-token latents $c_{KV}^{(t)}$, merge window $m$, stride $s$
+\State \textbf{Merge phase (hyper-network):}
+\For{each merged slot $j = 0, 1, \ldots$}
+    \State $\alpha_i \gets \texttt{sigmoid}(\text{HyperNet}(c_{KV}^{(s j + i)}))$ for $i = 0, \ldots, m-1$
+    \State $\bar c_{KV}^{(j)} \gets \sum_{i=0}^{m-1} \alpha_i\, c_{KV}^{(s j + i)}$ \Comment{gated average over window}
+\EndFor
+\State $\bar k \gets W_{UK}\, \bar c_{KV}$, \quad $\bar v \gets W_{UV}\, \bar c_{KV}$
+\State $\text{weights} \gets \texttt{softmax}(q\, \bar k^\top / \sqrt{d_h} + M_{\text{stride}})$ \Comment{stride-aware causal mask}
+\State \textbf{Output:} $\mathbf{Y} = \text{weights} \cdot \bar v$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d / m)$ on the merged sequence (length $\lceil n/m \rceil$) plus hyper-network cost.
+    \item \textbf{Inference complexity}: $\mathcal{O}(n/m)$ per token over merged slots; $\mathcal{O}(r_{kv} \cdot n / m)$ state.
+    \item \textbf{Trainable}: hyper-network and merge window $m$ are learned/chosen; stride-aware mask enforces consistency.
+    \item \textbf{Strengths}: 5.3$\times$ decode speedup, 8.3$\times$ GPU-memory reduction vs MHA; temporal compression orthogonal to rank compression.
+    \item \textbf{Limitations}: Merge window can blur fine temporal detail; hyper-network adds compute; mask design is non-trivial.
+\end{itemize}
+
+\subsection{Architectural Comparison and Synthesis}
+
+\subsection{Compressed Convolutional Attention (CCA)}
+Compressed Convolutional Attention (CCA) \citep{figliola_cca_2025} takes a fundamentally different approach to latent attention: rather than compressing the KV-cache and then up-projecting to full width before attending (as MLA/GQLA/MLRA do), CCA down-projects queries, keys, and values into a shared latent and performs the \emph{entire} attention operation inside it. There are no Q/K/V up-projection matrices---only a single output up-projection $W̃_O$ maps the latent output back to the residual stream. This simultaneously reduces parameters, KV-cache size, \textbf{and} attention FLOPs by the compression factor $C = E/\tilde{e}$, whereas MLA only shrinks the cache.
+
+To make attention in the fully compressed latent viable, CCA introduces three innovations: (1) two causal convolutions on the packed q/k tensor (a depth-wise sequence convolution and a head-wise grouped channel convolution), (2) q-k-mean (adds the pre-convolution mean of q and k to the post-convolution values), and (3) value-shift (each head receives half its values from the current token and half from the previous token via two independent projections). After these steps, QK L2-normalisation and a learnable key temperature $\beta$ are applied, RoPE is applied \emph{directly in the latent} (no separate RoPE head needed), and standard softmax attention is computed.
+
+\subsubsection{Mathematical Formulation}
+\[
+\tilde{q}_{\text{pre}} = \tilde{W}_Q\, x, \qquad \tilde{k}_{\text{pre}} = \tilde{W}_K\, x, \qquad \tilde{e} = E / C.
+\]
+\[
+\tilde{q} = \text{Conv}(\tilde{q}_{\text{pre}}) + \tfrac{1}{2}(\tilde{q}_{\text{pre}} + \tilde{k}_{\text{pre}}), \qquad
+\tilde{k} = \text{Conv}(\tilde{k}_{\text{pre}}) + \tfrac{1}{2}(\tilde{q}_{\text{pre}} + \tilde{k}_{\text{pre}}).
+\]
+\[
+\tilde{v} = [\tilde{W}_{V_1}\, x_t \;\|\; \tilde{W}_{V_2}\, x_{t-1}], \qquad
+\hat{q} = \frac{\tilde{q} \sqrt{d_h}}{\|\tilde{q}\|}, \quad \hat{k} = \frac{\tilde{k} \sqrt{d_h}}{\|\tilde{k}\|} e^{\beta}.
+\]
+\[
+\text{attn} = \texttt{softmax}\!\left(\frac{\text{RoPE}(\hat{q})\, \text{RoPE}(\hat{k})^\top}{\sqrt{d_h}}\right) \tilde{v}, \qquad
+\mathbf{Y} = W̃_O\, \text{attn}.
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+\begin{algorithmic}[1]
+\State \textbf{Input:} hidden state $x \in \mathbb{R}^{n \times E}$, compression factor $C$, projections $\tilde{W}_Q, \tilde{W}_K, \tilde{W}_{V_1}, \tilde{W}_{V_2}, W̃_O$
+\State $\tilde{e} \gets E / C$ \Comment{latent width}
+\State $\tilde{q}_{\text{pre}} \gets \tilde{W}_Q\, x$, \quad $\tilde{k}_{\text{pre}} \gets \tilde{W}_K\, x$ \Comment{down-project to latent}
+\State $\tilde{q}_{\text{conv}} \gets \text{ConvSeq}(\tilde{q}_{\text{pre}})$, \quad $\tilde{k}_{\text{conv}} \gets \text{ConvSeq}(\tilde{k}_{\text{pre}})$ \Comment{causal depth-wise + grouped convs}
+\State $\text{qk\_mean} \gets (\tilde{q}_{\text{pre}} + \tilde{k}_{\text{pre}}) / 2$ \Comment{q-k-mean bias}
+\State $\tilde{q} \gets \tilde{q}_{\text{conv}} + \text{qk\_mean}$, \quad $\tilde{k} \gets \tilde{k}_{\text{conv}} + \text{qk\_mean}$
+\State $\tilde{v}_1 \gets \tilde{W}_{V_1}\, x_t$, \quad $\tilde{v}_2 \gets \tilde{W}_{V_2}\, x_{t-1}$ \Comment{value-shift}
+\State $\tilde{v} \gets [\tilde{v}_1 \;\|\; \tilde{v}_2]$ \Comment{concat half-heads}
+\State $\hat{q} \gets \tilde{q}\, \sqrt{d_h} / \|\tilde{q}\|$, \quad $\hat{k} \gets \tilde{k}\, \sqrt{d_h} / \|\tilde{k}\| \cdot e^{\beta}$ \Comment{QK-norm + temperature}
+\State $\hat{q} \gets \text{RoPE}(\hat{q})$, \quad $\hat{k} \gets \text{RoPE}(\hat{k})$ \Comment{RoPE in latent}
+\State $\text{weights} \gets \texttt{softmax}(\hat{q}\, \hat{k}^\top / \sqrt{d_h})$
+\State \textbf{Output:} $\mathbf{Y} = W̃_O\, (\text{weights} \cdot \tilde{v})$
+\end{algorithmic}
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d / C)$ (attention in compressed latent, $C{\times}$ fewer FLOPs than MHA).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token, $\mathcal{O}(\tilde{e} \cdot n)$ KV-cache space.
+    \item \textbf{Trainable}: $C$, conv kernel sizes, and all three tricks (convs, qk-mean, value-shift) are configurable.
+    \item \textbf{Strengths}: Reduces params, cache, AND FLOPs simultaneously; RoPE integrates natively (no RoPE head); $>$2$\times$ fewer params than MLA at same compression.
+    \item \textbf{Limitations}: Does not remove quadratic $S^2$ (only divides by $C$); conv/qk-mean/v-shift add inductive bias; fused kernel needed for theoretical speedup.
+\end{itemize}
+
+\subsection{Compressed Convolutional Grouped Query Attention (CCGQA)}
+Compressed Convolutional Grouped Query Attention (CCGQA) \citep{figliola_cca_2025} extends CCA with GQA-style key/value head sharing applied \emph{inside} the compressed latent, and \textbf{decouples} the query and KV compression rates: queries are compressed by $C_1$ and keys/values by $C_2 \geq C_1$. The per-head latent dimension $d_h$ must match between query and key heads, enforcing the constraint $C_2 / C_1 = n_h / n_{kv}$. KV heads are shared per group (replicated to match query heads), and the qk-mean bias uses broadcast/reduce operators $B_{\text{group}}$ (replicate KV heads to query heads) and $E_{\text{group}}$ (average query heads within each group). CCGQA achieves the best reported loss at 8$\times$ KV-cache compression with no quality drop versus MHA.
+
+\subsubsection{Mathematical Formulation}
+Same pipeline as CCA, with decoupled latents:
+\[
+\tilde{q}_{\text{pre}} = \tilde{W}_Q\, x \in \mathbb{R}^{E/C_1}, \qquad
+\tilde{k}_{\text{pre}} = \tilde{W}_K\, x \in \mathbb{R}^{E/C_2}, \qquad C_2 \geq C_1.
+\]
+\[
+\text{qk\_mean}_q = \tfrac{1}{2}(\tilde{q}_{\text{pre}} + B_{\text{group}}(\tilde{k}_{\text{pre}})), \qquad
+\text{qk\_mean}_k = E_{\text{group}}(\text{qk\_mean}_q).
+\]
+\[
+\text{attn} = \texttt{softmax}\!\left(\frac{\text{RoPE}(\hat{q})\, \text{RoPE}(\hat{k})^\top}{\sqrt{d_h}}\right) \tilde{v}, \qquad
+\mathbf{Y} = W̃_O\, \text{attn}.
+\]
+
+\subsubsection{Key Characteristics}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d / C_1)$ ($S^2$ term scales by $1/C_1$; projection terms by $1/C_1 + 1/C_2$).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token, $\mathcal{O}(\tilde{e}_{kv} \cdot n)$ KV-cache space ($C_2$-compressed, group-shared).
+    \item \textbf{Trainable}: $C_1$, $C_2$, $n_{kv}$, and all CCA tricks are configurable. Constraint: $C_2/C_1 = n_h/n_{kv}$.
+    \item \textbf{Strengths}: Decoupled compression enables smooth Pareto frontier; same arithmetic intensity as GQA; best loss at 8$\times$ cache reduction.
+    \item \textbf{Limitations}: Same quadratic $S^2$ (only reduced by $C_1$); fused kernel needed; two value projections add complexity.
+\end{itemize}
+
+The latent family shows a clear progression along two axes: (i) \textbf{rank compression}, moving from full heads (MHA) to a shared latent (MLA) to partitioned sub-head latents (MLRA), and (ii) \textbf{deployment adaptivity}, moving from a single decode path to hardware-adaptive dispatch (GQLA) and temporal cache merging (MTLA). Tucker Attention provides the unifying algebraic frame: MHA, GQA, and MLA are all special cases of a Tucker factorisation with appropriate rank choices. CCA and CCGQA take a fundamentally different approach: rather than compressing the KV-cache and then up-projecting for full-width attention (MLA/GQLA/MLRA), they perform attention \emph{entirely inside} the compressed latent space, reducing not just the cache but also the attention FLOPs by the compression factor. CCGQA further decouples query and KV compression rates, achieving the best reported loss at 8$\times$ KV-cache compression.

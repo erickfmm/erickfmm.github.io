@@ -1,0 +1,37 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The design choices in Transformer Encoder Frankenstein reflect several engineering and research tensions in modern deep learning tooling.
+
+\subsection{Schema-Driven Design Trade-offs}
+
+The schema-first approach provides significant reproducibility benefits by enforcing explicit contracts and failing fast on invalid configurations. However, this approach also introduces rigidity: adding new architectures or optimizers requires schema extensions rather than loose command-line arguments. The prefixed hyperparameter system enables fine-grained control but increases configuration complexity for users accustomed to simpler interfaces.
+
+The decision to enforce \texttt{additionalProperties: false} at all schema levels eliminates silent parameter swallowing that has plagued earlier configuration systems, but this strictness requires careful schema maintenance when extending system capabilities. Each new attention mechanism or optimizer variant must be properly integrated into the validation framework, including schema field definitions with appropriate types and constraints, prefixed hyperparameter mapping for optimizer-specific groups, default values aligned with research best practices, and documentation strings for web interface rendering.
+
+\subsection{Architectural Coverage and Gaps}
+
+The seventeen implemented mixer architectures span major research directions in sequence modeling, but certain gaps remain. The system lacks recent hybrid architectures such as Griffin \citep{soares_griffin_2024} and Jamba \citep{gu_jamba_2024}, which combine gating with state-space models. MoE (Mixture of Experts) routing is implemented for FFN layers but not for attention computation, where recent work has shown benefits \citep{lewis_moe_2021}.
+
+The sparse attention coverage is comprehensive, but implementation of training-free methods (FASA, SpargeAttn) raises runtime errors during training, reflecting architectural constraints: these methods require pretrained checkpoints from full-attention models or specific fine-tuning procedures that are not currently automated.
+
+The gated mechanism coverage is strong across major categories (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax). Residual-stream macro-design is covered through the manifold-constrained n-stream residual (mHC) \citep{xie_mhc_2025}, whose Sinkhorn--Knopp projection onto the Birkhoff polytope restores the identity-mapping property lost by unconstrained Hyper-Connections; mHC is validated only at the level of the published 3B--27B MoE experiments, and the framework would benefit from independent reproductions at smaller scales (see Appendix~\ref{sec:annex-mhc}).
+
+\subsection{Optimizer Landscape Fragmentation}
+
+The support for twenty-two optimizer families across six algorithmic categories demonstrates comprehensiveness but also highlights the fragmented state of optimization research. Users face significant decision complexity when choosing among variance-reduction methods (Adan, MARS), memory-efficient variants (GaLore, Adafactor, APOLLO), and curvature-aware approaches (Sophia, Shampoo). The prefixed hyperparameter system, while powerful, requires understanding of which parameters are relevant for each optimizer class.
+
+The implementation quality varies across optimizers: classical methods (AdamW, SGD with momentum) are highly optimized in PyTorch, while newer methods (Muon, Turbo-Muon, SOAP) may require custom implementations that affect numerical stability and performance characteristics.
+
+\subsection{Deployment and Production Considerations}
+
+The quantization pipeline demonstrates practical deployment concerns but makes specific engineering trade-offs. Ternary weight packing reduces storage to approximately $1.58$ bits per parameter, but this aggressive compression may degrade performance, especially for smaller models where quantization error is more significant. The current implementation applies quantization uniformly across parameter types.
+
+The SBERT workflows provide practical utility for semantic similarity and retrieval tasks, but implementation assumes standard pooling strategies (CLS token, mean pooling). Recent advances such as Matryoshka embeddings \citep{muennighoff_matryoshka_2021} and contrastive learning refinements \citep{chen_supervised_2020} are not yet incorporated.
+
+\subsection{Integration and Extensibility Challenges}
+
+The current codebase structure, while functional, presents maintenance challenges as architecture and optimizer families expand. The dispatcher pattern for mixer selection and optimizer routing handles extensibility but risks becoming a ``kitchen sink'' of conditional logic. Future versions would benefit from plugin-based architectures where new mixers and optimizers could be registered declaratively rather than modifying core dispatch logic.
+
+The web configuration interface provides significant usability improvements but introduces deployment complexity: running Streamlit alongside training jobs requires additional resources and infrastructure considerations that may not be appropriate for all environments, particularly HPC clusters without web access.
+

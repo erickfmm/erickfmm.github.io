@@ -1,0 +1,52 @@
+\section{Trabajo Relacionado}
+
+Este trabajo se sitúa en la intersección de frameworks de aprendizaje profundo, herramientas de entrenamiento y experimentación basada en configuración. Mientras que las Secciones~\ref{sec:attention-families} y~\ref{sec:optimizer-families} examinan en profundidad la literatura arquitectónica y de optimización, esta sección se centra en el ecosistema de software para construir, entrenar y configurar modelos transformer.
+
+\subsection{Frameworks de Aprendizaje Profundo Base}
+
+El ecosistema moderno de investigación en transformers se apoya en varios frameworks fundamentales que proporcionan diferenciación automática, aceleración GPU y APIs de alto nivel para construcción de modelos.
+
+\textbf{PyTorch} \citep{paszke_pytorch_2019} se ha convertido en el framework dominante para la investigación en transformers. Su modelo de programación imperativa y grafos de cómputo dinámicos permiten depuración flexible y prototipado rápido de arquitecturas novedosas. La abstracción \texttt{torch.nn.Module}, el entrenamiento automático con precisión mixta mediante \texttt{torch.cuda.amp} y el compilador JIT \texttt{torch.compile} forman la columna vertebral de la mayoría de las implementaciones contemporáneas de transformers. Frankenstein Transformer está construido completamente sobre PyTorch, aprovechando su sistema de módulos para definiciones de arquitectura componibles.
+
+\textbf{TensorFlow} \citep{abadi_tensorflow_2016} fue pionero en aprendizaje profundo orientado a producción con su paradigma de grafo de cómputo estático y la API de alto nivel Keras. Aunque su influencia en la investigación de transformers ha disminuido en relación con PyTorch, la infraestructura de serving de TensorFlow (\texttt{TF Serving}, \texttt{TF Lite}) y la biblioteca \texttt{tensorflow-text} siguen siendo relevantes para escenarios de despliegue.
+
+\textbf{JAX} \citep{bradbury_jax_2018} ofrece un modelo de programación funcional construido alrededor de transformaciones componibles (\texttt{jit}, \texttt{vmap}, \texttt{grad}) y compilación XLA. Su diseño permite implementaciones limpias de algoritmos complejos y ha sido adoptado por varias bibliotecas recientes de transformers (por ejemplo, Flax, Haiku). El diseño sin estado de JAX y su vectorización automática son particularmente adecuados para la investigación en mecanismos de atención novedosos y algoritmos de optimización.
+
+\textbf{scikit-learn} \citep{pedregosa_scikit-learn_2011} proporciona algoritmos clásicos de aprendizaje automático y utilidades (preprocesamiento, métricas, selección de modelos) que sirven como líneas base y herramientas complementarias en flujos de trabajo con transformers. Aunque no está diseñado para aprendizaje profundo, su API consistente y documentación extensa lo convierten en un punto de referencia estándar para comparar enfoques basados en transformers con métodos tradicionales.
+
+\subsection{Frameworks de Entrenamiento Listos para Usar}
+
+Varias bibliotecas proporcionan pipelines de entrenamiento completos que abstraen la complejidad del entrenamiento distribuido, la carga de datos y la gestión de hiperparámetros.
+
+\textbf{Hugging Face Transformers} \citep{wolf_huggingface_2020} es el estándar de facto para acceder, ajustar y compartir modelos transformer preentrenados. Su API \texttt{Trainer}, el hub de modelos con más de 500,000 modelos y su estrecha integración con las bibliotecas \texttt{datasets} y \texttt{tokenizers} lo han convertido en el punto de entrada principal para NLP basado en transformers. Sin embargo, su arquitectura está optimizada para el ajuste fino de modelos preentrenados existentes en lugar de experimentar con diseños novedosos de mezcladores de secuencia o entrenar desde cero con estrategias de optimización personalizadas.
+
+\textbf{Oumi} (\texttt{\url{https://github.com/oumi-ai/oumi}}, 2025) es una plataforma de código abierto de extremo a extremo para entrenar, ajustar, evaluar y desplegar modelos fundacionales. Proporciona una interfaz unificada a través de múltiples proveedores de nube y soporta tanto ajuste fino supervisado como optimización de preferencias (DPO, RLHF). Oumi enfatiza la preparación para producción con monitoreo integrado, checkpointing y herramientas de despliegue.
+
+\textbf{LLaMA Factory} (\texttt{\url{https://github.com/hiyouga/LLaMA-Factory}}, 2024) ofrece un framework unificado para el ajuste fino eficiente de más de 100 modelos de lenguaje grandes. Proporciona tanto una interfaz web como una CLI, soportando LoRA, QLoRA, ajuste fino de parámetros completos y diversas técnicas de alineación. Su enfoque está en adaptar LLMs preentrenados existentes a tareas posteriores en lugar de experimentación arquitectónica.
+
+\textbf{Axolotl} (\texttt{\url{https://github.com/axolotl-ai-cloud/axolotl}}, 2024) es una herramienta simplificada de ajuste fino que soporta LoRA, QLoRA, DeepSpeed y FSDP. Enfatiza flujos de trabajo basados en configuración mediante archivos YAML y se ha vuelto popular en la comunidad de ajuste fino de LLMs de código abierto. Al igual que LLaMA Factory, se enfoca en el ajuste fino de modelos preentrenados en lugar de entrenar arquitecturas novedosas desde cero.
+
+\subsection{Herramientas de Bajo Código y Eficiencia}
+
+Una categoría creciente de herramientas prioriza la accesibilidad y la eficiencia computacional, reduciendo la barrera para el entrenamiento de transformers.
+
+\textbf{Unsloth} (\texttt{\url{https://github.com/unslothai/unsloth}}, 2024) proporciona ajuste fino de bajo código con aceleración de 2--5$\times$ y requisitos de VRAM significativamente reducidos mediante kernels CUDA escritos a mano y operaciones Triton optimizadas. Soporta exportación GGUF para despliegue cuantizado y se integra con el ecosistema Hugging Face. El enfoque de Unsloth está en hacer el ajuste fino más rápido y eficiente en memoria, no en exploración arquitectónica.
+
+\textbf{dashAI} (\texttt{\url{https://www.dash-ai.com}}, 2024) es una aplicación de escritorio para entrenamiento de aprendizaje automático sin código con una interfaz basada en esquemas. Permite a los usuarios configurar conjuntos de datos, modelos y parámetros de entrenamiento a través de una interfaz gráfica sin escribir código. Aunque dashAI demuestra el valor de la configuración basada en esquemas para la accesibilidad, se enfoca en flujos de trabajo de ML clásico en lugar de experimentación con arquitecturas transformer.
+
+\subsection{Experimentación Basada en Configuración}
+
+Un hilo común entre las herramientas examinadas anteriormente es su enfoque en el ajuste fino de modelos preentrenados existentes. Hugging Face Transformers, LLaMA Factory, Axolotl y Unsloth asumen un checkpoint preentrenado como punto de partida. Oumi soporta entrenamiento desde cero pero se enfoca en arquitecturas estándar. Ninguna de estas herramientas proporciona un marco sistemático para experimentar con arquitecturas novedosas de mezcladores de secuencia, comparar diversos algoritmos de optimización bajo condiciones controladas o explorar la interacción entre elecciones arquitectónicas y dinámicas de entrenamiento.
+
+\textbf{Frankenstein Transformer} llena este vacío proporcionando un sistema de configuración basado en esquemas diseñado específicamente para la experimentación arquitectónica. Sus diferenciadores clave incluyen:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Más de 35 mezcladores de secuencia} que abarcan atención densa, bloques recurrentes/retentivos, patrones de atención dispersa, mecanismos con compuerta, enrutamiento adaptativo por profundidad y capas de memoria condicional, todos seleccionables mediante un único campo YAML.
+    \item \textbf{23 familias de optimizadores} con un sistema de enrutamiento de hiperparámetros con prefijos que permite control por grupo de parámetros a través de embeddings, capas de normalización, bloques de atención y redes feed-forward.
+    \item \textbf{Modos de entrenamiento duales} que soportan tanto modelado de lenguaje enmascarado (MLM) estilo encoder como predicción del siguiente token autorregresiva (AR) estilo decoder, con flujos de trabajo de ajuste fino especializados para cada uno.
+    \item \textbf{Validación estricta de esquemas} mediante restricciones \texttt{additionalProperties: false} que previenen errores de configuración antes de que comience el entrenamiento, asegurando reproducibilidad entre experimentos.
+    \item \textbf{Flujos de trabajo de extremo a extremo} que abarcan despliegue cuantizado (empaquetado de pesos ternarios, activaciones INT8) y entrenamiento de sentence embeddings inspirado en SBERT \citep{reimers_sentence-bert_2019}.
+    \item \textbf{Interfaz de configuración web} que proporciona renderizado de formularios basado en esquemas con documentación en línea, validación en tiempo real y generación de comandos CLI.
+\end{itemize}
+
+Al desacoplar la definición de arquitectura de la infraestructura de entrenamiento mediante un contrato de configuración validado, Frankenstein Transformer permite la comparación sistemática de familias de mezcladores de secuencia y estrategias de optimización bajo condiciones de entrenamiento idénticas---una capacidad no proporcionada por ninguna herramienta existente en el ecosistema.

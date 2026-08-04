@@ -1,0 +1,545 @@
+\section{Gated Attention Families---Complete Literature Analysis}
+\label{sec:annex-gated}
+
+\subsection{Executive Summary: Gating for Memory Control}
+
+The emerging field of \emph{gated attention mechanisms} addresses a fundamental challenge in sequence modeling: how should information be retained, forgotten, and updated as the model processes new tokens? Traditional additive recurrent states accumulate all information without erasure, leading to memory saturation and inability to adapt to changing context. Softmax attention provides full expressiveness but uses $\mathcal{O}(Ld)$ KV cache during inference, limiting context window size. Gated mechanisms provide a middle ground: selective control over information survival.
+
+The unifying principle across gated architectures is that gating controls \textit{what information survives}. Gates operate at three distinct levels:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Recurrent state decay} (GLA, HGRN2): Multiplicative gates on the memory matrix $S_t$ control how much previous state persists into the next step.
+    \item \textbf{Write strength in recurrent updates} (DeltaNet, Gated DeltaNet, Gated DeltaNet-2): Gates control the magnitude and channel-wise direction of new information written into memory.
+    \item \textbf{Softmax logit biasing} (FoX): Gates inject token-level recency bias into attention logit computation.
+    \item \textbf{Post-attention sparsity} (Gated Softmax): Gates selectively scale SDPA output channels.
+\end{enumerate}
+
+This appendix synthesizes eight major gated-attention architectures published 2023--2026, analyzing their mathematical foundations, hardware efficiency characteristics, and empirical trade-offs.
+
+\subsection{1. Gated Linear Attention (GLA)}
+
+\subsubsection{Mathematical Foundation}
+
+Gated Linear Attention \citep{yang_gla_2023} augments vanilla linear attention (which uses a matrix-valued recurrent state) with data-dependent multiplicative decay. Standard linear attention reformulates the traditional softmax mechanism as a recurrence over hidden states:
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top, \quad \mathbf{o}_t = \mathbf{S}_t \mathbf{q}_t
+\]
+where state $\mathbf{S}_t \in \mathbb{R}^{d_v \times d_k}$ accumulates outer products. This purely additive formulation suffers from ``memory overload'': information accumulates monotonically and cannot be erased, degrading performance on tasks requiring context selection.
+
+GLA introduces a data-dependent \textbf{diagonal gating matrix} $\mathbf{G}_t \in [0,1]^{d_k \times d_k}$:
+\[
+\mathbf{S}_t = \mathbf{G}_t \odot \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top, \quad \mathbf{o}_t = \mathbf{S}_t \mathbf{q}_t
+\]
+The gate $\mathbf{G}_t$ is parameterized with an outer-product structure:
+\[
+\mathbf{G}_t = \mathbf{1} \boldsymbol{\alpha}_t^\top, \quad \boldsymbol{\alpha}_t = \text{logsigmoid}\left(\mathbf{W}_{gk} \mathbf{x}_t\right) / c
+\]
+where $\mathbf{W}_{gk}$ is a low-rank projection ($\mathbb{R}^{d \to d_k}$) and $c \approx 16$ is a normalizer. The logsigmoid activation maps $\alpha_t \in \mathbb{R}$ to approximately $[-1/2, 0]$, and division by $c$ further contracts this to near-identity for initialization. The resulting gate $G_t = 1 + \alpha_t \approx 1$ near initialization, then learns to decay $(\alpha_t \to -\infty)$ historical information.
+
+\begin{algorithm}[H]
+\caption{Gated Linear Attention (Recurrent Form)}
+\begin{algorithmic}[1]
+\Require Input $\mathbf{x}_t$; prior state $\mathbf{S}_{t-1}$
+\Require Projections: $W_q, W_k, W_v$ (standard); $W_{gk}$ (gate projection)
+\Ensure Output $\mathbf{o}_t$ and updated state $\mathbf{S}_t$
+\State $\mathbf{q}_t \gets W_q \mathbf{x}_t$
+\State $\mathbf{k}_t \gets W_k \mathbf{x}_t$
+\State $\mathbf{v}_t \gets W_v \mathbf{x}_t$
+\State Compute gate: $\boldsymbol{\alpha}_t \gets \text{logsigmoid}(W_{gk} \mathbf{x}_t) / 16$ \Comment{Per-key-dim decay}
+\State Apply outer-product gating: $\mathbf{G}_t \gets \mathbf{1} \boldsymbol{\alpha}_t^\top$  \Comment{diagonal outer product}
+\State Decay previous state: $\mathbf{S}_t^\text{decay} \gets \mathbf{G}_t \odot \mathbf{S}_{t-1}$ \Comment{element-wise product}
+\State Add new association: $\mathbf{S}_t \gets \mathbf{S}_t^\text{decay} + \mathbf{v}_t \mathbf{k}_t^\top$
+\State Retrieve via query: $\mathbf{o}_t^\text{raw} \gets \mathbf{S}_t \mathbf{q}_t$
+\State Apply output gate: $\mathbf{o}_t \gets \text{GroupNorm}(\mathbf{o}_t^\text{raw}) \otimes \text{SiLU}(W_g \mathbf{x}_t)$
+\Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Hardware-Efficient Training}
+
+For parallel training, GLA uses a chunkwise block-wise algorithm that groups tokens into chunks $C$ and computes recurrent transitions in parallel:
+\[
+\mathbf{O}_{[t]} = \overleftarrow{\mathbf{Q}}_{[t]} \mathbf{S}_{[t]}^\top + \left(\mathbf{Q}_{[t]} \mathbf{K}_{[t]}^\top \odot \mathbf{\Gamma}_{[t]}\right) \mathbf{V}_{[t]}
+\]
+where $\overleftarrow{\mathbf{Q}}_{[t]}$ are attending to the state at the chunk boundary (lookback), and $\mathbf{\Gamma}_{[t]}$ is the causal mask with decay-aware scaling:
+\[
+\mathbf{\Gamma}_{[t],ij} = \begin{cases} \prod_{l=j}^{i-1} \alpha_l & \text{if } i > j \text{ (lookback)} \\ \prod_{l=1}^{i-j} \alpha_l & \text{if } i \le j \text{ (in-chunk)} \end{cases}
+\]
+This design maximizes matmul operations susceptible to tensor-core acceleration, achieving sub-quadratic total complexity $\mathcal{O}(nLd^2/C)$ where $L$ is the number of attention heads and $C$ is chunk size.
+
+\subsubsection{Strengths and Limitations}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{0.95\linewidth}{Xp{4cm}p{4cm}}
+\toprule
+\textbf{Aspect} & \textbf{Strengths} & \textbf{Limitations} \\
+\midrule
+Computational efficiency & Sub-quadratic training via chunkwise parallelism. Constant-memory inference $O(d^2)$. & Requires custom CUDA/Triton kernels; not available in all frameworks. \\
+Context generalization & Extends 2K-token training to 20K+ tokens with negligible perplexity degradation. & Still underperforms softmax on retrieval-heavy benchmarks (needle-in-haystack). \\
+Selectivity & Per-key-dimension data-dependent decay. & Gate structure limits per-key-value selectivity; no direct control over which specific associations to erase. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{2. DeltaNet: Error-Correcting Linear Attention}
+
+\subsubsection{Mathematical Foundation}
+
+DeltaNet \citep{yang_deltanet_2024} applies a classical \textbf{delta learning rule} to linear attention state updates. Instead of additive accumulation, DeltaNet computes the difference between the predicted value (retrieved from memory) and the target value, then performs an error-correcting update:
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1}(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top
+\]
+where $\beta_t \in (0,1)$ is a data-dependent \textbf{writing strength} scalar. This update can be decomposed as an erase-write operation:
+\[
+\mathbf{v}_t^\text{old} = \mathbf{S}_{t-1} \mathbf{k}_t \quad \text{(current prediction)}, \quad
+\mathbf{v}_t^\text{updated} = \beta_t \mathbf{v}_t + (1-\beta_t)\mathbf{v}_t^\text{old} \quad \text{(blend old/new)}
+\]
+so that:
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1} - \mathbf{v}_t^\text{old}\mathbf{k}_t^\top + \mathbf{v}_t^\text{updated}\mathbf{k}_t^\top
+\]
+The key insight is that this update rule minimizes an online MSE loss at each timestep:
+\[
+\mathcal{L}_t(\mathbf{S}) = \tfrac{1}{2}\|\mathbf{S}\mathbf{k}_t - \mathbf{v}_t\|^2 \Rightarrow \nabla_{\mathbf{S}} \mathcal{L}_t = (\mathbf{S}\mathbf{k}_t - \mathbf{v}_t)\mathbf{k}_t^\top
+\]
+One step of SGD with learning rate $\beta_t$ yields the delta rule update. This connection to test-time training (TTT) provides theoretical grounding: DeltaNet is directly optimizing for value prediction at inference time.
+
+\subsubsection{Efficient Parallel Training}
+
+DeltaNet's transition matrix $\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top$ is a generalized Householder matrix (rank-1 update to identity). For chunkwise training, DeltaNet uses the \textbf{WY representation}, which represents the product of $m$ such rank-1 updates compactly:
+\[
+\prod_{i=1}^{m} (\mathbf{I} - \beta_i \mathbf{k}_i \mathbf{k}_i^\top) = \mathbf{I} - \mathbf{W}\mathbf{Y}^\top
+\]
+where $\mathbf{W}, \mathbf{Y} \in \mathbb{R}^{d \times m}$ are constructed recursively. This factorization enables matmul-rich parallelism without materializing the full product, keeping chunkwise training efficient.
+
+\begin{algorithm}[H]
+\caption{DeltaNet State Update with WY Representation}
+\begin{algorithmic}[1]
+\Require Input chunk $\mathbf{X}_{[t]}$; prior state $\mathbf{S}_{t-1}$
+\Require L2-normalized queries $\hat{\mathbf{Q}}_t$, keys $\hat{\mathbf{K}}_t$, values $\mathbf{V}_t$
+\Ensure Output $\mathbf{O}_{[t]}$ and updated state $\mathbf{S}_t$
+\State \textbf{Chunkwise phase:}
+\For{position $i = 1$ to chunk\_size}
+    \State Normalize: $\hat{\mathbf{k}}_i \gets \hat{\mathbf{K}}_t[i] / \|\hat{\mathbf{K}}_t[i]\|$, $\hat{\mathbf{q}}_i \gets \hat{\mathbf{Q}}_t[i] / \|\hat{\mathbf{Q}}_t[i]\|$
+    \State Compute write strength: $\beta_i \gets \text{sigmoid}(W_\beta \mathbf{x}_i)$
+    \State Prediction: $\hat{\mathbf{v}}^\text{pred} \gets \mathbf{S}_{i-1}^\text{in-chunk} \hat{\mathbf{k}}_i$
+    \State Error-aware blend: $\mathbf{v}_i^\text{update} \gets \beta_i(\mathbf{v}_i - \hat{\mathbf{v}}^\text{pred})$
+    \State Erase-write: $\mathbf{S}_i^\text{in-chunk} \gets \mathbf{S}_{i-1}^\text{in-chunk} - \hat{\mathbf{v}}^\text{pred}\hat{\mathbf{k}}_i^\top + (\beta_i \mathbf{v}_i + (1-\beta_i)\hat{\mathbf{v}}^\text{pred})\hat{\mathbf{k}}_i^\top$
+    \State Output: $\mathbf{o}_i \gets \mathbf{S}_i^\text{in-chunk} \hat{\mathbf{q}}_i$
+\EndFor
+\State \textbf{Inter-chunk phase:} Use WY representation of transition products
+\Return $\mathbf{O}_{[t]}$, $\mathbf{S}_{t}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Strengths and Limitations}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{0.95\linewidth}{Xp{4cm}p{4cm}}
+\toprule
+\textbf{Aspect} & \textbf{Strengths} & \textbf{Limitations} \\
+\midrule
+Associative recall & Perfect recall on Multi-Query Associative Recall (MQAR) benchmark; error-correcting semantics naturally fit retrieval patterns. & Without global forgetting, memory still crowds over extreme sequence lengths; requires periodic reset mechanisms for unbounded context. \\
+Theory & Grounded in online MSE optimization; clear connection to test-time training paradigm. & Requires L2-normalized keys for numerical stability; double-width normalization adds overhead. \\
+Throughput & WY representation enables efficient chunkwise training. & Slightly slower than Mamba2 per-token due to richer transition matrices (rank-1 instead of diagonal). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{3. Gated DeltaNet: Synthesis of Gating and Error Correction}
+
+\subsubsection{Mathematical Foundation}
+
+Gated DeltaNet \citep{yang_gated_deltanet_2024} synthesizes the strengths of GLA and DeltaNet by combining a \textbf{decay gate} $\alpha_t$ (from GLA) with the \textbf{writing strength gate} $\beta_t$ (from DeltaNet):
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1}\left(\alpha_t (\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top)\right) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top
+\]
+Rewriting for clarity:
+\[
+\mathbf{S}_t = \alpha_t \mathbf{S}_{t-1}(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top
+\]
+The two gates are complementary:
+\begin{itemize}[leftmargin=*]
+    \item $\alpha_t \to 0$ rapidly erases historical state: $\mathbf{S}_t \approx \beta_t \mathbf{v}_t \mathbf{k}_t^\top$ (context reset).
+    \item $\alpha_t \to 1$ recovers pure delta-rule behavior: $\mathbf{S}_t \approx \mathbf{S}_{t-1}(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top$ (targeted updates).
+    \item $\beta_t \to 0$ skips writing but decays: $\mathbf{S}_t \approx \alpha_t \mathbf{S}_{t-1}$ (pure forgetting).
+    \item $\beta_t \to 1$ replaces memory aggressively: $\mathbf{S}_t \approx \alpha_t \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top$ (replacement).
+\end{itemize}
+
+From an online learning perspective, Gated DeltaNet corresponds to:
+\[
+\min_{\mathbf{S}_t} \|\mathbf{S}_t - \alpha_t \mathbf{S}_{t-1}\|_F^2 - 2\langle \mathbf{S}_t \mathbf{k}_t, \beta_t(\mathbf{v}_t - \alpha_t \mathbf{S}_{t-1} \mathbf{k}_t)\rangle
+\]
+which introduces an adaptive weight decay $\alpha_t$ into an SGD-like update---analogous to decoupled weight decay in deep learning optimization.
+
+\begin{algorithm}[H]
+\caption{Gated DeltaNet Parallel Chunkwise Forward}
+\begin{algorithmic}[1]
+\Require Input chunk  $\mathbf{X}_{[i]}$; prior state $\mathbf{S}_{i-1}$; chunk size $C$
+\Require Projections: $W_q, W_k, W_v, W_\alpha, W_\beta$
+\Ensure Output $\mathbf{O}_{[i]}$ and state $\mathbf{S}_i$
+\State \textbf{In-chunk computation:}
+\For{$j = 1$ to $C$}
+    \State $\mathbf{q}_j \gets W_q \mathbf{x}_j$, $\mathbf{k}_j \gets W_k \mathbf{x}_j$, $\mathbf{v}_j \gets W_v \mathbf{x}_j$
+    \State $\alpha_j \gets \text{sigmoid}(W_\alpha \mathbf{x}_j)$, $\beta_j \gets \text{sigmoid}(W_\beta \mathbf{x}_j)$
+    \State Apply combined gate: $\mathbf{S}_j \gets \alpha_j \mathbf{S}_{j-1}(\mathbf{I} - \beta_j \mathbf{k}_j \mathbf{k}_j^\top) + \beta_j \mathbf{v}_j \mathbf{k}_j^\top$
+    \State $\mathbf{o}_j \gets \mathbf{S}_j \mathbf{q}_j$
+\EndFor
+\State \textbf{Inter-chunk recurrence:}
+\State $\mathbf{S}_i \gets \mathbf{S}_C$ from in-chunk; propagate across chunks via cumulative $\prod \alpha$ masks
+\State \textbf{Output gating:} $\mathbf{O}_{[i]} \gets \text{GroupNorm}(\mathbf{O}^\text{raw}) \otimes \text{SiLU}(W_g \mathbf{X}_{[i]})$
+\Return $\mathbf{O}_{[i]}$, $\mathbf{S}_i$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Empirical Performance and Trade-offs}
+
+Gated DeltaNet has been integrated into Alibaba's Qwen3-Next and Qwen3.5 production models. Empirically:
+\[
+\begin{array}{l|cccc}
+\textbf{Task} & \textbf{Gated DeltaNet} & \textbf{Mamba2} & \textbf{DeltaNet} & \textbf{GLA} \\
+\hline
+\text{Language Modeling} & \mathbf{1.0\times} & 1.08\times & 1.05\times & 1.12\times \\
+\text{Associative Recall} & \mathbf{1.0\times} & --(no perfect) & \mathbf{1.0\times} & 0.75 \\
+\text{Length Extrapolation} & \mathbf{1.0\times} & 0.98\times & 0.96\times & 0.94\times \\
+\text{Throughput (tokens/sec)} & 0.85\times & \mathbf{1.0\times} & 0.82\times & 0.88\times
+\end{array}
+\]
+Gated DeltaNet achieves the best balance across diverse tasks at the cost of slightly reduced throughput due to richer transition matrices.
+
+\subsection{4. HGRN2: Hierarchical Gating with Outer-Product Expansion}
+
+\subsubsection{Mathematical Foundation}
+
+HGRN2 \citep{qin_hgrn2_2024} uses an outer-product-based state expansion with \textbf{hierarchically lower-bounded forget gates}. The state update is:
+\[
+\mathbf{S}_t = \text{diag}(\mathbf{g}_t) \cdot \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top, \quad \mathbf{o}_t = \mathbf{S}_t \mathbf{q}_t
+\]
+where $\mathbf{g}_t \in [b_\ell, 1]^d$ is a lower-bounded forget gate for layer $\ell$. The bounds satisfy:
+\[
+0 \le b_{\ell_{\text{shallow}}} < b_{\ell_{\text{middle}}} < b_{\ell_{\text{deep}}} \le 1
+\]
+i.e., bounds increase (become less restrictive) in the deeper layers. The gate itself is computed as:
+\[
+\mathbf{g}_t = b_\ell + (1 - b_\ell) \cdot \sigma(W_g \mathbf{x}_t)
+\]
+where $\sigma$ is sigmoid. When $W_g$ outputs weakly negative logits, $\mathbf{g}_t \approx b_\ell$ (forced retention at shallow layers). When outputs are strongly positive, $\mathbf{g}_t \approx 1$ (memory refresh at any layer).
+
+The hierarchical structure encourages different layers to specialize to different timescales: shallow layers model local dependencies (high retention due to binding $b_\ell$), while deeper layers capture long-range structure (flexible gating with high upper bound).
+
+\begin{algorithm}[H]
+\caption{HGRN2 Forward with Hierarchical Bounds}
+\begin{algorithmic}[1]
+\Require Input $\mathbf{x}_t$; prior state $\mathbf{S}_{t-1}$; layer index $\ell \in [0, L-1]$
+\Require Non-decreasing bounds: $0 \le b_0 < b_1 < \cdots < b_{L-1} \le 1$
+\Ensure Output $\mathbf{o}_t$ and state $\mathbf{S}_t$
+\State Layer-specific retain bound: $b \gets b_\ell$
+\State Project: $\mathbf{q}_t \gets W_q \mathbf{x}_t$, $\mathbf{k}_t \gets W_k \mathbf{x}_t$, $\mathbf{v}_t \gets W_v \mathbf{x}_t$
+\State Compute forget gate with binding: $\mathbf{g}_t \gets b + (1-b) \cdot \sigma(W_g \mathbf{x}_t)$ \Comment{Constrained to $[b, 1]$}
+\State Diagonal multiplication (vectorized): $\mathbf{S}_t \gets \mathbf{S}_{t-1} \circ \text{diag}(\mathbf{g}_t) + \mathbf{v}_t \mathbf{k}_t^\top$
+\State Retrieve: $\mathbf{o}_t \gets \mathbf{S}_t \mathbf{q}_t$
+\State Optional normalization: $\mathbf{o}_t \gets \text{RMSNorm}(\mathbf{o}_t)$
+\Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Scaling and Empirical Results}
+
+At 3B scale on 100B tokens, HGRN2 slightly outperforms Mamba2 and LLaMA-architecture Transformers on language modeling. The hierarchical gating provides multi-scale temporal modeling without explicit layer-wise architectural variants. However, vector-valued diagonal gating (as opposed to element-wise selection) provides less per-item flexibility than delta-rule variants.
+
+\subsection{5. Forgetting Transformer (FoX): Gating in Softmax Logit Space}
+
+\subsubsection{Mathematical Foundation}
+
+Forgetting Transformer (FoX), proposed by Lin et al.~\citep{lin_forgetting_transformer_2025}, embeds a forget gate directly into softmax attention logits. Rather than replacing softmax with linear recurrence, FoX preserves full softmax expressiveness while adding recency control through a data-dependent logit bias.
+
+For each token position $t$ and all keys $j \le t$, compute a scalar forget gate:
+\[
+f_t = \sigma(w_f^\top \mathbf{x}_t + b_f)
+\]
+The logit bias at position $(i,j)$ is the cumulative log-forget product:
+\[
+d_{ij} = \sum_{l=j+1}^{i} \log f_l = \log \prod_{l=j+1}^{i} f_l
+\]
+The full attention output becomes:
+\[
+\mathbf{O} = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}} + \mathbf{D}\right) \mathbf{V}
+\]
+where $\mathbf{D}_{ij} = d_{ij}$. Equivalently:
+\[
+\text{Attention}(i,j) = \frac{\exp(\mathbf{q}_i^\top \mathbf{k}_j / \sqrt{d_k} + d_{ij})}{\sum_{j'=1}^{i} \exp(\mathbf{q}_i^\top \mathbf{k}_{j'} / \sqrt{d_k} + d_{ij'})}
+\]
+This weighting down-weights older tokens multiplicatively: a token from 10 steps ago is scaled by $\prod_{l=j+1}^{i} f_l$, which is typically much less than 1 if $f_t < 1$ on average.
+
+The mechanism is mathematically equivalent to a \textbf{data-dependent learnable variant of ALiBi (Attention with Linear Biases)}, where earlier work used fixed $d_{ij} = -\infty \cdot |i-j|$ or $d_{ij} = -(i-j)$.
+
+\begin{algorithm}[H]
+\caption{FoX: Forgetting Attention with Recency Bias}
+\begin{algorithmic}[1]
+\Require Queries $\mathbf{Q}$, keys $\mathbf{K}$, values $\mathbf{V}$; input $\mathbf{X}$
+\Require Forget gate parameters: $w_f \in \mathbb{R}^d$, $b_f \in \mathbb{R}$
+\Ensure Output attention $\mathbf{O}$
+\State \textbf{Compute forget gates:}
+\For{$t = 1$ to $T$}
+    \State $f_t \gets \sigma(w_f^\top \mathbf{x}_t + b_f)$ \Comment{Per-token forget probability}
+\EndFor
+\State \textbf{Compute cumulative log-forget biases:}
+\For{$i = 1$ to $T$}
+    \For{$j = 1$ to $i$}
+        \State $d_{ij} \gets \sum_{l=j+1}^{i} \log f_l$ \Comment{Cumulative product in log space}
+    \EndFor
+\EndFor
+\State \textbf{Standard SDPA with bias:}
+\State Compute scores: $\mathbf{S} \gets \mathbf{Q}\mathbf{K}^\top / \sqrt{d_k}$
+\State Add bias: $\mathbf{S} \gets \mathbf{S} + \mathbf{D}$
+\State Apply softmax: $\mathbf{A} \gets \text{softmax}(\mathbf{S}, \text{dim}=-1)$
+\State Weight values: $\mathbf{O} \gets \mathbf{A} \mathbf{V}$
+\Return $\mathbf{O}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Integration with FlashAttention}
+
+The key advantage of FoX is compatibility with FlashAttention and existing optimized implementations. The forget biases are added in the softmax logit computation, which is already a core operation in FlashAttention's block-wise algorithm. The overhead is:
+\[
+\text{Overhead} \approx 0.5--2\% \text{ wall-clock time}
+\]
+since the bias addition is amortized across matmul operations.
+
+\subsubsection{Strengths and Limitations}
+
+FoX achieves state-of-the-art results on length extrapolation, near-perfect needle-in-haystack retrieval, and superior long-context understanding compared to Transformers. However, it remains $\mathcal{O}(L^2 d)$ at training and $\mathcal{O}(L d)$ per step at inference with KV cache, limiting extreme sequence lengths.
+
+\subsection{6. Gated Attention (Post-SDPA Sigmoid Gating)}
+
+\subsubsection{Mathematical Foundation}
+
+The NeurIPS 2025 Best Paper by the Qwen team proposes applying a sigmoid gate \textbf{after} scaled dot-product attention (SDPA):
+\[
+\mathbf{Y} = \text{SDPA}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\right) \mathbf{V}
+\]
+\[
+\mathbf{Y}' = \mathbf{Y} \odot \sigma\left(\mathbf{X} \mathbf{W}_\theta\right)
+\]
+where the gate score $\sigma(\mathbf{X} \mathbf{W}_\theta)$ can have shape $\mathbb{R}^{n \times q \times d_k}$ (element-wise gating per query head) or $\mathbb{R}^{n \times q}$ (head-wise fixed gating). Across 30+ variants and 15B MoE + 1.7B dense models trained on 3.5T tokens, the team found:
+
+\begin{itemize}[leftmargin=*]
+    \item Headwise gating adds only $\sim 1.6M$ parameters to a 15B model (negligible overhead).
+    \item Effective gates are \textbf{sparse}: mean activation $\approx 0.116$ (i.e., 88\% are zero or near-zero).
+    \item Gates act as query-dependent filters, suppressing low-value channels while preserving high-value signal.
+    \item Gates demonstrably eliminate the \textbf{attention sink} phenomenon, where the attention pattern becomes dominated by a single early token.
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Gated Softmax Attention (Post-SDPA)}
+\begin{algorithmic}[1]
+\Require Queries $\mathbf{Q}$, Keys $\mathbf{K}$, Values $\mathbf{V}$; input $\mathbf{X}$
+\Require Gate projection matrix $W_g \in \mathbb{R}^{d \to d_{\text{gate}}}$ where $d_{\text{gate}} \in \{1, d_k\}$
+\Ensure Gated output $\mathbf{Y}'$
+\State \textbf{Standard SDPA:}
+\State Compute attention: $\mathbf{A} \gets \text{softmax}(\mathbf{Q}\mathbf{K}^\top / \sqrt{d_k})$ 
+\State Weight values: $\mathbf{Y} \gets \mathbf{A} \mathbf{V}$
+\State \textbf{Compute gates:}
+\State Project input: $\mathbf{G} \gets \mathbf{X} W_g$  \Comment{shape: $[n, q, d_{\text{gate}}]$}
+\State Apply sigmoid: $\mathbf{G} \gets \sigma(\mathbf{G})$ \Comment{Element-wise gating}
+\State \textbf{Apply gating:}
+\If{$d_{\text{gate}} = 1$}
+    \State Broadcast and scale: $\mathbf{Y}' \gets \mathbf{Y} \cdot \mathbf{G}$ \Comment{Head-wise scaling}
+\Else
+    \Comment{$d_{\text{gate}} = d_k$}
+    \State Element-wise modulation: $\mathbf{Y}' \gets \mathbf{Y} \odot \mathbf{G}$ \Comment{Per-dimension gating}
+\EndIf
+\Return $\mathbf{Y}'$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Findings}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Attention-sink suppression}: Gating breaks the feedback loop where softmax concentrates on the first token, enabling more balanced attention.
+    \item \textbf{Training stability}: Models with gating tolerate larger learning rates ($+30\%$ higher stable $\eta_{max}$).
+    \item \textbf{Minimal overhead}: Latency impact is only $1.6\%$ on H100 GPUs; throughput drops at most $2-3\%$.
+    \item \textbf{Scaling law improvement}: Improves loss across model scales from 800M to 110B parameters consistently.
+\end{itemize}
+
+\normalsize
+
+\subsection{7. Gated DeltaNet-2: Decoupled Channel-wise Erase and Write}
+
+\subsubsection{Mathematical Foundation}
+
+Gated DeltaNet-2 \citep{hatamizadeh_gated_deltanet2_2026} addresses a shared limitation of Gated DeltaNet and Kimi Delta Attention (KDA): both use a single \emph{scalar} delta gate $\beta_t$ to simultaneously control (i) how much old content is erased along the key-side read direction and (ii) how much new value is written along the value axis. Gated DeltaNet-2 \textbf{decouples} these two roles into a channel-wise erase gate $\mathbf{b}_t$ (key axis) and a channel-wise write gate $\mathbf{w}_t$ (value axis), while inheriting the channel-wise decay $\boldsymbol{\alpha}_t$ from KDA. With state $\mathbf{S}_t \in \mathbb{R}^{d_k \times d_v}$, decay $\mathbf{D}_t = \mathrm{Diag}(\boldsymbol{\alpha}_t)$, erase direction $\mathbf{e}_t = \mathbf{b}_t \odot \mathbf{k}_t$, and write target $\mathbf{z}_t = \mathbf{w}_t \odot \mathbf{v}_t$, the state update is:
+\[
+\mathbf{S}_t = \left(\mathbf{I} - \mathbf{k}_t \mathbf{e}_t^\top\right) \mathbf{D}_t \, \mathbf{S}_{t-1} + \mathbf{k}_t \mathbf{z}_t^\top, \qquad \mathbf{o}_t = \mathbf{S}_t^\top \mathbf{q}_t
+\]
+or, expanding the gate products:
+\[
+\mathbf{S}_t = \left(\mathbf{I} - \mathbf{k}_t (\mathbf{b}_t \odot \mathbf{k}_t)^\top\right) \mathbf{D}_t \, \mathbf{S}_{t-1} + \mathbf{k}_t (\mathbf{w}_t \odot \mathbf{v}_t)^\top
+\]
+The two gates are produced by independent linear projections followed by sigmoid:
+\[
+\mathbf{b}_t = \sigma(\mathbf{W}_b \mathbf{x}_t), \qquad \mathbf{w}_t = \sigma(\mathbf{W}_w \mathbf{x}_t)
+\]
+and the channel-wise decay follows a log-decay parameterization (computed in fp32 to avoid precision loss in long cumulative products):
+\[
+\mathbf{g}_t = \mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}), \qquad \boldsymbol{\alpha}_t = \exp(\mathbf{g}_t)
+\]
+The structural roles of the two gates are complementary:
+\begin{itemize}[leftmargin=*]
+    \item $\mathbf{b}_t$ (key axis) makes the \textbf{read direction} channel-selective: it determines which key channels are removed before writing.
+    \item $\mathbf{w}_t$ (value axis) makes the \textbf{write target} channel-selective: it determines which value channels are deposited into memory.
+    \item $\boldsymbol{\alpha}_t$ (per key channel) provides global decay, as in KDA.
+\end{itemize}
+\textbf{Reductions.} Setting $\mathbf{b}_t = \beta_t \mathbf{1}_{d_k}$ and $\mathbf{w}_t = \beta_t \mathbf{1}_{d_v}$ recovers KDA; further collapsing $\boldsymbol{\alpha}_t$ to a scalar recovers Gated DeltaNet. From the fast-weight / online-learning perspective, the update is the minimizer of:
+\[
+\mathcal{L}_t(\mathbf{S}) = \tfrac{1}{2}\|\mathbf{S} - \mathbf{D}_t \mathbf{S}_{t-1}\|_F^2 - 2\left\langle \mathbf{S}^\top \mathbf{k}_t,\; \mathbf{z}_t - (\mathbf{D}_t \mathbf{S}_{t-1})^\top \mathbf{e}_t \right\rangle
+\]
+
+\begin{algorithm}[H]
+\caption{Gated DeltaNet-2 Recurrent Forward (Reference Form)}
+\begin{algorithmic}[1]
+\Require Input $\mathbf{x}_t$; prior state $\mathbf{S}_{t-1} \in \mathbb{R}^{d_k \times d_v}$
+\Require Projections: $W_q, W_k, W_v, W_b, W_w$; log-decay parameters $\mathbf{a}, \boldsymbol{\delta}$
+\Ensure Output $\mathbf{o}_t$ and state $\mathbf{S}_t$
+\State $\mathbf{q}_t \gets \mathrm{normalize}(W_q \mathbf{x}_t)$, $\mathbf{k}_t \gets \mathrm{normalize}(W_k \mathbf{x}_t)$, $\mathbf{v}_t \gets \mathrm{silu}(W_v \mathbf{x}_t)$
+\State $\mathbf{b}_t \gets \sigma(W_b \mathbf{x}_t)$ \Comment{key-axis erase gate, $\mathbb{R}^{d_k}$}
+\State $\mathbf{w}_t \gets \sigma(W_w \mathbf{x}_t)$ \Comment{value-axis write gate, $\mathbb{R}^{d_v}$}
+\State $\boldsymbol{\alpha}_t \gets \exp(\mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}))$ \Comment{channel-wise decay, fp32}
+\State Erase direction: $\mathbf{e}_t \gets \mathbf{b}_t \odot \mathbf{k}_t$; write target: $\mathbf{z}_t \gets \mathbf{w}_t \odot \mathbf{v}_t$
+\State Decay state: $\mathbf{S}_t \gets \mathrm{Diag}(\boldsymbol{\alpha}_t)\, \mathbf{S}_{t-1}$
+\State Read: $\mathbf{r}_t \gets \mathbf{S}_t^\top \mathbf{e}_t$ \Comment{sum over key axis}
+\State Delta-rule update: $\mathbf{S}_t \gets \mathbf{S}_t - \mathbf{k}_t \mathbf{r}_t^\top + \mathbf{k}_t \mathbf{z}_t^\top$
+\State Retrieve: $\mathbf{o}_t \gets \mathbf{S}_t^\top \mathbf{q}_t$
+\State Output gating: $\mathbf{o}_t \gets \mathrm{GroupNorm}(\mathbf{o}_t) \odot \mathrm{silu}(W_g \mathbf{x}_t)$
+\State \Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+The chunkwise training algorithm extends KDA's WY representation by absorbing the channel-wise decay into an asymmetric delta recurrence on a decay-normalized state, enabling matmul-rich parallelism on tensor cores. Because $\mathbf{b}_t$ and $\mathbf{w}_t$ are per-channel diagonal operators varying per row, the scalar post-scaling shortcut of KDA breaks: the backward pass requires a \textbf{gate-aware WY} inversion that bakes the gates into each dot product accumulating the gradient.
+
+\subsubsection{Empirical Performance and Trade-offs}
+
+At 1.3B parameters trained on 100B FineWeb-Edu tokens, Gated DeltaNet-2 outperforms Mamba-2, Mamba-3, Gated DeltaNet, and KDA on language modeling, commonsense reasoning, and---most markedly---real-world and RULER long-context retrieval (especially multi-key needle-in-a-haystack). Its throughput on H100 stays near-flat ($38.0 \to 36.1$ Kt/s) as sequence length grows from 2K to 16K, where a Transformer's drops sharply. Ablations show the erase gate $\mathbf{b}_t$ accounts for most of the gain; the write gate $\mathbf{w}_t$ contributes a smaller additional improvement. The hybrid variant (recurrent Gated DeltaNet-2 + sliding-window attention) further closes the gap with pure-attention models on tasks requiring local evidence aggregation.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+\textbf{Aspect} & \textbf{Strength} & \textbf{Limitation} \\
+\midrule
+Recall & Best-in-class among recurrent delta-rule models on multi-key NIAH. & Recurrent variant still gaps Transformer on NQ/DROP. \\
+Throughput & Near-flat scaling 2K$\to$16K; small overhead vs KDA. & Requires a new gate-aware WY Triton backward kernel. \\
+Memory & Constant $\mathcal{O}(d^2)$ inference state. & Neg-eigenvalue erase range $[0,2]$ gives no consistent gain at 1.3B scale. \\
+\bottomrule
+\end{tabularx}
+\caption{Gated DeltaNet-2 trade-offs at 1.3B / 100B-token scale \citep{hatamizadeh_gated_deltanet2_2026}.}
+\label{tab:gated-deltanet2-tradeoffs}
+\end{table}
+
+\normalsize
+
+\subsection{8. Kimi Delta Attention (KDA): Channel-wise Decay Gating for the Delta Rule}
+
+\subsubsection{Mathematical Foundation}
+
+Kimi Delta Attention \citep{kimi_kda_2025} is the core module of Kimi Linear and extends Gated DeltaNet with a finer-grained \textbf{channel-wise decay gate}. Where Gated DeltaNet uses a single scalar per-head decay $\alpha_t$ alongside the scalar delta write gate $\beta_t$, KDA replaces the scalar decay with a \textbf{per-key-channel} decay $\boldsymbol{\alpha}_t \in \mathbb{R}^{d_k}$, parameterised through a log-decay formulation and applied as a diagonal matrix $\mathbf{D}_t = \mathrm{diag}(\boldsymbol{\alpha}_t)$ before the delta-rule update. The delta rule itself retains a scalar per-head write gate $\beta_t$:
+\[
+\mathbf{S}_t = (\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top)\, \mathbf{D}_t\, \mathbf{S}_{t-1} + \beta_t \mathbf{v}_t \mathbf{k}_t^\top, \qquad \mathbf{o}_t = \mathbf{S}_t^\top \mathbf{q}_t
+\]
+The channel-wise decay follows a log-decay parameterisation (computed in fp32 for numerical stability over long cumulative products):
+\[
+\mathbf{g} = \mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}), \qquad \boldsymbol{\alpha}_t = \exp(\mathbf{g})
+\]
+where $\mathbf{a}$ and $\boldsymbol{\delta}$ are learned per-channel parameters. This gives each key channel an independent forgetting timescale, allowing the model to retain some channels longer than others within the same head.
+
+\paragraph{Reduction to Gated DeltaNet}: When $\boldsymbol{\alpha}_t$ collapses to a scalar (i.e., all channels share the same decay), KDA reduces exactly to Gated DeltaNet. The channel-wise decay is thus a strict generalisation that adds per-channel selectivity on top of the scalar decay/write gating of Gated DeltaNet.
+
+\paragraph{Chunkwise training}: A bespoke chunkwise algorithm uses a specialised \textbf{Diagonal-Plus-Low-Rank (DPLR)} variant of the transition matrix to remain hardware-efficient. The product of per-step transitions $(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top)\mathbf{D}_t$ admits a DPLR decomposition that allows matmul-rich parallelism on tensor cores while preserving the channel-wise decay structure.
+
+\begin{algorithm}[H]
+\caption{Kimi Delta Attention Recurrent Forward (Reference Form)}
+\begin{algorithmic}[1]
+\Require Input $\mathbf{x}_t$; prior state $\mathbf{S}_{t-1} \in \mathbb{R}^{d_k \times d_v}$
+\Require Projections: $W_q, W_k, W_v, W_\beta$; log-decay parameters $\mathbf{a}, \boldsymbol{\delta}$
+\Ensure Output $\mathbf{o}_t$ and state $\mathbf{S}_t$
+\State $\mathbf{q}_t \gets W_q \mathbf{x}_t$, $\mathbf{k}_t \gets W_k \mathbf{x}_t$, $\mathbf{v}_t \gets W_v \mathbf{x}_t$
+\State $\beta_t \gets \mathrm{sigmoid}(W_\beta \mathbf{x}_t)$ \Comment{scalar per-head write gate}
+\State $\boldsymbol{\alpha}_t \gets \exp(\mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}))$ \Comment{channel-wise decay, fp32}
+\State $\mathbf{D}_t \gets \mathrm{diag}(\boldsymbol{\alpha}_t)$ \Comment{diagonal decay matrix}
+\State Decay state: $\mathbf{S}_t \gets \mathbf{D}_t \mathbf{S}_{t-1}$
+\State Read: $\mathbf{r}_t \gets \mathbf{S}_t^\top \mathbf{k}_t$ \Comment{current prediction along key}
+\State Delta-rule update: $\mathbf{S}_t \gets \mathbf{S}_t - \beta_t \mathbf{k}_t \mathbf{r}_t^\top + \beta_t \mathbf{v}_t \mathbf{k}_t^\top$
+\State Retrieve: $\mathbf{o}_t \gets \mathbf{S}_t^\top \mathbf{q}_t$
+\State Output gating: $\mathbf{o}_t \gets \mathrm{GroupNorm}(\mathbf{o}_t) \odot \mathrm{silu}(W_g \mathbf{x}_t)$
+\State \Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Empirical Performance and Trade-offs}
+
+KDA is deployed in Kimi Linear, a hybrid model (3B activated / 48B total parameters) combining KDA layers with Multi-head Latent Attention (MLA). Kimi Linear outperforms a full-MLA baseline across all evaluated tasks, reduces the KV cache by up to $75\%$, and achieves up to $6\times$ decoding throughput for 1M-token context. The channel-wise decay is the principal driver of the gain: it allows fine-grained control over which key channels persist, improving long-context recall relative to scalar-decay Gated DeltaNet.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+\textbf{Aspect} & \textbf{Strength} & \textbf{Limitation} \\
+\midrule
+Recall & Channel-wise decay improves long-context recall over scalar-decay baselines; deployed in Kimi Linear (3B/48B hybrid). & Recurrent matrix state $\mathcal{O}(d^2)$ is heavier than diagonal-gated linear attention. \\
+Throughput & Up to $6\times$ decoding throughput at 1M context; $75\%$ KV cache reduction vs full MLA. & Requires DPLR-aware chunkwise kernels for hardware efficiency. \\
+Memory & Constant $\mathcal{O}(d^2)$ inference state (matrix recurrent). & Log-decay fp32 computation adds overhead; reduction to Gated DeltaNet loses channel selectivity. \\
+\bottomrule
+\end{tabularx}
+\caption{KDA trade-offs in Kimi Linear (3B activated / 48B total) \citep{kimi_kda_2025}.}
+\label{tab:kda-tradeoffs}
+\end{table}
+
+\normalsize
+
+\subsection{Unified Gating Principle}
+
+All eight architectures share a common principle: \textbf{gating is a mechanism to control information flow and selective memory retention}. The specific design choices diverge along several dimensions:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Location of gating}: Recurrent state updates (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2) versus softmax logit/output space (FoX, Gated Softmax, RetNet).
+    \item \textbf{Granularity of control}: Dimension-wise (GLA, HGRN2 diagonal), key-specific (DeltaNet), token-wise (FoX), head-wise (Gated Softmax), or channel-wise decoupled erase/write (Gated DeltaNet-2).
+    \item \textbf{Data dependence}: Fully data-dependent (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, FoX, Gated Softmax) versus fixed schedules (RetNet with exponential decay).
+    \item \textbf{Expressiveness trade-off}: Linear recurrent efficiency (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, RetNet) versus full softmax expressiveness (FoX, Gated Softmax).
+\end{enumerate}
+
+\subsection{Implementation and Practical Guidance}
+
+\subsubsection{When to Use Each Architecture}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{GLA}: Fast inference with moderate-to-long contexts (2K--20K tokens), when custom CUDA kernels are acceptable, and retrieval performance is not critical.
+    \item \textbf{DeltaNet}: Strong associative recall and in-context learning tasks; good for synthetic tasks (MQAR) and key-value association testing.
+    \item \textbf{Gated DeltaNet}: Production models requiring the best balance of recall, forgetting, and throughput (proven in Qwen3-Next; ICLR 2025).
+    \item \textbf{Gated DeltaNet-2}: Long-context retrieval workloads (multi-key NIAH) where decoupled channel-wise erase/write yields the strongest recall; when a gate-aware WY kernel is available.
+    \item \textbf{RetNet}: Extremely efficient inference without KV caching; suitable for edge/mobile deployments or toy models.
+    \item \textbf{HGRN2}: Multi-scale temporal hierarchies; when layer-specific forget bounds are desirable.
+    \item \textbf{FoX}: Length extrapolation and long-context understanding; when quadratic training is acceptable and replacing softmax is not desired.
+    \item \textbf{Gated Softmax}: Quick improvement to existing softmax models with minimal code changes; best for practitioners wanting immediate gains without major refactoring.
+\end{enumerate}
+
+\subsubsection{Hardware Considerations}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{0.95\linewidth}{Xp{3.5cm}p{3.5cm}}
+\toprule
+\textbf{Hardware Target} & \textbf{Recommended Architectures} & \textbf{Notes} \\
+\midrule
+GPU (H100/A100) & Gated Softmax, FoX, Gated DeltaNet, Gated DeltaNet-2 & Mature softmax/linear implementations. GLA/DeltaNet require custom kernels. \\
+TPU (high memory) & GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2 & Hardware supports efficient matmuls; linear recurrent methods shine. \\
+Mobile/Edge & RetNet, lightweight Gated Softmax & Constant-memory inference critical. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+

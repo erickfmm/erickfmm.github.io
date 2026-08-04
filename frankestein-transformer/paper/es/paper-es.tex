@@ -1,0 +1,83 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[numbers]{natbib}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+%Includes "References" in the table of contents
+\usepackage[nottoc]{tocbibind}
+
+\usetikzlibrary{arrows.meta,positioning,fit,calc,backgrounds,shapes.geometric,shapes.multipart}
+\geometry{margin=1in}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\tikzset{
+box/.style={draw, rounded corners, align=center, minimum height=1cm, inner sep=6pt},
+line/.style={-Latex, thick},
+group/.style={draw, dashed, rounded corners, inner sep=8pt}
+}
+
+\newcommand{\fitfigure}[1]{\adjustbox{max width=0.98\linewidth,max totalheight=0.42\textheight,keepaspectratio}{#1}}
+
+\title{Frankenstein Transformer:\\Biblioteca Unificada de Codificador-Decodificador, CLI y Notas de Diseño Basadas en Investigación}
+\author{
+Erick F. Merino M. \\
+Este trabajo no está afiliado \\
+\texttt{erickfmm@gmail.com}
+}
+\date{Febrero 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Las arquitecturas de transformers se han convertido en el paradigma dominante para el modelado de secuencias en el procesamiento del lenguaje natural, la visión por computadora y la biología computacional. Los últimos años han sido testigos de una rápida diversificación de los mecanismos de atención y las estrategias de optimización, con innovaciones que abarcan variantes densas de softmax, alternativas recurrentes y retentivas, patrones de atención dispersa, mecanismos lineales con compuerta, proyecciones en espacio latente y bloques con aumento de memoria. Paralelamente, el panorama de optimizadores se ha expandido más allá del AdamW clásico para incluir métodos de reducción de varianza, variantes eficientes en memoria, enfoques sin programación de tasa de aprendizaje, precondicionadores de segundo orden y aproximaciones de bajo rango. A pesar de esta riqueza de avances arquitectónicos y algorítmicos, el ecosistema de investigación permanece fragmentado: comparar mezcladores de secuencia y optimizadores bajo condiciones de entrenamiento consistentes requiere un esfuerzo de ingeniería sustancial, lo que dificulta la reproducibilidad y ralentiza el progreso científico. En este trabajo proponemos Frankenstein Transformer, un conjunto de herramientas CLI basado en configuración (\texttt{frankenstein-transformer}) que unifica la definición, el entrenamiento y el despliegue de modelos transformer mediante un esquema YAML estricto. El conjunto de herramientas soporta treinta y cinco variantes de mezcladores de secuencia en seis familias (densa, recurrente, dispersa, con compuerta, latente y con aumento de memoria) y veintitrés familias de optimizadores con control de hiperparámetros por grupo de parámetros mediante prefijos. Proporciona subcomandos para entrenamiento (\texttt{train}), despliegue (\texttt{deploy}), cuantización (\texttt{quantize}), inferencia (\texttt{infer}), entrenamiento e inferencia de incrustaciones de oraciones estilo SBERT (\texttt{sbert-train}, \texttt{sbert-infer}), exportación compatible con HuggingFace (\texttt{transformers-export}), exportación GGUF con soporte BitNet (\texttt{bitnet-gguf}) y un constructor de configuración basado en web (\texttt{web-server}). El sistema impone la reproducibilidad mediante un contrato de esquema estricto con restricciones \texttt{additionalProperties: false}, ofrece una interfaz web basada en Streamlit para la construcción de configuraciones guiada por esquema e incluye tuberías de despliegue de extremo a extremo con cuantización ternaria de pesos y flujos de trabajo de incrustación de oraciones inspirados en SBERT. Las pruebas automatizadas integrales con suites de pruebas unitarias, validación de presets YAML y ejecución de CI en múltiples versiones de Python garantizan la confiabilidad.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduccion}
+\input{sections/02-trabajo-relacionado}
+\input{sections/03-diseno-arquitectura}
+\input{sections/04-taxonomia-arquitectura}
+\input{sections/05-familias-optimizadores}
+\input{sections/06-cuantizacion-despliegue}
+\input{sections/07-tareas-sbert}
+\input{sections/09-discusion}
+\input{sections/10-conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{../bibliography/other,../bibliography/optimizers,../bibliography/attention_types}
+
+\appendix
+\renewcommand{\thesection}{\arabic{section}}
+\addtocontents{toc}{\bigskip\noindent\textbf{Anexos}\par}
+\setcounter{section}{0}
+
+\input{appendices/annex-6-tutorial}
+\input{appendices/annex-schema}
+\input{appendices/annex-summary-tables}
+\input{appendices/annex-1-optimizadores}
+\input{appendices/annex-2-recurrent-attention}
+\input{appendices/annex-3-latent-attention}
+\input{appendices/annex-4-sparse-attention}
+\input{appendices/annex-5-gated-attention}
+\input{appendices/annex-7-norm-bitnet-mod}
+\input{appendices/annex-8-funciones-activacion}
+\input{appendices/annex-9-mhc}
+
+\end{document}

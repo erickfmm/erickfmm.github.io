@@ -1,0 +1,37 @@
+\section{Discusión}
+\label{sec:discussion}
+
+Las decisiones de diseño en Transformer Encoder Frankenstein reflejan varias tensiones de ingeniería e investigación en las herramientas modernas de aprendizaje profundo.
+
+\subsection{Compromisos de Diseño Basado en Esquemas}
+
+El enfoque basado en esquemas proporciona beneficios significativos de reproducibilidad al imponer contratos explícitos y fallar rápidamente ante configuraciones inválidas. Sin embargo, este enfoque también introduce rigidez: agregar nuevas arquitecturas u optimizadores requiere extensiones del esquema en lugar de argumentos de línea de comandos flexibles. El sistema de hiperparámetros prefijados permite un control detallado pero aumenta la complejidad de configuración para usuarios acostumbrados a interfaces más simples.
+
+La decisión de imponer \texttt{additionalProperties: false} en todos los niveles del esquema elimina la absorción silenciosa de parámetros que ha afectado a sistemas de configuración anteriores, pero esta rigurosidad requiere un mantenimiento cuidadoso del esquema al extender las capacidades del sistema. Cada nuevo mecanismo de atención o variante de optimizador debe integrarse adecuadamente en el marco de validación, incluyendo definiciones de campos del esquema con tipos y restricciones apropiados, mapeo de hiperparámetros prefijados para grupos específicos de optimizadores, valores predeterminados alineados con las mejores prácticas de investigación y cadenas de documentación para la representación en la interfaz web.
+
+\subsection{Cobertura Arquitectónica y Vacíos}
+
+Las diecisiete arquitecturas de mezclador implementadas abarcan las principales direcciones de investigación en modelado de secuencias, pero ciertos vacíos permanecen. El sistema carece de arquitecturas híbridas recientes como Griffin \citep{soares_griffin_2024} y Jamba \citep{gu_jamba_2024}, que combinan compuertas con modelos de espacio de estados. El enrutamiento MoE (Mezcla de Expertos) está implementado para capas FFN pero no para el cómputo de atención, donde trabajos recientes han mostrado beneficios \citep{lewis_moe_2021}.
+
+La cobertura de atención dispersa es completa, pero la implementación de métodos sin entrenamiento (FASA, SpargeAttn) genera errores en tiempo de ejecución durante el entrenamiento, reflejando restricciones arquitectónicas: estos métodos requieren checkpoints preentrenados de modelos de atención completa o procedimientos específicos de ajuste fino que actualmente no están automatizados.
+
+La cobertura de mecanismos de compuerta es sólida en todas las categorías principales (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax). El macro-diseño del flujo residual está cubierto mediante el flujo residual de $n$ streams restringido por variedad (mHC) \citep{xie_mhc_2025}, cuya proyección Sinkhorn--Knopp sobre el politopo de Birkhoff restaura la propiedad de mapeo de identidad que pierden las Hyper-Connexions sin restricción; mHC está validado solo al nivel de los experimentos MoE publicados de 3B--27B, y el marco se beneficiaría de reproducciones independientes a escalas menores (ver Apéndice~\ref{sec:annex-mhc}).
+
+\subsection{Fragmentación del Panorama de Optimizadores}
+
+El soporte para veintidós familias de optimizadores en seis categorías algorítmicas demuestra exhaustividad pero también resalta el estado fragmentado de la investigación en optimización. Los usuarios enfrentan una complejidad significativa de decisión al elegir entre métodos de reducción de varianza (Adan, MARS), variantes eficientes en memoria (GaLore, Adafactor, APOLLO) y enfoques conscientes de curvatura (Sophia, Shampoo). El sistema de hiperparámetros prefijados, aunque poderoso, requiere comprender qué parámetros son relevantes para cada clase de optimizador.
+
+La calidad de implementación varía entre optimizadores: los métodos clásicos (AdamW, SGD con momento) están altamente optimizados en PyTorch, mientras que los métodos más nuevos (Muon, Turbo-Muon, SOAP) pueden requerir implementaciones personalizadas que afectan la estabilidad numérica y las características de rendimiento.
+
+\subsection{Consideraciones de Despliegue y Producción}
+
+El pipeline de cuantización demuestra preocupaciones prácticas de despliegue pero realiza compromisos de ingeniería específicos. El empaquetado ternario de pesos reduce el almacenamiento a aproximadamente $1.58$ bits por parámetro, pero esta compresión agresiva puede degradar el rendimiento, especialmente para modelos más pequeños donde el error de cuantización es más significativo. La implementación actual aplica cuantización uniforme entre todos los tipos de parámetros.
+
+Los flujos de trabajo SBERT proporcionan utilidad práctica para tareas de similitud semántica y recuperación, pero la implementación asume estrategias de pooling estándar (token CLS, pooling promedio). Avances recientes como los embeddings Matryoshka \citep{muennighoff_matryoshka_2021} y los refinamientos de aprendizaje contrastivo \citep{chen_supervised_2020} aún no están incorporados.
+
+\subsection{Desafíos de Integración y Extensibilidad}
+
+La estructura actual del código base, aunque funcional, presenta desafíos de mantenimiento a medida que se expanden las familias de arquitecturas y optimizadores. El patrón de despachador para la selección de mezcladores y el enrutamiento de optimizadores maneja la extensibilidad pero corre el riesgo de convertirse en un ``cajón de sastre'' de lógica condicional. Las versiones futuras se beneficiarían de arquitecturas basadas en plugins donde nuevos mezcladores y optimizadores puedan registrarse de forma declarativa en lugar de modificar la lógica central de despacho.
+
+La interfaz de configuración web proporciona mejoras significativas de usabilidad pero introduce complejidad de despliegue: ejecutar Streamlit junto con trabajos de entrenamiento requiere recursos adicionales y consideraciones de infraestructura que pueden no ser apropiadas para todos los entornos, particularmente clústeres HPC sin acceso web.
+

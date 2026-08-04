@@ -1,0 +1,428 @@
+\section{Configuration Schema Structure}
+\label{sec:annex-schema}
+
+The Frankenstein Transformer toolkit enforces a strict YAML configuration schema with \texttt{additionalProperties: false} at all levels. The schema is defined in \texttt{src/schema.yaml}, which references modular sub-schemas in \texttt{src/schema/}. Every configurable field must be declared in the schema; unrecognized keys are rejected at validation time. This appendix documents the complete schema structure, including all fields, their types, constraints, and cross-component validation rules.
+
+\subsection{Top-Level Structure}
+
+The root schema object has five top-level properties. All are optional except \texttt{training}, which is required:
+
+\begin{itemize}[nosep]
+    \item \texttt{base\_model} (string) --- HuggingFace model identifier or local path for continual pretraining or SBERT fine-tuning. When set, \texttt{model\_class} and \texttt{model} are not required (the architecture is inferred from the checkpoint).
+    \item \texttt{tokenizer} (object) --- Tokenizer configuration with fields \texttt{name\_or\_path} (string), \texttt{use\_fast} (bool), and \texttt{trust\_remote\_code} (bool). Required when using \texttt{base\_model} with the \texttt{mlm} task.
+    \item \texttt{model\_class} (enum) --- Model architecture variant: \texttt{frankenstein} (mixed-architecture encoder) or \texttt{frankensteindecoder} (autoregressive causal decoder). Required when \texttt{base\_model} is not set.
+    \item \texttt{model} (object) --- Model architecture parameters (see \S\ref{subsec:model-config}). Required when \texttt{base\_model} is not set.
+    \item \texttt{training} (object, \textbf{required}) --- Training configuration (see \S\ref{subsec:training-config}).
+\end{itemize}
+
+The schema enforces a mutual-exclusivity rule: either \texttt{base\_model} must be present, or both \texttt{model\_class} and \texttt{model} must be present.
+
+\subsection{Model Configuration}
+\label{subsec:model-config}
+
+The \texttt{model} object defines all architectural hyperparameters. Required fields are \texttt{dims.vocab\_size}, \texttt{dims.hidden\_size}, \texttt{dims.num\_layers}, \texttt{dims.num\_heads}, and \texttt{dims.layer\_pattern}. Table~\ref{tab:model-fields} lists all model fields with their types and descriptions.
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{8.5cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Complete model configuration fields. All fields are optional unless marked required.}
+\label{tab:model-fields}
+\endlastfoot
+\midrule
+\multicolumn{3}{l}{\textit{model.dims.*}} \\
+\midrule
+dims.mode & enum (encoder, decoder) & Attention masking mode. \texttt{encoder} = bidirectional; \texttt{decoder} = causal. \\
+dims.vocab\_size & int $\ge 1$ (required) & Number of unique tokens in the vocabulary. Must match the tokenizer's vocab size. \\
+dims.hidden\_size & int $\ge 1$ (required) & Hidden dimension. Must be divisible by \texttt{num\_heads}. Typical: 512--2048. \\
+dims.num\_layers & int $\ge 1$ (required) & Number of physical transformer layers. Typical: 6--24. \\
+dims.num\_loops & int $\ge 1$ & Logical loop count. Each layer in \texttt{layer\_pattern} runs \texttt{num\_loops} times. Default: 1. \\
+dims.num\_heads & int $\ge 1$ (required) & Number of parallel attention heads. Must divide \texttt{hidden\_size} evenly. \\
+dims.retention\_heads & int $\ge 1$ & Number of heads for RetNet layers. Must divide \texttt{hidden\_size} evenly. \\
+dims.dropout & float [0,1] & Global dropout rate. Typical: 0.1 (BERT standard). \\
+dims.layer\_pattern & array of enum (required) & Ordered sequence of layer types. Length must equal \texttt{num\_layers}. 35+ mixer types available (see Table~\ref{tab:layer-pattern}). \\
+\midrule
+\multicolumn{3}{l}{\textit{model.norm.*}} \\
+\midrule
+norm.type & enum & Normalization strategy: \texttt{layer\_norm}, \texttt{dynamic\_tanh}, \texttt{derf}, \texttt{rms\_norm}, \texttt{prms\_norm}. \\
+norm.partial\_ratio & float (0,1] & Fraction of hidden dims for pRMSNorm estimation. Default: 0.0625. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.embedding.factorized.*}} \\
+\midrule
+embedding.factorized.enabled & bool & Enable embedding matrix factorization to reduce parameters. \\
+embedding.factorized.dim & int $\ge 1$ & Intermediate dimension for factorized embeddings. Typical: 64--256. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.embedding.conv.*}} \\
+\midrule
+embedding.conv.enabled & bool & Apply Conv1d over token embeddings to capture local n-gram patterns. \\
+embedding.conv.kernel & int $\ge 1$ & Kernel size for embedding Conv1d. Typical: 3. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.titan.*}} \\
+\midrule
+attention.titan.positional\_encoding & enum (hope, rope) & Positional encoding method for \texttt{titan\_attn} layers. \\
+attention.titan.use\_hope & bool & Legacy flag for HoPE in \texttt{titan\_attn}. Deprecated; prefer \texttt{positional\_encoding}. \\
+attention.titan.hope.base & float $\ge 0$ & Base frequency scale for HoPE. Typical: 10000. \\
+attention.titan.hope.damping & float $\ge 0$ & Damping coefficient for HoPE attention decay. Typical: 0.01. \\
+attention.titan.rope.base & float $\ge 0$ & Base frequency for RoPE. Typical: 10000. \\
+attention.titan.rope.scaling & float $\ge 0$ & Multiplier for RoPE position indices. Typical: 1.0. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.mla.*}} \\
+\midrule
+attention.mla.latent\_rank & int $\ge 1$ & Rank of joint KV latent for MLA. Default: \texttt{hidden\_size // 2}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.gqla.*}} \\
+\midrule
+attention.gqla.latent\_rank & int $\ge 1$ & Rank of joint KV latent for GQLA. Default: \texttt{hidden\_size // 2}. \\
+attention.gqla.num\_groups & int $\ge 1$ & Number of GQA groups for GQLA decode path. Must divide \texttt{num\_heads}. \\
+attention.gqla.decode\_path & enum (mqa\_absorb, gqa) & Decoding path for GQLA. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.mlra.*}} \\
+\midrule
+attention.mlra.latent\_rank & int $\ge 1$ & Total latent rank for MLRA. Default: \texttt{hidden\_size // 2}. \\
+attention.mlra.num\_latent\_heads & int $\ge 1$ & Number of disjoint latent sub-spaces for MLRA. Default: 4. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.tucker.*}} \\
+\midrule
+attention.tucker.query\_rank & int $\ge 1$ & Tucker rank for query weight tensor. Default: \texttt{hidden\_size}. \\
+attention.tucker.key\_rank & int $\ge 1$ & Tucker rank for key weight tensor. Default: \texttt{hidden\_size // 2}. \\
+attention.tucker.value\_rank & int $\ge 1$ & Tucker rank for value weight tensor. Default: \texttt{hidden\_size // 2}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.iha.*}} \\
+\midrule
+attention.iha.num\_pseudo\_heads & int $\ge 1$ & Number of pseudo-heads per head for IHA. Default: \texttt{num\_heads}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.gta.*}} \\
+\midrule
+attention.gta.num\_shared\_groups & int $\ge 1$ & Number of head groups sharing an attention map for GTA. Must divide \texttt{num\_heads}. \\
+attention.gta.value\_latent\_rank & int $\ge 1$ & Rank of value-cache latent for GTA. Default: \texttt{hidden\_size // 2}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.mtla.*}} \\
+\midrule
+attention.mtla.latent\_rank & int $\ge 1$ & Latent rank for MTLA. Default: \texttt{hidden\_size // 2}. \\
+attention.mtla.merge\_factor & int $\ge 1$ & Number of consecutive KV entries merged per temporal slot. Default: 2. \\
+attention.mtla.stride & int $\ge 1$ & Stride between merged temporal slots. Default: \texttt{mtla\_merge\_factor}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.cca.*}} \\
+\midrule
+attention.cca.latent\_rank & int $\ge 1$ & Latent width for CCA. Default: \texttt{hidden\_size // 4}. Must be divisible by \texttt{num\_heads}. \\
+attention.cca.num\_conv\_layers & enum (0, 1, 2) & Number of convolution layers in CCA. Default: 2. \\
+attention.cca.conv\_kernel\_seq & int $\ge 1$ & Kernel size of depth-wise causal sequence conv. Default: 4. \\
+attention.cca.conv\_kernel\_ch & int $\ge 1$ & Kernel size of head-wise grouped channel conv. Default: 3. \\
+attention.cca.qk\_mean & bool & Enable q-k-mean bias in CCA. Default: \texttt{true}. \\
+attention.cca.value\_shift & bool & Enable value-shift in CCA. Default: \texttt{true}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.ccgqa.*}} \\
+\midrule
+attention.ccgqa.query\_latent\_rank & int $\ge 1$ & Query latent width for CCGQA. Default: \texttt{hidden\_size // 2}. \\
+attention.ccgqa.kv\_latent\_rank & int $\ge 1$ & KV latent width for CCGQA. Default: \texttt{hidden\_size // 8}. \\
+attention.ccgqa.num\_kv\_heads & int $\ge 1$ & Number of KV heads for CCGQA. Must divide \texttt{num\_heads}. \\
+attention.ccgqa.num\_conv\_layers & enum (0, 1, 2) & Number of convolution layers in CCGQA. Default: 2. \\
+attention.ccgqa.conv\_kernel\_seq & int $\ge 1$ & Kernel size of depth-wise causal sequence conv. Default: 4. \\
+attention.ccgqa.conv\_kernel\_ch & int $\ge 1$ & Kernel size of head-wise grouped channel conv. Default: 3. \\
+attention.ccgqa.qk\_mean & bool & Enable q-k-mean bias in CCGQA. Default: \texttt{true}. \\
+attention.ccgqa.value\_shift & bool & Enable value-shift in CCGQA. Default: \texttt{true}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.msa.*}} \\
+\midrule
+attention.msa.block\_size & int $\ge 1$ & Block size for MiniMax Sparse Attention. Default: 128. \\
+attention.msa.topk\_blocks & int $\ge 1$ & Number of blocks selected per GQA group per query. Default: 16. \\
+attention.msa.index\_dim & int $\ge 1$ & Dimensionality of Index Branch heads. Default: 64. \\
+attention.msa.kl\_loss\_weight & float $\ge 0$ & Weight of KL alignment loss for MSA index branch. Default: 0.0. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.sparda.*}} \\
+\midrule
+attention.sparda.block\_size & int $\ge 1$ & KV block size for SparDA. Default: 128. \\
+attention.sparda.topk\_blocks & int $\ge 1$ & Number of KV blocks selected per GQA group. Default: 16. \\
+attention.sparda.forecast\_dim & int $\ge 1$ & Dimensionality of Forecast projection. Default: 64. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.engram.*}} \\
+\midrule
+attention.engram.max\_ngram\_size & int $\ge 2$ & Maximum N-gram order for Engram memory module. \\
+attention.engram.n\_heads\_per\_ngram & int $\ge 1$ & Number of hash heads per N-gram order. \\
+attention.engram.embed\_dim\_per\_head & int $\ge 1$ & Embedding dimension per hash head. \\
+attention.engram.kernel\_size & int $\ge 1$ & Causal depthwise conv kernel width for Engram. \\
+attention.engram.seed & int & Random seed for N-gram hash multipliers. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.mhc.*}} \\
+\midrule
+mhc.enabled & bool & Enable the manifold-constrained n-stream residual (mHC, arXiv:2512.24880). Default: \texttt{false}. \\
+mhc.expansion\_rate & int $\ge 1$ & Residual-stream expansion factor $n$. The stream becomes $n \times$ \texttt{hidden\_size}. $1$ recovers the identity mapping. Default: 4. \\
+mhc.sinkhorn\_iters & int $\ge 1$ & Sinkhorn-Knopp normalisation rounds constraining $H^{\text{res}}$ to be doubly stochastic. Default: 20. \\
+mhc.gating\_init & float $> 0$ & Initial value of the mHC gating scalars $\alpha$. Default: 0.01. \\
+mhc.checkpoint & bool & Gradient checkpointing on mHC layers to mitigate the $\sim n\times$ activation-memory increase. Default: \texttt{false}. \\
+mhc.full\_prec\_under\_bitnet & bool & Keep the mHC coefficient projection full-precision under BitNet. Default: \texttt{true}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.* (flat top-level)}} \\
+\midrule
+use\_moe & bool & Enable Mixture of Experts in FFN layers. \\
+num\_experts & int $\ge 1$ & Total number of expert networks in MoE layers. Requires \texttt{use\_moe=true}. \\
+top\_k\_experts & int $\ge 1$ & Number of experts activated per token in MoE. Must be $\le$ \texttt{num\_experts}. \\
+use\_bitnet & bool & Enable BitLinear ternary weight quantization. Default: \texttt{true}. \\
+bitnet\_routers & bool & Also quantize routing/scoring projections. Requires \texttt{use\_bitnet=true}. Default: \texttt{false}. \\
+use\_bitnet\_conv & bool & Quantize embedding Conv1d with BitConv1d. Requires \texttt{use\_bitnet=true} and \texttt{embedding.conv.enabled=true}. Default: \texttt{false}. \\
+use\_mixture\_of\_depths & bool & Enable Mixture-of-Depths token routing. \\
+mixture\_of\_depths\_capacity\_ratio & float (0,1] & Fraction of tokens updated per layer in MoD. \\
+mixture\_of\_depths\_router\_aux\_loss\_weight & float $\ge 0$ & Weight for MoD router auxiliary loss. \\
+ffn\_hidden\_size & int $\ge 1$ & Intermediate dimension of feed-forward layers. Typical: $4\times$ \texttt{hidden\_size}. \\
+ffn\_activation & enum (silu, gelu) & Non-linear activation for FFN layers. \\
+ffn\_activation\_config & object & Nested parameters for learnable activations (RAF degrees/version/init, PReLU init, etc.). \\
+ode\_solver & enum (rk4, euler) & Numerical integration method for ODE layers. \\
+ode\_steps & int $\ge 1$ & Number of integration steps for ODE layers. Typical: 2--4. \\
+\end{longtable}
+
+Fields are grouped under hierarchical sub-objects (\texttt{dims}, \texttt{norm}, \texttt{embedding.factorized}, \texttt{embedding.conv}, \texttt{attention.titan}, \texttt{attention.mla}, \texttt{attention.gqla}, etc.); each sub-header row marks the prefix in effect for the rows that follow it. Fields listed under \texttt{model.*} remain flat top-level keys.
+
+\subsubsection{Layer Pattern Enumeration}
+\label{tab:layer-pattern}
+
+The \texttt{model.dims.layer\_pattern} array accepts the following 35 mixer types. Each element defines one physical layer in the model stack. Table~\ref{tab:layer-pattern-enum} lists all available types with their training and inference support.
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{5.5cm}cc}
+\toprule
+\textbf{Type} & \textbf{Description} & \textbf{Train} & \textbf{Infer} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Type} & \textbf{Description} & \textbf{Train} & \textbf{Infer} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Complete \texttt{layer\_pattern} enumeration. $\checkmark$ = supported, $\times$ = not supported.}
+\label{tab:layer-pattern-enum}
+\endlastfoot
+standard\_attn & Classic multi-head self-attention (BERT-style) & \checkmark & \checkmark \\
+sigmoid\_attn & Sigmoid-gated attention & \checkmark & \checkmark \\
+gated\_softmax\_attn & Gated softmax attention with post-SDPA sigmoid & \checkmark & \checkmark \\
+titan\_attn & Titan attention with positional encoding (HoPE/RoPE) & \checkmark & \checkmark \\
+retnet / retnet\_attn & Retention Network (RNN+transformer hybrid) & \checkmark & \checkmark \\
+mamba & Selective state-space model (SSM) & \checkmark & \checkmark \\
+ode & Continuous-depth ODE layer & \checkmark & \checkmark \\
+gla\_attn & Gated Linear Attention with multiplicative decay & \checkmark & \checkmark \\
+deltanet\_attn / gated\_deltanet\_attn & DeltaNet with corrective delta rule & \checkmark & \checkmark \\
+gated\_deltanet2\_attn & Gated DeltaNet-2 with decoupled channel-wise erase/write gates & \checkmark & \checkmark \\
+hgrn2\_attn & HGRN2 with hierarchical forget gates & \checkmark & \checkmark \\
+fox\_attn & Forgetting Transformer (FoX) with forget bias in logits & \checkmark & \checkmark \\
+nsa\_attn & Native Sparse Attention (three-branch) & \checkmark & \checkmark \\
+engram\_attn & N-gram conditional memory lookup & \checkmark & \checkmark \\
+gqa\_attn & Grouped-Query Attention with configurable KV heads & \checkmark & \checkmark \\
+longformer\_attn & Longformer: sliding windows + global tokens & \checkmark & \checkmark \\
+bigbird\_attn & BigBird: local + random + global attention & \checkmark & \checkmark \\
+sparse\_transformer\_attn & Sparse Transformer: factorized patterns & \checkmark & \checkmark \\
+sparsek\_attn & SparseK: differentiable top-k KV selection & \checkmark & \checkmark \\
+sparge\_attn & SpargeAttn --- two-stage block pruning & $\times$ & \checkmark \\
+fasa\_attn & FASA --- frequency-aware token selection & $\times$ & \checkmark \\
+msa\_attn & MiniMax Sparse Attention --- block-sparse on GQA & \checkmark & \checkmark \\
+sparda\_attn & SparDA --- decoupled sparse attention with Forecast projection & \checkmark & \checkmark \\
+kda\_attn & Kimi Delta Attention --- channel-wise decay + scalar write gate & \checkmark & \checkmark \\
+mla\_attn & Multi-Head Latent Attention + RoPE & \checkmark & \checkmark \\
+gqla\_attn & Group-Query Latent Attention --- two decoding paths & \checkmark & \checkmark \\
+mlra\_attn & Multi-Head Low-Rank Attention --- partitionable latent & \checkmark & \checkmark \\
+tucker\_attn & Tucker Attention --- generalised low-rank factorisation & \checkmark & \checkmark \\
+iha\_attn & Interleaved Head Attention --- cross-head pseudo-heads & \checkmark & \checkmark \\
+gta\_attn & Grouped-head laTenT Attention --- shared map + latent values & \checkmark & \checkmark \\
+mtla\_attn & Multi-head Temporal Latent Attention --- temporal KV merge & \checkmark & \checkmark \\
+cca\_attn & Compressed Convolutional Attention --- latent-space attention + convs & \checkmark & \checkmark \\
+ccgqa\_attn & Compressed Convolutional Grouped Query Attention --- CCA + GQA in latent & \checkmark & \checkmark \\
+\end{longtable}
+
+\subsection{Training Configuration}
+\label{subsec:training-config}
+
+The \texttt{training} object controls the entire training pipeline. The only required field is \texttt{task}. Table~\ref{tab:training-fields} lists all training fields.
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{8.5cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Complete training configuration fields.}
+\label{tab:training-fields}
+\endlastfoot
+task & enum (mlm, sbert) (required) & Training objective. \texttt{mlm} = Masked Language Modeling; \texttt{sbert} = Sentence-BERT fine-tuning. \\
+num\_epochs & int $\ge 1$ & Complete passes through the training dataset (MLM only). \\
+batch\_size & int $\ge 1$ & Examples per optimizer step (before gradient accumulation). \\
+dataloader\_workers & int $\ge 0$ & Parallel worker processes for data loading. \\
+max\_length & int $\ge 1$ & Maximum token sequence length. Typical: 128--2048. \\
+mlm\_probability & float [0,1] & Fraction of tokens masked for MLM prediction. Standard: 0.15. \\
+max\_samples & int $\ge 1$ & Total samples before stopping, independent of epochs. \\
+dataset\_batch\_size & int $\ge 1$ & Internal batch size for streaming dataset. \\
+num\_workers & int $\ge 0$ & Parallel workers for dataset streaming pipeline. \\
+cache\_dir & string & Directory for caching processed datasets. \\
+local\_parquet\_dir & string & Path to local parquet files for offline streaming. \\
+prefer\_local\_cache & bool & Check local cache first before remote download. \\
+stream\_local\_parquet & bool & Stream from local parquet when \texttt{local\_parquet\_dir} is set. \\
+join\_temp\_data\_context\_window & int $\ge 0$ & If $>0$, joins cached token chunks into sequences of this length. \\
+join\_temp\_data\_min\_remainder\_tokens & int $\ge 0$ & Minimum content tokens in last partial joined window. \\
+use\_amp & bool & Enable FP16 mixed precision. \\
+gradient\_accumulation\_steps & int $\ge 1$ & Accumulate gradients over N mini-batches before optimizer step. \\
+optimizer & object & Optimizer configuration (see \S\ref{subsec:optimizer-config}). Required when \texttt{task=mlm}. \\
+sbert & object & SBERT training configuration (see \S\ref{subsec:sbert-config}). Required when \texttt{task=sbert}. \\
+scheduler\_total\_steps & int $\ge 1$ & Total optimizer steps for LR schedule. \\
+scheduler\_warmup\_ratio & float [0,1] & Fraction of \texttt{scheduler\_total\_steps} for LR warmup. \\
+scheduler\_type & enum (cosine, constant, linear\_warmup\_then\_constant) & LR decay strategy. \\
+grad\_clip\_max\_norm & float $\ge 0$ & Maximum allowed gradient norm. 0 = disabled. \\
+inf\_post\_clip\_threshold & float $\ge 0$ & Threshold for flagging post-clip gradient explosions. \\
+max\_nan\_retries & int $\ge 0$ & Maximum retries on NaN/Inf gradients before stopping. \\
+checkpoint\_every\_n\_steps & int $\ge 1$ & Save rolling checkpoint every N steps. \\
+max\_rolling\_checkpoints & int $\ge 1$ & Maximum rolling checkpoints kept. Oldest deleted when exceeded. \\
+num\_best\_checkpoints & int $\ge 1$ & Number of best checkpoints kept permanently (by validation loss). \\
+nan\_check\_interval & int $\ge 1$ & Steps between NaN/Inf checks. \\
+log\_gradient\_stats & bool & Log per-layer gradient norms, min/max. \\
+gradient\_log\_interval & int $\ge 1$ & Steps between gradient stat logs. \\
+csv\_log\_path & string & File path for step-level training metrics in CSV format. \\
+csv\_rotate\_on\_schema\_change & bool & Rotate CSV file when schema changes. \\
+gpu\_metrics\_backend & enum (nvml, none) & GPU telemetry backend. \\
+nvml\_device\_index & int $\ge 0$ & GPU index to monitor (0 = first GPU). \\
+enable\_block\_grad\_norms & bool & Log gradient norms per block (embeddings, attention, FFN, etc.). \\
+telemetry\_log\_interval & int $\ge 1$ & Steps between heavy telemetry logs. \\
+gpu\_temp\_guard\_enabled & bool & Strict GPU temperature monitoring. Requires \texttt{gpu\_metrics\_backend=nvml}. \\
+switch\_on\_thermal & bool & Critical temp triggers GPU$\to$CPU fallback, auto-resume on cooldown. \\
+gpu\_temp\_pause\_threshold\_c & float & Temperature ($^\circ$C) to pause training. \\
+gpu\_temp\_resume\_threshold\_c & float & Temperature ($^\circ$C) to resume training after pause. \\
+gpu\_temp\_critical\_threshold\_c & float & Informational logging marker for severe thermal events. \\
+gpu\_temp\_poll\_interval\_seconds & float & Seconds between temp checks during cooldown wait. \\
+use\_galore & bool & Enable Gradient Low-Rank Projection for memory-efficient training. \\
+galore\_rank & int $\ge 1$ & Low-rank projection dimension for GaLore. \\
+galore\_update\_interval & int $\ge 1$ & Steps between projection matrix recomputation. \\
+galore\_scale & float $\ge 0$ & Scaling factor for projected gradients. \\
+galore\_max\_dim & int $\ge 1$ & Maximum tensor dimension for GaLore projection. \\
+hf\_output\_dir & string & Directory for saving final model via \texttt{save\_pretrained()}. \\
+\end{longtable}
+
+\subsection{Optimizer Configuration}
+\label{subsec:optimizer-config}
+
+The \texttt{training.optimizer} object has two fields:
+
+\begin{itemize}[nosep]
+    \item \texttt{optimizer\_class} (enum, required) --- One of 23 optimizer algorithms: \texttt{sgd\_momentum}, \texttt{adamw}, \texttt{adafactor}, \texttt{galore\_adamw}, \texttt{prodigy}, \texttt{lion}, \texttt{sophia}, \texttt{muon}, \texttt{turbo\_muon}, \texttt{radam}, \texttt{adan}, \texttt{adopt}, \texttt{ademamix}, \texttt{mars\_adamw}, \texttt{cautious\_adamw}, \texttt{lamb}, \texttt{schedulefree\_adamw}, \texttt{shampoo}, \texttt{soap}, \texttt{anon}, \texttt{apollo}, \texttt{apollo\_mini}, \texttt{q\_apollo}.
+    \item \texttt{parameters} (object) --- Optimizer hyperparameters with prefixed keys in the format \texttt{<optimizer>-<group>\_<param>}.
+\end{itemize}
+
+\subsubsection{Shared Per-Group Suffixes}
+
+All optimizers support the following per-parameter-group suffixes, prefixed by the optimizer class name (e.g., \texttt{adamw-lr\_embeddings}):
+
+\begin{itemize}[nosep]
+    \item \textbf{Learning rate groups:} \texttt{lr\_embeddings}, \texttt{lr\_norms}, \texttt{lr\_attention}, \texttt{lr\_other}
+    \item \textbf{Weight decay groups:} \texttt{wd\_embeddings}, \texttt{wd\_norms}, \texttt{wd\_attention}, \texttt{wd\_other}
+    \item \textbf{Beta groups:} \texttt{betas\_embeddings}, \texttt{betas\_norms}, \texttt{betas\_attention}, \texttt{betas\_other}
+    \item \textbf{Epsilon groups:} \texttt{eps\_embeddings}, \texttt{eps\_norms}, \texttt{eps\_attention}, \texttt{eps\_other}
+\end{itemize}
+
+Note: parameters of ODE, RetNet, and Mamba mixers are routed into the \texttt{attention} group rather than having dedicated groups.
+
+\subsubsection{Optimizer-Specific Global Suffixes}
+
+Table~\ref{tab:optimizer-specific-suffixes} lists the additional global suffixes supported by each optimizer (prefixed by the optimizer name).
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Optimizer} & \textbf{Specific Global Suffixes} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Optimizer} & \textbf{Specific Global Suffixes} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{\textit{continued on next page}} \\
+\endfoot
+\bottomrule
+\caption{Optimizer-specific global parameter suffixes. All keys are prefixed with the optimizer class name (e.g., \texttt{sgd\_momentum-momentum}).}
+\label{tab:optimizer-specific-suffixes}
+\endlastfoot
+sgd\_momentum & \texttt{momentum}, \texttt{nesterov} \\
+adamw & (none --- shared suffixes only) \\
+adafactor & \texttt{beta2\_decay}, \texttt{clip\_threshold}, \texttt{eps1}, \texttt{eps2} \\
+galore\_adamw & \texttt{rank}, \texttt{update\_proj\_gap} \\
+prodigy & \texttt{d\_coef} \\
+lion & (none --- shared suffixes only) \\
+sophia & \texttt{rho}, \texttt{update\_k} \\
+muon & \texttt{momentum}, \texttt{nesterov}, \texttt{ns\_steps}, \texttt{ns\_eps} \\
+turbo\_muon & \texttt{momentum}, \texttt{nesterov}, \texttt{ns\_steps}, \texttt{ns\_eps} \\
+radam & (none --- shared suffixes only) \\
+adan & (none --- shared suffixes only) \\
+adopt & (none --- shared suffixes only) \\
+ademamix & (none --- shared suffixes only) \\
+mars\_adamw & (none --- shared suffixes only) \\
+cautious\_adamw & \texttt{cautious\_clip} \\
+lamb & (none --- shared suffixes only) \\
+schedulefree\_adamw & (none --- shared suffixes only) \\
+shampoo & (none --- shared suffixes only) \\
+soap & (none --- shared suffixes only) \\
+anon & \texttt{gamma} \\
+apollo & \texttt{rank}, \texttt{update\_proj\_gap}, \texttt{scale}, \texttt{scale\_type}, \texttt{proj\_type}, \texttt{scale\_front}, \texttt{disable\_nl} \\
+apollo\_mini & \texttt{update\_proj\_gap}, \texttt{scale}, \texttt{proj\_type}, \texttt{scale\_front}, \texttt{disable\_nl} \\
+q\_apollo & \texttt{rank}, \texttt{update\_proj\_gap}, \texttt{scale}, \texttt{scale\_type}, \texttt{proj\_type}, \texttt{scale\_front}, \texttt{disable\_nl}, \texttt{quant\_bits} \\
+\end{longtable}
+
+\subsection{SBERT Configuration}
+\label{subsec:sbert-config}
+
+The \texttt{training.sbert} object configures Sentence-BERT fine-tuning. It is required when \texttt{training.task=sbert}. Key fields include:
+
+\begin{itemize}[nosep]
+    \item \texttt{dataset\_name} (string) --- HuggingFace dataset ID or local path.
+    \item \texttt{dataset\_type} (enum) --- \texttt{paired\_similarity}, \texttt{triplets}, or \texttt{qa}.
+    \item \texttt{columns} (object) --- Optional column name overrides for dataset fields.
+    \item \texttt{query\_prefix} / \texttt{document\_prefix} (string) --- Text prepended to query/document fields during tokenization.
+    \item \texttt{output\_dir} (string) --- Directory for SBERT artifacts.
+    \item \texttt{batch\_size} (int) --- Examples per batch. Typical: 16--64.
+    \item \texttt{gradient\_accumulation\_steps} (int) --- Accumulation steps for SBERT.
+    \item \texttt{max\_grad\_norm} (float) --- Gradient clipping threshold. Typical: 0.5--2.0.
+    \item \texttt{epochs} (int) --- Complete passes through SBERT dataset. Typical: 1--10.
+    \item \texttt{warmup\_steps} (int) --- Steps for LR warmup.
+    \item \texttt{evaluation\_steps} (int) --- Evaluate every N steps.
+    \item \texttt{checkpoint\_save\_steps} (int) --- Save rolling checkpoint every N steps.
+    \item \texttt{resume\_from\_checkpoint} (bool) --- Resume from latest checkpoint.
+    \item \texttt{learning\_rate} (float) --- Initial LR. Typical: $1\times10^{-5}$ to $1\times10^{-4}$.
+    \item \texttt{max\_train\_samples} / \texttt{max\_eval\_samples} (int) --- Limit training/evaluation samples.
+    \item \texttt{max\_seq\_length} (int) --- Max token length for input texts. Typical: 128--512.
+    \item \texttt{pooling\_mode} (enum) --- \texttt{mean}, \texttt{cls}, or \texttt{max}.
+    \item \texttt{trust\_remote\_code} (bool) --- Allow custom code from model repo.
+    \item \texttt{use\_amp} (bool) --- Enable FP16 mixed precision.
+    \item \texttt{resample\_balanced} (bool) --- Resample to balanced distribution over similarity scores.
+    \item \texttt{standardize\_scores} (bool) --- Z-score normalize similarity scores.
+    \item \texttt{resample\_std} (float) --- Target std dev when \texttt{standardize\_scores=true}.
+    \item \texttt{optimizer} (object) --- Custom optimizer for SBERT (same classes as MLM training).
+    \item \texttt{wandb\_project} (string) --- Weights \& Biases project name for telemetry.
+\end{itemize}
+
+\subsection{Validation Rules}
+
+The schema enforces the following cross-component validation rules, implemented both in the JSON Schema (\texttt{\_conditional\_rules.yaml}) and at runtime in the configuration loader:
+
+\begin{enumerate}[nosep]
+    \item \texttt{additionalProperties: false} is enforced at all nesting levels. Any unrecognized key in any object triggers a validation error.
+    \item \texttt{model.dims.hidden\_size} must be divisible by \texttt{model.dims.num\_heads}. The per-head dimension is $\texttt{hidden\_size} / \texttt{num\_heads}$.
+    \item \texttt{model.dims.num\_kv\_heads} must divide \texttt{model.dims.num\_heads} exactly when Grouped-Query Attention is used.
+    \item \texttt{vocab\_size} must match the tokenizer's vocabulary size. Mismatch causes token ID corruption and unrecoverable training failure.
+    \item When \texttt{base\_model} is set, \texttt{training.task} is required. If \texttt{task=mlm}, \texttt{tokenizer.name\_or\_path} is also required.
+    \item \texttt{task: mlm} requires \texttt{training.optimizer}; \texttt{task: sbert} requires \texttt{training.sbert}.
+    \item \texttt{bitnet\_routers=true} requires \texttt{use\_bitnet=true}. The flag has no effect otherwise.
+    \item \texttt{use\_mhc=true} (mHC n-stream residual) and \texttt{use\_mixture\_of\_depths=true} are mutually exclusive. Enabling both raises a \texttt{ValueError}: MoD token routing operates on a single $C$-dimensional stream, which conflicts with the n-stream residual.
+    \item \texttt{fasa\_attn} and \texttt{sparge\_attn} are evaluation-only layer types. They raise \texttt{RuntimeError} if used during training. They must not appear in \texttt{model.dims.layer\_pattern} for training runs.
+    \item \texttt{model\_class: frankensteindecoder} forces \texttt{model.dims.mode: decoder} at runtime. Setting \texttt{model.dims.mode: encoder} with this class is overridden.
+    \item Either \texttt{base\_model} must be present, or both \texttt{model\_class} and \texttt{model} must be present. The schema rejects configurations that provide neither or an incomplete combination.
+\end{enumerate}

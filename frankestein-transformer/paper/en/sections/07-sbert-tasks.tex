@@ -1,0 +1,38 @@
+\section{SBERT Downstream Tasks}
+\label{sec:sbert}
+
+Sentence embedding is built on Siamese-style training \citep{reimers_sentence-bert_2019}. For sentence pair $(s_1,s_2)$ with embeddings $(e_1,e_2)$:
+\[
+\text{cos}(e_1,e_2)=\frac{e_1^\top e_2}{\|e_1\|\|e_2\|}
+\]
+and regression-style cosine loss:
+\[
+\mathcal{L}_{\text{cos}}=\left(\text{cos}(e_1,e_2)-y\right)^2
+\]
+with $y\in[-1,1]$ in this pipeline.
+
+Supported downstream modes:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Similarity}: pairwise score between two sentences.
+    \item \textbf{Search}: top-$k$ nearest neighbors over a corpus.
+    \item \textbf{Cluster}: grouping embeddings (e.g., k-means).
+    \item \textbf{Encode}: persistent embedding export for later retrieval.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\fitfigure{\begin{tikzpicture}[node distance=1.1cm and 1.0cm]
+\node[box, fill=blue!8] (encoder) {Shared encoder};
+\node[box, fill=yellow!10, below left=of encoder, xshift=-1.2cm] (sim) {Similarity\\cosine score};
+\node[box, fill=green!8, below=of encoder] (search) {Search\\top-$k$ retrieval};
+\node[box, fill=orange!12, below right=of encoder, xshift=1.2cm] (cluster) {Cluster / encode\\offline analysis};
+\draw[line] (encoder) -- (sim);
+\draw[line] (encoder) -- (search);
+\draw[line] (encoder) -- (cluster);
+\end{tikzpicture}}
+\caption{SBERT workflow reuse. A single encoder supports online pair scoring, corpus retrieval, clustering, and persistent embedding export.}
+\label{fig:sbert-modes}
+\end{figure}
+
+The pseudocode for the SBERT inference mode router---dispatching among similarity, search, cluster, and encode modes over a shared encoder---is deferred to Appendix~\ref{sec:annex-norm-bitnet-mod}.
+

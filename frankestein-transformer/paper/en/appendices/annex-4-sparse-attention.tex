@@ -1,0 +1,588 @@
+\section{Comprehensive Sparse Attention Mechanisms}
+\label{sec:annex-sparse}
+
+\subsection{Executive Summary}
+
+Sparse attention mechanisms address the prohibitive $\mathcal{O}(n^2)$ computational and memory complexity of standard scaled dot-product attention by restricting the set of attended key-value pairs. Modern sparse attention spans a rich design space distinguished by four orthogonal dimensions: (i) \textbf{sparsity pattern} (fixed geometric, data-dependent, or frequency-based), (ii) \textbf{trainability} (end-to-end trained or inference-only), (iii) \textbf{sparsity unit} (individual tokens, local windows, or blocks), and (iv) \textbf{mechanism} (masking, selection, filtering, or compression). This annex synthesizes seven major sparse attention families---Sparse Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, and FASA---providing mathematical formulations, algorithmic pseudocode, and comprehensive architectural comparisons.
+
+\subsection{Sparse Transformer: Factorized Strided and Fixed Patterns}
+
+\subsubsection{Mathematical Formulation}
+
+The Sparse Transformer \citep{child_sparse_transformer_2019} reduces quadratic complexity to $\mathcal{O}(n\sqrt{n})$ by factorizing sparse attention into two complementary sparse heads. Let $n$ be the sequence length and $l = \lfloor\sqrt{n}\rfloor$ be the stride.
+
+\paragraph{Strided attention head}: Each position $i$ attends to every $l$-th previous position:
+\[
+\mathcal{A}_i^{(\text{strided})} = \{j : j \leq i,\; (i - j) \bmod l = 0\}
+\]
+
+\paragraph{Fixed attention head}: Each position $i$ attends to positions within its local block plus fixed summary columns:
+\[
+\mathcal{A}_i^{(\text{fixed})} = \{j : \lfloor j/l \rfloor = \lfloor i/l \rfloor\} \cup \{j : j \bmod l \in \{l-c, \ldots, l-1\}\}
+\]
+where $c$ is a hyperparameter controlling the number of summary columns (typically $c=1$ or $c=2$).
+
+The attention computation for each head $h$ follows standard scaled dot-product rules restricted to the sparse set:
+\[
+\text{Attn}_h(Q, K, V)_i = \text{softmax}\left(\frac{q_i^h K_{\mathcal{A}_i}^h\top}{\sqrt{d_k}}\right) V_{\mathcal{A}_i}^h
+\]
+
+The key insight is that with the two factorized heads operating in parallel across a depth of $L$ transformer layers, every position can reach every other position through a path of length at most $L + 1$, preserving long-range reachability with a fraction of dense attention cost.
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{Sparse Transformer Attention: Strided + Fixed Dual Heads}
+\begin{algorithmic}[1]
+\Require Query $\mathbf{Q} \in \mathbb{R}^{n \times d}$, Key $\mathbf{K} \in \mathbb{R}^{n \times d}$, Value $\mathbf{V} \in \mathbb{R}^{n \times d}$
+\Require Stride $l = \lfloor\sqrt{n}\rfloor$, summary columns $c \in \{1, 2\}$
+\Ensure Output $\mathbf{Y} \in \mathbb{R}^{n \times d}$
+\State \textbf{Head 1: Strided Attention}
+\For{$i = 1, \ldots, n$}
+    \State $\mathcal{A}_i \gets \{j : j \leq i \text{ and } (i-j) \bmod l = 0\}$ \Comment{Every $l$-th position}
+    \State $\text{scores}_{i} \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_{i} \gets \text{softmax}(\text{scores}_{i})$
+    \State $\mathbf{y}_i^{(1)} \gets \text{attn}_{i} \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\State \textbf{Head 2: Fixed Block + Summary Attention}
+\For{$i = 1, \ldots, n$}
+    \State $\text{block\_start} \gets \lfloor i/l \rfloor \cdot l$, $\text{block\_end} \gets \min(i+1, \text{block\_start}+l)$
+    \State $\mathcal{A}_i \gets [\text{block\_start}, \text{block\_end}) \cup \{\text{cols from last } c \text{ columns}\}$
+    \State $\text{scores}_{i} \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_{i} \gets \text{softmax}(\text{scores}_{i})$
+    \State $\mathbf{y}_i^{(2)} \gets \text{attn}_{i} \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\State Concatenate: $\mathbf{Y} = [\mathbf{y}^{(1)} \| \mathbf{y}^{(2)}]$ and project via output linear layer
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: $\mathcal{O}(n\sqrt{n} \cdot d)$ during training; $\mathcal{O}(n)$ per token during generation.
+    \item \textbf{Trainable}: Yes; full backpropagation through selected positions.
+    \item \textbf{Sparsity pattern}: Fixed and data-agnostic; patterns do not adapt to content.
+    \item \textbf{Strength}: Structured reachability guarantees long-range dependencies; proven effective on long sequences (Enwik8, text images).
+    \item \textbf{Limitation}: Fixed patterns may miss important but non-contiguous relationships; requires custom CUDA kernels for practical efficiency.
+\end{itemize}
+
+\subsection{Longformer: Sliding Window, Dilation, and Global Tokens}
+
+\subsubsection{Mathematical Formulation}
+
+Longformer \citep{beltagy_longformer_2020} achieves linear $\mathcal{O}(n \cdot w)$ complexity by combining three complementary attention patterns.
+
+\paragraph{Sliding window attention}: Local neighborhood of size $w$:
+\[
+\mathcal{A}_i^{(\text{window})} = \{j : |i - j| \leq w/2\}
+\]
+
+\paragraph{Dilated sliding window}: Windowed attention with dilation $d$, skipping stride $d+1$:
+\[
+\mathcal{A}_i^{(\text{dilated})} = \{j : |i - j| \leq (w/2)(d+1) \text{ and } (i-j) \bmod (d+1) = 0\}
+\]
+
+\paragraph{Global attention}: Designated global tokens (e.g., $[\text{CLS}]$) attend to all positions and are attended by all:
+\[
+\mathcal{A}_i^{(\text{global})} = \begin{cases}
+\{1, \ldots, n\} & \text{if } i \in \mathcal{G} \\
+\mathcal{A}_i^{(\text{window})} \cup \mathcal{G} & \text{otherwise}
+\end{cases}
+\]
+
+The three patterns are applied via separate projections. The local and global attention can use either the same projections or task-specific separate ones.
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{Longformer: Sliding Window + Dilated + Global}
+\begin{algorithmic}[1]
+\Require Query $\mathbf{Q} \in \mathbb{R}^{n \times d}$, Key $\mathbf{K}$, Value $\mathbf{V}$, window size $w$, dilation $d$, global token indices $\mathcal{G}$
+\Ensure Output $\mathbf{Y}$
+\For{$i = 1, \ldots, n$}
+    \If{$i \in \mathcal{G}$}
+        \State $\mathcal{A}_i \gets \{1, \ldots, n\}$ \Comment{Global token attends to all}
+    \Else
+        \State Local window: $\mathcal{A}^{(\text{local})} \gets [i - w/2, i + w/2] \cap [1, n]$
+        \State Dilated offsets: $\mathcal{A}^{(\text{dilated})} \gets \{j : (i-j) \bmod (d+1) = 0\} \cap \mathcal{A}^{(\text{dilated range})}$
+        \State Combine: $\mathcal{A}_i \gets \mathcal{A}^{(\text{local})} \cup \mathcal{A}^{(\text{dilated})} \cup \mathcal{G}$
+    \EndIf
+    \State $\text{scores}_i \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_i \gets \text{softmax}(\text{scores}_i)$
+    \State $\mathbf{y}_i \gets \text{attn}_i \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: $\mathcal{O}(n \cdot w)$ where $w$ is the window size (linear when $w \ll n$).
+    \item \textbf{Trainable}: Yes; drop-in replacement for standard attention.
+    \item \textbf{Coverage}: With $L$ layers and window size $w$, receptive field grows to $L \times w$, covering entire sequence with shallow networks.
+    \item \textbf{Strength}: Practical for document-level tasks; dilation expands local receptive fields with minimal overhead; global tokens provide query-document correspondence.
+    \item \textbf{Limitation}: Window size remains a design hyperparameter; suboptimal for tasks requiring dense attention patterns.
+\end{itemize}
+
+\subsection{BigBird: Random, Local, and Global Sparse Graph}
+
+\subsubsection{Mathematical Formulation}
+
+BigBird \citep{zaheer_bigbird_2020} preserves universal approximation and Turing completeness using a principled mix of three sparsity patterns.
+
+\paragraph{Random connections}: Each position connects to $r$ randomly sampled positions:
+\[
+\mathcal{A}_i^{(\text{random})} = \text{RandomSample}(\{1, \ldots, n\}, r)
+\]
+
+\paragraph{Local window}: Sliding window neighborhood:
+\[
+\mathcal{A}_i^{(\text{local})} = \{j : |i-j| \leq w/2\}
+\]
+
+\paragraph{Global tokens}: Task-specific global anchors:
+\[
+\mathcal{A}_i^{(\text{global})} = \begin{cases}
+\{1, \ldots, n\} & \text{if } i \in \mathcal{G} \\
+\mathcal{A}_i^{(\text{random})} \cup \mathcal{A}_i^{(\text{local})} \cup \mathcal{G} & \text{otherwise}
+\end{cases}
+\]
+
+The composite sparse mask $M$ is:
+\[
+M_{ij} = \mathbf{1}[j \in \mathcal{A}_i^{(\text{random})} \cup \mathcal{A}_i^{(\text{local})} \cup \mathcal{A}_i^{(\text{global})}]
+\]
+
+In practice, BigBird groups tokens into blocks of size $b$ and applies the sparsity decision at the block level, enabling efficient block-sparse implementations.
+
+\subsubsection{Theoretical Guarantee}
+
+The authors prove that with $O(1)$ random connections and global tokens, the sparse graph maintains the same universal approximation and Turing completeness properties as dense attention. Formally, any computable function can be represented and any sequence of operations can be simulated within the BigBird connectivity graph.
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{BigBird: Random + Local + Global Block-Sparse Attention}
+\begin{algorithmic}[1]
+\Require Query $\mathbf{Q}$, Key $\mathbf{K}$, Value $\mathbf{V}$, block size $b$, random links per block $r$, global indices $\mathcal{G}$
+\Ensure Output $\mathbf{Y}$
+\State Reshape into blocks: $n_b = \lceil n / b \rceil$ blocks
+\For{block $i = 0, \ldots, n_b-1$}
+    \For{position $j$ in block $i$}
+        \State \textbf{Local window}: $\mathcal{A}_j^{(\text{local})} = \text{nearby positions in block} \cup \text{boundary positions}$
+        \State \textbf{Random block sampling}: Sample $r$ blocks uniformly at random, add all positions from those blocks
+        \State \textbf{Global}: Add all global token positions
+        \State $\mathcal{A}_j \gets \mathcal{A}_j^{(\text{local})} \cup \mathcal{A}_j^{(\text{random})} \cup \mathcal{G}$
+    \EndFor
+\EndFor
+\For{$i = 1, \ldots, n$}
+    \State $\text{scores}_i \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_i \gets \text{softmax}(\text{scores}_i)$
+    \State $\mathbf{y}_i \gets \text{attn}_i \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: $\mathcal{O}(n)$ or near-linear in optimal block-sparse implementation.
+    \item \textbf{Trainable}: Yes.
+    \item \textbf{Theoretical grounding}: Provably maintains universal approximation and Turing-completeness with sparse connectivity.
+    \item \textbf{Strength}: Strong long-document performance on question answering, summarization, and genomics tasks.
+    \item \textbf{Limitation}: Random sampling introduces variance and non-determinism; tuning of $r, w, g$ hyperparameters remains task-dependent.
+\end{itemize}
+
+\subsection{SparseK Attention: Differentiable Top-$k$ Selection}
+
+\subsubsection{Mathematical Formulation}
+
+SparseK \citep{lou_sparsek_2024} enables learnable sparsity via a \textbf{differentiable top-$k$ operator}. A scoring network $\phi_\theta$ evaluates key-value pair importance:
+
+\[
+u_j = \phi_\theta(\mathbf{k}_j, \mathbf{q}_i) \in \mathbb{R}
+\]
+
+The \textbf{SparseK operator} selects the top-$k$ scores while remaining differentiable. It computes a threshold $\tau(u)$ such that the sum of active scores equals $k$:
+
+\[
+\text{SparseK}(u, k)_j = \max(u_j - \tau(u), 0), \quad \text{where} \quad \sum_j \max(u_j - \tau, 0) = k
+\]
+
+The threshold $\tau$ is found via bisection. The attention becomes:
+
+\[
+m_j = \text{SparseK}(u, k)_j, \quad \text{Attn}_i = \text{softmax}\left(\frac{\mathbf{q}_i K_{\text{sel}}^\top}{\sqrt{d_k}}\right) V_{\text{sel}}
+\]
+
+where $K_{\text{sel}}, V_{\text{sel}}$ contain only the top-$k$ entries (those with $m_j > 0$).
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{SparseK: Differentiable Top-$k$ Attention}
+\begin{algorithmic}[1]
+\Require Query $\mathbf{q} \in \mathbb{R}^d$, Key matrix $\mathbf{K} \in \mathbb{R}^{n \times d}$, Value matrix $\mathbf{V} \in \mathbb{R}^{n \times d}$
+\Require Scoring network $\phi_\theta$, target sparsity $k$
+\Ensure Attention output $\mathbf{y}$
+\State \textbf{Compute importance scores:}
+\For{$j = 1, \ldots, n$}
+    \State $u_j \gets \phi_\theta(\mathbf{k}_j, \mathbf{q})$
+\EndFor
+\State \textbf{Compute differentiable top-$k$ via threshold:}
+\State $u_{\text{sorted}} \gets \text{sort}(u, \text{descending}=\text{True})$
+\State $\text{cumsum} \gets \text{cumsum}(u_{\text{sorted}})$
+\State Find $\rho = \max\{i : u_{\text{sorted}}[i] > 0 \text{ and cumsum}[i] \leq k\}$
+\State $\tau \gets (u_{\text{sorted}}[\rho] - k) / (\rho + 1)$ \Comment{Threshold for $k$ active elements}
+\State $m \gets \max(u - \tau, 0)$ \Comment{Differentiable selection mask}
+\State \textbf{Apply mask and compute attention:}
+\State $K_{\text{sel}} \gets K[m > 0]$, $V_{\text{sel}} \gets V[m > 0]$
+\State $\text{scores} \gets \mathbf{q} K_{\text{sel}}^\top / \sqrt{d_k}$
+\State $\text{attn} \gets \text{softmax}(\text{scores})$
+\State $\mathbf{y} \gets \text{attn} \cdot V_{\text{sel}}$
+\Return $\mathbf{y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: $\mathcal{O}(n \cdot d)$ during training (linear in sequence length); $\mathcal{O}(k)$ per token during generation.
+    \item \textbf{Trainable}: Yes; end-to-end gradient flow through the SparseK operator.
+    \item \textbf{Incremental generation}: Supports efficient constant-memory autoregressive generation.
+    \item \textbf{Strength}: Seamlessly integrates into existing LLM architectures; minimal fine-tuning needed.
+    \item \textbf{Limitation}: Scattered memory access from top-$k$ selection may limit cache efficiency on some hardware; scoring network adds overhead.
+\end{itemize}
+
+\subsection{NSA (Native Sparse Attention): Hardware-Aligned Hierarchical Branches}
+
+\subsubsection{Mathematical Formulation}
+
+NSA \citep{yuan_nsa_2025} decomposes sparse attention into three parallel branches that are combined through learned gates.
+
+\paragraph{Compression branch}: A learnable MLP $\varphi$ compresses key-value blocks:
+
+\[
+\tilde{K}_t^{\text{cmp}} = \left[\varphi(k_{id+1:id+l})\right]_{\substack{1 \leq i \leq \lfloor(t-l)/d\rfloor}} \quad, \quad \tilde{V}_t^{\text{cmp}} = \left[\varphi(v_{id+1:id+l})\right]
+\]
+
+\paragraph{Selection branch}: High-importance blocks are selected based on compressed scores:
+
+\[
+p_t^{\text{cmp}} = \text{softmax}(q_t^\top \tilde{K}_t^{\text{cmp}} / \sqrt{d}), \quad I_t = \mathrm{TopK}(p_t^{\text{cmp}}, n), \quad \tilde{K}_t^{\text{sel}} = \mathrm{Gather}(K, I_t)
+\]
+
+\paragraph{Sliding window branch}: Fixed local context:
+
+\[
+\tilde{K}_t^{\text{win}} = K_{t-w:t}, \quad \tilde{V}_t^{\text{win}} = V_{t-w:t}
+\]
+
+\paragraph{Gated combination}: The three attention outputs are combined via learned gates:
+
+\[
+\alpha_t^{(\text{cmp})} = \sigma(\text{Linear}_\text{cmp}(q_t)), \quad \alpha_t^{(\text{sel})} = \sigma(\text{Linear}_\text{sel}(q_t)), \quad \alpha_t^{(\text{win})} = \sigma(\text{Linear}_\text{win}(q_t))
+\]
+
+\[
+y_t = \alpha_t^{(\text{cmp})} \cdot \text{Attn}(q_t, \tilde{K}^{\text{cmp}}, \tilde{V}^{\text{cmp}}) + \alpha_t^{(\text{sel})} \cdot \text{Attn}(q_t, \tilde{K}^{\text{sel}}, \tilde{V}^{\text{sel}}) + \alpha_t^{(\text{win})} \cdot \text{Attn}(q_t, \tilde{K}^{\text{win}}, \tilde{V}^{\text{win}})
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{NSA: Compressed + Selected + Window Branches with Learned Gating}
+\begin{algorithmic}[1]
+\Require Query $\mathbf{q}_t$, cached Key/Value sequences, block size $l$, stride $d$, selection count $n$, window $w$
+\Require Compression MLP $\varphi$, gate networks $\text{Linear}_{\text{cmp}}, \text{Linear}_{\text{sel}}, \text{Linear}_{\text{win}}$
+\Ensure Output $\mathbf{y}_t$
+\State \textbf{Compression branch:}
+\For{$i = 1$ to $\lfloor t/d \rfloor$}
+    \State $k_i^{\text{cmp}} \gets \varphi(\mathbf{K}_{id+1:id+l})$ \Comment{Compress block via MLP}
+    \State $v_i^{\text{cmp}} \gets \varphi(\mathbf{V}_{id+1:id+l})$
+\EndFor
+\State $\tilde{\mathbf{K}}^{\text{cmp}} \gets [k_1^{\text{cmp}}, \ldots, k_{\lfloor t/d \rfloor}^{\text{cmp}}]$, $\tilde{\mathbf{V}}^{\text{cmp}} \gets [v_1^{\text{cmp}}, \ldots, v_{\lfloor t/d \rfloor}^{\text{cmp}}]$
+\State $\mathbf{y}_t^{(\text{cmp})} \gets \text{SDPA}(\mathbf{q}_t, \tilde{\mathbf{K}}^{\text{cmp}}, \tilde{\mathbf{V}}^{\text{cmp}})$
+\State \textbf{Selection branch:}
+\State Compute scores on compressed: $\mathbf{s} \gets \text{softmax}(\mathbf{q}_t \tilde{\mathbf{K}}^{\text{cmp}\top} / \sqrt{d})$
+\State Select top-$n$ important blocks: $I \gets \mathrm{TopK}(\mathbf{s}, n)$
+\State Gather full blocks: $\tilde{\mathbf{K}}^{\text{sel}} \gets [\mathbf{K}_{I_i d+1:I_i d+l}]_i$, $\tilde{\mathbf{V}}^{\text{sel}} \gets [\mathbf{V}_{I_i d+1:I_i d+l}]_i$
+\State $\mathbf{y}_t^{(\text{sel})} \gets \text{SDPA}(\mathbf{q}_t, \tilde{\mathbf{K}}^{\text{sel}}, \tilde{\mathbf{V}}^{\text{sel}})$
+\State \textbf{Window branch:}
+\State $\mathbf{y}_t^{(\text{win})} \gets \text{SDPA}(\mathbf{q}_t, \mathbf{K}_{t-w:t}, \mathbf{V}_{t-w:t})$
+\State \textbf{Gated fusion:}
+\State $\alpha^{(\text{cmp})} \gets \sigma(\text{Linear}_{\text{cmp}}(\mathbf{q}_t))$, $\alpha^{(\text{sel})} \gets \sigma(\text{Linear}_{\text{sel}}(\mathbf{q}_t))$, $\alpha^{(\text{win})} \gets \sigma(\text{Linear}_{\text{win}}(\mathbf{q}_t))$
+\State $\mathbf{y}_t \gets \alpha^{(\text{cmp})} \mathbf{y}_t^{(\text{cmp})} + \alpha^{(\text{sel})} \mathbf{y}_t^{(\text{sel})} + \alpha^{(\text{win})} \mathbf{y}_t^{(\text{win})}$
+\Return $\mathbf{y}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: $\mathcal{O}(t/d + n \cdot l + w)$ tokens attended per step (significantly reduced versus $\mathcal{O}(t)$ for dense).
+    \item \textbf{Trainable}: Yes; direct training with all branches differentiable.
+    \item \textbf{Hardware alignment}: Designed for efficient tensor core utilization; compression and selection reduce memory bandwidth pressure.
+    \item \textbf{Strength}: 11.6$\times$ decoding speedup and 9$\times$ forward speedup on 64k sequences; outperforms full attention on many tasks.
+    \item \textbf{Limitation}: Requires custom Triton/CUDA kernels; complex multi-branch architecture increases engineering overhead.
+\end{itemize}
+
+\subsection{FASA: Frequency-Aware Sparse Attention}
+
+\subsubsection{Mathematical Formulation}
+
+FASA \citep{wang_fasa_2026} is a \textbf{training-free inference-time method} that exploits rotary position embedding (RoPE) structure. Under RoPE, the token embedding is rotated by $\theta_i = B^{-2(i-1)/d}$, decomposing the $d$-dimensional space into $d/2$ frequency chunks (FCs).
+
+\paragraph{Key insight}: Only a small subset ($ < 1\%$) of FCs matter for contextual awareness; most encode positional patterns.
+
+\paragraph{Dominant frequency chunk identification}: For each layer $l$ and head $h$, identify dominant FCs via contextual agreement (CA):
+
+\[
+\text{CA}^{l,h,i} = \frac{|\text{TopK}(\alpha^{l,h}) \cap \text{TopK}(\alpha^{l,h,i})|}{K}
+\]
+
+where $\alpha^{l,h}$ is the full attention mask and $\alpha^{l,h,i}$ is the mask using only FC $i$. Dominant FCs have high CA---they contribute meaningfully to the final attention pattern.
+
+\paragraph{Token importance prediction (TIP) stage}: Using only dominant FCs, compute lightweight importance per token:
+
+\[
+S_t^{l,h} = \sum_{i \in \mathcal{I}_{\text{dom}}^{l,h}} \alpha^{l,h,i}(\mathbf{q}_t, \mathbf{K}_{1:t}), \quad \mathcal{T}_t = \text{TopK-Indices}(S_t, N_{\text{fac}})
+\]
+
+\paragraph{Focused attention computation (FAC) stage}: Compute full-precision attention on selected tokens:
+
+\[
+\hat{\alpha}_{\text{FAC}} = \text{softmax}\left(\frac{\mathbf{q}_t \mathbf{K}_{\mathcal{T}_t}^\top}{\sqrt{d}}\right), \quad \mathbf{o}_t = \hat{\alpha}_{\text{FAC}} \mathbf{V}_{\mathcal{T}_t}
+\]
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{FASA: Frequency-Aware Sparse Attention (Inference-Time)}
+\begin{algorithmic}[1]
+\Require Current query $\mathbf{q}_t$, cached Key/Value $\mathbf{K}_{1:t}, \mathbf{V}_{1:t}$, RoPE base $B$, dominant FCs $\mathcal{I}_{\text{dom}}$
+\Require TIP token budget $N_{\text{tip}}$, FAC token budget $N_{\text{fac}}$
+\Ensure Output $\mathbf{o}_t$
+\State \textbf{Stage 1: Token Importance Prediction (TIP)}
+\For{layer $l$ and head $h$}
+    \For{position $i = 1$ to $t$}
+        \State Compute importance from dominant FCs: $s_i \gets 0$
+        \For{$fc \in \mathcal{I}_{\text{dom}}^{l,h}$}
+            \State Rotate query and key into FC $fc$: $\mathbf{q}^{(fc)}, \mathbf{k}_i^{(fc)}$
+            \State $s_i^{(fc)} \gets \text{softmax}(\mathbf{q}^{(fc)} \mathbf{k}_i^{(fc)\top} / \sqrt{d}) $
+            \State $s_i \gets s_i + s_i^{(fc)}$
+        \EndFor
+    \EndFor
+    \State $\mathcal{T}_t \gets \mathrm{TopK-Indices}([s_1, \ldots, s_t], N_{\text{fac}})$ \Comment{Select top tokens}
+\EndFor
+\State \textbf{Stage 2: Focused Attention Computation (FAC)}
+\State $\text{scores}_{\text{fac}} \gets \mathbf{q}_t \mathbf{K}_{\mathcal{T}_t}^\top / \sqrt{d}$ \Comment{Full-precision dot product}
+\State $\alpha_{\text{fac}} \gets \text{softmax}(\text{scores}_{\text{fac}})$ \Comment{Full softmax}
+\State $\mathbf{o}_t \gets \alpha_{\text{fac}} \mathbf{V}_{\mathcal{T}_t}$ \Comment{Weighted value sum}
+\Return $\mathbf{o}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: TIP is $\mathcal{O}(t \cdot N_{\text{tip}})$; FAC is $\mathcal{O}(N_{\text{fac}} \cdot d)$.
+    \item \textbf{Trainable}: No; training-free inference optimization.
+    \item \textbf{Applicability}: Requires RoPE-based models; extended to ALiBi and MLA with modifications.
+    \item \textbf{Strength}: Near-oracle accuracy with $\leq 256$ tokens out of millions; up to 2.56$\times$ decoding speedup; orthogonal to quantization.
+    \item \textbf{Limitation}: Offline offline calibration required; dominant FC identification adds preprocessing overhead.
+\end{itemize}
+
+\subsection{SpargeAttn: Two-Stage Block-Level Filtering}
+
+\subsubsection{Mathematical Formulation}
+
+SpargeAttn \citep{zhang_spargeattn_2025} is a \textbf{universal training-free method} that predicts which blocks of the attention matrix will contain negligible values and skips computation for those blocks.
+
+\paragraph{Stage 1 --- Sparse prediction}: Compute low-cost proxy importance $\hat{s}_{ij}$ for block $(i,j)$:
+
+\[
+\hat{s}_{ij} = f_{\text{pred}}(\mathbf{Q}_i, \mathbf{K}_j; \text{hyperparams}), \quad \text{skip if } \hat{s}_{ij} < \epsilon_1
+\]
+
+Common predictors include block-mean similarity or self-similarity statistics.
+
+\paragraph{Stage 2 --- Softmax-aware filtering}: After computing $\tilde{P}_{ij} = \text{softmax}(Q_i K_j^\top/\sqrt{d})$, check if the block's maximum probability is negligible relative to the running softmax maximum:
+
+\[
+\text{skip } P_{ij} V_j \quad \text{if} \quad \max(\tilde{P}_{ij}) < e^{m_{\text{old}} - m_{\text{new}}} \cdot \epsilon_2
+\]
+
+where $m_{\text{old}}, m_{\text{new}}$ are online softmax running maxima (computed via FlashAttention-style numerics).
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{SpargeAttn: Two-Stage Block-Sparse Filtering}
+\begin{algorithmic}[1]
+\Require Query blocks $\mathbf{Q}_i$ for $i = 1, \ldots, n_b$, Key blocks $\mathbf{K}_j$ for $j = 1, \ldots, n_b$, Value blocks $\mathbf{V}_j$
+\Require Prediction threshold $\epsilon_1$, softmax threshold $\epsilon_2$, block size $b_s$
+\Ensure Output $\mathbf{Y}$
+\State Initialize: online softmax max $m_{\text{global}} \gets -\infty$
+\For{block row $i = 1$ to $n_b$}
+    \State Initialize: block row output $\mathbf{Y}_i \gets 0$, local max $m_i \gets -\infty$
+    \For{block column $j = 1$ to $n_b$}
+        \State \textbf{Stage 1: Sparse Prediction}
+        \State Compute proxy importance: $\hat{s}_{ij} \gets f_{\text{pred}}(\mathbf{Q}_i, \mathbf{K}_j)$
+        \If{$\hat{s}_{ij} < \epsilon_1$}
+            \State \textbf{skip} this block $[i,j]$  \Comment{Early termination}
+            \State \textbf{continue} \Comment{Move to next block}
+        \EndIf
+        \State \textbf{Stage 2: Compute and Filter}
+        \State $\tilde{P}_{ij} \gets \text{softmax}(\mathbf{Q}_i \mathbf{K}_j^\top / \sqrt{d})$
+        \State $m_{\text{block}} \gets \max(\tilde{P}_{ij})$
+        \If{$m_{\text{block}} < e^{m_i - m_{\text{global}}} \cdot \epsilon_2$}
+            \State Block contributes negligibly; skip  \Comment{Softmax-aware pruning}
+            \State \textbf{continue}
+        \EndIf
+        \State Update global max: $m_i \gets \max(m_i, m_{\text{block}})$
+        \State Accumulate: $\mathbf{Y}_i \gets \mathbf{Y}_i + \tilde{P}_{ij} \mathbf{V}_j$
+    \EndFor
+    \State $m_{\text{global}} \gets \max(m_{\text{global}}, m_i)$
+\EndFor
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: Empirical $\mathcal{O}(n^2 \cdot s)$ where $s$ is the fraction of non-skipped blocks (typically 0.2--0.5).
+    \item \textbf{Trainable}: No; plug-and-play acceleration for existing models.
+    \item \textbf{Universality}: Works on language models, image diffusion models, and video generation.
+    \item \textbf{Strength}: 2.5--5$\times$ speedup compared to dense or previous sparse methods; compatible with quantization (SageAttention integration).
+    \item \textbf{Limitation}: Speedup depends on inherent sparsity; block-level granularity may miss finer patterns; threshold tuning required per model family.
+\end{itemize}
+
+\subsection{MSA (MiniMax Sparse Attention): Blockwise Sparse Attention with Lightweight Index Branch}
+
+\subsubsection{Mathematical Formulation}
+
+MSA \citep{lai_minimax_2026} is a blockwise sparse attention mechanism built on grouped-query attention (GQA) that combines a lightweight \textbf{Index Branch} for block selection with a \textbf{Main Branch} for exact block-sparse softmax attention over the selected blocks. Let $N$ be the sequence length, $B_k = 128$ the block size, and $k = 16$ the number of blocks selected per query (yielding a fixed per-query budget of $k \cdot B_k = 2048$ tokens regardless of $N$).
+
+\paragraph{Index Branch}: A low-dimensional projection produces index queries $\mathbf{q}_t^{\text{idx}} \in \mathbb{R}^{d_{\text{idx}}}$ and block representatives $\mathbf{r}_b \in \mathbb{R}^{d_{\text{idx}}}$ for each KV block $b$. The index scores per GQA group are:
+\[
+s_{t,b}^{(g)} = \mathbf{q}_t^{\text{idx},(g)} \cdot \mathbf{r}_b, \qquad \mathcal{I}_t^{(g)} = \mathrm{TopK}\left(\{s_{t,b}^{(g)}\}_{b=1}^{N/B_k},\; k\right)
+\]
+The index input is \textbf{detached} (stop-gradient), so gradients do not flow back through the indexer's input; the Index Branch is trained instead by a KL alignment loss between its attention distribution and the Main Branch's distribution. Because softmax is order-preserving, the raw index scores feed directly into the top-$k$ operator \emph{without} an explicit softmax (\textbf{exp-free top-$k$}), reducing numerical cost.
+
+\paragraph{Forced local block}: The block containing the query position $t$ is \textbf{always} included in $\mathcal{I}_t^{(g)}$, guaranteeing local context coverage.
+
+\paragraph{Main Branch}: Standard scaled dot-product attention is computed exactly over the union of selected blocks:
+\[
+\mathbf{o}_t^{(h)} = \mathrm{softmax}\left(\frac{\mathbf{q}_t^{(h)} \mathbf{K}_{\mathcal{I}_t}^{(h)\top}}{\sqrt{d_h}}\right) \mathbf{V}_{\mathcal{I}_t}^{(h)}
+\]
+where $\mathbf{K}_{\mathcal{I}_t}, \mathbf{V}_{\mathcal{I}_t}$ gather the full-precision key/value tensors of the selected blocks. Selection is performed independently per GQA group, so different query groups within the same layer may attend to different block subsets.
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{MSA: MiniMax Sparse Attention with Index + Main Branches}
+\begin{algorithmic}[1]
+\Require Query $\mathbf{Q} \in \mathbb{R}^{N \times d}$, Key $\mathbf{K}$, Value $\mathbf{V}$, block size $B_k = 128$, top-$k$ blocks $k = 16$
+\Require Index projection $W_{\text{idx}}$ (detached input), block representatives $\{\mathbf{r}_b\}$
+\Ensure Output $\mathbf{Y} \in \mathbb{R}^{N \times d}$
+\State Compute block reps: $\mathbf{r}_b \gets \mathrm{mean}(\mathbf{K}_{bB_k:(b+1)B_k})$ for $b = 1, \ldots, N/B_k$
+\For{query position $t = 1, \ldots, N$}
+    \For{each GQA group $g$}
+        \State $\mathbf{q}_t^{\text{idx}} \gets \mathrm{sg}(W_{\text{idx}} \mathbf{x}_t)$ \Comment{detached index query}
+        \State Compute block scores: $s_b \gets \mathbf{q}_t^{\text{idx}} \cdot \mathbf{r}_b$
+        \State Identify local block: $b_{\text{local}} \gets \lfloor t / B_k \rfloor$
+        \State $\mathcal{I}_t^{(g)} \gets \mathrm{TopK}(\{s_b\}, k) \cup \{b_{\text{local}}\}$ \Comment{exp-free top-$k$ + forced local}
+    \EndFor
+    \State Gather selected KV: $\tilde{\mathbf{K}}_t \gets \mathrm{Gather}(\mathbf{K}, \mathcal{I}_t)$, $\tilde{\mathbf{V}}_t \gets \mathrm{Gather}(\mathbf{V}, \mathcal{I}_t)$
+    \State Main branch SDPA: $\mathbf{y}_t \gets \mathrm{softmax}(\mathbf{q}_t \tilde{\mathbf{K}}_t^\top / \sqrt{d_h}) \tilde{\mathbf{V}}_t$
+\EndFor
+\State Add KL alignment loss $\mathcal{L}_{\text{KL}} = \mathrm{KL}(\text{index dist} \,\|\, \text{main dist})$ during training
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: Index branch $\mathcal{O}(H_{\text{kv}} \cdot d_{\text{idx}} \cdot N^2)$; Main branch $\mathcal{O}(H_q \cdot d_h \cdot N \cdot k \cdot B_k)$. Per-query budget fixed at $k \cdot B_k = 2048$ tokens regardless of $N$.
+    \item \textbf{Trainable}: Yes; end-to-end (the Index Branch is trained via a KL alignment loss, not eval-only).
+    \item \textbf{State}: $\mathcal{O}(N)$ KV cache (GQA-sized); no expansion of the recurrent/state dimension.
+    \item \textbf{Strength}: Deployed on the 109B MiniMax-M3, MSA achieves a $28.4\times$ per-token attention compute reduction at 1M context, with $14.2\times$ prefill and $7.6\times$ decode speedup on H800 GPUs.
+    \item \textbf{Limitation}: Selection granularity is fixed at the block level ($B_k = 128$); the forced local block and per-group independent selection increase engineering complexity and require custom block-sparse kernels.
+\end{itemize}
+
+\subsection{SparDA (Sparse Decoupled Attention): Forecast-Guided Lookahead Block Selection}
+
+\subsubsection{Mathematical Formulation}
+
+SparDA \citep{fu_sparda_2026} introduces a \textbf{decoupled} sparse attention scheme that augments the standard per-layer projections $Q, K, V$ with a fourth projection, the \textbf{Forecast}, which predicts the KV blocks that will be needed by the \emph{next} layer. This lookahead enables overlapping CPU-to-GPU prefetch of the next layer's selected blocks with the current layer's execution, hiding the offload latency that plagues sparse-attention deployments on memory-constrained hardware.
+
+\paragraph{Forecast projection}: For input $\mathbf{x} \in \mathbb{R}^{N \times d}$,
+\[
+\mathbf{F} = \mathbf{x} \mathbf{W}_F \in \mathbb{R}^{N \times H_{\text{kv}} \times d_f}
+\]
+with \textbf{one Forecast head per GQA group}, which reduces selection overhead relative to multi-head selectors used by prior work.
+
+\paragraph{Block scoring and selection}: For each query $i$ and KV block $b$ with representative $\mathbf{r}_b$:
+\[
+S_{i,b} = \mathbf{F}_i \cdot \mathbf{r}_b, \qquad \mathcal{I}_i = \mathrm{TopK}(\{S_{i,b}\}_b, k)
+\]
+\paragraph{Block-sparse attention}: Standard scaled dot-product attention is then computed over the selected blocks:
+\[
+\mathbf{o}_i = \mathrm{softmax}\left(\frac{\mathbf{q}_i \mathbf{K}_{\mathcal{I}_i}^\top}{\sqrt{d_h}}\right) \mathbf{V}_{\mathcal{I}_i}
+\]
+\paragraph{Training}: SparDA adds fewer than $0.5\%$ additional parameters. Only the Forecast projections are trained, by matching the original (frozen) sparse selector's attention distribution---a lightweight distillation that preserves the base model's behaviour while enabling lookahead prefetch.
+
+\subsubsection{Algorithmic Pseudocode}
+
+\begin{algorithm}[H]
+\caption{SparDA: Sparse Decoupled Attention with Forecast Prefetch}
+\begin{algorithmic}[1]
+\Require Input $\mathbf{x} \in \mathbb{R}^{N \times d}$, cached Key/Value blocks, top-$k$ blocks $k$
+\Require Projections $W_q, W_k, W_v, W_F$; frozen base selector $\pi_{\text{orig}}$
+\Ensure Output $\mathbf{Y}$; prefetched blocks for next layer
+\State Compute Forecast: $\mathbf{F} \gets \mathbf{x} \mathbf{W}_F$ \Comment{one head per GQA group}
+\For{query $i = 1, \ldots, N$}
+    \State Compute block scores: $S_{i,b} \gets \mathbf{F}_i \cdot \mathbf{r}_b$ for each block $b$
+    \State Select: $\mathcal{I}_i \gets \mathrm{TopK}(\{S_{i,b}\}, k)$
+    \State \textbf{Prefetch} $\mathbf{K}_{\mathcal{I}_i}, \mathbf{V}_{\mathcal{I}_i}$ from CPU to GPU for the \emph{next} layer \Comment{overlaps with current layer}
+\EndFor
+\State Compute block-sparse SDPA over current-layer selected blocks: $\mathbf{Y} \gets \mathrm{BlockSparseSDPA}(\mathbf{Q}, \mathbf{K}, \mathbf{V}, \{\mathcal{I}_i\})$
+\State Training loss: $\mathcal{L} \gets \mathrm{KL}(\text{Forecast dist} \,\|\, \pi_{\text{orig}})$ \Comment{only $W_F$ is updated}
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Characteristics}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complexity}: Forecast $\mathcal{O}(H_{\text{kv}} \cdot d_f \cdot N \cdot N_{\text{blocks}})$; Main attention $\mathcal{O}(H_q \cdot d_h \cdot N \cdot k \cdot B_k)$.
+    \item \textbf{Trainable}: Yes; only the Forecast projections are trained ($<0.5\%$ extra parameters).
+    \item \textbf{Strength}: On two 8B sparse-pretrained models, SparDA achieves up to $1.25\times$ prefill and $1.7\times$ decode speedup over the sparse-attention offload baseline, and up to $5.3\times$ decode throughput versus a non-offload sparse baseline.
+    \item \textbf{Limitation}: Requires a CPU--GPU offload pipeline and a frozen base selector; the lookahead benefit is contingent on next-layer block demand being predictable from the current Forecast.
+\end{itemize}
+
+\subsection{Design Space and Selection Criteria}
+
+The seven sparse attention methods occupy complementary positions in a multidimensional design space:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Geometric/fixed patterns} (Sparse Transformer, Longformer): Simple to implement and analyze, but patterns do not adapt to content.
+    \item \textbf{Learned selection} (SparseK, NSA): Enable adaptation through trainable selection networks, at the cost of higher implementation complexity.
+    \item \textbf{Training-free acceleration} (FASA, SpargeAttn): Enable drop-in speedup of existing models without retraining, suited for deployed systems.
+    \item \textbf{Theoretical guarantees} (BigBird): Provide formal proofs of expressive completeness, important for understanding safety margins.
+\end{itemize}
+
+\textbf{Selection guidance:}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{New model training} where resources permit: NSA or SparseK for maximal inference speedup; BigBird for theoretical assurance.
+    \item \textbf{Long-context document understanding}: Longformer or FASA for practical simplicity; NSA for extreme scale.
+    \item \textbf{Accelerating existing models}: FASA for RoPE-based LLMs; SpargeAttn for any architecture.
+    \item \textbf{Constrained environments}: Sparse Transformer for simplicity and proven efficiency at moderate scale.
+\end{enumerate}
+

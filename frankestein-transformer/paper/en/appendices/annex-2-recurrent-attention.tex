@@ -1,0 +1,210 @@
+\section{Dense, Recurrent, and Memory-Augmented Transformers}
+\label{sec:annex-transformer}
+
+This annex synthesizes the dense, recurrent, and memory-augmented transformer families. The field has evolved toward several primary paradigms: dense global attention with variants, key-value head compression via grouped-query attention, recurrent state compression with decay, selective state-space models, continuous-depth numerical integration, and memory-augmented architectures. Understanding this taxonomy illuminates fundamental tradeoffs between expressiveness, computational cost, memory footprint, and deployment simplicity.
+
+\subsection{Dense Attention Baselines: Standard and Sigmoid}
+
+\subsubsection{Standard Softmax Attention}
+Standard multi-head self-attention \citep{vaswani_attention_2017} computes scaled dot-product similarity between token embeddings:
+
+\begin{algorithmic}[1]
+\State \textbf{Input:} Query matrix $\mathbf{Q} \in \mathbb{R}^{n \times d}$, Key matrix $\mathbf{K} \in \mathbb{R}^{n \times d}$, Value matrix $\mathbf{V} \in \mathbb{R}^{n \times d}$
+\State $\text{scores} \gets \frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d}} \in \mathbb{R}^{n \times n}$ \Comment{compute pairwise similarities}
+\State $\text{attention\_weights} \gets \texttt{softmax}(\text{scores}, \text{axis}=1) \in \mathbb{R}^{n \times n}$ \Comment{normalize across keys}
+\State \textbf{Output:} $\mathbf{Y} = \text{attention\_weights} \cdot \mathbf{V} \in \mathbb{R}^{n \times d}$ \Comment{weighted value combination}
+\end{algorithmic}
+
+For autoregressive generation, KV caching stores past keys and values to avoid $\mathcal{O}(n^2)$ recomputation. However, this linearly growing cache occupies $\sim n \cdot d_{\text{hidden}}$ bytes, which can consume hundreds of gigabytes for billion-parameter models. Standard attention achieves \textbf{perfect expressiveness} within the context window---any token can attend to any other token with learned weights---but pays the price of dense computation.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$ time, $\mathcal{O}(n^2)$ space (attention matrix materialization).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ time per token, $\mathcal{O}(n)$ space (KV cache).
+    \item \textbf{Strengths}: Unparalleled expressiveness; perfect history recall; highly parallelizable.
+    \item \textbf{Weaknesses}: Quadratic bottleneck prohibits very long contexts; KV cache dominates memory during generation.
+\end{itemize}
+
+\subsubsection{Sigmoid Attention}
+Sigmoid attention replaces row-wise softmax with element-wise sigmoid activation \citep{ramapuram_theory_2024}:
+
+\begin{algorithmic}[1]
+\State \textbf{Input:} $\mathbf{Q}, \mathbf{K}, \mathbf{V}$ as above, learnable bias $\mathbf{b} \in \mathbb{R}^{n \times n}$
+\State $\text{logits} \gets \frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d}} + \mathbf{b}$
+\State $\text{attention\_weights} \gets \sigma(\text{logits})$ \Comment{element-wise sigmoid, not softmax}
+\State \textbf{Output:} $\mathbf{Y} = \text{attention\_weights} \odot \mathbf{V}$
+\end{algorithmic}
+
+Unlike softmax, sigmoid does not enforce a probability distribution (weights need not sum to 1), enabling stronger token independence. Theoretical analysis via mixture-of-experts shows sigmoid achieves superior sample complexity: $\mathcal{O}(n^{-0.51})$ convergence for ReLU experts versus softmax's $\mathcal{O}(n^{-0.24})$. However, empirical training revealed gradient instabilities at scale. The remedy is \textbf{hybrid-norm}---adding normalization after the attention output---which stabilizes gradients without sacrificing the theoretical benefits of element-wise gating.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$ (identical to standard), but element-wise operations enable 17\% inference speedup via FlashSigmoid.
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token with KV cache (asymptotically same, but lower constant factors).
+    \item \textbf{Strengths}: Overcomes zero-sum competition; avoids row-wise synchronization; hardware-friendly implementation.
+    \item \textbf{Weaknesses}: Requires careful stabilization (hybrid-norm); training instability at large scales without auxiliary loss.
+\end{itemize}
+
+\subsubsection{Grouped-Query Attention (GQA)}
+Grouped-query attention \citep{ainslie_gqa_2023} bridges multi-head attention (MHA) and multi-query attention (MQA) by partitioning query heads into groups, each sharing a single key-value head. If $h$ is the total number of attention heads, $h_k$ is the number of key-value heads, and $G = h / h_k$ is the group size, then every group of $G$ query heads shares one KV head:
+
+\begin{algorithmic}[1]
+\State \textbf{Input:} $\mathbf{Q} \in \mathbb{R}^{n \times h \cdot d_h}$, $\mathbf{K} \in \mathbb{R}^{n \times h_k \cdot d_h}$, $\mathbf{V} \in \mathbb{R}^{n \times h_k \cdot d_h}$
+\State $\mathbf{K}_{\text{full}} \gets \texttt{repeat\_interleave}(\mathbf{K}, G)$ \Comment{expand from $h_k$ to $h$ heads}
+\State $\mathbf{V}_{\text{full}} \gets \texttt{repeat\_interleave}(\mathbf{V}, G)$
+\State $\text{scores} \gets \frac{\mathbf{Q}\mathbf{K}_{\text{full}}^\top}{\sqrt{d_h}} \in \mathbb{R}^{n \times n}$ \Comment{standard dot product after expansion}
+\State $\text{attention\_weights} \gets \texttt{softmax}(\text{scores}, \text{axis}=1)$
+\State \textbf{Output:} $\mathbf{Y} = \text{attention\_weights} \cdot \mathbf{V}_{\text{full}} \in \mathbb{R}^{n \times h \cdot d_h}$
+\end{algorithmic}
+
+GQA interpolates smoothly between MHA ($h_k = h$, $G = 1$) and MQA ($h_k = 1$, $G = h$). The key advantage is a tunable tradeoff between KV-cache footprint and representational capacity. Each additional KV head consumes $2 \cdot d_h \cdot n$ extra bytes in the cache, so reducing $h_k$ yields proportional memory savings.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot h \cdot d_h)$ (identical to MHA after head expansion).
+    \item \textbf{Inference complexity}: $\mathcal{O}(n)$ per token, $\mathcal{O}(h_k \cdot n \cdot d_h)$ KV-cache space.
+    \item \textbf{Strengths}: Flexible head-count tradeoff; proven at scale (Llama 2 \& 3 use $h_k = 8$ KV heads with $h = 32$ query heads); reduces KV-cache by $G \times$; supports fast inference with FlashAttention.
+    \item \textbf{Weaknesses}: Fewer KV heads can reduce representational capacity in small models; requiring $h_k$ to divide $h$ constrains architectural choices.
+\end{itemize}
+
+\subsection{Recurrent and Retentive Architectures}
+
+\subsubsection{Retentive Networks (RetNet)}
+RetNet \citep{sun_retentive_2023} unifies three computation paradigms: parallel training, recurrent inference, and chunkwise deployment. Its core innovation is the \textbf{retention mechanism}, which uses a fixed exponential decay matrix to model temporal importance:
+
+\begin{algorithmic}[1]
+\State \textbf{Parallel (training) form:}
+\State $\text{decay\_matrix}[i,j] \gets \gamma^{i-j}$ for $i \geq j$, else $0$ \Comment{causal exponential decay}
+\State $\text{decay\_matrix}[i,j] \gets 0$ for $i < j$ \Comment{causal masking}
+\State $\mathbf{Y}_{\text{parallel}} \gets (\mathbf{Q}\mathbf{K}^\top \odot \text{decay\_matrix}) \mathbf{V}$ \Comment{element-wise multiplication with decay}
+\end{algorithmic}
+
+\begin{algorithmic}[1]
+\State \textbf{Recurrent (inference) form:}
+\For{$t = 1, \ldots, n$}
+    \State $\mathbf{s}_t \gets \gamma \mathbf{s}_{t-1} + \mathbf{k}_t \mathbf{v}_t^\top$ \Comment{state update with decay}
+    \State $\mathbf{y}_t \gets \mathbf{q}_t \mathbf{s}_t$ \Comment{output via query-state interaction}
+\EndFor
+\end{algorithmic}
+
+The decay scalar $\gamma \in (0,1)$ controls the temporal window. RetNet uses \textbf{multi-scale retention} with different $\gamma$ values per head (e.g., $\gamma = 1 - 2^{-5}, 1 - 2^{-6}, \ldots$), allowing short-term and long-term dependencies simultaneously. Chunkwise recurrent mode divides sequences into chunks, processes each chunk in parallel, and threads a recurrent state between chunks.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n^2 \cdot d)$ (parallel), or $\mathcal{O}(n \cdot c \cdot d)$ (chunkwise recurrent with chunk size $c$).
+    \item \textbf{Inference complexity}: $\mathcal{O}(1)$ per token, $\mathcal{O}(d^2)$ state space (fixed matrix).
+    \item \textbf{Strengths}: Constant-time inference; triple computation paradigm; multi-scale consolidation.
+    \item \textbf{Weaknesses}: Fixed decay imposes rigid inductive bias; may truncate learned long-range patterns.
+\end{itemize}
+
+\subsubsection{Mamba: Selective State-Space Models}
+Mamba \citep{gu_mamba_2023} frames recurrence as a continuous-time dynamical system with input-dependent parameters, achieving both linear training and constant-time inference:
+
+\begin{algorithmic}[1]
+\State \textbf{Continuous dynamics:} $h'(t) = \mathbf{A} h(t) + \mathbf{B} x(t)$, \quad $y(t) = \mathbf{C} h(t)$
+\State \textbf{Discretization with step size $\Delta_t$:}
+\State $\bar{\mathbf{A}}_t \gets \exp(\Delta_t \mathbf{A})$
+\State $\bar{\mathbf{B}}_t \gets (\Delta_t \mathbf{A})^{-1} (\exp(\Delta_t \mathbf{A}) - \mathbf{I}) \Delta_t \mathbf{B}_t$
+\State \textbf{Recurrent update:}
+\For{$t = 1, \ldots, n$}
+    \State $\Delta_t \gets \text{softplus}(\text{Linear}(x_t))$ \Comment{input-dependent step size}
+    \State $\mathbf{B}_t \gets \text{Linear}(x_t)$, \quad $\mathbf{C}_t \gets \text{Linear}(x_t)$ \Comment{input-dependent projection matrices}
+    \State $h_t \gets \bar{\mathbf{A}}_t h_{t-1} + \bar{\mathbf{B}}_t x_t$ \Comment{state transition}
+    \State $y_t \gets \mathbf{C}_t h_t$ \Comment{output projection}
+\EndFor
+\end{algorithmic}
+
+The critical innovation is that $\mathbf{A}$ (the system matrix) is \textit{not} input-dependent, but $\Delta_t$, $\mathbf{B}_t$, and $\mathbf{C}_t$ are, making the system \textbf{time-varying}. This selectivity allows the model to \textit{ignore} irrelevant information by setting $\Delta_t$ near zero, effectively creating a gate. A hardware-aware parallel scan algorithm implements the recurrence efficiently on GPUs by fusing computation within SRAM, avoiding expensive HBM bandwidth.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(n \cdot d)$ via hardware-aware scan (linear in sequence length).
+    \item \textbf{Inference complexity}: $\mathcal{O}(1)$ per token, $\mathcal{O}(d)$ state (hidden vector).
+    \item \textbf{Strengths}: Achieves linear training and constant-inference simultaneously; practical on long sequences (millions of tokens).
+    \item \textbf{Weaknesses}: State vector compression can weaken exact copying and dense associative recall versus full attention.
+\end{itemize}
+
+\subsection{Continuous-Depth Transformers: ODE Integration}
+
+\subsubsection{ODE Transformer}
+The ODE Transformer \citep{zhang_continuous_2021} interprets network depth as numerical integration of a continuous dynamical system, using higher-order Runge-Kutta solvers to reduce truncation error:
+
+\begin{algorithmic}[1]
+\State \textbf{Continuous formulation:} $\frac{dh(t)}{dt} = f_\theta(h(t), t)$ where $f_\theta$ is the transformer sub-network
+\State \textbf{Runge-Kutta-4 discrete approximation:}
+\State $k_1 \gets f_\theta(h_t, t)$
+\State $k_2 \gets f_\theta(h_t + \tfrac{1}{2}k_1, t + \tfrac{1}{2}\Delta t)$
+\State $k_3 \gets f_\theta(h_t + \tfrac{1}{2}k_2, t + \tfrac{1}{2}\Delta t)$
+\State $k_4 \gets f_\theta(h_t + k_3, t + \Delta t)$
+\State $h_{t+1} \gets h_t + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)$ \Comment{weighted combination}
+\end{algorithmic}
+
+Instead of simple Euler residual connections $h_{t+1} = h_t + f_\theta(h_t)$, the RK4 block computes four intermediate evaluations and combines them with classical RK4 weights. To avoid vanishing gradients, the architecture introduces \textbf{learned gating} that interpolates between intermediate approximations:
+
+\begin{algorithmic}[1]
+\State $g \gets \sigma(\text{Linear}([k_1, k_2, k_3, k_4]))$ \Comment{learnable gate}
+\State $h_{t+1} \gets h_t + g \cdot k_1 + (1-g) \cdot k_2$ \Comment{interpolated refinement}
+\end{algorithmic}
+
+This formulation reduces the effective number of parameters through weight sharing---the same $f_\theta$ is evaluated multiple times---while providing richer trajectory refinement.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: $\mathcal{O}(k \cdot n^2 \cdot d)$ where $k$ is the RK order (4 for RK4).
+    \item \textbf{Inference complexity}: $\mathcal{O}(k \cdot n)$ per token (higher constant overhead).
+    \item \textbf{Strengths}: Significantly higher accuracy on generation tasks (state-of-the-art BLEU); parameter-efficient via weight sharing.
+    \item \textbf{Weaknesses}: High per-step compute; inference latency increases by constant factor $k$; complex gating required for stability.
+\end{itemize}
+
+\subsection{Test-Time Memory: Titans}
+
+The Titans architecture \citep{behrouz_titans_2025} introduces an orthogonal dimension: instead of static weights, the model maintains a learnable memory that is \textit{updated during inference} based on a surprise-driven signal:
+
+\begin{algorithmic}[1]
+\State \textbf{Local short-term attention:} Apply standard or sparse attention within a fixed context window $c$
+\State $y_t^{\text{local}} \gets \text{Attention}(q_t, k_{[t-c:t]}, v_{[t-c:t]})$
+\State \textbf{Memory update signal (surprise):}
+\State $S_t \gets \eta_t S_{t-1} - \theta_t \nabla_\ell(\mathcal{M}_{t-1}; x_t)$ \Comment{surprise as gradient of loss w.r.t. memory}
+\State $\mathcal{M}_t \gets (1 - \alpha_t) \mathcal{M}_{t-1} + S_t$ \Comment{memory updated via EMA}
+\State \textbf{Long-term memory retrieval:}
+\State $y_t^{\text{memory}} \gets \mathcal{M}_t^* (q_t)$ \Comment{query memory module for retrieved information}
+\State \textbf{Output combination:}
+\State $y_t \gets y_t^{\text{local}} + \text{gate}(y_t^{\text{memory}})$ \Comment{combine local and retrieved memory}
+\end{algorithmic}
+
+The memory module $\mathcal{M}$ is literally updated during the forward pass by computing gradients of an associative loss and applying SGD steps with momentum. The decay rates $\eta_t, \theta_t, \alpha_t$ are themselves input-dependent, allowing the model to switch memory paradigms when context shifts.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Training complexity}: Roughly $\mathcal{O}(c^2 + n \cdot f)$ where $c$ is local window and $f$ is memory update overhead.
+    \item \textbf{Inference complexity}: $\mathcal{O}(c^2)$ local attention plus $\mathcal{O}(1)$ memory retrieval per token.
+    \item \textbf{Strengths}: Handles extreme context lengths; enables true associative recall; memory adapts to input.
+    \item \textbf{Weaknesses}: Significantly more complex; inference includes gradient computation; higher coordination overhead.
+\end{itemize}
+
+\subsection{Pattern-Driven Mixer Dispatch}
+
+The codebase selects a mixer per block from the configured \texttt{layer\_pattern}. The dispatch logic enforces the training-free policy for eval-only blocks and routes to the corresponding family implementation.
+
+\begin{algorithm}[t]
+\caption{Pattern-Driven Mixer Forward (Conceptual)}
+\begin{algorithmic}[1]
+\Require Hidden states $H$, pattern $P$, layer index $\ell$
+\State $m \gets P[\ell \bmod |P|]$
+\If{$m \in \{\texttt{fasa\_attn}, \texttt{sparge\_attn}\}$ and model is in training mode}
+    \State raise configuration/runtime error (training-free block in train mode)
+\ElsIf{$m=\texttt{standard\_attn}$}
+    \State $H \gets \text{softmax-attention}(H)$
+\ElsIf{$m=\texttt{sigmoid\_attn}$}
+    \State $H \gets \text{sigmoid-attention}(H)$
+\ElsIf{$m\in\{\texttt{retnet},\texttt{retnet\_attn}\}$}
+    \State $H \gets \text{retention}(H)$
+\ElsIf{$m=\texttt{mamba}$}
+    \State $H \gets \text{selective-ssm}(H)$
+\ElsIf{$m=\texttt{ode}$}
+    \State $H \gets \text{rk-step}(H)$
+\ElsIf{$m$ is a sparse attention key}
+    \State $H \gets \text{sparse-attention-family}(H)$
+\ElsIf{$m$ is a gated attention key}
+    \State $H \gets \text{gated-attention-family}(H)$
+\Else
+    \State $H \gets \text{memory-augmented-attn}(H)$
+\EndIf
+\State \Return $H$
+\end{algorithmic}
+\end{algorithm}
+
+The field exhibits a clear progression along two axes: (i) \textbf{computational efficiency}, moving from $O(n^2)$ to $O(n)$ or $O(1)$, and (ii) \textbf{memory adaptivity}, shifting from static weights to dynamic, test-time updated models. Standard attention remains the expressiveness baseline; Mamba and RetNet represent the practical efficiency frontier; Titans introduces an orthogonal innovation axis (test-time learning). The choice of architecture reflects the fundamental engineering constraint: expressiveness versus deployment cost. The latent-attention family, which compresses the KV cache into a low-rank latent, is covered in Appendix~\ref{sec:annex-latent}.

@@ -1,0 +1,210 @@
+\section{Transformadores Densos, Recurrentes y Aumentados con Memoria}
+\label{sec:annex-transformer}
+
+Este anexo sintetiza las familias densas, recurrentes y aumentadas con memoria de transformers. El campo ha evolucionado hacia varios paradigmas principales: atención densa global con variantes, compresión de cabezas clave-valor mediante atención por consultas agrupadas, compresión de estado recurrente con decaimiento, modelos de espacio de estado selectivos, integración numérica de profundidad continua y arquitecturas aumentadas con memoria. Comprender esta taxonomía ilumina las compensaciones fundamentales entre expresividad, costo computacional, huella de memoria y simplicidad de despliegue.
+
+\subsection{Atención Densa de Referencia: Estándar y Sigmoide}
+
+\subsubsection{Atención Softmax Estándar}
+La atención multi-cabeza estándar \citep{vaswani_attention_2017} calcula la similitud de producto punto escalado entre embeddings de tokens:
+
+\begin{algorithmic}[1]
+\State \textbf{Entrada:} Matriz de consulta $\mathbf{Q} \in \mathbb{R}^{n \times d}$, Matriz de clave $\mathbf{K} \in \mathbb{R}^{n \times d}$, Matriz de valor $\mathbf{V} \in \mathbb{R}^{n \times d}$
+\State $\text{puntajes} \gets \frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d}} \in \mathbb{R}^{n \times n}$ \Comment{calcular similitudes por pares}
+\State $\text{pesos\_atencion} \gets \texttt{softmax}(\text{puntajes}, \text{eje}=1) \in \mathbb{R}^{n \times n}$ \Comment{normalizar sobre las claves}
+\State \textbf{Salida:} $\mathbf{Y} = \text{pesos\_atencion} \cdot \mathbf{V} \in \mathbb{R}^{n \times d}$ \Comment{combinación ponderada de valores}
+\end{algorithmic}
+
+Para generación autorregresiva, el almacenamiento en caché KV guarda claves y valores pasados para evitar el recálculo $\mathcal{O}(n^2)$. Sin embargo, este caché de crecimiento lineal ocupa $\sim n \cdot d_{\text{oculto}}$ bytes, lo que puede consumir cientos de gigabytes para modelos de miles de millones de parámetros. La atención estándar logra una \textbf{expresividad perfecta} dentro de la ventana de contexto---cualquier token puede atender a cualquier otro token con pesos aprendidos---pero paga el precio del cómputo denso.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: $\mathcal{O}(n^2 \cdot d)$ tiempo, $\mathcal{O}(n^2)$ espacio (materialización de la matriz de atención).
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(n)$ tiempo por token, $\mathcal{O}(n)$ espacio (caché KV).
+    \item \textbf{Fortalezas}: Expresividad incomparable; recuperación perfecta del historial; altamente paralelizable.
+    \item \textbf{Debilidades}: El cuello de botella cuadrático prohíbe contextos muy largos; el caché KV domina la memoria durante la generación.
+\end{itemize}
+
+\subsubsection{Atención Sigmoide}
+La atención sigmoide reemplaza el softmax por filas con una activación sigmoide elemento a elemento \citep{ramapuram_theory_2024}:
+
+\begin{algorithmic}[1]
+\State \textbf{Entrada:} $\mathbf{Q}, \mathbf{K}, \mathbf{V}$ como arriba, sesgo aprendible $\mathbf{b} \in \mathbb{R}^{n \times n}$
+\State $\text{logits} \gets \frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d}} + \mathbf{b}$
+\State $\text{pesos\_atencion} \gets \sigma(\text{logits})$ \Comment{sigmoide elemento a elemento, no softmax}
+\State \textbf{Salida:} $\mathbf{Y} = \text{pesos\_atencion} \odot \mathbf{V}$
+\end{algorithmic}
+
+A diferencia de softmax, la sigmoide no impone una distribución de probabilidad (los pesos no necesitan sumar 1), lo que permite una independencia de tokens más fuerte. El análisis teórico mediante mezcla de expertos muestra que la sigmoide alcanza una complejidad muestral superior: convergencia $\mathcal{O}(n^{-0.51})$ para expertos ReLU frente a $\mathcal{O}(n^{-0.24})$ de softmax. Sin embargo, el entrenamiento empírico reveló inestabilidades de gradiente a escala. El remedio es la \textbf{norma híbrida}---agregar normalización después de la salida de atención---que estabiliza los gradientes sin sacrificar los beneficios teóricos del enrutamiento elemento a elemento.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: $\mathcal{O}(n^2 \cdot d)$ (idéntico al estándar), pero las operaciones elemento a elemento permiten una aceleración de inferencia del 17\% mediante FlashSigmoid.
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(n)$ por token con caché KV (asintóticamente igual, pero con factores constantes más bajos).
+    \item \textbf{Fortalezas}: Supera la competencia de suma cero; evita la sincronización por filas; implementación eficiente en hardware.
+    \item \textbf{Debilidades}: Requiere estabilización cuidadosa (norma híbrida); inestabilidad de entrenamiento a grandes escalas sin pérdida auxiliar.
+\end{itemize}
+
+\subsubsection{Atención por Consultas Agrupadas (GQA)}
+La atención por consultas agrupadas (GQA) \citep{ainslie_gqa_2023} tiende un puente entre la atención multi-cabeza (MHA) y la atención multi-consulta (MQA) al particionar las cabezas de consulta en grupos, cada uno compartiendo una sola cabeza clave-valor. Si $h$ es el número total de cabezas de atención, $h_k$ es el número de cabezas clave-valor, y $G = h / h_k$ es el tamaño del grupo, entonces cada grupo de $G$ cabezas de consulta comparte una cabeza KV:
+
+\begin{algorithmic}[1]
+\State \textbf{Entrada:} $\mathbf{Q} \in \mathbb{R}^{n \times h \cdot d_h}$, $\mathbf{K} \in \mathbb{R}^{n \times h_k \cdot d_h}$, $\mathbf{V} \in \mathbb{R}^{n \times h_k \cdot d_h}$
+\State $\mathbf{K}_{\text{completo}} \gets \texttt{repeat\_interleave}(\mathbf{K}, G)$ \Comment{expandir de $h_k$ a $h$ cabezas}
+\State $\mathbf{V}_{\text{completo}} \gets \texttt{repeat\_interleave}(\mathbf{V}, G)$
+\State $\text{puntajes} \gets \frac{\mathbf{Q}\mathbf{K}_{\text{completo}}^\top}{\sqrt{d_h}} \in \mathbb{R}^{n \times n}$ \Comment{producto punto estándar tras expansión}
+\State $\text{pesos\_atencion} \gets \texttt{softmax}(\text{puntajes}, \text{eje}=1)$
+\State \textbf{Salida:} $\mathbf{Y} = \text{pesos\_atencion} \cdot \mathbf{V}_{\text{completo}} \in \mathbb{R}^{n \times h \cdot d_h}$
+\end{algorithmic}
+
+GQA interpola suavemente entre MHA ($h_k = h$, $G = 1$) y MQA ($h_k = 1$, $G = h$). La ventaja clave es un balance ajustable entre la huella del caché KV y la capacidad representacional. Cada cabeza KV adicional consume $2 \cdot d_h \cdot n$ bytes extra en el caché, por lo que reducir $h_k$ produce ahorros proporcionales de memoria.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: $\mathcal{O}(n^2 \cdot h \cdot d_h)$ (idéntico a MHA tras la expansión de cabezas).
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(n)$ por token, espacio de caché KV $\mathcal{O}(h_k \cdot n \cdot d_h)$.
+    \item \textbf{Fortalezas}: Balance flexible de cabezas; probado a escala (Llama 2 y 3 usan $h_k = 8$ cabezas KV con $h = 32$ cabezas de consulta); reduce el caché KV en factor $G \times$; soporta inferencia rápida con FlashAttention.
+    \item \textbf{Debilidades}: Menos cabezas KV pueden reducir la capacidad representacional en modelos pequeños; requerir que $h_k$ divida a $h$ restringe las opciones arquitectónicas.
+\end{itemize}
+
+\subsection{Arquitecturas Recurrentes y Retentivas}
+
+\subsubsection{Redes Retentivas (RetNet)}
+RetNet \citep{sun_retentive_2023} unifica tres paradigmas de cómputo: entrenamiento paralelo, inferencia recurrente y despliegue por fragmentos. Su innovación central es el \textbf{mecanismo de retención}, que utiliza una matriz de decaimiento exponencial fija para modelar la importancia temporal:
+
+\begin{algorithmic}[1]
+\State \textbf{Forma paralela (entrenamiento):}
+\State $\text{matriz\_decaimiento}[i,j] \gets \gamma^{i-j}$ para $i \geq j$, si no $0$ \Comment{decaimiento exponencial causal}
+\State $\text{matriz\_decaimiento}[i,j] \gets 0$ para $i < j$ \Comment{enmascaramiento causal}
+\State $\mathbf{Y}_{\text{paralelo}} \gets (\mathbf{Q}\mathbf{K}^\top \odot \text{matriz\_decaimiento}) \mathbf{V}$ \Comment{multiplicación elemento a elemento con decaimiento}
+\end{algorithmic}
+
+\begin{algorithmic}[1]
+\State \textbf{Forma recurrente (inferencia):}
+\For{$t = 1, \ldots, n$}
+    \State $\mathbf{s}_t \gets \gamma \mathbf{s}_{t-1} + \mathbf{k}_t \mathbf{v}_t^\top$ \Comment{actualización de estado con decaimiento}
+    \State $\mathbf{y}_t \gets \mathbf{q}_t \mathbf{s}_t$ \Comment{salida mediante interacción consulta-estado}
+\EndFor
+\end{algorithmic}
+
+El escalar de decaimiento $\gamma \in (0,1)$ controla la ventana temporal. RetNet utiliza \textbf{retención multi-escala} con diferentes valores de $\gamma$ por cabeza (ej., $\gamma = 1 - 2^{-5}, 1 - 2^{-6}, \ldots$), permitiendo dependencias a corto y largo plazo simultáneamente. El modo recurrente por fragmentos divide las secuencias en fragmentos, procesa cada fragmento en paralelo y enhebra un estado recurrente entre fragmentos.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: $\mathcal{O}(n^2 \cdot d)$ (paralela), o $\mathcal{O}(n \cdot c \cdot d)$ (recurrente por fragmentos con tamaño de fragmento $c$).
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(1)$ por token, $\mathcal{O}(d^2)$ espacio de estado (matriz fija).
+    \item \textbf{Fortalezas}: Inferencia en tiempo constante; triple paradigma de cómputo; consolidación multi-escala.
+    \item \textbf{Debilidades}: El decaimiento fijo impone un sesgo inductivo rígido; puede truncar patrones de largo alcance aprendidos.
+\end{itemize}
+
+\subsubsection{Mamba: Modelos de Espacio de Estado Selectivos}
+Mamba \citep{gu_mamba_2023} enmarca la recurrencia como un sistema dinámico de tiempo continuo con parámetros dependientes de la entrada, logrando tanto entrenamiento lineal como inferencia en tiempo constante:
+
+\begin{algorithmic}[1]
+\State \textbf{Dinámica continua:} $h'(t) = \mathbf{A} h(t) + \mathbf{B} x(t)$, \quad $y(t) = \mathbf{C} h(t)$
+\State \textbf{Discretización con tamaño de paso $\Delta_t$:}
+\State $\bar{\mathbf{A}}_t \gets \exp(\Delta_t \mathbf{A})$
+\State $\bar{\mathbf{B}}_t \gets (\Delta_t \mathbf{A})^{-1} (\exp(\Delta_t \mathbf{A}) - \mathbf{I}) \Delta_t \mathbf{B}_t$
+\State \textbf{Actualización recurrente:}
+\For{$t = 1, \ldots, n$}
+    \State $\Delta_t \gets \text{softplus}(\text{Lineal}(x_t))$ \Comment{tamaño de paso dependiente de la entrada}
+    \State $\mathbf{B}_t \gets \text{Lineal}(x_t)$, \quad $\mathbf{C}_t \gets \text{Lineal}(x_t)$ \Comment{matrices de proyección dependientes de la entrada}
+    \State $h_t \gets \bar{\mathbf{A}}_t h_{t-1} + \bar{\mathbf{B}}_t x_t$ \Comment{transición de estado}
+    \State $y_t \gets \mathbf{C}_t h_t$ \Comment{proyección de salida}
+\EndFor
+\end{algorithmic}
+
+La innovación crítica es que $\mathbf{A}$ (la matriz del sistema) \textit{no} depende de la entrada, pero $\Delta_t$, $\mathbf{B}_t$ y $\mathbf{C}_t$ sí, haciendo que el sistema sea \textbf{variante en el tiempo}. Esta selectividad permite al modelo \textit{ignorar} información irrelevante estableciendo $\Delta_t$ cerca de cero, creando efectivamente una compuerta. Un algoritmo de escaneo paralelo consciente del hardware implementa la recurrencia eficientemente en GPUs fusionando el cómputo dentro de SRAM, evitando el costoso ancho de banda de HBM.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: $\mathcal{O}(n \cdot d)$ mediante escaneo consciente del hardware (lineal en la longitud de la secuencia).
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(1)$ por token, $\mathcal{O}(d)$ estado (vector oculto).
+    \item \textbf{Fortalezas}: Logra entrenamiento lineal e inferencia constante simultáneamente; práctico en secuencias largas (millones de tokens).
+    \item \textbf{Debilidades}: La compresión del vector de estado puede debilitar la copia exacta y la recuperación asociativa densa en comparación con la atención completa.
+\end{itemize}
+
+\subsection{Transformers de Profundidad Continua: Integración EDO}
+
+\subsubsection{Transformer EDO}
+El Transformer EDO \citep{zhang_continuous_2021} interpreta la profundidad de la red como integración numérica de un sistema dinámico continuo, utilizando solucionadores Runge-Kutta de orden superior para reducir el error de truncamiento:
+
+\begin{algorithmic}[1]
+\State \textbf{Formulación continua:} $\frac{dh(t)}{dt} = f_\theta(h(t), t)$ donde $f_\theta$ es la subred del transformer
+\State \textbf{Aproximación discreta Runge-Kutta-4:}
+\State $k_1 \gets f_\theta(h_t, t)$
+\State $k_2 \gets f_\theta(h_t + \tfrac{1}{2}k_1, t + \tfrac{1}{2}\Delta t)$
+\State $k_3 \gets f_\theta(h_t + \tfrac{1}{2}k_2, t + \tfrac{1}{2}\Delta t)$
+\State $k_4 \gets f_\theta(h_t + k_3, t + \Delta t)$
+\State $h_{t+1} \gets h_t + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)$ \Comment{combinación ponderada}
+\end{algorithmic}
+
+En lugar de las conexiones residuales simples de Euler $h_{t+1} = h_t + f_\theta(h_t)$, el bloque RK4 calcula cuatro evaluaciones intermedias y las combina con los pesos clásicos de RK4. Para evitar gradientes que se desvanecen, la arquitectura introduce \textbf{compuertas aprendidas} que interpolan entre aproximaciones intermedias:
+
+\begin{algorithmic}[1]
+\State $g \gets \sigma(\text{Lineal}([k_1, k_2, k_3, k_4]))$ \Comment{compuerta aprendible}
+\State $h_{t+1} \gets h_t + g \cdot k_1 + (1-g) \cdot k_2$ \Comment{refinamiento interpolado}
+\end{algorithmic}
+
+Esta formulación reduce el número efectivo de parámetros mediante el uso compartido de pesos---la misma $f_\theta$ se evalúa múltiples veces---proporcionando un refinamiento de trayectoria más rico.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: $\mathcal{O}(k \cdot n^2 \cdot d)$ donde $k$ es el orden RK (4 para RK4).
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(k \cdot n)$ por token (mayor sobrecarga constante).
+    \item \textbf{Fortalezas}: Precisión significativamente mayor en tareas de generación (BLEU de última generación); eficiente en parámetros mediante uso compartido de pesos.
+    \item \textbf{Debilidades}: Alto costo de cómputo por paso; la latencia de inferencia aumenta por un factor constante $k$; requiere compuertas complejas para la estabilidad.
+\end{itemize}
+
+\subsection{Memoria en Tiempo de Prueba: Titans}
+
+La arquitectura Titans \citep{behrouz_titans_2025} introduce una dimensión ortogonal: en lugar de pesos estáticos, el modelo mantiene una memoria aprendible que se \textit{actualiza durante la inferencia} basada en una señal impulsada por sorpresa:
+
+\begin{algorithmic}[1]
+\State \textbf{Atención local a corto plazo:} Aplicar atención estándar o dispersa dentro de una ventana de contexto fija $c$
+\State $y_t^{\text{local}} \gets \text{Atencion}(q_t, k_{[t-c:t]}, v_{[t-c:t]})$
+\State \textbf{Señal de actualización de memoria (sorpresa):}
+\State $S_t \gets \eta_t S_{t-1} - \theta_t \nabla_\ell(\mathcal{M}_{t-1}; x_t)$ \Comment{sorpresa como gradiente de la pérdida respecto a la memoria}
+\State $\mathcal{M}_t \gets (1 - \alpha_t) \mathcal{M}_{t-1} + S_t$ \Comment{memoria actualizada mediante EMA}
+\State \textbf{Recuperación de memoria a largo plazo:}
+\State $y_t^{\text{memoria}} \gets \mathcal{M}_t^* (q_t)$ \Comment{consultar módulo de memoria para información recuperada}
+\State \textbf{Combinación de salida:}
+\State $y_t \gets y_t^{\text{local}} + \text{compuerta}(y_t^{\text{memoria}})$ \Comment{combinar memoria local y recuperada}
+\end{algorithmic}
+
+El módulo de memoria $\mathcal{M}$ se actualiza literalmente durante el paso hacia adelante calculando gradientes de una pérdida asociativa y aplicando pasos de SGD con momento. Las tasas de decaimiento $\eta_t, \theta_t, \alpha_t$ son en sí mismas dependientes de la entrada, permitiendo al modelo cambiar de paradigma de memoria cuando el contexto cambia.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad de entrenamiento}: Aproximadamente $\mathcal{O}(c^2 + n \cdot f)$ donde $c$ es la ventana local y $f$ es la sobrecarga de actualización de memoria.
+    \item \textbf{Complejidad de inferencia}: $\mathcal{O}(c^2)$ atención local más $\mathcal{O}(1)$ recuperación de memoria por token.
+    \item \textbf{Fortalezas}: Maneja longitudes de contexto extremas; permite recuperación asociativa real; la memoria se adapta a la entrada.
+    \item \textbf{Debilidades}: Significativamente más complejo; la inferencia incluye cálculos de gradientes; mayor sobrecarga de coordinación.
+\end{itemize}
+
+\subsection{Despacho de Mezclador Guiado por Patrón}
+
+El código base selecciona un mezclador por bloque a partir del \texttt{layer\_pattern} configurado. La lógica de despacho impone la política sin entrenamiento para bloques de solo evaluación y enruta a la implementación de familia correspondiente.
+
+\begin{algorithm}[t]
+\caption{Paso Adelante del Mezclador Guiado por Patrón (Conceptual)}
+\begin{algorithmic}[1]
+\Require Estados ocultos $H$, patrón $P$, índice de capa $\ell$
+\State $m \gets P[\ell \bmod |P|]$
+\If{$m \in \{\texttt{fasa\_attn}, \texttt{sparge\_attn}\}$ y el modelo está en modo entrenamiento}
+    \State lanzar error de configuración/tiempo de ejecución (bloque sin entrenamiento en modo entrenar)
+\ElsIf{$m=\texttt{standard\_attn}$}
+    \State $H \gets \text{softmax-attention}(H)$
+\ElsIf{$m=\texttt{sigmoid\_attn}$}
+    \State $H \gets \text{sigmoid-attention}(H)$
+\ElsIf{$m\in\{\texttt{retnet},\texttt{retnet\_attn}\}$}
+    \State $H \gets \text{retention}(H)$
+\ElsIf{$m=\texttt{mamba}$}
+    \State $H \gets \text{selective-ssm}(H)$
+\ElsIf{$m=\texttt{ode}$}
+    \State $H \gets \text{rk-step}(H)$
+\ElsIf{$m$ es una clave de atención dispersa}
+    \State $H \gets \text{sparse-attention-family}(H)$
+\ElsIf{$m$ es una clave de atención con compuerta}
+    \State $H \gets \text{gated-attention-family}(H)$
+\Else
+    \State $H \gets \text{memory-augmented-attn}(H)$
+\EndIf
+\State \Return $H$
+\end{algorithmic}
+\end{algorithm}
+
+El campo exhibe una progresión clara a lo largo de dos ejes: (i) \textbf{eficiencia computacional}, pasando de $O(n^2)$ a $O(n)$ u $O(1)$, y (ii) \textbf{adaptabilidad de memoria}, pasando de pesos estáticos a modelos dinámicos actualizados en tiempo de prueba. La atención estándar sigue siendo la línea base de expresividad; Mamba y RetNet representan la frontera práctica de eficiencia; Titans introduce un eje de innovación ortogonal (aprendizaje en tiempo de prueba). La elección de arquitectura refleja la restricción fundamental de ingeniería: expresividad versus costo de despliegue. La familia de atención latente, que comprime el caché KV en un latente de rango bajo, se cubre en el Apéndice~\ref{sec:annex-latent}.

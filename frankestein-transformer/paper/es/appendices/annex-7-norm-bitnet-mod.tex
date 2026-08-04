@@ -1,0 +1,285 @@
+\section{Normalización, Cuantización, Enrutamiento de Profundidad y Algoritmos de Ejecución}
+\label{sec:annex-norm-bitnet-mod}
+
+Este anexo recopila el detalle a nivel de implementación para las variantes de normalización, cuantización ternaria estilo BitNet, enrutamiento adaptativo de profundidad (Mixture-of-Depths), memoria condicional (Engram), embeddings factorizados y los algoritmos de ejecución (controles de estabilidad del paso de entrenamiento, enrutador de inferencia SBERT) que soportan la tubería impulsada por configuración. (Las conexiones residuales restringidas por variedad de mHC se documentan por separado en el Anexo~9.) Las secciones principales difieren a este anexo para las formulaciones matemáticas y el pseudocódigo; las claves bibliográficas citadas aquí se resuelven contra \texttt{docs/bibliography/}.
+
+\subsection{Variantes de Normalización: LayerNorm, RMSNorm, pRMSNorm, Tanh Dinámico, Erf Dinámico y FlashNorm}
+
+La normalización determina cómo se controla la escala de activación a través de la profundidad. En este repositorio, la normalización no es solo una elección de modelado sino también una cuestión de compatibilidad con el esquema, porque solo ciertos valores son actualmente aceptados por \texttt{norm\_type}. El contrato del esquema es:
+\[
+\texttt{norm\_type} \in \{\texttt{layer\_norm}, \texttt{dynamic\_tanh}, \texttt{derf}, \texttt{rms\_norm}, \texttt{prms\_norm}, \texttt{flash\_norm}\}
+\]
+Las formulaciones más relevantes para este código base son:
+
+\subsubsection{LayerNorm (Línea Base)}
+LayerNorm \citep{ba2016layer} es el normalizador por defecto; centra y reescala cada token por su media y varianza por token:
+\[
+\mu = \frac{1}{d}\sum_{i=1}^{d} x_i, \quad \sigma^2 = \frac{1}{d}\sum_{i=1}^{d}(x_i - \mu)^2, \quad y_i = \gamma_i \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta_i.
+\]
+
+\subsubsection{RMSNorm}
+RMSNorm elimina la centralización de la media y solo reescala por la magnitud de la raíz cuadrada media \citep{zhang_root_2019}:
+\[
+\mathrm{RMS}(x)=\sqrt{\frac{1}{d}\sum_{i=1}^{d}x_i^2+\epsilon},\qquad
+y_i=\gamma_i\frac{x_i}{\mathrm{RMS}(x)}.
+\]
+En comparación con LayerNorm, RMSNorm es computacionalmente más simple (sin resta de la media de características) y se usa a menudo cuando es importante reducir la sobrecarga de normalización (p.\,ej., Llama, GPT-NeoX). Tiene una escala $\gamma$ aprendible por dimensión pero sin término de bias.
+
+\subsubsection{RMSNorm Parcial (pRMSNorm)}
+pRMSNorm \citep{zhang_root_2019} reduce aún más la sobrecarga estimando el RMS de solo el primer $p$\% de las dimensiones ocultas:
+\[
+\mathrm{RMS}(x)=\sqrt{\frac{1}{k}\sum_{i=1}^{k}x_i^2+\epsilon},\qquad k=\lceil d\cdot p\rceil,
+\]
+explotando el supuesto de que las neuronas dentro de una capa son aproximadamente i.i.d. La misma escala $\gamma$ se aplica a todas las dimensiones. La razón parcial $p$ se controla mediante el campo de configuración \texttt{prms\_partial\_ratio} (por defecto $6.25\%$). El paper reporta que se pueden lograr resultados competitivos con tan solo el $6.25\%$ de las entradas, aunque puede surgir inestabilidad de gradiente con razones muy pequeñas.
+
+\subsubsection{Tanh Dinámico (DyT)}
+El Tanh Dinámico propone reemplazar la normalización explícita con un mapeo elemento a elemento acotado \citep{zhu_transformers_2025}:
+\[
+\mathrm{DyT}(x)=\tanh(\alpha x)
+\]
+donde $\alpha$ se aprende. La idea central es que la contracción no lineal acotada puede proporcionar un escalado de señal estable sin calcular explícitamente estadísticas de normalización por token.
+
+\subsubsection{Erf Dinámico (Derf)}
+Derf extiende la misma dirección libre de normalización usando un mapeo basado en la función error \citep{chen_stronger_2025}:
+\[
+\mathrm{Derf}(x)=\mathrm{erf}(\alpha x+s)
+\]
+con escala/desplazamiento aprendibles. Los resultados reportados en el trabajo citado indican un rendimiento superior al de DyT y las líneas base de normalización comunes en múltiples dominios.
+
+\subsubsection{FlashNorm (RMSNorm sin pesos)}
+FlashNorm \citep{graef2026flashnorm} no es una nueva normalización matemática; es una \emph{reescritura algebraica exacta} del ubicuo par ``$\mathrm{RMSNorm} \to \mathrm{Lineal}$'' que (i) elimina la escala aprendible por dimensión $\mathbf{g}$ al plegarla en los pesos de la capa lineal subsecuente, y (ii) difiere la reducción escalar RMS a la salida de la multiplicación matricial, de modo que el \texttt{matmul} (unidad matricial) y la reducción RMS (unidad vectorial) se ejecuten en paralelo. Tres proposiciones formalizan la reescritura.
+
+\paragraph{Proposición 1 (Plegado de pesos).}
+Dada la activación $\mathbf{a}\in\mathbb{R}^{n}$, el peso RMSNorm $\mathbf{g}\in\mathbb{R}^{n}$ y una lineal subsecuente $\mathbf{W}\in\mathbb{R}^{n\times k}$,
+\[
+\mathbf{z}=\mathrm{RMSNorm}(\mathbf{a})\mathbf{W}=\frac{\mathbf{a}}{\mathrm{RMS}(\mathbf{a})}\mathbf{W}^{*},\qquad
+W^{*}_{i,j}=g_{i}\cdot W_{i,j}\ \Leftrightarrow\ \mathbf{W}^{*}=\operatorname{diag}(\mathbf{g})\mathbf{W}.
+\]
+La escala por dimensión $\mathbf{g}$ se vuelve redundante y se pliega en $\mathbf{W}$ una única vez al cargar el modelo. El módulo autónomo \texttt{FlashNorm} de este repositorio aplica esto directamente: \emph{no tiene parámetros aprendibles} (la escala está destinada a ser absorbida por la proyección subsecuente).
+
+\paragraph{Proposición 2 (Normalización diferida).}
+Para una lineal sin bias $\mathbf{W}^{*}$, la conmutatividad escalar--matricial produce
+\[
+\frac{\mathbf{a}}{\mathrm{RMS}(\mathbf{a})}\mathbf{W}^{*}=\left(\mathbf{a}\mathbf{W}^{*}\right)\cdot\frac{1}{\mathrm{RMS}(\mathbf{a})}.
+\]
+El \texttt{matmul} $\mathbf{a}\mathbf{W}^{*}$ y la reducción RMS son independientes entre sí; en hardware con unidades matriciales y vectoriales diferenciadas se ejecutan en paralelo, y solo una multiplicación vectorial--escalar los sincroniza. El módulo fusionado \texttt{FlashNormLinear} implementa esta reescritura: en la ruta sin bias calcula el \texttt{matmul} sobre la entrada \emph{no normalizada} y multiplica el resultado por el RMS recíproco por token. Cuando la lineal tiene bias $\mathbf{c}$, la reescritura deja de ser exacta (Observación 1 del paper): $\left(\mathbf{a}\mathbf{W}^{*}+\mathbf{c}\right)/\mathrm{RMS}(\mathbf{a})\neq\mathbf{a}\mathbf{W}^{*}/\mathrm{RMS}(\mathbf{a})+\mathbf{c}$; la capa entonces aplica el escalar a la entrada primero y deja que la lineal añada su bias como de costumbre.
+
+\paragraph{Proposición 3 (Cancelación de RMS).}
+Por la invariancia de escala de RMS, $\mathrm{RMS}(\alpha\mathbf{a})=\alpha\,\mathrm{RMS}(\mathbf{a})$. Por tanto, un patrón ``$\mathrm{RMSNorm}\to\mathrm{Lineal}\to\mathrm{RMSNorm}$'' permite que el \emph{primer} RMSNorm se elimine por completo:
+\[
+\mathrm{RMSNorm}\!\left(\frac{\mathbf{a}}{\mathrm{RMS}(\mathbf{a})}\mathbf{W}^{*}\right)=\mathrm{RMSNorm}\!\left(\mathbf{a}\mathbf{W}^{*}\right).
+\]
+Esta cancelación es relevante para la normalización QKV (Gemma~4) y la normalización latente MLA (DeepSeek-V2, Mistral Small~4); no se aplica automáticamente en este repositorio pero se documenta por completitud.
+
+\paragraph{Composición con RMS parcial.}
+FlashNorm se compone naturalmente con el truco pRMSNorm (§\ref{sec:annex-norm-bitnet-mod}, subsección pRMSNorm): cuando \texttt{flashnorm\_partial\_ratio} $=p>0$, el RMS se estima solo de los primeros $k=\lceil d\cdot p\rceil$ elementos de la entrada, reduciendo aún más el costo de la reducción RMS en la unidad vectorial.
+
+\paragraph{Interacción con BitNet.}
+Plegar un $\mathbf{g}$ de coma flotante en el tensor de pesos ternarios de BitNet $\{-1,0,+1\}$ \citep{wang_bitnet_2023} destruiría la cuantización, y BitLinear aplica su propio LayerNorm interno antes de la cuantización de activaciones, el cual necesita la entrada normalizada. El módulo fusionado \texttt{FlashNormBitLinear} por tanto recurre a la composición secuencial $\mathrm{FlashNorm}\to\mathrm{BitLinear}$: el \texttt{matmul} y la reducción RMS aún se ejecutan en paralelo, pero la multiplicación escalar post-\texttt{matmul} de la Prop.~2 se sacrifica. El plegado de $\mathbf{g}$ en coma flotante en un tensor de pesos de 1.58 bits se deja a trabajo futuro a nivel kernel.
+
+\paragraph{Pseudocódigo PyTorch.}
+\begin{algorithmic}[1]
+\State \textbf{Entrada:} activación $\mathbf{a}\in\mathbb{R}^{T\times n}$, peso RMSNorm $\mathbf{g}\in\mathbb{R}^{n}$, lineal $\mathbf{W}\in\mathbb{R}^{n\times k}$, bias $\mathbf{c}\in\mathbb{R}^{k}$ o \texttt{None}
+\State \texttt{// Prop. 1: plegado de pesos al cargar}
+\State $\mathbf{W}^{*}\gets \mathbf{g}\odot\mathbf{W}$ \Comment{por columnas; \texttt{g.unsqueeze(0) * W} en PyTorch}
+\State $\mathbf{g}\gets \mathbf{1}$ \Comment{la norma autónoma ahora es sin pesos}
+\State \texttt{// Prop. 2: paso forward con RMS diferida (ruta sin bias)}
+\State $\mathbf{b}\gets \mathbf{a}\mathbf{W}^{*\top}$ \Comment{unidad matricial / tensor cores}
+\State $\mathrm{rms\_inv}\gets \mathrm{rsqrt}(\mathrm{mean}(\mathbf{a}^{2})+\varepsilon)$ \Comment{unidad vectorial, independiente de $\mathbf{b}$}
+\If{$\mathbf{c}=\texttt{None}$}
+    \State \textbf{retornar} $\mathbf{b}\cdot\mathrm{rms\_inv}$ \Comment{una sola multiplicación vectorial--escalar}
+\Else
+    \State \texttt{// Observación 1: la ruta con bias es secuencial; matmul y RMS aún paralelizan}
+    \State \textbf{retornar} $(\mathbf{a}\cdot\mathrm{rms\_inv})\mathbf{W}^{*\top}+\mathbf{c}$
+\EndIf
+\end{algorithmic}
+
+\paragraph{Latencia reportada (GPU NVIDIA T4).}
+El paper reporta las siguientes aceleraciones sobre la operación \emph{norm-then-project}, con un despacho adaptativo que cae al camino secuencial en el régión limitada por memoria (decodificación):
+
+\scriptsize
+\begin{tabular}{llrrrl}
+\toprule
+\textbf{Escala} & \textbf{Tokens} & \textbf{Secuencial (ms)} & \textbf{FlashNorm (ms)} & \textbf{Aceleración} & \textbf{Notas} \\
+\midrule
+SmolLM2-135M & 4096 & 0.704 & 0.468 & $+33.6\%$ & limitada por cómputo (prefill) \\
+SmolLM2-135M & 8192 & 0.929 & 0.599 & $+35.5\%$ & limitada por cómputo (prefill) \\
+Llama-7B     & 1024 & 1.882 & 1.654 & $+12.1\%$ & limitada por cómputo (prefill) \\
+Llama-7B     & 4096 & 7.628 & 6.570 & $+13.9\%$ & limitada por cómputo (prefill) \\
+\bottomrule
+\end{tabular}
+\normalsize
+
+\paragraph{Validación de plegado sin pérdida.}
+El plegado de pesos (Prop.~1) es matemáticamente exacto; el paper verificó salidas bit-idénticas en tres checkpoints abiertos:
+
+\scriptsize
+\begin{tabular}{lll}
+\toprule
+\textbf{Modelo} & \textbf{Precisión} & \textbf{Resultado} \\
+\midrule
+SmolLM2-135M & fp16 & diff máxima $=0.0$, similitud coseno $=1.0$, texto idéntico \\
+Llama-3.2-1B & fp32 & generación voraz bit-idéntica \\
+Llama-3.1-8B & fp32 & generación voraz bit-idéntica \\
+\bottomrule
+\end{tabular}
+\normalsize
+La preservación de calidad en \texttt{lm-evaluation-harness} (wikitext word\_ppl, MMLU 5-shot, HellaSwag 0-shot) se mantiene dentro del ruido del benchmark (peor $\Delta=+0.0017$ word\_ppl).
+
+\subsubsection{Comparación}
+\scriptsize
+\begin{longtable}{p{2.2cm}p{3.4cm}p{2.0cm}p{4.0cm}}
+\toprule
+\textbf{Método} & \textbf{Fórmula} & \textbf{Estadísticas Necesarias} & \textbf{Notas} \\
+\midrule
+\endhead
+LayerNorm & $\gamma_i (x_i - \mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i$ & media + varianza & Por defecto; centrado y reescalado completo \citep{ba2016layer}. \\
+RMSNorm & $\gamma_i x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}$ & Solo RMS & Menor sobrecarga; línea base ampliamente usada \citep{zhang_root_2019}. \\
+pRMSNorm & $\gamma_i x_i/\sqrt{\frac{1}{k}\sum_{j\le k} x_j^2+\epsilon}$ & RMS parcial & RMS del primer $p$\% de dims; \texttt{prms\_partial\_ratio} por defecto $6.25\%$ \citep{zhang_root_2019}. \\
+Tanh Dinámico & $\tanh(\alpha x)$ & ninguna & Transformación acotada libre de normalización; reemplazo directo \citep{zhu_transformers_2025}. \\
+Erf Dinámico & $\mathrm{erf}(\alpha x+s)$ & ninguna & Alternativa libre de normalización; mejora sobre DyT \citep{chen_stronger_2025}. \\
+FlashNorm & $x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}$ (sin pesos) & Solo RMS & Reescritura exacta de RMSNorm$\to$Lineal: pliega $\mathbf{g}$ en $\mathbf{W}$ (Prop.~1), difiere el escalar RMS a la salida del \texttt{matmul} (Prop.~2); 12--35\% de reducción de latencia en GPU T4 \citep{graef2026flashnorm}. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Ruta de Cuantización Ternaria BitNet}
+
+Cuando \texttt{use\_bitnet=true}, las capas BitLinear reemplazan a \texttt{nn.Linear} estándar con cuantización ternaria de pesos ($-1, 0, +1$) siguiendo BitNet \citep{wang_bitnet_2023}. Dado el tensor de pesos $W$, un escalado práctico es:
+\[
+s=\text{mean}(|W|),\qquad
+\tilde{W}=\text{clip}\left(\text{round}\left(\frac{W}{s}\right),-1,1\right).
+\]
+El mapeo empaquetado utiliza dos bits por símbolo de peso para eficiencia de almacenamiento. Esto permite una compresión significativa ($\sim 32\times$ frente a FP32) pero es experimental y puede afectar la calidad del modelo; es más adecuado para el despliegue de inferencia.
+
+La cuantización de activaciones para la ruta INT8 es:
+\[
+q=\text{round}\left(x\cdot\frac{127}{\max(|x|)+\epsilon}\right),\qquad q\in[-128,127]
+\]
+con des-cuantización $x\approx q/\alpha$. Para $N$ parámetros, las estimaciones de tamaño antes de metadatos y sobrecarga de empaquetado son:
+\[
+\text{Tamaño FP32}\approx 4N,\quad \text{Tamaño FP16}\approx 2N,\quad \text{Tamaño 1.58-bit}\approx \frac{1.58}{8}N
+\]
+lo que se alinea con objetivos de despliegue ligero \citep{samson_lightweight_2026,bravin_embbert_2026}.
+
+\subsection{Enrutamiento de Tokens Mixture-of-Depths (MoD)}
+
+Cuando \texttt{use\_mixture\_of\_depths=true}, cada bloque del transformer puntúa los tokens con un enrutador ligero. Solo el subconjunto superior de \texttt{mixture\_of\_depths\_capacity\_ratio} se actualiza; los tokens omitidos pasan sin cambios \citep{zhu2026mixtureofdepthsattention}. Esto asigna más profundidad a los tokens destacados, reduciendo el cómputo por capa.
+
+\begin{algorithmic}[1]
+\State \textbf{Entrada:} estados ocultos $H \in \mathbb{R}^{n \times d}$, enrutador $R$, ratio de capacidad $\rho$
+\State $\text{puntajes} \gets R(H)$ \Comment{puntaje del enrutador por token}
+\State $\mathcal{S} \gets \texttt{top-k}(\text{puntajes}, k=\lceil \rho \cdot n \rceil)$ \Comment{seleccionar subconjunto destacado}
+\State $H_{\text{actualizar}} \gets \texttt{bloque}(H[\mathcal{S}])$ \Comment{aplicar bloque transformer a tokens seleccionados}
+\State $H[\mathcal{S}] \gets H_{\text{actualizar}}$ \Comment{escribir de vuelta; los tokens no seleccionados bypassan el bloque}
+\State \textbf{Salida:} $H$ \Comment{pérdida auxiliar de balance de carga añadida desde \texttt{mixture\_of\_depths\_router\_aux\_loss\_weight}}
+\end{algorithmic}
+
+\subsubsection{Configuración}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{use\_mixture\_of\_depths}: bool --- habilitar enrutamiento MoD de tokens.
+    \item \texttt{mixture\_of\_depths\_capacity\_ratio}: float en $(0, 1]$ --- fracción de tokens actualizados por capa.
+    \item \texttt{mixture\_of\_depths\_router\_aux\_loss\_weight}: float $\ge 0$ --- peso de pérdida auxiliar para regularización del enrutador.
+\end{itemize}
+
+\subsection{Memoria Condicional Engram}
+
+Engram (\texttt{engram\_attn}) implementa memoria condicional mediante búsqueda N-gram escalable \citep{cheng2026conditionalmemoryscalablelookup}. Construye tablas de búsqueda basadas en hash para contextos N-gram desde tamaño 2 hasta \texttt{engram\_max\_ngram\_size}, con cabezas hash independientes por orden N-gram. Una convolución causal depthwise (\texttt{engram\_kernel\_size}) proporciona contexto de corto alcance antes de la búsqueda N-gram.
+
+\begin{algorithmic}[1]
+\State \textbf{Entrada:} flujo de tokens $x_{1:n}$, órdenes N-gram $\{2, \ldots, N\}$, cabezas hash por orden $H$
+\State $h_{\text{conv}} \gets \text{DepthwiseConv1d}(x_{1:n}, k=\texttt{engram\_kernel\_size})$ \Comment{contexto de corto alcance}
+\For{cada orden N-gram $k \in \{2, \ldots, N\}$}
+    \State $\text{ctx}_t^{(k)} \gets x_{t-k+1:t}$ \Comment{ventana de contexto N-gram}
+    \State $\text{lookup}^{(k)}_t \gets \text{HashTable}^{(k)}[\text{hash}(\text{ctx}_t^{(k)})]$ \Comment{recuperación por cabeza, $H$ cabezas por orden}
+\EndFor
+\State $y_t \gets \sum_{k} \text{lookup}^{(k)}_t + h_{\text{conv},t}$ \Comment{combinar memorias condicionales}
+\State \textbf{Salida:} $y_{1:n}$
+\end{algorithmic}
+
+\subsubsection{Configuración}
+\begin{itemize}[leftmargin=*]
+    \item \texttt{engram\_max\_ngram\_size}: int $\ge 2$ --- orden N-gram más alto (por defecto 3).
+    \item \texttt{engram\_n\_heads\_per\_ngram}: int $\ge 1$ --- cabezas hash por orden N-gram (por defecto 4).
+    \item \texttt{engram\_embed\_dim\_per\_head}: int $\ge 1$ --- dimensión de embedding por cabeza hash (por defecto 32).
+    \item \texttt{engram\_kernel\_size}: int $\ge 1$ --- ancho del kernel de conv causal depthwise (por defecto 4).
+    \item \texttt{engram\_seed}: int --- semilla hash para reproducibilidad (por defecto 42).
+\end{itemize}
+Tamaño oculto total de Engram = $(\texttt{max\_ngram\_size} - 1) \times \texttt{n\_heads\_per\_ngram} \times \texttt{embed\_dim\_per\_head}$.
+
+\subsection{Embeddings Factorizados y Convolución de Embedding}
+
+\subsubsection{Embeddings Factorizados}
+Cuando \texttt{use\_factorized\_embedding=true}, la matriz de embedding se factoriza en dos matrices más pequeñas, reduciendo parámetros de $O(V \times H)$ a $O(V \times R + R \times H)$ donde $R = \texttt{factorized\_embedding\_dim}$.
+\begin{itemize}[leftmargin=*]
+    \item \texttt{use\_factorized\_embedding}: bool --- habilitar factorización.
+    \item \texttt{factorized\_embedding\_dim}: int $\ge 1$ --- dimensión intermedia (típico: 64--256).
+\end{itemize}
+
+\subsubsection{Convolución de Embedding}
+Cuando \texttt{use\_embedding\_conv=true}, se aplica una Conv1d depthwise sobre el flujo de embeddings antes del primer bloque transformer, con tamaño de kernel \texttt{embedding\_conv\_kernel}. Esto proporciona un filtro ligero de contexto local sobre embeddings de tokens.
+
+\subsection{Controles de Estabilidad del Paso de Entrenamiento}
+
+El paso de entrenamiento guiado por esquema aplica acumulación de gradientes, recorte de norma global, guardas de explosión post-recorte y reintentos acotados de NaN/Inf. El gradiente acumulado es:
+\[
+g_{\text{acc}}=\frac{1}{K}\sum_{i=1}^{K} g_i,\quad K=\texttt{gradient\_accumulation\_steps}
+\]
+\[
+g_{\text{clip}} = g_{\text{acc}}\cdot
+\min\left(1,\frac{\tau}{\|g_{\text{acc}}\|_2+\epsilon}\right),\quad
+\tau=\texttt{grad\_clip\_max\_norm}
+\]
+luego los guardas de desbordamiento usan \texttt{inf\_post\_clip\_threshold} y lógica de reintentos limitada por \texttt{max\_nan\_retries}.
+
+\begin{algorithm}[t]
+\caption{Paso de Entrenamiento Guiado por Esquema con Controles de Estabilidad}
+\begin{algorithmic}[1]
+\Require Flujo de lotes, configuración $C$
+\State Inicializar contador de reintentos $r\gets 0$
+\For{cada paso del optimizador}
+    \State Acumular gradientes para $K=C.\texttt{gradient\_accumulation\_steps}$ micro-lotes
+    \State Aplicar recorte de norma global con $\tau=C.\texttt{grad\_clip\_max\_norm}$
+    \If{el gradiente post-recorte excede $C.\texttt{inf\_post\_clip\_threshold}$ o se detecta NaN/Inf}
+        \If{$r < C.\texttt{max\_nan\_retries}$}
+            \State restaurar estado seguro / saltar paso; $r \gets r+1$
+            \State \textbf{continue}
+        \Else
+            \State detener entrenamiento con estado de fallo
+        \EndIf
+    \EndIf
+    \State ejecutar paso del optimizador seleccionado por \texttt{optimizer\_class}
+    \State actualizar scheduler (\texttt{cosine}, \texttt{constant}, o \texttt{linear\_warmup\_then\_constant})
+    \If{paso mod \texttt{checkpoint\_every\_n\_steps}$=0$}
+        \State guardar checkpoint rodante y podar a \texttt{max\_rolling\_checkpoints}
+    \EndIf
+    \State actualizar mejores checkpoints hasta \texttt{num\_best\_checkpoints}
+    \State emitir CSV + telemetría según \texttt{gradient\_log\_interval} y \texttt{telemetry\_log\_interval}
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Enrutador de Modo de Inferencia SBERT}
+
+El despachador de inferencia SBERT selecciona entre puntuación de similitud, búsqueda sobre corpus, agrupamiento y codificación persistente sobre un único codificador compartido \citep{reimers_sentence-bert_2019}. La similitud coseno y la pérdida de regresión son:
+\[
+\text{cos}(e_1,e_2)=\frac{e_1^\top e_2}{\|e_1\|\|e_2\|},\qquad
+\mathcal{L}_{\text{cos}}=\left(\text{cos}(e_1,e_2)-y\right)^2
+\]
+con $y\in[-1,1]$ en este pipeline.
+
+\begin{algorithm}[t]
+\caption{Enrutador de Modo de Inferencia SBERT}
+\begin{algorithmic}[1]
+\Require modo $m$, modelo $E$, entradas $X$
+\If{$m=\texttt{similarity}$}
+    \State retornar $\cos(E(x_1),E(x_2))$
+\ElsIf{$m=\texttt{search}$}
+    \State retornar top-$k$ por producto-punto/coseno contra embeddings del corpus
+\ElsIf{$m=\texttt{cluster}$}
+    \State retornar etiquetas de clustering sobre $E(X)$
+\Else
+    \State retornar embeddings serializados $E(X)$
+\EndIf
+\end{algorithmic}
+\end{algorithm}

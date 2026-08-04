@@ -1,0 +1,548 @@
+\section{Familias de Atención con Compuerta---Análisis Exhaustivo de Literatura}
+\label{sec:annex-gated}
+
+\subsection{Resumen Ejecutivo: Compuertas para el Control de Memoria}
+
+El campo emergente de los \emph{mecanismos de atención con compuerta} aborda un desafío fundamental en el modelado de secuencias: ¿cómo debe retenerse, olvidarse y actualizarse la información a medida que el modelo procesa nuevos tokens? Los estados recurrentes aditivos tradicionales acumulan toda la información sin borrado, lo que lleva a la saturación de memoria y a la incapacidad de adaptarse a contextos cambiantes. La atención softmax proporciona expresividad completa pero usa un caché KV de $\mathcal{O}(Ld)$ durante la inferencia, limitando el tamaño de la ventana de contexto. Los mecanismos con compuerta proporcionan un punto intermedio: control selectivo sobre la supervivencia de la información.
+
+El principio unificador entre las arquitecturas con compuerta es que las compuertas controlan \textit{qué información sobrevive}. Las compuertas operan en tres niveles distintos:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Decaimiento del estado recurrente} (GLA, HGRN2): Compuertas multiplicativas sobre la matriz de memoria $S_t$ controlan cuánto del estado anterior persiste en el siguiente paso.
+    \item \textbf{Intensidad de escritura en actualizaciones recurrentes} (DeltaNet, Gated DeltaNet, Gated DeltaNet-2): Las compuertas controlan la magnitud y la dirección canalizada de la nueva información escrita en la memoria.
+    \item \textbf{Sesgo de logits softmax} (FoX): Las compuertas inyectan sesgo de actualidad a nivel de token en el cálculo de logits de atención.
+    \item \textbf{Dispersidad post-atención} (Gated Softmax): Las compuertas escalan selectivamente los canales de salida de SDPA.
+\end{enumerate}
+
+Este apéndice sintetiza ocho arquitecturas principales de atención con compuerta publicadas entre 2023 y 2026, analizando sus fundamentos matemáticos, características de eficiencia en hardware y compensaciones empíricas.
+
+\subsection{1. Atención Lineal con Compuerta (GLA)}
+
+\subsubsection{Fundamento Matemático}
+
+La Atención Lineal con Compuerta \citep{yang_gla_2023} aumenta la atención lineal estándar (que usa un estado recurrente con valor de matriz) con decaimiento multiplicativo dependiente de los datos. La atención lineal estándar reformula el mecanismo softmax tradicional como una recurrencia sobre estados ocultos:
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top, \quad \mathbf{o}_t = \mathbf{S}_t \mathbf{q}_t
+\]
+donde el estado $\mathbf{S}_t \in \mathbb{R}^{d_v \times d_k}$ acumula productos externos. Esta formulación puramente aditiva sufre de ``sobrecarga de memoria'': la información se acumula monótonamente y no puede borrarse, degradando el rendimiento en tareas que requieren selección de contexto.
+
+GLA introduce una \textbf{matriz de compuerta diagonal} $\mathbf{G}_t \in [0,1]^{d_k \times d_k}$ dependiente de los datos:
+\[
+\mathbf{S}_t = \mathbf{G}_t \odot \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top, \quad \mathbf{o}_t = \mathbf{S}_t \mathbf{q}_t
+\]
+La compuerta $\mathbf{G}_t$ se parametriza con una estructura de producto externo:
+\[
+\mathbf{G}_t = \mathbf{1} \boldsymbol{\alpha}_t^\top, \quad \boldsymbol{\alpha}_t = \text{logsigmoid}\left(\mathbf{W}_{gk} \mathbf{x}_t\right) / c
+\]
+donde $\mathbf{W}_{gk}$ es una proyección de rango bajo ($\mathbb{R}^{d \to d_k}$) y $c \approx 16$ es un normalizador. La activación logsigmoid mapea $\alpha_t \in \mathbb{R}$ a aproximadamente $[-1/2, 0]$, y la división por $c$ contrae esto aún más para que esté cerca de la identidad en la inicialización. La compuerta resultante $G_t = 1 + \alpha_t \approx 1$ cerca de la inicialización, luego aprende a decaer $(\alpha_t \to -\infty)$ información histórica.
+
+\begin{algorithm}[H]
+\caption{Atención Lineal con Compuerta (Forma Recurrente)}
+\begin{algorithmic}[1]
+\Require Entrada $\mathbf{x}_t$; estado anterior $\mathbf{S}_{t-1}$
+\Require Proyecciones: $W_q, W_k, W_v$ (estándar); $W_{gk}$ (proyección de compuerta)
+\Ensure Salida $\mathbf{o}_t$ y estado actualizado $\mathbf{S}_t$
+\State $\mathbf{q}_t \gets W_q \mathbf{x}_t$
+\State $\mathbf{k}_t \gets W_k \mathbf{x}_t$
+\State $\mathbf{v}_t \gets W_v \mathbf{x}_t$
+\State Calcular compuerta: $\boldsymbol{\alpha}_t \gets \text{logsigmoid}(W_{gk} \mathbf{x}_t) / 16$ \Comment{Decaimiento por dimensión de clave}
+\State Aplicar compuerta de producto externo: $\mathbf{G}_t \gets \mathbf{1} \boldsymbol{\alpha}_t^\top$  \Comment{producto externo diagonal}
+\State Decaer estado anterior: $\mathbf{S}_t^\text{decaimiento} \gets \mathbf{G}_t \odot \mathbf{S}_{t-1}$ \Comment{producto elemento a elemento}
+\State Agregar nueva asociación: $\mathbf{S}_t \gets \mathbf{S}_t^\text{decaimiento} + \mathbf{v}_t \mathbf{k}_t^\top$
+\State Recuperar mediante consulta: $\mathbf{o}_t^\text{crudo} \gets \mathbf{S}_t \mathbf{q}_t$
+\State Aplicar compuerta de salida: $\mathbf{o}_t \gets \text{GroupNorm}(\mathbf{o}_t^\text{crudo}) \otimes \text{SiLU}(W_g \mathbf{x}_t)$
+\Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Entrenamiento Eficiente en Hardware}
+
+Para el entrenamiento paralelo, GLA usa un algoritmo por fragmentos que agrupa tokens en fragmentos $C$ y calcula transiciones recurrentes en paralelo:
+\[
+\mathbf{O}_{[t]} = \overleftarrow{\mathbf{Q}}_{[t]} \mathbf{S}_{[t]}^\top + \left(\mathbf{Q}_{[t]} \mathbf{K}_{[t]}^\top \odot \mathbf{\Gamma}_{[t]}\right) \mathbf{V}_{[t]}
+\]
+donde $\overleftarrow{\mathbf{Q}}_{[t]}$ atiende al estado en el límite del fragmento (retrospectiva), y $\mathbf{\Gamma}_{[t]}$ es la máscara causal con escalado consciente del decaimiento:
+\[
+\mathbf{\Gamma}_{[t],ij} = \begin{cases} \prod_{l=j}^{i-1} \alpha_l & \text{si } i > j \text{ (retrospectiva)} \\ \prod_{l=1}^{i-j} \alpha_l & \text{si } i \le j \text{ (en-fragmento)} \end{cases}
+\]
+Este diseño maximiza las operaciones matmul susceptibles de aceleración mediante núcleos tensoriales, logrando una complejidad total subcuadrática $\mathcal{O}(nLd^2/C)$ donde $L$ es el número de cabezas de atención y $C$ es el tamaño del fragmento.
+
+\subsubsection{Fortalezas y Limitaciones}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{0.95\linewidth}{Xp{4cm}p{4cm}}
+\toprule
+\textbf{Aspecto} & \textbf{Fortalezas} & \textbf{Limitaciones} \\
+\midrule
+Eficiencia computacional & Entrenamiento subcuadrático mediante paralelismo por fragmentos. Inferencia con memoria constante $O(d^2)$. & Requiere kernels CUDA/Triton personalizados; no disponible en todos los frameworks. \\
+Generalización de contexto & Extiende entrenamiento de 2K tokens a más de 20K tokens con degradación de perplejidad insignificante. & Aún rinde por debajo de softmax en benchmarks con mucha recuperación (aguja en el pajar). \\
+Selectividad & Decaimiento dependiente de los datos por dimensión de clave. & La estructura de compuerta limita la selectividad por par clave-valor; no hay control directo sobre qué asociaciones específicas borrar. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{2. DeltaNet: Atención Lineal con Corrección de Errores}
+
+\subsubsection{Fundamento Matemático}
+
+DeltaNet \citep{yang_deltanet_2024} aplica una \textbf{regla de aprendizaje delta} clásica a las actualizaciones de estado de la atención lineal. En lugar de acumulación aditiva, DeltaNet calcula la diferencia entre el valor predicho (recuperado de la memoria) y el valor objetivo, luego realiza una actualización de corrección de errores:
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1}(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top
+\]
+donde $\beta_t \in (0,1)$ es un escalar de \textbf{intensidad de escritura} dependiente de los datos. Esta actualización puede descomponerse como una operación de borrado-escritura:
+\[
+\mathbf{v}_t^\text{anterior} = \mathbf{S}_{t-1} \mathbf{k}_t \quad \text{(predicción actual)}, \quad
+\mathbf{v}_t^\text{actualizado} = \beta_t \mathbf{v}_t + (1-\beta_t)\mathbf{v}_t^\text{anterior} \quad \text{(mezcla anterior/nuevo)}
+\]
+de modo que:
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1} - \mathbf{v}_t^\text{anterior}\mathbf{k}_t^\top + \mathbf{v}_t^\text{actualizado}\mathbf{k}_t^\top
+\]
+
+La idea clave es que esta regla de actualización minimiza una pérdida de ECM en línea en cada paso temporal:
+\[
+\mathcal{L}_t(\mathbf{S}) = \tfrac{1}{2}\|\mathbf{S}\mathbf{k}_t - \mathbf{v}_t\|^2 \Rightarrow \nabla_{\mathbf{S}} \mathcal{L}_t = (\mathbf{S}\mathbf{k}_t - \mathbf{v}_t)\mathbf{k}_t^\top
+\]
+
+Un paso de SGD con tasa de aprendizaje $\beta_t$ produce la actualización de la regla delta. Esta conexión con el entrenamiento en tiempo de prueba (TTT) proporciona fundamentación teórica: DeltaNet optimiza directamente la predicción de valores en tiempo de inferencia.
+
+\subsubsection{Entrenamiento Paralelo Eficiente}
+
+La matriz de transición de DeltaNet $\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top$ es una matriz de Householder generalizada (actualización de rango 1 a la identidad). Para el entrenamiento por fragmentos, DeltaNet usa la \textbf{representación WY}, que representa el producto de $m$ de estas actualizaciones de rango 1 de forma compacta:
+\[
+\prod_{i=1}^{m} (\mathbf{I} - \beta_i \mathbf{k}_i \mathbf{k}_i^\top) = \mathbf{I} - \mathbf{W}\mathbf{Y}^\top
+\]
+donde $\mathbf{W}, \mathbf{Y} \in \mathbb{R}^{d \times m}$ se construyen recursivamente. Esta factorización permite paralelismo rico en matmul sin materializar el producto completo, manteniendo el entrenamiento por fragmentos eficiente.
+
+\begin{algorithm}[H]
+\caption{Actualización de Estado de DeltaNet con Representación WY}
+\begin{algorithmic}[1]
+\Require Fragmento de entrada $\mathbf{X}_{[t]}$; estado anterior $\mathbf{S}_{t-1}$
+\Require Consultas normalizadas L2 $\hat{\mathbf{Q}}_t$, claves $\hat{\mathbf{K}}_t$, valores $\mathbf{V}_t$
+\Ensure Salida $\mathbf{O}_{[t]}$ y estado actualizado $\mathbf{S}_t$
+\State \textbf{Fase por fragmentos:}
+\For{posición $i = 1$ to tamaño\_fragmento}
+    \State Normalizar: $\hat{\mathbf{k}}_i \gets \hat{\mathbf{K}}_t[i] / \|\hat{\mathbf{K}}_t[i]\|$, $\hat{\mathbf{q}}_i \gets \hat{\mathbf{Q}}_t[i] / \|\hat{\mathbf{Q}}_t[i]\|$
+    \State Calcular intensidad de escritura: $\beta_i \gets \text{sigmoid}(W_\beta \mathbf{x}_i)$
+    \State Predicción: $\hat{\mathbf{v}}^\text{pred} \gets \mathbf{S}_{i-1}^\text{en-fragmento} \hat{\mathbf{k}}_i$
+    \State Mezcla consciente del error: $\mathbf{v}_i^\text{actualización} \gets \beta_i(\mathbf{v}_i - \hat{\mathbf{v}}^\text{pred})$
+    \State Borrar-escribir: $\mathbf{S}_i^\text{en-fragmento} \gets \mathbf{S}_{i-1}^\text{en-fragmento} - \hat{\mathbf{v}}^\text{pred}\hat{\mathbf{k}}_i^\top + (\beta_i \mathbf{v}_i + (1-\beta_i)\hat{\mathbf{v}}^\text{pred})\hat{\mathbf{k}}_i^\top$
+    \State Salida: $\mathbf{o}_i \gets \mathbf{S}_i^\text{en-fragmento} \hat{\mathbf{q}}_i$
+\EndFor
+\State \textbf{Fase entre fragmentos:} Usar representación WY de los productos de transición
+\Return $\mathbf{O}_{[t]}$, $\mathbf{S}_{t}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Fortalezas y Limitaciones}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{0.95\linewidth}{Xp{4cm}p{4cm}}
+\toprule
+\textbf{Aspecto} & \textbf{Fortalezas} & \textbf{Limitaciones} \\
+\midrule
+Recuperación asociativa & Recuperación perfecta en el benchmark MQAR (Recuperación Asociativa Multi-Consulta); la semántica de corrección de errores se ajusta naturalmente a patrones de recuperación. & Sin olvido global, la memoria aún se satura en longitudes de secuencia extremas; requiere mecanismos de reinicio periódico para contexto ilimitado. \\
+Teoría & Fundamentada en optimización de ECM en línea; conexión clara con el paradigma de entrenamiento en tiempo de prueba. & Requiere claves normalizadas L2 para estabilidad numérica; la normalización de doble ancho añade sobrecarga. \\
+Rendimiento & La representación WY permite entrenamiento eficiente por fragmentos. & Ligeramente más lento que Mamba2 por token debido a matrices de transición más ricas (rango 1 en lugar de diagonales). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{3. Gated DeltaNet: Síntesis de Compuerta y Corrección de Errores}
+
+\subsubsection{Fundamento Matemático}
+
+Gated DeltaNet \citep{yang_gated_deltanet_2024} sintetiza las fortalezas de GLA y DeltaNet combinando una \textbf{compuerta de decaimiento} $\alpha_t$ (de GLA) con la \textbf{compuerta de intensidad de escritura} $\beta_t$ (de DeltaNet):
+\[
+\mathbf{S}_t = \mathbf{S}_{t-1}\left(\alpha_t (\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top)\right) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top
+\]
+Reescribiendo para mayor claridad:
+\[
+\mathbf{S}_t = \alpha_t \mathbf{S}_{t-1}(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top
+\]
+Las dos compuertas son complementarias:
+\begin{itemize}[leftmargin=*]
+    \item $\alpha_t \to 0$ borra rápidamente el estado histórico: $\mathbf{S}_t \approx \beta_t \mathbf{v}_t \mathbf{k}_t^\top$ (reinicio de contexto).
+    \item $\alpha_t \to 1$ recupera el comportamiento puro de regla delta: $\mathbf{S}_t \approx \mathbf{S}_{t-1}(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top) + \beta_t \mathbf{v}_t \mathbf{k}_t^\top$ (actualizaciones dirigidas).
+    \item $\beta_t \to 0$ omite la escritura pero decae: $\mathbf{S}_t \approx \alpha_t \mathbf{S}_{t-1}$ (olvido puro).
+    \item $\beta_t \to 1$ reemplaza la memoria agresivamente: $\mathbf{S}_t \approx \alpha_t \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top$ (reemplazo).
+\end{itemize}
+
+Desde una perspectiva de aprendizaje en línea, Gated DeltaNet corresponde a:
+\[
+\min_{\mathbf{S}_t} \|\mathbf{S}_t - \alpha_t \mathbf{S}_{t-1}\|_F^2 - 2\langle \mathbf{S}_t \mathbf{k}_t, \beta_t(\mathbf{v}_t - \alpha_t \mathbf{S}_{t-1} \mathbf{k}_t)\rangle
+\]
+que introduce un decaimiento de pesos adaptativo $\alpha_t$ en una actualización tipo SGD---análogo al decaimiento de pesos desacoplado en la optimización de aprendizaje profundo.
+
+\begin{algorithm}[H]
+\caption{Paso Adelante Paralelo por Fragmentos de Gated DeltaNet}
+\begin{algorithmic}[1]
+\Require Fragmento de entrada $\mathbf{X}_{[i]}$; estado anterior $\mathbf{S}_{i-1}$; tamaño de fragmento $C$
+\Require Proyecciones: $W_q, W_k, W_v, W_\alpha, W_\beta$
+\Ensure Salida $\mathbf{O}_{[i]}$ y estado $\mathbf{S}_i$
+\State \textbf{Cálculo en-fragmento:}
+\For{$j = 1$ to $C$}
+    \State $\mathbf{q}_j \gets W_q \mathbf{x}_j$, $\mathbf{k}_j \gets W_k \mathbf{x}_j$, $\mathbf{v}_j \gets W_v \mathbf{x}_j$
+    \State $\alpha_j \gets \text{sigmoid}(W_\alpha \mathbf{x}_j)$, $\beta_j \gets \text{sigmoid}(W_\beta \mathbf{x}_j)$
+    \State Aplicar compuerta combinada: $\mathbf{S}_j \gets \alpha_j \mathbf{S}_{j-1}(\mathbf{I} - \beta_j \mathbf{k}_j \mathbf{k}_j^\top) + \beta_j \mathbf{v}_j \mathbf{k}_j^\top$
+    \State $\mathbf{o}_j \gets \mathbf{S}_j \mathbf{q}_j$
+\EndFor
+\State \textbf{Recurrencia entre fragmentos:}
+\State $\mathbf{S}_i \gets \mathbf{S}_C$ del en-fragmento; propagar entre fragmentos mediante máscaras $\prod \alpha$ acumulativas
+\State \textbf{Compuerta de salida:} $\mathbf{O}_{[i]} \gets \text{GroupNorm}(\mathbf{O}^\text{crudo}) \otimes \text{SiLU}(W_g \mathbf{X}_{[i]})$
+\Return $\mathbf{O}_{[i]}$, $\mathbf{S}_i$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Rendimiento Empírico y Compensaciones}
+
+Gated DeltaNet se ha integrado en los modelos de producción Qwen3-Next y Qwen3.5 de Alibaba. Empíricamente:
+\[
+\begin{array}{l|cccc}
+\textbf{Tarea} & \textbf{Gated DeltaNet} & \textbf{Mamba2} & \textbf{DeltaNet} & \textbf{GLA} \\
+\hline
+\text{Modelado de Lenguaje} & \mathbf{1.0\times} & 1.08\times & 1.05\times & 1.12\times \\
+\text{Recuperación Asociativa} & \mathbf{1.0\times} & --(sin perfecto) & \mathbf{1.0\times} & 0.75 \\
+\text{Extrapolación de Longitud} & \mathbf{1.0\times} & 0.98\times & 0.96\times & 0.94\times \\
+\text{Rendimiento (tokens/seg)} & 0.85\times & \mathbf{1.0\times} & 0.82\times & 0.88\times
+\end{array}
+\]
+Gated DeltaNet logra el mejor equilibrio entre diversas tareas a costa de un rendimiento ligeramente reducido debido a matrices de transición más ricas.
+
+\subsection{4. HGRN2: Compuerta Jerárquica con Expansión de Producto Externo}
+
+\subsubsection{Fundamento Matemático}
+
+HGRN2 \citep{qin_hgrn2_2024} usa una expansión de estado basada en producto externo con \textbf{compuertas de olvido acotadas inferiormente de forma jerárquica}. La actualización de estado es:
+\[
+\mathbf{S}_t = \text{diag}(\mathbf{g}_t) \cdot \mathbf{S}_{t-1} + \mathbf{v}_t \mathbf{k}_t^\top, \quad \mathbf{o}_t = \mathbf{S}_t \mathbf{q}_t
+\]
+donde $\mathbf{g}_t \in [b_\ell, 1]^d$ es una compuerta de olvido con cota inferior para la capa $\ell$. Las cotas satisfacen:
+\[
+0 \le b_{\ell_{\text{poco profunda}}} < b_{\ell_{\text{media}}} < b_{\ell_{\text{profunda}}} \le 1
+\]
+es decir, las cotas aumentan (se vuelven menos restrictivas) en las capas más profundas. La compuerta en sí se calcula como:
+\[
+\mathbf{g}_t = b_\ell + (1 - b_\ell) \cdot \sigma(W_g \mathbf{x}_t)
+\]
+donde $\sigma$ es sigmoide. Cuando $W_g$ produce logits débilmente negativos, $\mathbf{g}_t \approx b_\ell$ (retención forzada en capas superficiales). Cuando las salidas son fuertemente positivas, $\mathbf{g}_t \approx 1$ (refresco de memoria en cualquier capa).
+
+La estructura jerárquica anima a diferentes capas a especializarse en diferentes escalas temporales: las capas superficiales modelan dependencias locales (alta retención debido a la cota $b_\ell$), mientras que las capas profundas capturan estructura de largo alcance (compuerta flexible con cota superior alta).
+
+\begin{algorithm}[H]
+\caption{Paso Adelante de HGRN2 con Cotas Jerárquicas}
+\begin{algorithmic}[1]
+\Require Entrada $\mathbf{x}_t$; estado anterior $\mathbf{S}_{t-1}$; índice de capa $\ell \in [0, L-1]$
+\Require Cotas no decrecientes: $0 \le b_0 < b_1 < \cdots < b_{L-1} \le 1$
+\Ensure Salida $\mathbf{o}_t$ y estado $\mathbf{S}_t$
+\State Cota de retención específica de capa: $b \gets b_\ell$
+\State Proyectar: $\mathbf{q}_t \gets W_q \mathbf{x}_t$, $\mathbf{k}_t \gets W_k \mathbf{x}_t$, $\mathbf{v}_t \gets W_v \mathbf{x}_t$
+\State Calcular compuerta de olvido con cota: $\mathbf{g}_t \gets b + (1-b) \cdot \sigma(W_g \mathbf{x}_t)$ \Comment{Confinado a $[b, 1]$}
+\State Multiplicación diagonal (vectorizada): $\mathbf{S}_t \gets \mathbf{S}_{t-1} \circ \text{diag}(\mathbf{g}_t) + \mathbf{v}_t \mathbf{k}_t^\top$
+\State Recuperar: $\mathbf{o}_t \gets \mathbf{S}_t \mathbf{q}_t$
+\State Normalización opcional: $\mathbf{o}_t \gets \text{RMSNorm}(\mathbf{o}_t)$
+\Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Escalado y Resultados Empíricos}
+
+A escala de 3B en 100B tokens, HGRN2 supera ligeramente a Mamba2 y a los Transformers con arquitectura LLaMA en modelado de lenguaje. La compuerta jerárquica proporciona modelado temporal multi-escala sin variantes arquitectónicas explícitas por capa. Sin embargo, la compuerta diagonal con valor vectorial (en oposición a la selección elemento a elemento) proporciona menos flexibilidad por elemento que las variantes de regla delta.
+
+\subsection{5. Forgetting Transformer (FoX): Compuerta en el Espacio de Logits Softmax}
+
+\subsubsection{Fundamento Matemático}
+
+Forgetting Transformer (FoX), propuesto por Lin et al.~\citep{lin_forgetting_transformer_2025}, incrusta una compuerta de olvido directamente en los logits de atención softmax. En lugar de reemplazar softmax con recurrencia lineal, FoX preserva la expresividad completa de softmax mientras añade control de actualidad mediante un sesgo de logit dependiente de los datos.
+
+Para cada posición de token $t$ y todas las claves $j \le t$, calcular un escalar de compuerta de olvido:
+\[
+f_t = \sigma(w_f^\top \mathbf{x}_t + b_f)
+\]
+El sesgo de logit en la posición $(i,j)$ es el producto acumulativo log-olvido:
+\[
+d_{ij} = \sum_{l=j+1}^{i} \log f_l = \log \prod_{l=j+1}^{i} f_l
+\]
+La salida de atención completa se convierte en:
+\[
+\mathbf{O} = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}} + \mathbf{D}\right) \mathbf{V}
+\]
+donde $\mathbf{D}_{ij} = d_{ij}$. Equivalentemente:
+\[
+\text{Atencion}(i,j) = \frac{\exp(\mathbf{q}_i^\top \mathbf{k}_j / \sqrt{d_k} + d_{ij})}{\sum_{j'=1}^{i} \exp(\mathbf{q}_i^\top \mathbf{k}_{j'} / \sqrt{d_k} + d_{ij'})}
+\]
+
+Esta ponderación reduce el peso de los tokens más antiguos multiplicativamente: un token de hace 10 pasos se escala por $\prod_{l=j+1}^{i} f_l$, que es típicamente mucho menor que 1 si $f_t < 1$ en promedio.
+
+El mecanismo es matemáticamente equivalente a una \textbf{variante aprendible dependiente de los datos de ALiBi (Atención con Sesgos Lineales)}, donde trabajos anteriores usaban $d_{ij} = -\infty \cdot |i-j|$ fijo o $d_{ij} = -(i-j)$.
+
+\begin{algorithm}[H]
+\caption{FoX: Atención con Olvido y Sesgo de Actualidad}
+\begin{algorithmic}[1]
+\Require Consultas $\mathbf{Q}$, claves $\mathbf{K}$, valores $\mathbf{V}$; entrada $\mathbf{X}$
+\Require Parámetros de compuerta de olvido: $w_f \in \mathbb{R}^d$, $b_f \in \mathbb{R}$
+\Ensure Salida de atención $\mathbf{O}$
+\State \textbf{Calcular compuertas de olvido:}
+\For{$t = 1$ to $T$}
+    \State $f_t \gets \sigma(w_f^\top \mathbf{x}_t + b_f)$ \Comment{Probabilidad de olvido por token}
+\EndFor
+\State \textbf{Calcular sesgos acumulativos de log-olvido:}
+\For{$i = 1$ to $T$}
+    \For{$j = 1$ to $i$}
+        \State $d_{ij} \gets \sum_{l=j+1}^{i} \log f_l$ \Comment{Producto acumulativo en espacio logarítmico}
+    \EndFor
+\EndFor
+\State \textbf{SDPA estándar con sesgo:}
+\State Calcular puntajes: $\mathbf{S} \gets \mathbf{Q}\mathbf{K}^\top / \sqrt{d_k}$
+\State Agregar sesgo: $\mathbf{S} \gets \mathbf{S} + \mathbf{D}$
+\State Aplicar softmax: $\mathbf{A} \gets \text{softmax}(\mathbf{S}, \text{dim}=-1)$
+\State Ponderar valores: $\mathbf{O} \gets \mathbf{A} \mathbf{V}$
+\Return $\mathbf{O}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Integración con FlashAttention}
+
+La ventaja clave de FoX es la compatibilidad con FlashAttention y las implementaciones optimizadas existentes. Los sesgos de olvido se añaden en el cálculo de logits softmax, que ya es una operación central en el algoritmo por bloques de FlashAttention. La sobrecarga es:
+\[
+\text{Sobrecarga} \approx 0.5--2\% \text{ del tiempo de pared}
+\]
+ya que la adición de sesgo se amortiza entre las operaciones matmul.
+
+\subsubsection{Fortalezas y Limitaciones}
+
+FoX logra resultados de última generación en extrapolación de longitud, recuperación casi perfecta de aguja en el pajar y comprensión superior de contexto largo en comparación con los Transformers. Sin embargo, sigue siendo $\mathcal{O}(L^2 d)$ en entrenamiento y $\mathcal{O}(L d)$ por paso en inferencia con caché KV, limitando las longitudes de secuencia extremas.
+
+\subsection{6. Atención con Compuerta (Post-SDPA Sigmoide)}
+
+\subsubsection{Fundamento Matemático}
+
+El Mejor Artículo de NeurIPS 2025 del equipo de Qwen propone aplicar una compuerta sigmoide \textbf{después} de la atención de producto punto escalado (SDPA):
+\[
+\mathbf{Y} = \text{SDPA}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\right) \mathbf{V}
+\]
+\[
+\mathbf{Y}' = \mathbf{Y} \odot \sigma\left(\mathbf{X} \mathbf{W}_\theta\right)
+\]
+donde el puntaje de compuerta $\sigma(\mathbf{X} \mathbf{W}_\theta)$ puede tener forma $\mathbb{R}^{n \times q \times d_k}$ (compuerta elemento a elemento por cabeza de consulta) o $\mathbb{R}^{n \times q}$ (compuerta fija por cabeza). En más de 30 variantes y modelos MoE de 15B + densos de 1.7B entrenados en 3.5T tokens, el equipo encontró:
+
+\begin{itemize}[leftmargin=*]
+    \item La compuerta por cabeza añade solo $\sim 1.6M$ parámetros a un modelo de 15B (sobrecarga insignificante).
+    \item Las compuertas efectivas son \textbf{dispersas}: activación media $\approx 0.116$ (es decir, el 88\% son cero o casi cero).
+    \item Las compuertas actúan como filtros dependientes de la consulta, suprimiendo canales de bajo valor mientras preservan señales de alto valor.
+    \item Las compuertas eliminan demostrablemente el fenómeno de \textbf{sumidero de atención}, donde el patrón de atención se vuelve dominado por un único token temprano.
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Atención Softmax con Compuerta (Post-SDPA)}
+\begin{algorithmic}[1]
+\Require Consultas $\mathbf{Q}$, Claves $\mathbf{K}$, Valores $\mathbf{V}$; entrada $\mathbf{X}$
+\Require Matriz de proyección de compuerta $W_g \in \mathbb{R}^{d \to d_{\text{compuerta}}}$ donde $d_{\text{compuerta}} \in \{1, d_k\}$
+\Ensure Salida con compuerta $\mathbf{Y}'$
+\State \textbf{SDPA estándar:}
+\State Calcular atención: $\mathbf{A} \gets \text{softmax}(\mathbf{Q}\mathbf{K}^\top / \sqrt{d_k})$ 
+\State Ponderar valores: $\mathbf{Y} \gets \mathbf{A} \mathbf{V}$
+\State \textbf{Calcular compuertas:}
+\State Proyectar entrada: $\mathbf{G} \gets \mathbf{X} W_g$  \Comment{forma: $[n, q, d_{\text{compuerta}}]$}
+\State Aplicar sigmoide: $\mathbf{G} \gets \sigma(\mathbf{G})$ \Comment{Compuerta elemento a elemento}
+\State \textbf{Aplicar compuerta:}
+\If{$d_{\text{compuerta}} = 1$}
+    \State Transmitir y escalar: $\mathbf{Y}' \gets \mathbf{Y} \cdot \mathbf{G}$ \Comment{Escalado por cabeza}
+\Else
+    \Comment{$d_{\text{compuerta}} = d_k$}
+    \State Modulación elemento a elemento: $\mathbf{Y}' \gets \mathbf{Y} \odot \mathbf{G}$ \Comment{Compuerta por dimensión}
+\EndIf
+\Return $\mathbf{Y}'$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Hallazgos Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Supresión del sumidero de atención}: La compuerta rompe el ciclo de retroalimentación donde softmax se concentra en el primer token, permitiendo una atención más equilibrada.
+    \item \textbf{Estabilidad de entrenamiento}: Los modelos con compuerta toleran tasas de aprendizaje más grandes ($+30\%$ mayor $\eta_{max}$ estable).
+    \item \textbf{Sobrecarga mínima}: El impacto en latencia es solo del $1.6\%$ en GPUs H100; el rendimiento cae como máximo $2-3\%$.
+    \item \textbf{Mejora en la ley de escalado}: Mejora la pérdida en todas las escalas de modelo, desde 800M hasta 110B parámetros de forma consistente.
+\end{itemize}
+
+\normalsize
+
+\subsection{7. Gated DeltaNet-2: Borrado y Escritura Canalizados Decouplados}
+
+\subsubsection{Fundamento Matemático}
+
+Gated DeltaNet-2 \citep{hatamizadeh_gated_deltanet2_2026} aborda una limitación compartida de Gated DeltaNet y Kimi Delta Attention (KDA): ambos usan una única \emph{compuerta delta escalar} $\beta_t$ para controlar simultáneamente (i) cuánto contenido antiguo se borra en la dirección de lectura del eje de claves y (ii) cuánto valor nuevo se escribe en el eje de valores. Gated DeltaNet-2 \textbf{desacopla} estos dos roles en una compuerta de borrado canalizada $\mathbf{b}_t$ (eje de claves) y una compuerta de escritura canalizada $\mathbf{w}_t$ (eje de valores), heredando además el decaimiento canalizado $\boldsymbol{\alpha}_t$ de KDA. Con estado $\mathbf{S}_t \in \mathbb{R}^{d_k \times d_v}$, decaimiento $\mathbf{D}_t = \mathrm{Diag}(\boldsymbol{\alpha}_t)$, dirección de borrado $\mathbf{e}_t = \mathbf{b}_t \odot \mathbf{k}_t$ y objetivo de escritura $\mathbf{z}_t = \mathbf{w}_t \odot \mathbf{v}_t$, la actualización de estado es:
+\[
+\mathbf{S}_t = \left(\mathbf{I} - \mathbf{k}_t \mathbf{e}_t^\top\right) \mathbf{D}_t \, \mathbf{S}_{t-1} + \mathbf{k}_t \mathbf{z}_t^\top, \qquad \mathbf{o}_t = \mathbf{S}_t^\top \mathbf{q}_t
+\]
+o, expandiendo los productos de las compuertas:
+\[
+\mathbf{S}_t = \left(\mathbf{I} - \mathbf{k}_t (\mathbf{b}_t \odot \mathbf{k}_t)^\top\right) \mathbf{D}_t \, \mathbf{S}_{t-1} + \mathbf{k}_t (\mathbf{w}_t \odot \mathbf{v}_t)^\top
+\]
+Las dos compuertas se producen mediante proyecciones lineales independientes seguidas de sigmoide:
+\[
+\mathbf{b}_t = \sigma(\mathbf{W}_b \mathbf{x}_t), \qquad \mathbf{w}_t = \sigma(\mathbf{W}_w \mathbf{x}_t)
+\]
+y el decaimiento canalizado sigue una parametrización de log-decaimiento (calculada en fp32 para evitar pérdida de precisión en productos acumulativos largos):
+\[
+\mathbf{g}_t = \mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}), \qquad \boldsymbol{\alpha}_t = \exp(\mathbf{g}_t)
+\]
+Los roles estructurales de las dos compuertas son complementarios:
+\begin{itemize}[leftmargin=*]
+    \item $\mathbf{b}_t$ (eje de claves) hace que la \textbf{dirección de lectura} sea selectiva por canal: determina qué canales de clave se eliminan antes de escribir.
+    \item $\mathbf{w}_t$ (eje de valores) hace que el \textbf{objetivo de escritura} sea selectivo por canal: determina qué canales de valor se depositan en memoria.
+    \item $\boldsymbol{\alpha}_t$ (por canal de clave) proporciona decaimiento global, como en KDA.
+\end{itemize}
+\textbf{Reducciones.} Fijar $\mathbf{b}_t = \beta_t \mathbf{1}_{d_k}$ y $\mathbf{w}_t = \beta_t \mathbf{1}_{d_v}$ recupera KDA; colapsar además $\boldsymbol{\alpha}_t$ a un escalar recupera Gated DeltaNet. Desde la perspectiva de aprendizaje en línea/pesos rápidos, la actualización es el minimizador de:
+\[
+\mathcal{L}_t(\mathbf{S}) = \tfrac{1}{2}\|\mathbf{S} - \mathbf{D}_t \mathbf{S}_{t-1}\|_F^2 - 2\left\langle \mathbf{S}^\top \mathbf{k}_t,\; \mathbf{z}_t - (\mathbf{D}_t \mathbf{S}_{t-1})^\top \mathbf{e}_t \right\rangle
+\]
+
+\begin{algorithm}[H]
+\caption{Avance Recurrente de Gated DeltaNet-2 (Forma de Referencia)}
+\begin{algorithmic}[1]
+\Require Entrada $\mathbf{x}_t$; estado previo $\mathbf{S}_{t-1} \in \mathbb{R}^{d_k \times d_v}$
+\Require Proyecciones: $W_q, W_k, W_v, W_b, W_w$; parámetros de log-decaimiento $\mathbf{a}, \boldsymbol{\delta}$
+\Ensure Salida $\mathbf{o}_t$ y estado $\mathbf{S}_t$
+\State $\mathbf{q}_t \gets \mathrm{normalize}(W_q \mathbf{x}_t)$, $\mathbf{k}_t \gets \mathrm{normalize}(W_k \mathbf{x}_t)$, $\mathbf{v}_t \gets \mathrm{silu}(W_v \mathbf{x}_t)$
+\State $\mathbf{b}_t \gets \sigma(W_b \mathbf{x}_t)$ \Comment{compuerta de borrado eje-clave, $\mathbb{R}^{d_k}$}
+\State $\mathbf{w}_t \gets \sigma(W_w \mathbf{x}_t)$ \Comment{compuerta de escritura eje-valor, $\mathbb{R}^{d_v}$}
+\State $\boldsymbol{\alpha}_t \gets \exp(\mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}))$ \Comment{decaimiento canalizado, fp32}
+\State Dirección de borrado: $\mathbf{e}_t \gets \mathbf{b}_t \odot \mathbf{k}_t$; objetivo de escritura: $\mathbf{z}_t \gets \mathbf{w}_t \odot \mathbf{v}_t$
+\State Decaer estado: $\mathbf{S}_t \gets \mathrm{Diag}(\boldsymbol{\alpha}_t)\, \mathbf{S}_{t-1}$
+\State Lectura: $\mathbf{r}_t \gets \mathbf{S}_t^\top \mathbf{e}_t$ \Comment{suma sobre eje de claves}
+\State Actualización delta: $\mathbf{S}_t \gets \mathbf{S}_t - \mathbf{k}_t \mathbf{r}_t^\top + \mathbf{k}_t \mathbf{z}_t^\top$
+\State Recuperar: $\mathbf{o}_t \gets \mathbf{S}_t^\top \mathbf{q}_t$
+\State Compuerta de salida: $\mathbf{o}_t \gets \mathrm{GroupNorm}(\mathbf{o}_t) \odot \mathrm{silu}(W_g \mathbf{x}_t)$
+\State \Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+El algoritmo de entrenamiento por fragmentos extiende la representación WY de KDA absorbiendo el decaimiento canalizado en una recurrencia delta asimétrica sobre un estado normalizado por decaimiento, permitiendo paralelismo rico en matmuls en tensor cores. Como $\mathbf{b}_t$ y $\mathbf{w}_t$ son operadores diagonales por canal que varían por fila, el atajo de post-escalado escalar de KDA se rompe: el paso hacia atrás requiere una \textbf{inversión WY consciente de las compuertas} que incorpora las compuertas en cada producto escalar que acumula el gradiente.
+
+\subsubsection{Rendimiento Empírico y Compromisos}
+
+A 1.3B parámetros entrenados con 100B tokens FineWeb-Edu, Gated DeltaNet-2 supera a Mamba-2, Mamba-3, Gated DeltaNet y KDA en modelado de lenguaje, razonamiento de sentido común y---más notablemente---recuperación de contexto largo del mundo real y RULER (especialmente multi-key needle-in-a-haystack). Su rendimiento en H100 se mantiene casi plano ($38.0 \to 36.1$ Kt/s) al crecer la longitud de secuencia de 2K a 16K, donde el de un Transformer cae bruscamente. Los estudios de ablación muestran que la compuerta de borrado $\mathbf{b}_t$ explica la mayor parte de la ganancia; la compuerta de escritura $\mathbf{w}_t$ aporta una mejora adicional menor. La variante híbrida (Gated DeltaNet-2 recurrente + atención de ventana deslizante) reduce aún más la brecha con los modelos de atención pura en tareas que requieren agregación de evidencia local.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+\textbf{Aspecto} & \textbf{Fortaleza} & \textbf{Limitación} \\
+\midrule
+Recuperación & La mejor entre modelos delta recurrentes en multi-key NIAH. & La variante recurrente aún supera al Transformer en NQ/DROP. \\
+Rendimiento & Escalado casi plano 2K$\to$16K; pequeña sobrecarga vs KDA. & Requiere un nuevo kernel Triton WY consciente de las compuertas. \\
+Memoria & Estado de inferencia constante $\mathcal{O}(d^2)$. & Rango de borrado de autovalores negativos $[0,2]$ no da ganancia consistente a 1.3B. \\
+\bottomrule
+\end{tabularx}
+\caption{Compromisos de Gated DeltaNet-2 a escala 1.3B / 100B tokens \citep{hatamizadeh_gated_deltanet2_2026}.}
+\label{tab:gated-deltanet2-tradeoffs-es}
+\end{table}
+
+\normalsize
+
+\subsection{8. Kimi Delta Attention (KDA): Compuerta de Decaimiento Canalizada para la Regla Delta}
+
+\subsubsection{Fundamento Matemático}
+
+Kimi Delta Attention \citep{kimi_kda_2025} es el módulo central de Kimi Linear y extiende Gated DeltaNet con una \textbf{compuerta de decaimiento canalizada} de grano más fino. Mientras que Gated DeltaNet usa un único decaimiento escalar por cabeza $\alpha_t$ junto con la compuerta escalar de escritura delta $\beta_t$, KDA reemplaza el decaimiento escalar con un decaimiento \textbf{por canal de clave} $\boldsymbol{\alpha}_t \in \mathbb{R}^{d_k}$, parametrizado mediante una formulación de log-decaimiento y aplicado como una matriz diagonal $\mathbf{D}_t = \mathrm{diag}(\boldsymbol{\alpha}_t)$ antes de la actualización de la regla delta. La regla delta en sí retiene una compuerta de escritura escalar por cabeza $\beta_t$:
+\[
+\mathbf{S}_t = (\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top)\, \mathbf{D}_t\, \mathbf{S}_{t-1} + \beta_t \mathbf{v}_t \mathbf{k}_t^\top, \qquad \mathbf{o}_t = \mathbf{S}_t^\top \mathbf{q}_t
+\]
+El decaimiento canalizado sigue una parametrización de log-decaimiento (calculada en fp32 por estabilidad numérica en productos acumulativos largos):
+\[
+\mathbf{g} = \mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}), \qquad \boldsymbol{\alpha}_t = \exp(\mathbf{g})
+\]
+donde $\mathbf{a}$ y $\boldsymbol{\delta}$ son parámetros aprendidos por canal. Esto da a cada canal de clave una escala temporal de olvido independiente, permitiendo al modelo retener algunos canales más tiempo que otros dentro de la misma cabeza.
+
+\paragraph{Reducción a Gated DeltaNet}: Cuando $\boldsymbol{\alpha}_t$ colapsa a un escalar (es decir, todos los canales comparten el mismo decaimiento), KDA se reduce exactamente a Gated DeltaNet. El decaimiento canalizado es por tanto una generalización estricta que añade selectividad por canal sobre el decaimiento/escritura escalares de Gated DeltaNet.
+
+\paragraph{Entrenamiento por fragmentos}: Un algoritmo por fragmentos ad hoc usa una variante \textbf{Diagonal-Plus-Low-Rank (DPLR)} especializada de la matriz de transición para mantener la eficiencia en hardware. El producto de las transiciones por paso $(\mathbf{I} - \beta_t \mathbf{k}_t \mathbf{k}_t^\top)\mathbf{D}_t admite una descomposición DPLR que permite paralelismo rico en matmuls en tensor cores preservando la estructura de decaimiento canalizado.
+
+\begin{algorithm}[H]
+\caption{Avance Recurrente de Kimi Delta Attention (Forma de Referencia)}
+\begin{algorithmic}[1]
+\Require Entrada $\mathbf{x}_t$; estado previo $\mathbf{S}_{t-1} \in \mathbb{R}^{d_k \times d_v}$
+\Require Proyecciones: $W_q, W_k, W_v, W_\beta$; parámetros de log-decaimiento $\mathbf{a}, \boldsymbol{\delta}$
+\Ensure Salida $\mathbf{o}_t$ y estado $\mathbf{S}_t$
+\State $\mathbf{q}_t \gets W_q \mathbf{x}_t$, $\mathbf{k}_t \gets W_k \mathbf{x}_t$, $\mathbf{v}_t \gets W_v \mathbf{x}_t$
+\State $\beta_t \gets \mathrm{sigmoid}(W_\beta \mathbf{x}_t)$ \Comment{compuerta de escritura escalar por cabeza}
+\State $\boldsymbol{\alpha}_t \gets \exp(\mathbf{a} - \mathrm{softplus}(\boldsymbol{\delta}))$ \Comment{decaimiento canalizado, fp32}
+\State $\mathbf{D}_t \gets \mathrm{diag}(\boldsymbol{\alpha}_t)$ \Comment{matriz diagonal de decaimiento}
+\State Decaer estado: $\mathbf{S}_t \gets \mathbf{D}_t \mathbf{S}_{t-1}$
+\State Lectura: $\mathbf{r}_t \gets \mathbf{S}_t^\top \mathbf{k}_t$ \Comment{predicción actual a lo largo de la clave}
+\State Actualización delta: $\mathbf{S}_t \gets \mathbf{S}_t - \beta_t \mathbf{k}_t \mathbf{r}_t^\top + \beta_t \mathbf{v}_t \mathbf{k}_t^\top$
+\State Recuperar: $\mathbf{o}_t \gets \mathbf{S}_t^\top \mathbf{q}_t$
+\State Compuerta de salida: $\mathbf{o}_t \gets \mathrm{GroupNorm}(\mathbf{o}_t) \odot \mathrm{silu}(W_g \mathbf{x}_t)$
+\State \Return $\mathbf{o}_t$, $\mathbf{S}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Rendimiento Empírico y Compromisos}
+
+KDA está desplegado en Kimi Linear, un modelo híbrido (3B activados / 48B parámetros totales) que combina capas KDA con Multi-head Latent Attention (MLA). Kimi Linear supera a un baseline de MLA completa en todas las tareas evaluadas, reduce el caché KV hasta un $75\%$, y logra hasta $6\times$ de throughput de decodificación para contexto de 1M de tokens. El decaimiento canalizado es el principal impulsor de la ganancia: permite control fino sobre qué canales de clave persisten, mejorando el recuerdo de contexto largo frente a Gated DeltaNet con decaimiento escalar.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+\textbf{Aspecto} & \textbf{Fortaleza} & \textbf{Limitación} \\
+\midrule
+Recuperación & El decaimiento canalizado mejora el recuerdo de contexto largo frente a baselines de decaimiento escalar; desplegado en Kimi Linear (híbrido 3B/48B). & El estado recurrente matricial $\mathcal{O}(d^2)$ es más pesado que la atención lineal con compuerta diagonal. \\
+Rendimiento & Hasta $6\times$ de throughput de decodificación a 1M de contexto; $75\%$ de reducción de caché KV frente a MLA completa. & Requiere kernels por fragmentos conscientes de DPLR para eficiencia en hardware. \\
+Memoria & Estado de inferencia constante $\mathcal{O}(d^2)$ (recurrente matricial). & El cálculo log-decaimiento en fp32 añade sobrecarga; la reducción a Gated DeltaNet pierde selectividad por canal. \\
+\bottomrule
+\end{tabularx}
+\caption{Compromisos de KDA en Kimi Linear (3B activados / 48B total) \citep{kimi_kda_2025}.}
+\label{tab:kda-tradeoffs-es}
+\end{table}
+
+\normalsize
+
+\subsection{Principio Unificado de Compuerta}
+
+Las ocho arquitecturas comparten un principio común: \textbf{la compuerta es un mecanismo para controlar el flujo de información y la retención selectiva de memoria}. Las decisiones de diseño específicas divergen a lo largo de varias dimensiones:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Ubicación de la compuerta}: Actualizaciones de estado recurrente (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2) versus espacio de logits/salida softmax (FoX, Gated Softmax, RetNet).
+    \item \textbf{Granularidad de control}: Por dimensión (GLA, HGRN2 diagonal), por clave (DeltaNet), por token (FoX), por cabeza (Gated Softmax) o borrado/escritura canalizados decouplados (Gated DeltaNet-2).
+    \item \textbf{Dependencia de datos}: Completamente dependiente de datos (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, FoX, Gated Softmax) versus esquemas fijos (RetNet con decaimiento exponencial).
+    \item \textbf{Compensación de expresividad}: Eficiencia recurrente lineal (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, RetNet) versus expresividad completa de softmax (FoX, Gated Softmax).
+\end{enumerate}
+
+\subsection{Implementación y Orientación Práctica}
+
+\subsubsection{Cuándo Usar Cada Arquitectura}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{GLA}: Inferencia rápida con contextos moderados a largos (2K--20K tokens), cuando los kernels CUDA personalizados son aceptables y el rendimiento de recuperación no es crítico.
+    \item \textbf{DeltaNet}: Fuerte recuperación asociativa y tareas de aprendizaje en contexto; bueno para tareas sintéticas (MQAR) y pruebas de asociación clave-valor.
+    \item \textbf{Gated DeltaNet}: Modelos de producción que requieren el mejor equilibrio de recuperación, olvido y rendimiento (probado en Qwen3-Next; ICLR 2025).
+    \item \textbf{Gated DeltaNet-2}: Cargas de recuperación de contexto largo (multi-key NIAH) donde el borrado/escritura canalizado decouplado da el recuerdo más fuerte; cuando se dispone de un kernel WY consciente de las compuertas.
+    \item \textbf{RetNet}: Inferencia extremadamente eficiente sin almacenamiento en caché KV; adecuado para despliegues en dispositivos móviles/de borde o modelos de juguete.
+    \item \textbf{HGRN2}: Jerarquías temporales multi-escala; cuando los límites de olvido específicos por capa son deseables.
+    \item \textbf{FoX}: Extrapolación de longitud y comprensión de contexto largo; cuando el entrenamiento cuadrático es aceptable y no se desea reemplazar softmax.
+    \item \textbf{Gated Softmax}: Mejora rápida para modelos softmax existentes con cambios mínimos de código; mejor para profesionales que desean ganancias inmediatas sin una reestructuración importante.
+\end{enumerate}
+
+\subsubsection{Consideraciones de Hardware}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{0.95\linewidth}{Xp{3.5cm}p{3.5cm}}
+\toprule
+\textbf{Objetivo de Hardware} & \textbf{Arquitecturas Recomendadas} & \textbf{Notas} \\
+\midrule
+GPU (H100/A100) & Gated Softmax, FoX, Gated DeltaNet, Gated DeltaNet-2 & Implementaciones maduras de softmax/lineal. GLA/DeltaNet requieren kernels personalizados. \\
+TPU (alta memoria) & GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2 & Hardware soporta matmuls eficientes; los métodos recurrentes lineales brillan. \\
+Móvil/Borde & RetNet, Gated Softmax ligero & Inferencia con memoria constante es crítica. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
