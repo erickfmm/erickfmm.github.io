@@ -1,0 +1,588 @@
+\section{Mecanismos de Atención Dispersa Exhaustivos}
+\label{sec:annex-sparse}
+
+\subsection{Resumen Ejecutivo}
+
+Los mecanismos de atención dispersa abordan la prohibitiva complejidad computacional y de memoria $\mathcal{O}(n^2)$ de la atención de producto punto escalado estándar al restringir el conjunto de pares clave-valor atendidos. La atención dispersa moderna abarca un rico espacio de diseño distinguido por cuatro dimensiones ortogonales: (i) \textbf{patrón de dispersidad} (geométrico fijo, dependiente de datos o basado en frecuencia), (ii) \textbf{capacidad de entrenamiento} (entrenado de extremo a extremo o solo inferencia), (iii) \textbf{unidad de dispersidad} (tokens individuales, ventanas locales o bloques), y (iv) \textbf{mecanismo} (enmascaramiento, selección, filtrado o compresión). Este anexo sintetiza siete familias principales de atención dispersa---Sparse Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn y FASA---proporcionando formulaciones matemáticas, pseudocódigo algorítmico y comparaciones arquitectónicas exhaustivas.
+
+\subsection{Sparse Transformer: Patrones Estrideados y Fijos Factorizados}
+
+\subsubsection{Formulación Matemática}
+
+Sparse Transformer \citep{child_sparse_transformer_2019} reduce la complejidad cuadrática a $\mathcal{O}(n\sqrt{n})$ factorizando la atención dispersa en dos cabezas dispersas complementarias. Sea $n$ la longitud de la secuencia y $l = \lfloor\sqrt{n}\rfloor$ el stride.
+
+\paragraph{Cabeza de atención estrideada}: Cada posición $i$ atiende a cada $l$-ésima posición anterior:
+\[
+\mathcal{A}_i^{(\text{estrideada})} = \{j : j \leq i,\; (i - j) \bmod l = 0\}
+\]
+
+\paragraph{Cabeza de atención fija}: Cada posición $i$ atiende a posiciones dentro de su bloque local más columnas de resumen fijas:
+\[
+\mathcal{A}_i^{(\text{fija})} = \{j : \lfloor j/l \rfloor = \lfloor i/l \rfloor\} \cup \{j : j \bmod l \in \{l-c, \ldots, l-1\}\}
+\]
+donde $c$ es un hiperparámetro que controla el número de columnas de resumen (típicamente $c=1$ o $c=2$).
+
+El cálculo de atención para cada cabeza $h$ sigue las reglas estándar de producto punto escalado restringido al conjunto disperso:
+\[
+\text{Attn}_h(Q, K, V)_i = \text{softmax}\left(\frac{q_i^h K_{\mathcal{A}_i}^h\top}{\sqrt{d_k}}\right) V_{\mathcal{A}_i}^h
+\]
+
+La idea clave es que con las dos cabezas factorizadas operando en paralelo a través de una profundidad de $L$ capas transformer, cada posición puede alcanzar cualquier otra posición a través de un camino de longitud máxima $L + 1$, preservando la alcanzabilidad de largo alcance con una fracción del costo de la atención densa.
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{Atención Sparse Transformer: Cabezas Duales Estrideada + Fija}
+\begin{algorithmic}[1]
+\Require Consulta $\mathbf{Q} \in \mathbb{R}^{n \times d}$, Clave $\mathbf{K} \in \mathbb{R}^{n \times d}$, Valor $\mathbf{V} \in \mathbb{R}^{n \times d}$
+\Require Stride $l = \lfloor\sqrt{n}\rfloor$, columnas de resumen $c \in \{1, 2\}$
+\Ensure Salida $\mathbf{Y} \in \mathbb{R}^{n \times d}$
+\State \textbf{Cabeza 1: Atención Estrideada}
+\For{$i = 1, \ldots, n$}
+    \State $\mathcal{A}_i \gets \{j : j \leq i \text{ y } (i-j) \bmod l = 0\}$ \Comment{Cada $l$-ésima posición}
+    \State $\text{puntajes}_{i} \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_{i} \gets \text{softmax}(\text{puntajes}_{i})$
+    \State $\mathbf{y}_i^{(1)} \gets \text{attn}_{i} \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\State \textbf{Cabeza 2: Atención de Bloque Fijo + Resumen}
+\For{$i = 1, \ldots, n$}
+    \State $\text{inicio\_bloque} \gets \lfloor i/l \rfloor \cdot l$, $\text{fin\_bloque} \gets \min(i+1, \text{inicio\_bloque}+l)$
+    \State $\mathcal{A}_i \gets [\text{inicio\_bloque}, \text{fin\_bloque}) \cup \{\text{columnas de las últimas } c \text{ columnas}\}$
+    \State $\text{puntajes}_{i} \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_{i} \gets \text{softmax}(\text{puntajes}_{i})$
+    \State $\mathbf{y}_i^{(2)} \gets \text{attn}_{i} \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\State Concatenar: $\mathbf{Y} = [\mathbf{y}^{(1)} \| \mathbf{y}^{(2)}]$ y proyectar mediante capa lineal de salida
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: $\mathcal{O}(n\sqrt{n} \cdot d)$ durante el entrenamiento; $\mathcal{O}(n)$ por token durante la generación.
+    \item \textbf{Entrenable}: Sí; retropropagación completa a través de las posiciones seleccionadas.
+    \item \textbf{Patrón de dispersidad}: Fijo e independiente de los datos; los patrones no se adaptan al contenido.
+    \item \textbf{Fortaleza}: Alcanzabilidad estructurada que garantiza dependencias de largo alcance; demostrado efectivo en secuencias largas (Enwik8, imágenes de texto).
+    \item \textbf{Limitación}: Los patrones fijos pueden pasar por alto relaciones importantes pero no contiguas; requiere kernels CUDA personalizados para eficiencia práctica.
+\end{itemize}
+
+\subsection{Longformer: Ventana Deslizante, Dilatación y Tokens Globales}
+
+\subsubsection{Formulación Matemática}
+
+Longformer \citep{beltagy_longformer_2020} logra una complejidad lineal $\mathcal{O}(n \cdot w)$ combinando tres patrones de atención complementarios.
+
+\paragraph{Atención de ventana deslizante}: Vecindario local de tamaño $w$:
+\[
+\mathcal{A}_i^{(\text{ventana})} = \{j : |i - j| \leq w/2\}
+\]
+
+\paragraph{Ventana deslizante dilatada}: Atención con ventana y dilatación $d$, saltando stride $d+1$:
+\[
+\mathcal{A}_i^{(\text{dilatada})} = \{j : |i - j| \leq (w/2)(d+1) \text{ y } (i-j) \bmod (d+1) = 0\}
+\]
+
+\paragraph{Atención global}: Tokens globales designados (ej., $[\text{CLS}]$) atienden a todas las posiciones y todos atienden a ellos:
+\[
+\mathcal{A}_i^{(\text{global})} = \begin{cases}
+\{1, \ldots, n\} & \text{si } i \in \mathcal{G} \\
+\mathcal{A}_i^{(\text{ventana})} \cup \mathcal{G} & \text{en otro caso}
+\end{cases}
+\]
+
+Los tres patrones se aplican mediante proyecciones separadas. La atención local y global pueden usar las mismas proyecciones o unas separadas específicas para cada tarea.
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{Longformer: Ventana Deslizante + Dilatada + Global}
+\begin{algorithmic}[1]
+\Require Consulta $\mathbf{Q} \in \mathbb{R}^{n \times d}$, Clave $\mathbf{K}$, Valor $\mathbf{V}$, tamaño de ventana $w$, dilatación $d$, índices de tokens globales $\mathcal{G}$
+\Ensure Salida $\mathbf{Y}$
+\For{$i = 1, \ldots, n$}
+    \If{$i \in \mathcal{G}$}
+        \State $\mathcal{A}_i \gets \{1, \ldots, n\}$ \Comment{Token global atiende a todos}
+    \Else
+        \State Ventana local: $\mathcal{A}^{(\text{local})} \gets [i - w/2, i + w/2] \cap [1, n]$
+        \State Desplazamientos dilatados: $\mathcal{A}^{(\text{dilatada})} \gets \{j : (i-j) \bmod (d+1) = 0\} \cap \mathcal{A}^{(\text{rango dilatado})}$
+        \State Combinar: $\mathcal{A}_i \gets \mathcal{A}^{(\text{local})} \cup \mathcal{A}^{(\text{dilatada})} \cup \mathcal{G}$
+    \EndIf
+    \State $\text{puntajes}_i \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_i \gets \text{softmax}(\text{puntajes}_i)$
+    \State $\mathbf{y}_i \gets \text{attn}_i \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: $\mathcal{O}(n \cdot w)$ donde $w$ es el tamaño de ventana (lineal cuando $w \ll n$).
+    \item \textbf{Entrenable}: Sí; reemplazo directo para la atención estándar.
+    \item \textbf{Cobertura}: Con $L$ capas y tamaño de ventana $w$, el campo receptivo crece a $L \times w$, cubriendo toda la secuencia con redes poco profundas.
+    \item \textbf{Fortaleza}: Práctico para tareas a nivel de documentos; la dilatación expande los campos receptivos locales con sobrecarga mínima; los tokens globales proporcionan correspondencia consulta-documento.
+    \item \textbf{Limitación}: El tamaño de ventana sigue siendo un hiperparámetro de diseño; subóptimo para tareas que requieren patrones de atención densos.
+\end{itemize}
+
+\subsection{BigBird: Grafo Disperso Aleatorio, Local y Global}
+
+\subsubsection{Formulación Matemática}
+
+BigBird \citep{zaheer_bigbird_2020} preserva la aproximación universal y la completitud de Turing utilizando una combinación fundamentada de tres patrones de dispersidad.
+
+\paragraph{Conexiones aleatorias}: Cada posición se conecta a $r$ posiciones muestreadas aleatoriamente:
+\[
+\mathcal{A}_i^{(\text{aleatoria})} = \text{MuestraAleatoria}(\{1, \ldots, n\}, r)
+\]
+
+\paragraph{Ventana local}: Vecindario de ventana deslizante:
+\[
+\mathcal{A}_i^{(\text{local})} = \{j : |i-j| \leq w/2\}
+\]
+
+\paragraph{Tokens globales}: Anclas globales específicas de la tarea:
+\[
+\mathcal{A}_i^{(\text{global})} = \begin{cases}
+\{1, \ldots, n\} & \text{si } i \in \mathcal{G} \\
+\mathcal{A}_i^{(\text{aleatoria})} \cup \mathcal{A}_i^{(\text{local})} \cup \mathcal{G} & \text{en otro caso}
+\end{cases}
+\]
+
+La máscara dispersa compuesta $M$ es:
+\[
+M_{ij} = \mathbf{1}[j \in \mathcal{A}_i^{(\text{aleatoria})} \cup \mathcal{A}_i^{(\text{local})} \cup \mathcal{A}_i^{(\text{global})}]
+\]
+
+En la práctica, BigBird agrupa tokens en bloques de tamaño $b$ y aplica la decisión de dispersidad a nivel de bloque, permitiendo implementaciones eficientes de bloques dispersos.
+
+\subsubsection{Garantía Teórica}
+
+Los autores demuestran que con $O(1)$ conexiones aleatorias y tokens globales, el grafo disperso mantiene las mismas propiedades de aproximación universal y completitud de Turing que la atención densa. Formalmente, cualquier función computable puede representarse y cualquier secuencia de operaciones puede simularse dentro del grafo de conectividad de BigBird.
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{BigBird: Atención Dispersa por Bloques Aleatoria + Local + Global}
+\begin{algorithmic}[1]
+\Require Consulta $\mathbf{Q}$, Clave $\mathbf{K}$, Valor $\mathbf{V}$, tamaño de bloque $b$, enlaces aleatorios por bloque $r$, índices globales $\mathcal{G}$
+\Ensure Salida $\mathbf{Y}$
+\State Reformar en bloques: $n_b = \lceil n / b \rceil$ bloques
+\For{bloque $i = 0, \ldots, n_b-1$}
+    \For{posición $j$ en bloque $i$}
+        \State \textbf{Ventana local}: $\mathcal{A}_j^{(\text{local})} = \text{posiciones cercanas en el bloque} \cup \text{posiciones frontera}$
+        \State \textbf{Muestreo aleatorio de bloques}: Muestrear $r$ bloques uniformemente al azar, agregar todas las posiciones de esos bloques
+        \State \textbf{Global}: Agregar todas las posiciones de tokens globales
+        \State $\mathcal{A}_j \gets \mathcal{A}_j^{(\text{local})} \cup \mathcal{A}_j^{(\text{aleatoria})} \cup \mathcal{G}$
+    \EndFor
+\EndFor
+\For{$i = 1, \ldots, n$}
+    \State $\text{puntajes}_i \gets \mathbf{q}_i \mathbf{K}_{\mathcal{A}_i}^\top / \sqrt{d_k}$
+    \State $\text{attn}_i \gets \text{softmax}(\text{puntajes}_i)$
+    \State $\mathbf{y}_i \gets \text{attn}_i \mathbf{V}_{\mathcal{A}_i}$
+\EndFor
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: $\mathcal{O}(n)$ o casi lineal en implementación óptima de bloques dispersos.
+    \item \textbf{Entrenable}: Sí.
+    \item \textbf{Base teórica}: Mantiene demostrablemente la aproximación universal y la completitud de Turing con conectividad dispersa.
+    \item \textbf{Fortaleza}: Rendimiento sólido en documentos largos para preguntas-respuestas, resúmenes y tareas de genómica.
+    \item \textbf{Limitación}: El muestreo aleatorio introduce varianza y no determinismo; el ajuste de los hiperparámetros $r, w, g$ sigue dependiendo de la tarea.
+\end{itemize}
+
+\subsection{Atención SparseK: Selección Diferencial Top-$k$}
+
+\subsubsection{Formulación Matemática}
+
+SparseK \citep{lou_sparsek_2024} permite dispersidad aprendible mediante un \textbf{operador top-$k$ diferenciable}. Una red de puntuación $\phi_\theta$ evalúa la importancia de cada par clave-valor:
+
+\[
+u_j = \phi_\theta(\mathbf{k}_j, \mathbf{q}_i) \in \mathbb{R}
+\]
+
+El \textbf{operador SparseK} selecciona los puntajes top-$k$ manteniéndose diferenciable. Calcula un umbral $\tau(u)$ tal que la suma de los puntajes activos sea igual a $k$:
+
+\[
+\text{SparseK}(u, k)_j = \max(u_j - \tau(u), 0), \quad \text{donde} \quad \sum_j \max(u_j - \tau, 0) = k
+\]
+
+El umbral $\tau$ se encuentra mediante bisección. La atención se convierte en:
+
+\[
+m_j = \text{SparseK}(u, k)_j, \quad \text{Attn}_i = \text{softmax}\left(\frac{\mathbf{q}_i K_{\text{sel}}^\top}{\sqrt{d_k}}\right) V_{\text{sel}}
+\]
+
+donde $K_{\text{sel}}, V_{\text{sel}}$ contienen solo las entradas top-$k$ (aquellas con $m_j > 0$).
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{SparseK: Atención Top-$k$ Diferenciable}
+\begin{algorithmic}[1]
+\Require Consulta $\mathbf{q} \in \mathbb{R}^d$, Matriz de clave $\mathbf{K} \in \mathbb{R}^{n \times d}$, Matriz de valor $\mathbf{V} \in \mathbb{R}^{n \times d}$
+\Require Red de puntuación $\phi_\theta$, dispersidad objetivo $k$
+\Ensure Salida de atención $\mathbf{y}$
+\State \textbf{Calcular puntajes de importancia:}
+\For{$j = 1, \ldots, n$}
+    \State $u_j \gets \phi_\theta(\mathbf{k}_j, \mathbf{q})$
+\EndFor
+\State \textbf{Calcular top-$k$ diferenciable mediante umbral:}
+\State $u_{\text{ordenado}} \gets \text{ordenar}(u, \text{descendente}=\text{Verdadero})$
+\State $\text{suma\_acum} \gets \text{suma\_acumulada}(u_{\text{ordenado}})$
+\State Encontrar $\rho = \max\{i : u_{\text{ordenado}}[i] > 0 \text{ y suma\_acum}[i] \leq k\}$
+\State $\tau \gets (u_{\text{ordenado}}[\rho] - k) / (\rho + 1)$ \Comment{Umbral para $k$ elementos activos}
+\State $m \gets \max(u - \tau, 0)$ \Comment{Máscara de selección diferenciable}
+\State \textbf{Aplicar máscara y calcular atención:}
+\State $K_{\text{sel}} \gets K[m > 0]$, $V_{\text{sel}} \gets V[m > 0]$
+\State $\text{puntajes} \gets \mathbf{q} K_{\text{sel}}^\top / \sqrt{d_k}$
+\State $\text{attn} \gets \text{softmax}(\text{puntajes})$
+\State $\mathbf{y} \gets \text{attn} \cdot V_{\text{sel}}$
+\Return $\mathbf{y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: $\mathcal{O}(n \cdot d)$ durante el entrenamiento (lineal en la longitud de la secuencia); $\mathcal{O}(k)$ por token durante la generación.
+    \item \textbf{Entrenable}: Sí; flujo de gradiente de extremo a extremo a través del operador SparseK.
+    \item \textbf{Generación incremental}: Soporta generación autorregresiva eficiente con memoria constante.
+    \item \textbf{Fortaleza}: Se integra perfectamente en arquitecturas LLM existentes; mínimo ajuste fino necesario.
+    \item \textbf{Limitación}: El acceso a memoria disperso de la selección top-$k$ puede limitar la eficiencia de caché en algunos hardwares; la red de puntuación añade sobrecarga.
+\end{itemize}
+
+\subsection{NSA (Native Sparse Attention): Ramas Jerárquicas Alineadas con el Hardware}
+
+\subsubsection{Formulación Matemática}
+
+NSA \citep{yuan_nsa_2025} descompone la atención dispersa en tres ramas paralelas que se combinan mediante compuertas aprendidas.
+
+\paragraph{Rama de compresión}: Un MLP aprendible $\varphi$ comprime bloques de clave-valor:
+
+\[
+\tilde{K}_t^{\text{cmp}} = \left[\varphi(k_{id+1:id+l})\right]_{\substack{1 \leq i \leq \lfloor(t-l)/d\rfloor}} \quad, \quad \tilde{V}_t^{\text{cmp}} = \left[\varphi(v_{id+1:id+l})\right]
+\]
+
+\paragraph{Rama de selección}: Los bloques de alta importancia se seleccionan basándose en puntajes comprimidos:
+
+\[
+p_t^{\text{cmp}} = \text{softmax}(q_t^\top \tilde{K}_t^{\text{cmp}} / \sqrt{d}), \quad I_t = \mathrm{TopK}(p_t^{\text{cmp}}, n), \quad \tilde{K}_t^{\text{sel}} = \mathrm{Recolectar}(K, I_t)
+\]
+
+\paragraph{Rama de ventana deslizante}: Contexto local fijo:
+
+\[
+\tilde{K}_t^{\text{win}} = K_{t-w:t}, \quad \tilde{V}_t^{\text{win}} = V_{t-w:t}
+\]
+
+\paragraph{Combinación con compuertas}: Las tres salidas de atención se combinan mediante compuertas aprendidas:
+
+\[
+\alpha_t^{(\text{cmp})} = \sigma(\text{Lineal}_\text{cmp}(q_t)), \quad \alpha_t^{(\text{sel})} = \sigma(\text{Lineal}_\text{sel}(q_t)), \quad \alpha_t^{(\text{win})} = \sigma(\text{Lineal}_\text{win}(q_t))
+\]
+
+\[
+y_t = \alpha_t^{(\text{cmp})} \cdot \text{Attn}(q_t, \tilde{K}^{\text{cmp}}, \tilde{V}^{\text{cmp}}) + \alpha_t^{(\text{sel})} \cdot \text{Attn}(q_t, \tilde{K}^{\text{sel}}, \tilde{V}^{\text{sel}}) + \alpha_t^{(\text{win})} \cdot \text{Attn}(q_t, \tilde{K}^{\text{win}}, \tilde{V}^{\text{win}})
+\]
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{NSA: Ramas Comprimida + Seleccionada + Ventana con Compuertas Aprendidas}
+\begin{algorithmic}[1]
+\Require Consulta $\mathbf{q}_t$, secuencias de Clave/Valor almacenadas en caché, tamaño de bloque $l$, stride $d$, conteo de selección $n$, ventana $w$
+\Require MLP de compresión $\varphi$, redes de compuerta $\text{Lineal}_{\text{cmp}}, \text{Lineal}_{\text{sel}}, \text{Lineal}_{\text{win}}$
+\Ensure Salida $\mathbf{y}_t$
+\State \textbf{Rama de compresión:}
+\For{$i = 1$ to $\lfloor t/d \rfloor$}
+    \State $k_i^{\text{cmp}} \gets \varphi(\mathbf{K}_{id+1:id+l})$ \Comment{Comprimir bloque mediante MLP}
+    \State $v_i^{\text{cmp}} \gets \varphi(\mathbf{V}_{id+1:id+l})$
+\EndFor
+\State $\tilde{\mathbf{K}}^{\text{cmp}} \gets [k_1^{\text{cmp}}, \ldots, k_{\lfloor t/d \rfloor}^{\text{cmp}}]$, $\tilde{\mathbf{V}}^{\text{cmp}} \gets [v_1^{\text{cmp}}, \ldots, v_{\lfloor t/d \rfloor}^{\text{cmp}}]$
+\State $\mathbf{y}_t^{(\text{cmp})} \gets \text{SDPA}(\mathbf{q}_t, \tilde{\mathbf{K}}^{\text{cmp}}, \tilde{\mathbf{V}}^{\text{cmp}})$
+\State \textbf{Rama de selección:}
+\State Calcular puntajes sobre comprimidos: $\mathbf{s} \gets \text{softmax}(\mathbf{q}_t \tilde{\mathbf{K}}^{\text{cmp}\top} / \sqrt{d})$
+\State Seleccionar los $n$ bloques más importantes: $I \gets \mathrm{TopK}(\mathbf{s}, n)$
+\State Recolectar bloques completos: $\tilde{\mathbf{K}}^{\text{sel}} \gets [\mathbf{K}_{I_i d+1:I_i d+l}]_i$, $\tilde{\mathbf{V}}^{\text{sel}} \gets [\mathbf{V}_{I_i d+1:I_i d+l}]_i$
+\State $\mathbf{y}_t^{(\text{sel})} \gets \text{SDPA}(\mathbf{q}_t, \tilde{\mathbf{K}}^{\text{sel}}, \tilde{\mathbf{V}}^{\text{sel}})$
+\State \textbf{Rama de ventana:}
+\State $\mathbf{y}_t^{(\text{win})} \gets \text{SDPA}(\mathbf{q}_t, \mathbf{K}_{t-w:t}, \mathbf{V}_{t-w:t})$
+\State \textbf{Fusión con compuertas:}
+\State $\alpha^{(\text{cmp})} \gets \sigma(\text{Lineal}_{\text{cmp}}(\mathbf{q}_t))$, $\alpha^{(\text{sel})} \gets \sigma(\text{Lineal}_{\text{sel}}(\mathbf{q}_t))$, $\alpha^{(\text{win})} \gets \sigma(\text{Lineal}_{\text{win}}(\mathbf{q}_t))$
+\State $\mathbf{y}_t \gets \alpha^{(\text{cmp})} \mathbf{y}_t^{(\text{cmp})} + \alpha^{(\text{sel})} \mathbf{y}_t^{(\text{sel})} + \alpha^{(\text{win})} \mathbf{y}_t^{(\text{win})}$
+\Return $\mathbf{y}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: $\mathcal{O}(t/d + n \cdot l + w)$ tokens atendidos por paso (significativamente reducido frente a $\mathcal{O}(t)$ para densa).
+    \item \textbf{Entrenable}: Sí; entrenamiento directo con todas las ramas diferenciables.
+    \item \textbf{Alineación con hardware}: Diseñado para utilización eficiente de núcleos tensoriales; la compresión y selección reducen la presión sobre el ancho de banda de memoria.
+    \item \textbf{Fortaleza}: 11.6$\times$ de aceleración en decodificación y 9$\times$ de aceleración hacia adelante en secuencias de 64k; supera a la atención completa en muchas tareas.
+    \item \textbf{Limitación}: Requiere kernels Triton/CUDA personalizados; la arquitectura multi-rama compleja aumenta la sobrecarga de ingeniería.
+\end{itemize}
+
+\subsection{FASA: Atención Dispersa Consciente de la Frecuencia}
+
+\subsubsection{Formulación Matemática}
+
+FASA \citep{wang_fasa_2026} es un \textbf{método en tiempo de inferencia sin entrenamiento} que explota la estructura del embedding de posición rotatorio (RoPE). Bajo RoPE, el embedding del token se rota por $\theta_i = B^{-2(i-1)/d}$, descomponiendo el espacio $d$-dimensional en $d/2$ fragmentos de frecuencia (FC).
+
+\paragraph{Idea clave}: Solo un subconjunto pequeño ($ < 1\%$) de los FC importa para la conciencia contextual; la mayoría codifica patrones posicionales.
+
+\paragraph{Identificación de fragmento de frecuencia dominante}: Para cada capa $l$ y cabeza $h$, identificar FC dominantes mediante concordancia contextual (CA):
+
+\[
+\text{CA}^{l,h,i} = \frac{|\text{TopK}(\alpha^{l,h}) \cap \text{TopK}(\alpha^{l,h,i})|}{K}
+\]
+
+donde $\alpha^{l,h}$ es la máscara de atención completa y $\alpha^{l,h,i}$ es la máscara usando solo el FC $i$. Los FC dominantes tienen CA alta---contribuyen significativamente al patrón de atención final.
+
+\paragraph{Etapa de predicción de importancia de tokens (TIP)}: Usando solo FC dominantes, calcular importancia ligera por token:
+
+\[
+S_t^{l,h} = \sum_{i \in \mathcal{I}_{\text{dom}}^{l,h}} \alpha^{l,h,i}(\mathbf{q}_t, \mathbf{K}_{1:t}), \quad \mathcal{T}_t = \text{TopK-Índices}(S_t, N_{\text{fac}})
+\]
+
+\paragraph{Etapa de cálculo de atención enfocada (FAC)}: Calcular atención de precisión completa en los tokens seleccionados:
+
+\[
+\hat{\alpha}_{\text{FAC}} = \text{softmax}\left(\frac{\mathbf{q}_t \mathbf{K}_{\mathcal{T}_t}^\top}{\sqrt{d}}\right), \quad \mathbf{o}_t = \hat{\alpha}_{\text{FAC}} \mathbf{V}_{\mathcal{T}_t}
+\]
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{FASA: Atención Dispersa Consciente de la Frecuencia (en Tiempo de Inferencia)}
+\begin{algorithmic}[1]
+\Require Consulta actual $\mathbf{q}_t$, Clave/Valor almacenados en caché $\mathbf{K}_{1:t}, \mathbf{V}_{1:t}$, base RoPE $B$, FC dominantes $\mathcal{I}_{\text{dom}}$
+\Require Presupuesto TIP $N_{\text{tip}}$, presupuesto FAC $N_{\text{fac}}$
+\Ensure Salida $\mathbf{o}_t$
+\State \textbf{Etapa 1: Predicción de Importancia de Tokens (TIP)}
+\For{capa $l$ y cabeza $h$}
+    \For{posición $i = 1$ to $t$}
+        \State Calcular importancia desde FC dominantes: $s_i \gets 0$
+        \For{$fc \in \mathcal{I}_{\text{dom}}^{l,h}$}
+            \State Rotar consulta y clave en FC $fc$: $\mathbf{q}^{(fc)}, \mathbf{k}_i^{(fc)}$
+            \State $s_i^{(fc)} \gets \text{softmax}(\mathbf{q}^{(fc)} \mathbf{k}_i^{(fc)\top} / \sqrt{d}) $
+            \State $s_i \gets s_i + s_i^{(fc)}$
+        \EndFor
+    \EndFor
+    \State $\mathcal{T}_t \gets \mathrm{TopK-Índices}([s_1, \ldots, s_t], N_{\text{fac}})$ \Comment{Seleccionar tokens principales}
+\EndFor
+\State \textbf{Etapa 2: Cálculo de Atención Enfocada (FAC)}
+\State $\text{puntajes}_{\text{fac}} \gets \mathbf{q}_t \mathbf{K}_{\mathcal{T}_t}^\top / \sqrt{d}$ \Comment{Producto punto de precisión completa}
+\State $\alpha_{\text{fac}} \gets \text{softmax}(\text{puntajes}_{\text{fac}})$ \Comment{Softmax completo}
+\State $\mathbf{o}_t \gets \alpha_{\text{fac}} \mathbf{V}_{\mathcal{T}_t}$ \Comment{Suma ponderada de valores}
+\Return $\mathbf{o}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: TIP es $\mathcal{O}(t \cdot N_{\text{tip}})$; FAC es $\mathcal{O}(N_{\text{fac}} \cdot d)$.
+    \item \textbf{Entrenable}: No; optimización de inferencia sin entrenamiento.
+    \item \textbf{Aplicabilidad}: Requiere modelos basados en RoPE; extendido a ALiBi y MLA con modificaciones.
+    \item \textbf{Fortaleza}: Precisión cercana a la óptima con $\leq 256$ tokens de entre millones; hasta 2.56$\times$ de aceleración en decodificación; ortogonal a la cuantización.
+    \item \textbf{Limitación}: Requiere calibración fuera de línea; la identificación de FC dominantes añade sobrecarga de preprocesamiento.
+\end{itemize}
+
+\subsection{SpargeAttn: Filtrado de Dos Etapas a Nivel de Bloques}
+
+\subsubsection{Formulación Matemática}
+
+SpargeAttn \citep{zhang_spargeattn_2025} es un \textbf{método universal sin entrenamiento} que predice qué bloques de la matriz de atención contendrán valores insignificantes y omite el cálculo para esos bloques.
+
+\paragraph{Etapa 1 --- Predicción dispersa}: Calcular importancia proxy de bajo costo $\hat{s}_{ij}$ para el bloque $(i,j)$:
+
+\[
+\hat{s}_{ij} = f_{\text{pred}}(\mathbf{Q}_i, \mathbf{K}_j; \text{hiperparámetros}), \quad \text{omitir si } \hat{s}_{ij} < \epsilon_1
+\]
+
+Los predictores comunes incluyen similitud de media de bloque o estadísticas de autosimilitud.
+
+\paragraph{Etapa 2 --- Filtrado consciente de softmax}: Después de calcular $\tilde{P}_{ij} = \text{softmax}(Q_i K_j^\top/\sqrt{d})$, verificar si la probabilidad máxima del bloque es insignificante en relación con el máximo de softmax en ejecución:
+
+\[
+\text{omitir } P_{ij} V_j \quad \text{si} \quad \max(\tilde{P}_{ij}) < e^{m_{\text{antiguo}} - m_{\text{nuevo}}} \cdot \epsilon_2
+\]
+
+donde $m_{\text{antiguo}}, m_{\text{nuevo}}$ son máximos del softmax en línea en ejecución (calculados mediante numéricos estilo FlashAttention).
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{SpargeAttn: Filtrado Disperso de Dos Etapas por Bloques}
+\begin{algorithmic}[1]
+\Require Bloques de consulta $\mathbf{Q}_i$ para $i = 1, \ldots, n_b$, Bloques de clave $\mathbf{K}_j$ para $j = 1, \ldots, n_b$, Bloques de valor $\mathbf{V}_j$
+\Require Umbral de predicción $\epsilon_1$, umbral de softmax $\epsilon_2$, tamaño de bloque $b_s$
+\Ensure Salida $\mathbf{Y}$
+\State Inicializar: máximo de softmax en línea $m_{\text{global}} \gets -\infty$
+\For{fila de bloque $i = 1$ to $n_b$}
+    \State Inicializar: salida de fila de bloque $\mathbf{Y}_i \gets 0$, máximo local $m_i \gets -\infty$
+    \For{columna de bloque $j = 1$ to $n_b$}
+        \State \textbf{Etapa 1: Predicción Dispersa}
+        \State Calcular importancia proxy: $\hat{s}_{ij} \gets f_{\text{pred}}(\mathbf{Q}_i, \mathbf{K}_j)$
+        \If{$\hat{s}_{ij} < \epsilon_1$}
+            \State \textbf{omitir} este bloque $[i,j]$  \Comment{Terminación temprana}
+            \State \textbf{continuar} \Comment{Pasar al siguiente bloque}
+        \EndIf
+        \State \textbf{Etapa 2: Calcular y Filtrar}
+        \State $\tilde{P}_{ij} \gets \text{softmax}(\mathbf{Q}_i \mathbf{K}_j^\top / \sqrt{d})$
+        \State $m_{\text{bloque}} \gets \max(\tilde{P}_{ij})$
+        \If{$m_{\text{bloque}} < e^{m_i - m_{\text{global}}} \cdot \epsilon_2$}
+            \State El bloque contribuye insignificantemente; omitir  \Comment{Poda consciente de softmax}
+            \State \textbf{continuar}
+        \EndIf
+        \State Actualizar máximo global: $m_i \gets \max(m_i, m_{\text{bloque}})$
+        \State Acumular: $\mathbf{Y}_i \gets \mathbf{Y}_i + \tilde{P}_{ij} \mathbf{V}_j$
+    \EndFor
+    \State $m_{\text{global}} \gets \max(m_{\text{global}}, m_i)$
+\EndFor
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: Empírica $\mathcal{O}(n^2 \cdot s)$ donde $s$ es la fracción de bloques no omitidos (típicamente 0.2--0.5).
+    \item \textbf{Entrenable}: No; aceleración plug-and-play para modelos existentes.
+    \item \textbf{Universalidad}: Funciona en modelos de lenguaje, modelos de difusión de imágenes y generación de video.
+    \item \textbf{Fortaleza}: 2.5--5$\times$ de aceleración comparado con métodos densos o dispersos anteriores; compatible con cuantización (integración SageAttention).
+    \item \textbf{Limitación}: La aceleración depende de la dispersidad inherente; la granularidad a nivel de bloque puede pasar por alto patrones más finos; se requiere ajuste de umbral por familia de modelos.
+\end{itemize}
+
+\subsection{MSA (MiniMax Sparse Attention): Atención Dispersa por Bloques con Rama de Índice Ligera}
+
+\subsubsection{Formulación Matemática}
+
+MSA \citep{lai_minimax_2026} es un mecanismo de atención dispersa por bloques construido sobre atención agrupada por consultas (GQA) que combina una \textbf{Rama de Índice} ligera para la selección de bloques con una \textbf{Rama Principal} para atención softmax dispersa por bloques exacta sobre los bloques seleccionados. Sea $N$ la longitud de la secuencia, $B_k = 128$ el tamaño de bloque, y $k = 16$ el número de bloques seleccionados por consulta (lo que yield un presupuesto fijo por consulta de $k \cdot B_k = 2048$ tokens independientemente de $N$).
+
+\paragraph{Rama de Índice}: Una proyección de baja dimensionalidad produce consultas de índice $\mathbf{q}_t^{\text{idx}} \in \mathbb{R}^{d_{\text{idx}}}$ y representantes de bloque $\mathbf{r}_b \in \mathbb{R}^{d_{\text{idx}}}$ para cada bloque KV $b$. Los puntajes de índice por grupo GQA son:
+\[
+s_{t,b}^{(g)} = \mathbf{q}_t^{\text{idx},(g)} \cdot \mathbf{r}_b, \qquad \mathcal{I}_t^{(g)} = \mathrm{TopK}\left(\{s_{t,b}^{(g)}\}_{b=1}^{N/B_k},\; k\right)
+\]
+La entrada del índice está \textbf{desconectada} (stop-gradient), de modo que los gradientes no fluyen hacia atrás a través de la entrada del indexador; la Rama de Índice se entrena en su lugar mediante una pérdida de alineación KL entre su distribución de atención y la distribución de la Rama Principal. Debido a que softmax preserva el orden, los puntajes crudos de índice se alimentan directamente al operador top-$k$ \emph{sin} un softmax explícito (\textbf{top-$k$ sin exponencial}), reduciendo el costo numérico.
+
+\paragraph{Bloque local forzado}: El bloque que contiene la posición de consulta $t$ \textbf{siempre} se incluye en $\mathcal{I}_t^{(g)}$, garantizando cobertura de contexto local.
+
+\paragraph{Rama Principal}: La atención estándar de producto punto escalado se calcula exactamente sobre la unión de los bloques seleccionados:
+\[
+\mathbf{o}_t^{(h)} = \mathrm{softmax}\left(\frac{\mathbf{q}_t^{(h)} \mathbf{K}_{\mathcal{I}_t}^{(h)\top}}{\sqrt{d_h}}\right) \mathbf{V}_{\mathcal{I}_t}^{(h)}
+\]
+donde $\mathbf{K}_{\mathcal{I}_t}, \mathbf{V}_{\mathcal{I}_t}$ reúnen los tensores de clave/valor de precisión completa de los bloques seleccionados. La selección se realiza independientemente por grupo GQA, de modo que diferentes grupos de consulta dentro de la misma capa pueden atender a diferentes subconjuntos de bloques.
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{MSA: Atención Dispersa MiniMax con Ramas de Índice + Principal}
+\begin{algorithmic}[1]
+\Require Consulta $\mathbf{Q} \in \mathbb{R}^{N \times d}$, Clave $\mathbf{K}$, Valor $\mathbf{V}$, tamaño de bloque $B_k = 128$, bloques top-$k$ $k = 16$
+\Require Proyección de índice $W_{\text{idx}}$ (entrada desconectada), representantes de bloque $\{\mathbf{r}_b\}$
+\Ensure Salida $\mathbf{Y} \in \mathbb{R}^{N \times d}$
+\State Calcular representantes de bloque: $\mathbf{r}_b \gets \mathrm{mean}(\mathbf{K}_{bB_k:(b+1)B_k})$ para $b = 1, \ldots, N/B_k$
+\For{posición de consulta $t = 1, \ldots, N$}
+    \For{cada grupo GQA $g$}
+        \State $\mathbf{q}_t^{\text{idx}} \gets \mathrm{sg}(W_{\text{idx}} \mathbf{x}_t)$ \Comment{consulta de índice desconectada}
+        \State Calcular puntajes de bloque: $s_b \gets \mathbf{q}_t^{\text{idx}} \cdot \mathbf{r}_b$
+        \State Identificar bloque local: $b_{\text{local}} \gets \lfloor t / B_k \rfloor$
+        \State $\mathcal{I}_t^{(g)} \gets \mathrm{TopK}(\{s_b\}, k) \cup \{b_{\text{local}}\}$ \Comment{top-$k$ sin exp + local forzado}
+    \EndFor
+    \State Reunir KV seleccionado: $\tilde{\mathbf{K}}_t \gets \mathrm{Gather}(\mathbf{K}, \mathcal{I}_t)$, $\tilde{\mathbf{V}}_t \gets \mathrm{Gather}(\mathbf{V}, \mathcal{I}_t)$
+    \State Rama principal SDPA: $\mathbf{y}_t \gets \mathrm{softmax}(\mathbf{q}_t \tilde{\mathbf{K}}_t^\top / \sqrt{d_h}) \tilde{\mathbf{V}}_t$
+\EndFor
+\State Agregar pérdida de alineación KL $\mathcal{L}_{\text{KL}} = \mathrm{KL}(\text{dist índice} \,\|\, \text{dist principal})$ durante el entrenamiento
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: Rama de índice $\mathcal{O}(H_{\text{kv}} \cdot d_{\text{idx}} \cdot N^2)$; Rama principal $\mathcal{O}(H_q \cdot d_h \cdot N \cdot k \cdot B_k)$. Presupuesto por consulta fijo en $k \cdot B_k = 2048$ tokens independientemente de $N$.
+    \item \textbf{Entrenable}: Sí; de extremo a extremo (la Rama de Índice se entrena mediante una pérdida de alineación KL, no es solo inferencia).
+    \item \textbf{Estado}: Caché KV $\mathcal{O}(N)$ (tamaño GQA); sin expansión de la dimensión de estado recurrente.
+    \item \textbf{Fortaleza}: Desplegado en el modelo 109B MiniMax-M3, MSA logra una reducción de cómputo de atención por token de $28.4\times$ a contexto de 1M, con $14.2\times$ en prefill y $7.6\times$ en decodificación en GPUs H800.
+    \item \textbf{Limitación}: La granularidad de selección es fija a nivel de bloque ($B_k = 128$); el bloque local forzado y la selección independiente por grupo aumentan la complejidad de ingeniería y requieren kernels personalizados de bloques dispersos.
+\end{itemize}
+
+\subsection{SparDA (Atención Dispersa Desacoplada): Selección de Bloques Anticipada Guiada por Pronóstico}
+
+\subsubsection{Formulación Matemática}
+
+SparDA \citep{fu_sparda_2026} introduce un esquema de atención dispersa \textbf{desacoplado} que aumenta las proyecciones estándar por capa $Q, K, V$ con una cuarta proyección, el \textbf{Pronóstico}, que predice los bloques KV que serán necesarios en la \emph{siguiente} capa. Esta anticipación permite solapar el prefetch CPU-a-GPU de los bloques seleccionados de la siguiente capa con la ejecución de la capa actual, ocultando la latencia de offload que afecta a las implementaciones de atención dispersa en hardware con memoria limitada.
+
+\paragraph{Proyección de Pronóstico}: Para la entrada $\mathbf{x} \in \mathbb{R}^{N \times d}$,
+\[
+\mathbf{F} = \mathbf{x} \mathbf{W}_F \in \mathbb{R}^{N \times H_{\text{kv}} \times d_f}
+\]
+con \textbf{una cabeza de Pronóstico por grupo GQA}, lo que reduce la sobrecarga de selección frente a los selectores multi-cabeza usados en trabajos anteriores.
+
+\paragraph{Puntuación y selección de bloques}: Para cada consulta $i$ y bloque KV $b$ con representante $\mathbf{r}_b$:
+\[
+S_{i,b} = \mathbf{F}_i \cdot \mathbf{r}_b, \qquad \mathcal{I}_i = \mathrm{TopK}(\{S_{i,b}\}_b, k)
+\]
+\paragraph{Atención dispersa por bloques}: La atención estándar de producto punto escalado se calcula entonces sobre los bloques seleccionados:
+\[
+\mathbf{o}_i = \mathrm{softmax}\left(\frac{\mathbf{q}_i \mathbf{K}_{\mathcal{I}_i}^\top}{\sqrt{d_h}}\right) \mathbf{V}_{\mathcal{I}_i}
+\]
+\paragraph{Entrenamiento}: SparDA añade menos del $0.5\%$ de parámetros adicionales. Solo las proyecciones de Pronóstico se entrenan, emparejando la distribución de atención del selector disperso original (congelado)---una destilación ligera que preserva el comportamiento del modelo base mientras habilita el prefetch anticipado.
+
+\subsubsection{Pseudocódigo Algorítmico}
+
+\begin{algorithm}[H]
+\caption{SparDA: Atención Dispersa Desacoplada con Prefetch de Pronóstico}
+\begin{algorithmic}[1]
+\Require Entrada $\mathbf{x} \in \mathbb{R}^{N \times d}$, bloques de Clave/Valor en caché, bloques top-$k$ $k$
+\Require Proyecciones $W_q, W_k, W_v, W_F$; selector base congelado $\pi_{\text{orig}}$
+\Ensure Salida $\mathbf{Y}$; bloques prefetched para la siguiente capa
+\State Calcular Pronóstico: $\mathbf{F} \gets \mathbf{x} \mathbf{W}_F$ \Comment{una cabeza por grupo GQA}
+\For{consulta $i = 1, \ldots, N$}
+    \State Calcular puntajes de bloque: $S_{i,b} \gets \mathbf{F}_i \cdot \mathbf{r}_b$ para cada bloque $b$
+    \State Seleccionar: $\mathcal{I}_i \gets \mathrm{TopK}(\{S_{i,b}\}, k)$
+    \State \textbf{Prefetch} $\mathbf{K}_{\mathcal{I}_i}, \mathbf{V}_{\mathcal{I}_i}$ de CPU a GPU para la \emph{siguiente} capa \Comment{solapa con la capa actual}
+\EndFor
+\State Calcular SDPA dispersa por bloques sobre los bloques seleccionados de la capa actual: $\mathbf{Y} \gets \mathrm{BlockSparseSDPA}(\mathbf{Q}, \mathbf{K}, \mathbf{V}, \{\mathcal{I}_i\})$
+\State Pérdida de entrenamiento: $\mathcal{L} \gets \mathrm{KL}(\text{dist Pronóstico} \,\|\, \pi_{\text{orig}})$ \Comment{solo se actualiza $W_F$}
+\Return $\mathbf{Y}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Características Clave}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Complejidad}: Pronóstico $\mathcal{O}(H_{\text{kv}} \cdot d_f \cdot N \cdot N_{\text{bloques}})$; Atención principal $\mathcal{O}(H_q \cdot d_h \cdot N \cdot k \cdot B_k)$.
+    \item \textbf{Entrenable}: Sí; solo las proyecciones de Pronóstico se entrenan ($<0.5\%$ parámetros extra).
+    \item \textbf{Fortaleza}: En dos modelos sparse-pretrained de 8B, SparDA logra hasta $1.25\times$ en prefill y $1.7\times$ en decodificación sobre el baseline de offload de atención dispersa, y hasta $5.3\times$ throughput de decodificación frente a un baseline disperso sin offload.
+    \item \textbf{Limitación}: Requiere un pipeline de offload CPU--GPU y un selector base congelado; el beneficio anticipado depende de que la demanda de bloques de la siguiente capa sea predecible a partir del Pronóstico actual.
+\end{itemize}
+
+\subsection{Espacio de Diseño y Criterios de Selección}
+
+Los siete métodos de atención dispersa ocupan posiciones complementarias en un espacio de diseño multidimensional:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Patrones geométricos/fijos} (Sparse Transformer, Longformer): Simples de implementar y analizar, pero los patrones no se adaptan al contenido.
+    \item \textbf{Selección aprendida} (SparseK, NSA): Permiten adaptación mediante redes de selección entrenables, a costa de mayor complejidad de implementación.
+    \item \textbf{Aceleración sin entrenamiento} (FASA, SpargeAttn): Permiten aceleración directa de modelos existentes sin reentrenamiento, adecuados para sistemas desplegados.
+    \item \textbf{Garantías teóricas} (BigBird): Proporcionan demostraciones formales de completitud expresiva, importantes para comprender los márgenes de seguridad.
+\end{itemize}
+
+\textbf{Orientación de selección:}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Entrenamiento de nuevos modelos} donde los recursos lo permitan: NSA o SparseK para máxima aceleración de inferencia; BigBird para garantía teórica.
+    \item \textbf{Comprensión de documentos de contexto largo}: Longformer o FASA por simplicidad práctica; NSA para escala extrema.
+    \item \textbf{Aceleración de modelos existentes}: FASA para LLMs basados en RoPE; SpargeAttn para cualquier arquitectura.
+    \item \textbf{Entornos con recursos limitados}: Sparse Transformer por simplicidad y eficiencia probada a escala moderada.
+\end{enumerate}
+

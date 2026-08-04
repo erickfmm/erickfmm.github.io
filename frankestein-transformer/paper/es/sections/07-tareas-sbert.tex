@@ -1,0 +1,38 @@
+\section{Tareas Posteriores de SBERT}
+\label{sec:sbert}
+
+El embedding de oraciones se construye sobre entrenamiento estilo Siamese \citep{reimers_sentence-bert_2019}. Para el par de oraciones $(s_1,s_2)$ con embeddings $(e_1,e_2)$:
+\[
+\text{cos}(e_1,e_2)=\frac{e_1^\top e_2}{\|e_1\|\|e_2\|}
+\]
+y pérdida coseno estilo regresión:
+\[
+\mathcal{L}_{\text{cos}}=\left(\text{cos}(e_1,e_2)-y\right)^2
+\]
+con $y\in[-1,1]$ en este pipeline.
+
+Modos posteriores soportados:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Similitud}: puntuación por pares entre dos oraciones.
+    \item \textbf{Búsqueda}: $k$ vecinos más cercanos sobre un corpus.
+    \item \textbf{Clustering}: agrupación de embeddings (ej., k-means).
+    \item \textbf{Codificación}: exportación persistente de embeddings para recuperación posterior.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\fitfigure{\begin{tikzpicture}[node distance=1.1cm and 1.0cm]
+\node[box, fill=blue!8] (encoder) {Codificador compartido};
+\node[box, fill=yellow!10, below left=of encoder, xshift=-1.2cm] (sim) {Similitud\\puntuación coseno};
+\node[box, fill=green!8, below=of encoder] (search) {Búsqueda\\recuperación top-$k$};
+\node[box, fill=orange!12, below right=of encoder, xshift=1.2cm] (cluster) {Cluster / codificar\\análisis offline};
+\draw[line] (encoder) -- (sim);
+\draw[line] (encoder) -- (search);
+\draw[line] (encoder) -- (cluster);
+\end{tikzpicture}}
+\caption{Reutilización del flujo de trabajo SBERT. Un único codificador soporta puntuación de pares en línea, recuperación sobre corpus, clustering y exportación persistente de embeddings.}
+\label{fig:sbert-modes}
+\end{figure}
+
+El pseudocódigo del enrutador de modo de inferencia SBERT---despachando entre los modos de similitud, búsqueda, cluster y codificación sobre un codificador compartido---se difiere al Apéndice~\ref{sec:annex-norm-bitnet-mod}.
+

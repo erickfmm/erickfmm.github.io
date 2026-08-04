@@ -1,0 +1,375 @@
+\section{Activation Functions}
+\label{sec:annex-activation-functions}
+
+This annex documents the complete activation-function library available in the
+model. The library provides \textbf{43 feed-forward activation functions}: 40
+elementwise activations and 3 gated-FFN variants. Activations are grouped into
+five families, following the taxonomy of Dubey et al.~\citep{dubey2021activations}
+and the analytic overview of Lederer~\citep{lederer2021activations}, augmented
+with the learnable Rational Activation Function (RAF) of
+Fang et al.~\citep{fang2023raft}.
+
+The selection is driven by the \texttt{ffn\_activation} configuration field (a
+string enum) and dispatched at runtime by a factory function that mirrors the
+normalization-layer dispatch (Annex~7).
+
+\[
+\texttt{ffn\_activation} \in \{\texttt{silu},\;\texttt{gelu},\;\dots,\;
+\texttt{raf},\;\texttt{swiglu},\;\texttt{geglu},\;\texttt{reglu}\}
+\]
+
+\subsection{Classical / Sigmoid--Tanh Family (12 activations)}
+
+The classical family comprises smooth, stateless activations rooted in
+logistic and algebraic functions~\citep{lederer2021activations,dubey2021activations}.
+All share monotonicity or near-monotonicity and are continuously differentiable.
+
+\begin{align}
+  \text{Sigmoid}(x) &= \frac{1}{1+e^{-x}}
+    & \text{Range: } (0,1),\;\text{monotonic, smooth}
+    & \quad \citep{lederer2021activations} \\[4pt]
+  \text{Tanh}(x) &= \frac{e^{x}-e^{-x}}{e^{x}+e^{-x}} = 2\,\sigma(2x)-1
+    & \text{Range: } (-1,1),\;\text{monotonic, smooth}
+    & \quad \citep{lederer2021activations} \\[4pt]
+  \text{Arctan}(x) &= \arctan(x)
+    & \text{Range: } (-\tfrac{\pi}{2},\tfrac{\pi}{2}),\;\text{monotonic, smooth}
+    & \quad \citep{lederer2021activations} \\[4pt]
+  \text{Softsign}(x) &= \frac{x}{1+|x|}
+    & \text{Range: } (-1,1),\;\text{smooth, once-diff.\ at 0}
+    & \quad \citep{lederer2021activations} \\[4pt]
+  \text{Elliott}(x) &= \frac{x}{1+|x|}
+    & \text{Alias of Softsign (survey ``elliottsig'' notation)}
+    & \quad \citep{lederer2021activations} \\[4pt]
+  \text{Identity}(x) &= x
+    & \text{Range: } (-\infty,\infty),\;\text{linear, }C^\infty
+    & \quad \text{(internal)}
+\end{align}
+
+\begin{align}
+  \text{Softplus}(x) &= \log(1+e^{x})
+    & \text{Range: } [0,\infty),\;\text{smooth, }C^\infty
+    & \quad \citep{glorot2011softplus} \\[4pt]
+  \text{Mish}(x) &= x\,\tanh\!\big(\text{softplus}(x)\big)
+    = x\,\tanh\!\big(\log(1+e^{x})\big)
+    & \text{Range: } [\approx{-0.31},\infty),\;\text{non-monotonic, smooth}
+    & \quad \citep{misra2019mish} \\[4pt]
+  \text{GELU}(x) &= x\,\Phi(x) = x\cdot\tfrac{1}{2}\Big(1+\text{erf}\!\Big(\frac{x}{\sqrt{2}}\Big)\Big)
+    & \text{Range: } (\approx{-0.17},\infty),\;\text{smooth, probabilistic}
+    & \quad \citep{hendrycks2016gelu} \\[4pt]
+  \text{GELU-tanh}(x) &= \tfrac{x}{2}\Big(1+\tanh\!\Big(\sqrt{\tfrac{2}{\pi}}
+    (x+0.044715\,x^{3})\Big)\Big)
+    & \text{Tanh approximation of GELU (faster)}
+    & \quad \citep{hendrycks2016gelu} \\[4pt]
+  \text{ReLU}(x) &= \max(0,x)
+    & \text{Range: } [0,\infty),\;\text{piecewise-linear, non-smooth at 0}
+    & \quad \citep{nair2010relu} \\[4pt]
+  \text{SiLU}(x) &= x\,\sigma(x) = \frac{x}{1+e^{-x}}
+    & \text{Range: } (\approx{-0.278},\infty),\;\text{non-monotonic, smooth}
+    & \quad \citep{elfwing2018silu}
+\end{align}
+
+\noindent\textbf{SiLU} (Sigmoid Linear Unit) is the default activation
+(\texttt{ffn\_activation=silu}). When $\beta=1$, the parametric Swish reduces
+to SiLU. GELU and its tanh approximation are the standard in BERT and
+GPT-2/3~\citep{hendrycks2016gelu}. Mish~\citep{misra2019mish} is a
+self-regularized, non-monotonic composition of Softplus and Tanh, reported to
+outperform Swish on several benchmarks.
+
+\subsection{Rectified Family (12 activations)}
+
+The rectifier family extends ReLU with learnable slopes, bounded variants, and
+rectified-hyperbolic forms~\citep{nair2010relu,dubey2021activations}.
+
+\begin{align}
+  \text{LeakyReLU}(x) &= \begin{cases} x & x\ge 0 \\ a\,x & x < 0 \end{cases},
+    \quad a=0.01
+    & \text{Range: } (-\infty,\infty)
+    & \quad \citep{maas2013leakyrelu} \\[4pt]
+  \text{ReLU6}(x) &= \min\!\big(\max(0,x),\,6\big)
+    & \text{Range: } [0,6],\;\text{bounded, fixed-point friendly}
+    & \quad \citep{howard2017mobile} \\[4pt]
+  \text{HardSwish}(x) &= x\cdot\frac{\text{ReLU6}(x+3)}{6}
+    & \text{Range: } (\approx{-1.67},\infty),\;\text{cheap Swish approx.}
+    & \quad \citep{howard2019hardswish} \\[4pt]
+  \text{PReLU}(x) &= \max(0,x)+\mathbf{p}\odot\min(0,x)
+    & \text{Learnable per-channel slope } \mathbf{p},\;\text{init 0.25}
+    & \quad \citep{he2015prelu} \\[4pt]
+  \text{AbsReLU}(x) &= \max(0,x)-\max(0,-x) = x\;\text{rectified to sign-ramp}
+    & \text{Range: } (-\infty,\infty)
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{NLReLU}(x) &= \beta\,\log\!\big(1+\max(0,x)\big)
+    & \text{Range: } [0,\infty),\;\beta=1.0,\;\text{logarithmic compression}
+    & \quad \citep{dubey2021activations}
+\end{align}
+
+\begin{align}
+  \text{BReLU}(x) &= \min\!\big(\max(0,x),\,t\big),\quad t=1.0
+    & \text{Range: } [0,t],\;\text{bounded rectifier}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{VReLU}(x) &= |x|
+    & \text{Range: } [0,\infty),\;\text{symmetric rectifier}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{Hexpo}(x) &= a\,\max(0,x)-c\,\max(0,-x),\quad a{=}c{=}1.0
+    & \text{Asymmetric two-sided rectifier}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{PenalizedTanh}(x) &= \max\!\big(0,\,\tanh(x)\big)
+    & \text{Range: } [0,1),\;\text{rectified tanh, smooth near 0}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{DisReLU}(x) &= \max(0,\,x-\delta),\quad \delta=0.0
+    & \text{Right-shifted ReLU hinge}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{LiSHT}(x) &= x\,\tanh(x)
+    & \text{Range: } [0,\infty)\;\text{(magnitude), non-monotonic, smooth}
+    & \quad \citep{roy2019lisht}
+\end{align}
+
+\noindent\textbf{PReLU}~\citep{he2015prelu} makes the negative slope a
+per-channel learnable parameter, enabling the network to learn the optimal
+leak per feature. \textbf{HardSwish}~\citep{howard2019hardswish} is the cheap
+Swish approximation used in MobileNetV3. \textbf{ReLU6}~\citep{howard2017mobile}
+was introduced in MobileNetV1 for fixed-point quantization friendliness.
+
+\subsection{Exponential / ELU Family (12 activations)}
+
+The exponential-linear family provides smooth negative saturation and
+self-normalizing variants~\citep{clevert2016elu,klambauer2017selu,dubey2021activations}.
+Several members introduce per-channel learnable parameters.
+
+\begin{align}
+  \text{ELU}(x) &= \begin{cases} x & x\ge 0 \\ \alpha(e^{x}-1) & x<0 \end{cases},
+    \quad \alpha=1.0
+    & \text{Range: } (-\alpha,\infty)
+    & \quad \citep{clevert2016elu} \\[4pt]
+  \text{SELU}(x) &= \lambda\,\text{ELU}_{\alpha'}(x)
+    & \alpha'{\approx}1.6733,\;\lambda{\approx}1.0507,
+    & \quad \citep{klambauer2017selu} \\
+  & & \text{self-normalizing (mean 0, var 1)} & \notag \\[4pt]
+  \text{CELU}(x) &= \begin{cases} x & x\ge 0 \\ \alpha(e^{x/\alpha}-1) & x<0 \end{cases},
+    \quad \alpha=1.0
+    & \text{Once-diff.\ at 0 for any } \alpha
+    & \quad \citep{barron2017celu} \\[4pt]
+  \text{PELU}(x) &= \begin{cases} \tfrac{\alpha}{\beta}\,x & x\ge 0 \\
+    \alpha(e^{x/\beta}-1) & x<0 \end{cases}
+    & \alpha,\beta\text{ learnable per-channel}
+    & \quad \citep{trottier2017pelu} \\[4pt]
+  \text{MPELU}(x) &= \text{ReLU}(x)+\beta\cdot\text{ELU}_{\alpha}(x)\cdot\mathbb{1}_{x<0}
+    & \alpha,\beta\text{ learnable per-channel}
+    & \quad \citep{dubey2021activations}
+\end{align}
+
+\begin{align}
+  \text{FELU}(x) &= \begin{cases} x & x\ge 0 \\ \alpha(e^{x}-1) & x<0 \end{cases}
+    & \alpha\text{ learnable, clamped to } [0,1]
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{EELU}(x) &= \beta\,\text{ReLU}(x)+\alpha(e^{x}-1)\cdot\mathbb{1}_{x<0}
+    & \alpha,\beta\text{ learnable per-channel}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{PDELU}(x) &= \begin{cases} x & x\ge 0 \\
+    \alpha(e^{x/\alpha}-1)+(1-\alpha)\,x & x<0 \end{cases}
+    & \alpha\text{ learnable, interpolates CELU--identity}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{PREU}(x) &= \beta\,\text{ReLU}(x)+\alpha(e^{x}-1)\cdot\mathbb{1}_{x<0}^{\le 0}
+    & \alpha,\beta\text{ learnable per-channel}
+    & \quad \citep{dubey2021activations} \\[4pt]
+  \text{SoftExp}(x) &= \begin{cases}
+    \tfrac{1}{\alpha}\big(e^{\alpha x}-1\big)+\alpha & \alpha>0 \\
+    x & \alpha=0 \\
+    -\tfrac{1}{\alpha}\ln\!\big(1-\alpha(x+\alpha)\big) & \alpha<0
+    \end{cases}
+    & \alpha\text{ learnable; exp/linear/log interpolation}
+    & \quad \citep{godfrey2015softexp}
+\end{align}
+
+\begin{align}
+  \text{ELiSH}(x) &= \begin{cases} x\,\sigma(x) & x\ge 0 \\
+    (e^{x}-1)\,\sigma(x) & x<0 \end{cases}
+    & \text{Swish pos.\ branch, ELU-gated neg.\ branch}
+    & \quad \citep{basirat2019elish} \\[4pt]
+  \text{HardELiSH}(x) &= \begin{cases} x\cdot\text{hard\_sigmoid}(x) & x\ge 0 \\
+    (e^{x}-1)\cdot\text{hard\_sigmoid}(x) & x<0 \end{cases}
+    & \text{Hard-sigmoid variant of ELiSH}
+    & \quad \citep{basirat2019elish}
+\end{align}
+
+\noindent where $\text{hard\_sigmoid}(x)=\text{ReLU6}(x+3)/6$.
+
+\noindent\textbf{ELU}~\citep{clevert2016elu} provides smooth negative
+saturation. \textbf{SELU}~\citep{klambauer2017selu} induces self-normalization
+with fixed $\alpha'{\approx}1.6733$, $\lambda{\approx}1.0507$.
+\textbf{CELU}~\citep{barron2017celu} is once-differentiable at 0 for any
+$\alpha$ (unlike ELU). \textbf{PELU}~\citep{trottier2017pelu} makes both
+$\alpha,\beta$ learnable per-channel. The parametric variants
+(MPELU, FELU, EELU, PDELU, PREU) generalize ELU and PReLU by introducing
+learnable per-channel parameters for the negative and positive branches.
+\textbf{SoftExp}~\citep{godfrey2015softexp} continuously interpolates between
+logarithmic ($\alpha<0$), linear ($\alpha=0$), and exponential ($\alpha>0$)
+regimes. \textbf{ELiSH} and \textbf{HardELiSH}~\citep{basirat2019elish}
+combine Swish and ELU behaviors via a piecewise definition.
+
+\subsection{Swish and Parametric Activations}
+
+Swish~\citep{ramachandran2017swish} is a family parameterized by a slope
+$\beta$:
+\[
+  \text{Swish}_\beta(x) = x\,\sigma(\beta x) = \frac{x}{1+e^{-\beta x}}.
+\]
+When $\beta=1$ this is SiLU (the default). Large $\beta$ approaches
+ReLU; $\beta\to 0$ approaches the linear function $x/2$.
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Swish} (\texttt{swish}): fixed $\beta$ (default 1.0, configured
+    via \texttt{ffn\_activation\_config.swish\_beta}). No learnable parameters.
+  \item \textbf{SwishTrainable} (\texttt{swish\_trainable}): $\beta$ is a
+    per-channel learnable parameter, initialized to 1.0. Equivalent to SiLU at
+    initialization, then adapts during training.
+  \item \textbf{Maxout} (\texttt{maxout}): computes $k$ linear projections and
+    takes the elementwise maximum: $\max_{i=0}^{k-1}(W_i x + b_i)$.
+    A universal approximator for any continuous function given enough pieces.
+    Parameter count increases by factor $k$ (default $k=2$, configured via
+    \texttt{ffn\_activation\_config.maxout\_pieces}).
+\end{itemize}
+
+\noindent References: Swish~\citep{ramachandran2017swish},
+Maxout~\citep{goodfellow2013maxout}.
+
+\subsection{Rational Activation Functions (RAF)}
+\label{sec:raf}
+
+Following Fang et al.~\citep{fang2023raft}, a Rational Activation Function is a
+learnable ratio of two low-degree polynomials (a Pad\'e approximant):
+\[
+  F(x) = \frac{P(x)}{Q(x)}
+        = \frac{\displaystyle\sum_{j=0}^{m} a_j\, x^{j}}
+               {1 + R(x)}
+\]
+where $\mathbf{a}\in\mathbb{R}^{m+1}$ and $\mathbf{b}\in\mathbb{R}^{n}$ are
+\emph{learnable}, and the denominator term $R(x)$ depends on the version.
+The default configuration matches the paper: degree $(m,n)=(5,4)$, version
+``A'' (safe), initialized by a least-squares fit to GELU on $[-3,3]$.
+
+The implementation supports five denominator variants:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Version A} (default, ``safe''):
+    $Q(x)=1+\sum_{k}|b_k\, x^{k+1}|$ (per-term absolute value).
+    Guarantees $Q(x)\ge 1$, no division by zero.
+  \item \textbf{Version B}: $Q(x)=1+\big|\sum_{k} b_k\, x^{k+1}\big|$
+    (absolute value of the whole sum). Also guarantees $Q(x)\ge 1$.
+  \item \textbf{Version C}: $Q(x)=0.1+\big|\sum_{k} b_k\, x^{k}\big|$
+    with a $0.1$ floor. Minimum denominator $0.1$.
+  \item \textbf{Version D}: like B, but injects uniform multiplicative noise
+    $U(1-\varepsilon, 1+\varepsilon)$ on the denominator weights during
+    \emph{training only} ($\varepsilon=0.1$). Regularization effect.
+  \item \textbf{Version N} (``nunsafe''):
+    $Q(x)=1+\sum_{k} b_k\, x^{k+1}$ without any absolute value.
+    Can have poles (denominator zeros); use with care.
+\end{itemize}
+
+\textbf{RAFT input scaling.} Because a Pad\'e approximant is a reliable
+universal approximator only on a bounded interval, the RAFT model preprocesses
+each token's pre-activations with a per-token min--max scaling into $[-3,3]$:
+\[
+  \tilde{x} = \frac{x-\min(x)}{\max(x)-\min(x)}\cdot 6 - 3.
+\]
+This is toggled by \texttt{ffn\_activation\_config.raf\_input\_scaling}
+(default \texttt{false}).
+
+\textbf{Initialization targets.} The rational coefficients can be initialized by
+fitting to any of the following target functions: \texttt{gelu} (default),
+\texttt{relu}, \texttt{leaky\_relu}, \texttt{leaky\_relu\_0.1},
+\texttt{sigmoid}, \texttt{tanh}, \texttt{swish}/\texttt{silu}, or
+\texttt{identity}. The fit uses a least-squares solve on 2001 uniformly spaced
+samples over $[-3,3]$.
+
+\textbf{Freezing.} Setting \texttt{raf\_trainable=false} freezes the rational
+parameters, useful for parameter-efficient fine-tuning. Frozen RAFs are
+typically paired with a separate (higher) learning rate for the remaining
+network parameters.
+
+\textbf{Note on naming.} RAF stands for \emph{Rational} Activation Function,
+not ``Rectified''; it is the learnable polynomial ratio described above.
+
+\subsection{Gated FFN Variants: SwiGLU, GEGLU, ReGLU}
+\label{sec:glu}
+
+SwiGLU, GEGLU, and ReGLU~\citep{shazeer2020glu} are gated feed-forward units
+that replace the standard $\text{Linear}\to\text{activation}\to\text{Linear}$
+block. They own their own linear projections and are therefore implemented as
+FFN modules, \emph{not} as elementwise activations:
+\[
+  \text{GatedFFN}(x) = \text{dropout}\!\Big(\,
+    W_{\text{down}}\Big(\text{act}(x\,W_{\text{gate}})
+    \odot (x\,W_{\text{up}})\Big)\Big),
+\]
+where $W_{\text{gate}}, W_{\text{up}}\in\mathbb{R}^{d\times d_{\text{ff}}}$ and
+$W_{\text{down}}\in\mathbb{R}^{d_{\text{ff}}\times d}$. The gate function is:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{SwiGLU} (\texttt{swiglu}): $\text{act}=\text{SiLU}$
+    (the default, used in Llama, PaLM).
+  \item \textbf{GEGLU} (\texttt{geglu}): $\text{act}=\text{GELU}$
+    (used in some T5 variants).
+  \item \textbf{ReGLU} (\texttt{reglu}): $\text{act}=\text{ReLU}$
+    (cheapest option).
+\end{itemize}
+
+\noindent When \texttt{ffn\_activation} is one of
+\texttt{swiglu}/\texttt{geglu}/\texttt{reglu}, the feed-forward layer swaps
+the standard dense and MoE FFN blocks for a gated FFN built with the same
+projection class (BitLinear under BitNet). Bias is disabled by default.
+
+\subsection{Configuration Schema}
+
+The \texttt{ffn\_activation\_config} object groups all learnable-activation
+parameters. It is optional and ignored for stateless activations.
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{raf\_degrees}: $[m,n]$ Pad\'e numerator/denominator degrees
+    (ints $\ge 1$). Default: $[5,4]$.
+  \item \texttt{raf\_version}: denominator form, one of
+    \texttt{A} (default), \texttt{B}, \texttt{C}, \texttt{D}, \texttt{N}.
+  \item \texttt{raf\_approx\_func}: initialization target. One of
+    \texttt{gelu} (default), \texttt{relu}, \texttt{leaky\_relu},
+    \texttt{leaky\_relu\_0.1}, \texttt{sigmoid}, \texttt{tanh},
+    \texttt{swish}, \texttt{silu}, \texttt{identity}.
+  \item \texttt{raf\_trainable}: freeze the rational parameters when
+    \texttt{false}. Default: \texttt{true}.
+  \item \texttt{raf\_input\_scaling}: per-token min--max scaling to $[-3,3]$
+    before the rational (RAFT preprocessing). Default: \texttt{false}.
+  \item \texttt{prelu\_init}: initial negative slope for PReLU. Default: $0.25$.
+  \item \texttt{elu\_alpha}: ELU saturation constant. Default: $1.0$.
+  \item \texttt{celu\_alpha}: CELU saturation constant. Default: $1.0$.
+  \item \texttt{swish\_beta}: fixed $\beta$ for Swish / initial $\beta$ for
+    SwishTrainable. Default: $1.0$.
+  \item \texttt{leaky\_relu\_slope}: negative slope for LeakyReLU.
+    Default: $0.01$.
+  \item \texttt{maxout\_pieces}: number of linear pieces $k$ for Maxout
+    (int $\ge 1$). Default: $2$.
+  \item Additional ELU-parametric keys:
+    \texttt{pelu\_alpha}, \texttt{mpelu\_alpha}, \texttt{mpelu\_beta},
+    \texttt{felu\_alpha}, \texttt{eelu\_alpha}, \texttt{eelu\_beta},
+    \texttt{pdelu\_alpha}, \texttt{preu\_alpha}, \texttt{preu\_beta},
+    \texttt{softexp\_alpha}. All default to $1.0$ (except
+    \texttt{softexp\_alpha} which defaults to $0.0$).
+\end{itemize}
+
+\subsection{Selection Guide}
+
+The following decision tree aids activation choice:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Safe default} $\to$ \texttt{silu} (SiLU/Swish$_1$, used in
+    Llama, PaLM).
+  \item \textbf{Classic stability} $\to$ \texttt{gelu} or \texttt{relu}.
+  \item \textbf{Smooth non-monotonic} $\to$ \texttt{mish} or \texttt{swish}.
+  \item \textbf{Mobile-friendly} $\to$ \texttt{hardswish} or \texttt{relu6}.
+  \item \textbf{Learnable per-task shape} $\to$ \texttt{raf},
+    \texttt{prelu}, \texttt{swish\_trainable}, or \texttt{maxout}.
+  \item \textbf{Self-normalizing networks} $\to$ \texttt{selu} (with
+    AlphaDropout).
+  \item \textbf{Gated FFN (own projections)} $\to$ \texttt{swiglu},
+    \texttt{geglu}, or \texttt{reglu}.
+\end{itemize}
+
+\noindent With BitNet quantization, \texttt{silu} may be more robust than
+smooth activations that rely on precise gradient computation. Learnable
+activations (\texttt{raf}, \texttt{prelu}, \texttt{swish\_trainable}) add
+parameters but can adapt to the task distribution.

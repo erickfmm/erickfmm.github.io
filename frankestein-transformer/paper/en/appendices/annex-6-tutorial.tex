@@ -1,0 +1,157 @@
+\section{Conceptual Introduction---Transformers and Attention for Beginners}
+\label{sec:annex-tutorial}
+
+This appendix provides an accessible introduction to the fundamental concepts of transformers and the attention mechanism, aimed at readers without deep prior knowledge in deep learning. Transformers are the engine behind modern artificial intelligence systems like ChatGPT, but their operation can be understood through real-world analogies.
+
+\subsection{What is a Transformer?}
+
+A transformer is a neural architecture that processes text or data sequences by interpreting the meaning of each word while considering all other words in context. Imagine you read a sentence:
+
+\begin{center}
+\textit{``The bank was full of people waiting. Mary went to the bank.''}
+\end{center}
+
+What does ``bank'' mean in each case? In the first sentence, it refers to a financial institution (or a bench). In the second, it is less clear without context. A transformer solves this automatically by looking at all surrounding words. In the second sentence, seeing ``Mary went'', the model better understands that it probably is a riverbank (where she goes to swim) or a financial institution (where she goes to conduct a transaction).
+
+This ability to understand the complete meaning of a word by considering the entire sentence is called \emph{contextualization}, and it is the heart of how modern transformers work.
+
+\subsection{The Attention Mechanism: An Analogy}
+
+The attention mechanism is the ``magic trick'' that allows transformers to understand context. Think of it as participating in an important conversation in a noisy room:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Lots of noise}: Someone is speaking and being very important to you.
+    \item \textbf{You ignore the rest}: Your brain automatically focuses attention on that person, ignoring other sounds.
+    \item \textbf{You understand better}: By concentrating, you catch every word clearly.
+\end{enumerate}
+
+The neural attention mechanism works the same way: each word ``asks'' how important every other word is to understanding its meaning, then ``focuses'' its attention on the most relevant ones.
+
+\subsection{Practical Example Step-by-Step}
+
+Let's see how a transformer understands the word ``eats'' in two different contexts:
+
+\subsubsection{Context 1: ``The cat eats fish''}
+
+The transformer, when processing ``eats'', internally asks:
+\begin{itemize}[leftmargin=*]
+    \item How relevant is ``The''? Little (it's just an article). \textbf{Low attention}.
+    \item How relevant is ``cat''? Very relevant (it's the subject, who eats). \textbf{High attention}.
+    \item How relevant is ``fish''? Very relevant (it's what is eaten). \textbf{High attention}.
+\end{itemize}
+
+Thus, the mental representation of ``eats'' focuses primarily on ``cat'' and ``fish''.
+
+\subsubsection{Context 2: ``The restaurant eats into profit margins''}
+
+Here the transformer asks in a different context:
+\begin{itemize}[leftmargin=*]
+    \item How relevant is ``restaurant''? Very relevant (it's the subject). \textbf{High attention}.
+    \item How relevant is ``profit''? Very relevant (it's affected). \textbf{High attention}.
+    \item How relevant is ``margins''? Very relevant (it's what's being consumed). \textbf{High attention}.
+\end{itemize}
+
+The word ``eats'' gets a completely different representation because it ``attends'' to different words in different contexts.
+
+\subsection{How Attention Works Mathematically (Simple Version)}
+
+Behind the attention shift is mathematics. Here is the simplified version without too much technical detail:
+
+\subsubsection{Step 1: Queries, Keys, and Values}
+
+Each word in the sentence is transformed into three versions:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Query}: ``What information do I need to know?''
+    \item \textbf{Key}: ``What information do I have?''
+    \item \textbf{Value}: ``Here is my important information.''
+\end{itemize}
+
+Imagine in a library, each visitor is a ``query'', each book is a ``key'', and the content is the ``value''. The librarian (attention) matches queries with the most relevant keys to access the correct value.
+
+\subsubsection{Step 2: Compatibility}
+
+The system examines how \emph{compatible} each query is with each key. Queries similar to keys get a \emph{high} compatibility score. This is calculated by multiplying the query by the key (mathematically, the dot product).
+
+\subsubsection{Step 3: Focus}
+
+The compatibility scores are converted into ``focus weights''. High compatibilities mean ``focus attention here'', and low ones mean ``ignore this''. Mathematically, a function called \texttt{softmax} converts scores into percentages (like: 40\% attention here, 35\% here, 25\% there).
+
+\subsubsection{Step 4: Combine}
+
+Finally, the system combines all values, weighted by the focus weights. If a word has 80\% attention on the subject, 80\% of the subject's information gets blended into that word's representation.
+
+\subsection{Multiple Attention Heads: Multiple Perspectives}
+
+A key feature is that transformers do not use a single attention but \emph{multiple attention heads} in parallel. It's as if you had 8 people analyzing the sentence \emph{simultaneously}, each paying attention to different aspects:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Person 1}: ``I focus on subject-verb relationships.''
+    \item \textbf{Person 2}: ``I search for the direct object.''
+    \item \textbf{Person 3}: ``I track information about verb tense.''
+    \item \textbf{Person 4}: ``I search for modifiers and adjectives.''
+\end{itemize}
+
+Each ``head'' learns to focus on different language patterns. Together, they capture much richer understanding than a single head.
+
+\subsection{Stacking Layers}
+
+Transformers process information in \emph{multiple layers} (usually 12 to 48 for practical models). Imagine editing an essay:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{First pass}: You fix spelling and basic grammar.
+    \item \textbf{Second pass}: You improve clarity and sentence structure.
+    \item \textbf{Third pass}: You ensure consistency and narrative flow.
+\end{enumerate}
+
+Transformers work the same way: each layer refines text understanding. The first layer captures basic features (simple words, genders), while later layers understand complex concepts (word relationships, abstract meanings).
+
+\subsection{Why Does It Matter?}
+
+The attention mechanism was revolutionary because:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Parallelism}: It finds context for \emph{any word with any other word}, without processing them sequentially (unlike earlier systems). This makes it very fast.
+    \item \textbf{Flexibility}: It learns what patterns to look for automatically from data, without you needing to program rules manually.
+    \item \textbf{Scalability}: It works from small texts to contexts with millions of words.
+    \item \textbf{General Capabilities}: The same mechanism works for translation, summarization, question-answering, text generation, computer vision, and more.
+\end{enumerate}
+
+\subsection{Practical Challenges}
+
+Despite the extraordinary success of transformers, they present challenges:
+
+\subsubsection{Computational Complexity}
+
+If a sentence has 1,000 words, the standard attention mechanism must compare each word with all other 1,000 words. That's $1,000 \times 1,000 = 1,000,000$ comparisons. For long documents with millions of words, this becomes prohibitively expensive in time and memory.
+
+\subsubsection{Memory Requirements}
+
+Especially during inference (when using trained models), storing the entire attention matrix can consume enormous amounts of RAM or GPU memory, limiting the sequence lengths you can process.
+
+\subsubsection{Device Efficiency}
+
+Transformers were designed for powerful TPUs and GPUs. Running them on phones or embedded devices is challenging.
+
+\subsection{Modern Solutions}
+
+To solve these challenges, research has proposed many variants:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Sparse Attention}: Instead of comparing each word with ALL others, it compares only with a strategic subset (nearby neighbors, periodic patterns). Reduces complexity from $\mathcal{O}(n^2)$ to $\mathcal{O}(n \log n)$ or $\mathcal{O}(n)$.
+    \item \textbf{Recurrent Models}: Like Mamba, they incorporate aspects of old recurrent neural networks but with better modern efficiency.
+    \item \textbf{Gated Attention}: Mechanisms that selectively learn what information to pass forward, reducing storage needs.
+    \item \textbf{Quantization}: Use smaller numbers (integers instead of decimals) to reduce memory without losing too much precision.
+\end{itemize}
+
+These innovations are what this toolkit (Frankenstein) allows you to experiment with easily.
+
+\subsection{Key Takeaways}
+
+\begin{itemize}[leftmargin=*]
+    \item A \textbf{transformer} is a neural network that understands language context very well.
+    \item The \textbf{attention mechanism} allows each word to ``focus'' on which other words are relevant to understanding its meaning.
+    \item Attention works by computing \textbf{compatibility} between each word (query) and all others (keys), then combining information based on that compatibility (values).
+    \item \textbf{Multiple heads} of attention explore different patterns in parallel.
+    \item \textbf{Multiple layers} progressively refine understanding.
+    \item The main challenge is that standard attention has quadratic complexity, which is expensive for long texts.
+    \item Many \textbf{modern solutions} (sparse attention, recurrent models, quantization) address these challenges, and this toolkit lets you explore all of them.
+\end{itemize}
+

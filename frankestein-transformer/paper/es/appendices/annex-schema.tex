@@ -1,0 +1,428 @@
+\section{Estructura del Esquema de Configuración}
+\label{sec:annex-schema}
+
+El conjunto de herramientas Frankenstein Transformer impone un esquema de configuración YAML estricto con \texttt{additionalProperties: false} en todos los niveles. El esquema se define en \texttt{src/schema.yaml}, que referencia sub-esquemas modulares en \texttt{src/schema/}. Cada campo configurable debe declararse en el esquema; las claves no reconocidas se rechazan en tiempo de validación. Este anexo documenta la estructura completa del esquema, incluyendo todos los campos, sus tipos, restricciones y reglas de validación entre componentes.
+
+\subsection{Estructura de Nivel Superior}
+
+El objeto raíz del esquema tiene cinco propiedades de nivel superior. Todas son opcionales excepto \texttt{training}, que es obligatorio:
+
+\begin{itemize}[nosep]
+    \item \texttt{base\_model} (string) --- Identificador de modelo HuggingFace o ruta local para preentrenamiento continuo o ajuste fino SBERT. Cuando se establece, \texttt{model\_class} y \texttt{model} no son obligatorios (la arquitectura se infiere del checkpoint).
+    \item \texttt{tokenizer} (object) --- Configuración del tokenizador con campos \texttt{name\_or\_path} (string), \texttt{use\_fast} (bool) y \texttt{trust\_remote\_code} (bool). Obligatorio cuando se usa \texttt{base\_model} con la tarea \texttt{mlm}.
+    \item \texttt{model\_class} (enum) --- Variante de arquitectura del modelo: \texttt{frankenstein} (codificador de arquitectura mixta) o \texttt{frankensteindecoder} (decodificador causal autorregresivo). Obligatorio cuando \texttt{base\_model} no está establecido.
+    \item \texttt{model} (object) --- Parámetros de arquitectura del modelo (ver \S\ref{subsec:model-config}). Obligatorio cuando \texttt{base\_model} no está establecido.
+    \item \texttt{training} (object, \textbf{obligatorio}) --- Configuración de entrenamiento (ver \S\ref{subsec:training-config}).
+\end{itemize}
+
+El esquema impone una regla de exclusión mutua: o bien \texttt{base\_model} debe estar presente, o bien tanto \texttt{model\_class} como \texttt{model} deben estar presentes.
+
+\subsection{Configuración del Modelo}
+\label{subsec:model-config}
+
+El objeto \texttt{model} define todos los hiperparámetros arquitectónicos. Los campos obligatorios son \texttt{dims.vocab\_size}, \texttt{dims.hidden\_size}, \texttt{dims.num\_layers}, \texttt{dims.num\_heads} y \texttt{dims.layer\_pattern}. La Tabla~\ref{tab:model-fields} enumera todos los campos del modelo con sus tipos y descripciones.
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{8.5cm}}
+\toprule
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{continúa en la página siguiente}} \\
+\endfoot
+\bottomrule
+\caption{Campos completos de configuración del modelo. Todos los campos son opcionales a menos que se indique como obligatorio.}
+\label{tab:model-fields}
+\endlastfoot
+\midrule
+\multicolumn{3}{l}{\textit{model.dims.*}} \\
+\midrule
+dims.mode & enum (encoder, decoder) & Modo de enmascaramiento de atención. \texttt{encoder} = bidireccional; \texttt{decoder} = causal. \\
+dims.vocab\_size & int $\ge 1$ (obligatorio) & Número de tokens únicos en el vocabulario. Debe coincidir con el tamaño de vocabulario del tokenizador. \\
+dims.hidden\_size & int $\ge 1$ (obligatorio) & Dimensión oculta. Debe ser divisible por \texttt{num\_heads}. Típico: 512--2048. \\
+dims.num\_layers & int $\ge 1$ (obligatorio) & Número de capas físicas del transformer. Típico: 6--24. \\
+dims.num\_loops & int $\ge 1$ & Número de bucles lógicos. Cada capa en \texttt{layer\_pattern} se ejecuta \texttt{num\_loops} veces. Por defecto: 1. \\
+dims.num\_heads & int $\ge 1$ (obligatorio) & Número de cabezas de atención paralelas. Debe dividir \texttt{hidden\_size} exactamente. \\
+dims.retention\_heads & int $\ge 1$ & Número de cabezas para capas RetNet. Debe dividir \texttt{hidden\_size} exactamente. \\
+dims.dropout & float [0,1] & Tasa de dropout global. Típico: 0.1 (estándar BERT). \\
+dims.layer\_pattern & array of enum (obligatorio) & Secuencia ordenada de tipos de capa. La longitud debe igualar \texttt{num\_layers}. Más de 35 tipos de mezclador disponibles (ver Tabla~\ref{tab:layer-pattern}). \\
+\midrule
+\multicolumn{3}{l}{\textit{model.norm.*}} \\
+\midrule
+norm.type & enum & Estrategia de normalización: \texttt{layer\_norm}, \texttt{dynamic\_tanh}, \texttt{derf}, \texttt{rms\_norm}, \texttt{prms\_norm}. \\
+norm.partial\_ratio & float (0,1] & Fracción de dimensiones ocultas para estimación pRMSNorm. Por defecto: 0.0625. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.embedding.factorized.*}} \\
+\midrule
+embedding.factorized.enabled & bool & Activar factorización de matriz de embedding para reducir parámetros. \\
+embedding.factorized.dim & int $\ge 1$ & Dimensión intermedia para embeddings factorizados. Típico: 64--256. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.embedding.conv.*}} \\
+\midrule
+embedding.conv.enabled & bool & Aplicar Conv1d sobre embeddings de tokens para capturar patrones locales de n-gramas. \\
+embedding.conv.kernel & int $\ge 1$ & Tamaño de kernel para Conv1d de embedding. Típico: 3. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.titan.*}} \\
+\midrule
+attention.titan.positional\_encoding & enum (hope, rope) & Método de codificación posicional para capas \texttt{titan\_attn}. \\
+attention.titan.use\_hope & bool & Bandera heredada para HoPE en \texttt{titan\_attn}. Obsoleta; preferir \texttt{positional\_encoding}. \\
+attention.titan.hope.base & float $\ge 0$ & Escala de frecuencia base para HoPE. Típico: 10000. \\
+attention.titan.hope.damping & float $\ge 0$ & Coeficiente de amortiguación para decaimiento de atención HoPE. Típico: 0.01. \\
+attention.titan.rope.base & float $\ge 0$ & Frecuencia base para RoPE. Típico: 10000. \\
+attention.titan.rope.scaling & float $\ge 0$ & Multiplicador para índices de posición RoPE. Típico: 1.0. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.mla.*}} \\
+\midrule
+attention.mla.latent\_rank & int $\ge 1$ & Rango del latente KV conjunto para MLA. Por defecto: \texttt{hidden\_size // 2}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.gqla.*}} \\
+\midrule
+attention.gqla.latent\_rank & int $\ge 1$ & Rango del latente KV conjunto para GQLA. Por defecto: \texttt{hidden\_size // 2}. \\
+attention.gqla.num\_groups & int $\ge 1$ & Número de grupos GQA para la ruta de decodificación GQLA. Debe dividir \texttt{num\_heads}. \\
+attention.gqla.decode\_path & enum (mqa\_absorb, gqa) & Ruta de decodificación para GQLA. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.mlra.*}} \\
+\midrule
+attention.mlra.latent\_rank & int $\ge 1$ & Rango latente total para MLRA. Por defecto: \texttt{hidden\_size // 2}. \\
+attention.mlra.num\_latent\_heads & int $\ge 1$ & Número de sub-espacios latentes disjuntos para MLRA. Por defecto: 4. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.tucker.*}} \\
+\midrule
+attention.tucker.query\_rank & int $\ge 1$ & Rango Tucker para el tensor de pesos de consulta. Por defecto: \texttt{hidden\_size}. \\
+attention.tucker.key\_rank & int $\ge 1$ & Rango Tucker para el tensor de pesos de clave. Por defecto: \texttt{hidden\_size // 2}. \\
+attention.tucker.value\_rank & int $\ge 1$ & Rango Tucker para el tensor de pesos de valor. Por defecto: \texttt{hidden\_size // 2}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.iha.*}} \\
+\midrule
+attention.iha.num\_pseudo\_heads & int $\ge 1$ & Número de pseudo-cabezas por cabeza para IHA. Por defecto: \texttt{num\_heads}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.gta.*}} \\
+\midrule
+attention.gta.num\_shared\_groups & int $\ge 1$ & Número de grupos de cabezas que comparten un mapa de atención para GTA. Debe dividir \texttt{num\_heads}. \\
+attention.gta.value\_latent\_rank & int $\ge 1$ & Rango del latente de caché de valores para GTA. Por defecto: \texttt{hidden\_size // 2}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.mtla.*}} \\
+\midrule
+attention.mtla.latent\_rank & int $\ge 1$ & Rango latente para MTLA. Por defecto: \texttt{hidden\_size // 2}. \\
+attention.mtla.merge\_factor & int $\ge 1$ & Número de entradas KV consecutivas fusionadas por slot temporal. Por defecto: 2. \\
+attention.mtla.stride & int $\ge 1$ & Stride entre slots temporales fusionados. Por defecto: \texttt{mtla\_merge\_factor}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.cca.*}} \\
+\midrule
+attention.cca.latent\_rank & int $\ge 1$ & Ancho latente para CCA. Por defecto: \texttt{hidden\_size // 4}. Debe ser divisible por \texttt{num\_heads}. \\
+attention.cca.num\_conv\_layers & enum (0, 1, 2) & Número de capas de convolución en CCA. Por defecto: 2. \\
+attention.cca.conv\_kernel\_seq & int $\ge 1$ & Tamaño de kernel de convolución causal depth-wise de secuencia. Por defecto: 4. \\
+attention.cca.conv\_kernel\_ch & int $\ge 1$ & Tamaño de kernel de convolución agrupada de canales por cabeza. Por defecto: 3. \\
+attention.cca.qk\_mean & bool & Activar sesgo q-k-mean en CCA. Por defecto: \texttt{true}. \\
+attention.cca.value\_shift & bool & Activar value-shift en CCA. Por defecto: \texttt{true}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.ccgqa.*}} \\
+\midrule
+attention.ccgqa.query\_latent\_rank & int $\ge 1$ & Ancho latente de consulta para CCGQA. Por defecto: \texttt{hidden\_size // 2}. \\
+attention.ccgqa.kv\_latent\_rank & int $\ge 1$ & Ancho latente KV para CCGQA. Por defecto: \texttt{hidden\_size // 8}. \\
+attention.ccgqa.num\_kv\_heads & int $\ge 1$ & Número de cabezas KV para CCGQA. Debe dividir \texttt{num\_heads}. \\
+attention.ccgqa.num\_conv\_layers & enum (0, 1, 2) & Número de capas de convolución en CCGQA. Por defecto: 2. \\
+attention.ccgqa.conv\_kernel\_seq & int $\ge 1$ & Tamaño de kernel de convolución causal depth-wise de secuencia. Por defecto: 4. \\
+attention.ccgqa.conv\_kernel\_ch & int $\ge 1$ & Tamaño de kernel de convolución agrupada de canales por cabeza. Por defecto: 3. \\
+attention.ccgqa.qk\_mean & bool & Activar sesgo q-k-mean en CCGQA. Por defecto: \texttt{true}. \\
+attention.ccgqa.value\_shift & bool & Activar value-shift en CCGQA. Por defecto: \texttt{true}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.msa.*}} \\
+\midrule
+attention.msa.block\_size & int $\ge 1$ & Tamaño de bloque para MiniMax Sparse Attention. Por defecto: 128. \\
+attention.msa.topk\_blocks & int $\ge 1$ & Número de bloques seleccionados por grupo GQA por consulta. Por defecto: 16. \\
+attention.msa.index\_dim & int $\ge 1$ & Dimensionalidad de las cabezas de la Rama de Índice. Por defecto: 64. \\
+attention.msa.kl\_loss\_weight & float $\ge 0$ & Peso de la pérdida de alineación KL para la rama índice MSA. Por defecto: 0.0. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.sparda.*}} \\
+\midrule
+attention.sparda.block\_size & int $\ge 1$ & Tamaño de bloque KV para SparDA. Por defecto: 128. \\
+attention.sparda.topk\_blocks & int $\ge 1$ & Número de bloques KV seleccionados por grupo GQA. Por defecto: 16. \\
+attention.sparda.forecast\_dim & int $\ge 1$ & Dimensionalidad de la proyección Forecast. Por defecto: 64. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.attention.engram.*}} \\
+\midrule
+attention.engram.max\_ngram\_size & int $\ge 2$ & Tamaño máximo de N-grama para el módulo de memoria Engram. \\
+attention.engram.n\_heads\_per\_ngram & int $\ge 1$ & Número de cabezas hash por orden de N-grama. \\
+attention.engram.embed\_dim\_per\_head & int $\ge 1$ & Dimensión de embedding por cabeza hash. \\
+attention.engram.kernel\_size & int $\ge 1$ & Ancho de kernel de convolución depthwise causal para Engram. \\
+attention.engram.seed & int & Semilla aleatoria para multiplicadores hash de N-gramas. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.mhc.*}} \\
+\midrule
+mhc.enabled & bool & Activar el flujo residual de $n$ streams restringido por variedad (mHC, arXiv:2512.24880). Por defecto: \texttt{false}. \\
+mhc.expansion\_rate & int $\ge 1$ & Factor de expansión del flujo residual $n$. El flujo pasa a ser $n \times$ \texttt{hidden\_size}. $1$ recupera el mapeo de identidad. Por defecto: 4. \\
+mhc.sinkhorn\_iters & int $\ge 1$ & Rondas de normalización Sinkhorn-Knopp que restringen $H^{\text{res}}$ a ser doblemente estocástica. Por defecto: 20. \\
+mhc.gating\_init & float $> 0$ & Valor inicial de los escalares de compuerta mHC $\alpha$. Por defecto: 0.01. \\
+mhc.checkpoint & bool & Gradient checkpointing en capas mHC para mitigar el aumento de $\sim n\times$ en memoria de activaciones. Por defecto: \texttt{false}. \\
+mhc.full\_prec\_under\_bitnet & bool & Mantener la proyección de coeficientes mHC en precisión completa bajo BitNet. Por defecto: \texttt{true}. \\
+\midrule
+\multicolumn{3}{l}{\textit{model.* (nivel superior plano)}} \\
+\midrule
+use\_moe & bool & Activar Mezcla de Expertos en capas FFN. \\
+num\_experts & int $\ge 1$ & Número total de redes expertas en capas MoE. Requiere \texttt{use\_moe=true}. \\
+top\_k\_experts & int $\ge 1$ & Número de expertos activados por token en MoE. Debe ser $\le$ \texttt{num\_experts}. \\
+use\_bitnet & bool & Activar cuantización ternaria de pesos BitLinear. Por defecto: \texttt{true}. \\
+bitnet\_routers & bool & Cuantizar también proyecciones de enrutamiento/puntuación. Requiere \texttt{use\_bitnet=true}. Por defecto: \texttt{false}. \\
+use\_bitnet\_conv & bool & Cuantizar Conv1d de embedding con BitConv1d. Requiere \texttt{use\_bitnet=true} y \texttt{embedding.conv.enabled=true}. Por defecto: \texttt{false}. \\
+use\_mixture\_of\_depths & bool & Activar enrutamiento de tokens Mixture-of-Depths. \\
+mixture\_of\_depths\_capacity\_ratio & float (0,1] & Fracción de tokens actualizados por capa en MoD. \\
+mixture\_of\_depths\_router\_aux\_loss\_weight & float $\ge 0$ & Peso para la pérdida auxiliar del enrutador MoD. \\
+ffn\_hidden\_size & int $\ge 1$ & Dimensión intermedia de capas feed-forward. Típico: $4\times$ \texttt{hidden\_size}. \\
+ffn\_activation & enum (silu, gelu) & Activación no lineal para capas FFN. \\
+ffn\_activation\_config & object & Parámetros anidados para activaciones aprendibles (grados/versión/init de RAF, init PReLU, etc.). \\
+ode\_solver & enum (rk4, euler) & Método de integración numérica para capas ODE. \\
+ode\_steps & int $\ge 1$ & Número de pasos de integración para capas ODE. Típico: 2--4. \\
+\end{longtable}
+
+Los campos se agrupan bajo sub-objetos jerárquicos (\texttt{dims}, \texttt{norm}, \texttt{embedding.factorized}, \texttt{embedding.conv}, \texttt{attention.titan}, \texttt{attention.mla}, \texttt{attention.gqla}, etc.); cada fila de sub-encabezado marca el prefijo vigente para las filas que le siguen. Los campos listados bajo \texttt{model.*} permanecen como claves planas de nivel superior.
+
+\subsubsection{Enumeración del Patrón de Capas}
+\label{tab:layer-pattern}
+
+El array \texttt{model.dims.layer\_pattern} acepta los siguientes 35 tipos de mezclador. Cada elemento define una capa física en la pila del modelo. La Tabla~\ref{tab:layer-pattern-enum} enumera todos los tipos disponibles con su soporte de entrenamiento e inferencia.
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{5.5cm}cc}
+\toprule
+\textbf{Tipo} & \textbf{Descripción} & \textbf{Entrenar} & \textbf{Inferir} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tipo} & \textbf{Descripción} & \textbf{Entrenar} & \textbf{Inferir} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{continúa en la página siguiente}} \\
+\endfoot
+\bottomrule
+\caption{Enumeración completa de \texttt{layer\_pattern}. $\checkmark$ = soportado, $\times$ = no soportado.}
+\label{tab:layer-pattern-enum}
+\endlastfoot
+standard\_attn & Atención multi-cabeza clásica (estilo BERT) & \checkmark & \checkmark \\
+sigmoid\_attn & Atención con compuerta sigmoide & \checkmark & \checkmark \\
+gated\_softmax\_attn & Atención softmax con compuerta sigmoide post-SDPA & \checkmark & \checkmark \\
+titan\_attn & Atención Titan con codificación posicional (HoPE/RoPE) & \checkmark & \checkmark \\
+retnet / retnet\_attn & Red de Retención (híbrido RNN+transformer) & \checkmark & \checkmark \\
+mamba & Modelo de espacio de estado selectivo (SSM) & \checkmark & \checkmark \\
+ode & Capa ODE de profundidad continua & \checkmark & \checkmark \\
+gla\_attn & Atención Lineal con Compuerta con decaimiento multiplicativo & \checkmark & \checkmark \\
+deltanet\_attn / gated\_deltanet\_attn & DeltaNet con regla delta correctiva & \checkmark & \checkmark \\
+gated\_deltanet2\_attn & Gated DeltaNet-2 con compuertas de borrado/escritura canalizadas desacopladas & \checkmark & \checkmark \\
+hgrn2\_attn & HGRN2 con compuertas de olvido jerárquicas & \checkmark & \checkmark \\
+fox\_attn & Forgetting Transformer (FoX) con sesgo de olvido en logits & \checkmark & \checkmark \\
+nsa\_attn & Native Sparse Attention (tres ramas) & \checkmark & \checkmark \\
+engram\_attn & Búsqueda condicional de memoria de N-gramas & \checkmark & \checkmark \\
+gqa\_attn & Atención por Consultas Agrupadas con cabezas KV configurables & \checkmark & \checkmark \\
+longformer\_attn & Longformer: ventanas deslizantes + tokens globales & \checkmark & \checkmark \\
+bigbird\_attn & BigBird: atención local + aleatoria + global & \checkmark & \checkmark \\
+sparse\_transformer\_attn & Sparse Transformer: patrones factorizados & \checkmark & \checkmark \\
+sparsek\_attn & SparseK: selección KV top-k diferenciable & \checkmark & \checkmark \\
+sparge\_attn & SpargeAttn --- poda de bloques en dos etapas & $\times$ & \checkmark \\
+fasa\_attn & FASA --- selección de tokens consciente de frecuencia & $\times$ & \checkmark \\
+msa\_attn & MiniMax Sparse Attention --- bloques dispersos sobre GQA & \checkmark & \checkmark \\
+sparda\_attn & SparDA --- atención dispersa desacoplada con proyección Forecast & \checkmark & \checkmark \\
+kda\_attn & Kimi Delta Attention --- decaimiento por canal + compuerta de escritura escalar & \checkmark & \checkmark \\
+mla\_attn & Atención Latente Multi-Cabeza + RoPE & \checkmark & \checkmark \\
+gqla\_attn & Atención Latente por Consultas Agrupadas --- dos rutas de decodificación & \checkmark & \checkmark \\
+mlra\_attn & Atención Multi-Cabeza de Rango Bajo --- latente particionable & \checkmark & \checkmark \\
+tucker\_attn & Atención Tucker --- factorización de rango bajo generalizada & \checkmark & \checkmark \\
+iha\_attn & Atención de Cabezas Entrelazadas --- pseudo-cabezas entre cabezas & \checkmark & \checkmark \\
+gta\_attn & Atención laTenT por Cabezas Agrupadas --- mapa compartido + valores latentes & \checkmark & \checkmark \\
+mtla\_attn & Atención Latente Temporal Multi-Cabeza --- fusión temporal KV & \checkmark & \checkmark \\
+cca\_attn & Atención Convolucional Comprimida --- atención en espacio latente + convs & \checkmark & \checkmark \\
+ccgqa\_attn & Atención Convolucional Comprimida por Consultas Agrupadas --- CCA + GQA en latente & \checkmark & \checkmark \\
+\end{longtable}
+
+\subsection{Configuración de Entrenamiento}
+\label{subsec:training-config}
+
+El objeto \texttt{training} controla todo el pipeline de entrenamiento. El único campo obligatorio es \texttt{task}. La Tabla~\ref{tab:training-fields} enumera todos los campos de entrenamiento.
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{8.5cm}}
+\toprule
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{continúa en la página siguiente}} \\
+\endfoot
+\bottomrule
+\caption{Campos completos de configuración de entrenamiento.}
+\label{tab:training-fields}
+\endlastfoot
+task & enum (mlm, sbert) (obligatorio) & Objetivo de entrenamiento. \texttt{mlm} = Modelado de Lenguaje Enmascarado; \texttt{sbert} = ajuste fino Sentence-BERT. \\
+num\_epochs & int $\ge 1$ & Pasadas completas por el dataset de entrenamiento (solo MLM). \\
+batch\_size & int $\ge 1$ & Ejemplos por paso del optimizador (antes de acumulación de gradientes). \\
+dataloader\_workers & int $\ge 0$ & Procesos trabajadores paralelos para carga de datos. \\
+max\_length & int $\ge 1$ & Longitud máxima de secuencia de tokens. Típico: 128--2048. \\
+mlm\_probability & float [0,1] & Fracción de tokens enmascarados para predicción MLM. Estándar: 0.15. \\
+max\_samples & int $\ge 1$ & Muestras totales antes de detenerse, independiente de épocas. \\
+dataset\_batch\_size & int $\ge 1$ & Tamaño de lote interno para dataset de streaming. \\
+num\_workers & int $\ge 0$ & Trabajadores paralelos para pipeline de streaming de dataset. \\
+cache\_dir & string & Directorio para cachear datasets procesados. \\
+local\_parquet\_dir & string & Ruta a archivos parquet locales para streaming offline. \\
+prefer\_local\_cache & bool & Verificar caché local primero antes de descarga remota. \\
+stream\_local\_parquet & bool & Hacer streaming desde parquet local cuando \texttt{local\_parquet\_dir} está configurado. \\
+join\_temp\_data\_context\_window & int $\ge 0$ & Si $>0$, une fragmentos de tokens en caché en secuencias de esta longitud. \\
+join\_temp\_data\_min\_remainder\_tokens & int $\ge 0$ & Tokens de contenido mínimos en la última ventana parcial unida. \\
+use\_amp & bool & Activar precisión mixta FP16. \\
+gradient\_accumulation\_steps & int $\ge 1$ & Acumular gradientes sobre N mini-lotes antes del paso del optimizador. \\
+optimizer & object & Configuración del optimizador (ver \S\ref{subsec:optimizer-config}). Obligatorio cuando \texttt{task=mlm}. \\
+sbert & object & Configuración de entrenamiento SBERT (ver \S\ref{subsec:sbert-config}). Obligatorio cuando \texttt{task=sbert}. \\
+scheduler\_total\_steps & int $\ge 1$ & Pasos totales del optimizador para la programación de LR. \\
+scheduler\_warmup\_ratio & float [0,1] & Fracción de \texttt{scheduler\_total\_steps} para calentamiento de LR. \\
+scheduler\_type & enum (cosine, constant, linear\_warmup\_then\_constant) & Estrategia de decaimiento de LR. \\
+grad\_clip\_max\_norm & float $\ge 0$ & Norma máxima permitida del gradiente. 0 = desactivado. \\
+inf\_post\_clip\_threshold & float $\ge 0$ & Umbral para marcar explosiones de gradiente post-recorte. \\
+max\_nan\_retries & int $\ge 0$ & Reintentos máximos ante gradientes NaN/Inf antes de detenerse. \\
+checkpoint\_every\_n\_steps & int $\ge 1$ & Guardar checkpoint rotativo cada N pasos. \\
+max\_rolling\_checkpoints & int $\ge 1$ & Máximo de checkpoints rotativos mantenidos. El más antiguo se elimina al exceder. \\
+num\_best\_checkpoints & int $\ge 1$ & Número de mejores checkpoints conservados permanentemente (por pérdida de validación). \\
+nan\_check\_interval & int $\ge 1$ & Pasos entre verificaciones de NaN/Inf. \\
+log\_gradient\_stats & bool & Registrar normas de gradiente por capa, min/max. \\
+gradient\_log\_interval & int $\ge 1$ & Pasos entre registros de estadísticas de gradiente. \\
+csv\_log\_path & string & Ruta de archivo para métricas de entrenamiento a nivel de paso en formato CSV. \\
+csv\_rotate\_on\_schema\_change & bool & Rotar archivo CSV cuando cambia el esquema. \\
+gpu\_metrics\_backend & enum (nvml, none) & Backend de telemetría GPU. \\
+nvml\_device\_index & int $\ge 0$ & Índice de GPU a monitorear (0 = primera GPU). \\
+enable\_block\_grad\_norms & bool & Registrar normas de gradiente por bloque (embeddings, atención, FFN, etc.). \\
+telemetry\_log\_interval & int $\ge 1$ & Pasos entre registros de telemetría pesada. \\
+gpu\_temp\_guard\_enabled & bool & Monitoreo estricto de temperatura GPU. Requiere \texttt{gpu\_metrics\_backend=nvml}. \\
+switch\_on\_thermal & bool & Temperatura crítica activa fallback GPU$\to$CPU, reanudación automática al enfriarse. \\
+gpu\_temp\_pause\_threshold\_c & float & Temperatura ($^\circ$C) para pausar entrenamiento. \\
+gpu\_temp\_resume\_threshold\_c & float & Temperatura ($^\circ$C) para reanudar entrenamiento tras pausa. \\
+gpu\_temp\_critical\_threshold\_c & float & Marcador de registro informativo para eventos térmicos severos. \\
+gpu\_temp\_poll\_interval\_seconds & float & Segundos entre verificaciones de temperatura durante espera de enfriamiento. \\
+use\_galore & bool & Activar Proyección de Gradiente de Bajo Rango para entrenamiento eficiente en memoria. \\
+galore\_rank & int $\ge 1$ & Dimensión de proyección de bajo rango para GaLore. \\
+galore\_update\_interval & int $\ge 1$ & Pasos entre recomputaciones de la matriz de proyección. \\
+galore\_scale & float $\ge 0$ & Factor de escala para gradientes proyectados. \\
+galore\_max\_dim & int $\ge 1$ & Dimensión máxima del tensor para proyección GaLore. \\
+hf\_output\_dir & string & Directorio para guardar el modelo final mediante \texttt{save\_pretrained()}. \\
+\end{longtable}
+
+\subsection{Configuración del Optimizador}
+\label{subsec:optimizer-config}
+
+El objeto \texttt{training.optimizer} tiene dos campos:
+
+\begin{itemize}[nosep]
+    \item \texttt{optimizer\_class} (enum, obligatorio) --- Uno de 23 algoritmos optimizadores: \texttt{sgd\_momentum}, \texttt{adamw}, \texttt{adafactor}, \texttt{galore\_adamw}, \texttt{prodigy}, \texttt{lion}, \texttt{sophia}, \texttt{muon}, \texttt{turbo\_muon}, \texttt{radam}, \texttt{adan}, \texttt{adopt}, \texttt{ademamix}, \texttt{mars\_adamw}, \texttt{cautious\_adamw}, \texttt{lamb}, \texttt{schedulefree\_adamw}, \texttt{shampoo}, \texttt{soap}, \texttt{anon}, \texttt{apollo}, \texttt{apollo\_mini}, \texttt{q\_apollo}.
+    \item \texttt{parameters} (object) --- Hiperparámetros del optimizador con claves prefijadas en el formato \texttt{<optimizador>-<grupo>\_<param>}.
+\end{itemize}
+
+\subsubsection{Sufijos Compartidos por Grupo}
+
+Todos los optimizadores soportan los siguientes sufijos por grupo de parámetros, prefijados por el nombre de la clase del optimizador (ej., \texttt{adamw-lr\_embeddings}):
+
+\begin{itemize}[nosep]
+    \item \textbf{Grupos de tasa de aprendizaje:} \texttt{lr\_embeddings}, \texttt{lr\_norms}, \texttt{lr\_attention}, \texttt{lr\_other}
+    \item \textbf{Grupos de decaimiento de peso:} \texttt{wd\_embeddings}, \texttt{wd\_norms}, \texttt{wd\_attention}, \texttt{wd\_other}
+    \item \textbf{Grupos beta:} \texttt{betas\_embeddings}, \texttt{betas\_norms}, \texttt{betas\_attention}, \texttt{betas\_other}
+    \item \textbf{Grupos epsilon:} \texttt{eps\_embeddings}, \texttt{eps\_norms}, \texttt{eps\_attention}, \texttt{eps\_other}
+\end{itemize}
+
+Nota: los parámetros de los mezcladores ODE, RetNet y Mamba se enrutan al grupo \texttt{attention} en lugar de tener grupos dedicados.
+
+\subsubsection{Sufijos Globales Específicos del Optimizador}
+
+La Tabla~\ref{tab:optimizer-specific-suffixes} enumera los sufijos globales adicionales soportados por cada optimizador (prefijados por el nombre del optimizador).
+
+\begin{longtable}{>{\ttfamily}l>{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Optimizador} & \textbf{Sufijos Globales Específicos} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Optimizador} & \textbf{Sufijos Globales Específicos} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{\textit{continúa en la página siguiente}} \\
+\endfoot
+\bottomrule
+\caption{Sufijos de parámetros globales específicos del optimizador. Todas las claves están prefijadas con el nombre de la clase del optimizador (ej., \texttt{sgd\_momentum-momentum}).}
+\label{tab:optimizer-specific-suffixes}
+\endlastfoot
+sgd\_momentum & \texttt{momentum}, \texttt{nesterov} \\
+adamw & (ninguno --- solo sufijos compartidos) \\
+adafactor & \texttt{beta2\_decay}, \texttt{clip\_threshold}, \texttt{eps1}, \texttt{eps2} \\
+galore\_adamw & \texttt{rank}, \texttt{update\_proj\_gap} \\
+prodigy & \texttt{d\_coef} \\
+lion & (ninguno --- solo sufijos compartidos) \\
+sophia & \texttt{rho}, \texttt{update\_k} \\
+muon & \texttt{momentum}, \texttt{nesterov}, \texttt{ns\_steps}, \texttt{ns\_eps} \\
+turbo\_muon & \texttt{momentum}, \texttt{nesterov}, \texttt{ns\_steps}, \texttt{ns\_eps} \\
+radam & (ninguno --- solo sufijos compartidos) \\
+adan & (ninguno --- solo sufijos compartidos) \\
+adopt & (ninguno --- solo sufijos compartidos) \\
+ademamix & (ninguno --- solo sufijos compartidos) \\
+mars\_adamw & (ninguno --- solo sufijos compartidos) \\
+cautious\_adamw & \texttt{cautious\_clip} \\
+lamb & (ninguno --- solo sufijos compartidos) \\
+schedulefree\_adamw & (ninguno --- solo sufijos compartidos) \\
+shampoo & (ninguno --- solo sufijos compartidos) \\
+soap & (ninguno --- solo sufijos compartidos) \\
+anon & \texttt{gamma} \\
+apollo & \texttt{rank}, \texttt{update\_proj\_gap}, \texttt{scale}, \texttt{scale\_type}, \texttt{proj\_type}, \texttt{scale\_front}, \texttt{disable\_nl} \\
+apollo\_mini & \texttt{update\_proj\_gap}, \texttt{scale}, \texttt{proj\_type}, \texttt{scale\_front}, \texttt{disable\_nl} \\
+q\_apollo & \texttt{rank}, \texttt{update\_proj\_gap}, \texttt{scale}, \texttt{scale\_type}, \texttt{proj\_type}, \texttt{scale\_front}, \texttt{disable\_nl}, \texttt{quant\_bits} \\
+\end{longtable}
+
+\subsection{Configuración SBERT}
+\label{subsec:sbert-config}
+
+El objeto \texttt{training.sbert} configura el ajuste fino Sentence-BERT. Es obligatorio cuando \texttt{training.task=sbert}. Los campos clave incluyen:
+
+\begin{itemize}[nosep]
+    \item \texttt{dataset\_name} (string) --- Identificador de dataset HuggingFace o ruta local.
+    \item \texttt{dataset\_type} (enum) --- \texttt{paired\_similarity}, \texttt{triplets} o \texttt{qa}.
+    \item \texttt{columns} (object) --- Sobrescrituras opcionales de nombres de columna para campos del dataset.
+    \item \texttt{query\_prefix} / \texttt{document\_prefix} (string) --- Texto antepuesto a campos de consulta/documento durante la tokenización.
+    \item \texttt{output\_dir} (string) --- Directorio para artefactos SBERT.
+    \item \texttt{batch\_size} (int) --- Ejemplos por lote. Típico: 16--64.
+    \item \texttt{gradient\_accumulation\_steps} (int) --- Pasos de acumulación para SBERT.
+    \item \texttt{max\_grad\_norm} (float) --- Umbral de recorte de gradiente. Típico: 0.5--2.0.
+    \item \texttt{epochs} (int) --- Pasadas completas por el dataset SBERT. Típico: 1--10.
+    \item \texttt{warmup\_steps} (int) --- Pasos para calentamiento de LR.
+    \item \texttt{evaluation\_steps} (int) --- Evaluar cada N pasos.
+    \item \texttt{checkpoint\_save\_steps} (int) --- Guardar checkpoint rotativo cada N pasos.
+    \item \texttt{resume\_from\_checkpoint} (bool) --- Reanudar desde el último checkpoint.
+    \item \texttt{learning\_rate} (float) --- LR inicial. Típico: $1\times10^{-5}$ a $1\times10^{-4}$.
+    \item \texttt{max\_train\_samples} / \texttt{max\_eval\_samples} (int) --- Limitar muestras de entrenamiento/evaluación.
+    \item \texttt{max\_seq\_length} (int) --- Longitud máxima de tokens para textos de entrada. Típico: 128--512.
+    \item \texttt{pooling\_mode} (enum) --- \texttt{mean}, \texttt{cls} o \texttt{max}.
+    \item \texttt{trust\_remote\_code} (bool) --- Permitir código personalizado del repositorio del modelo.
+    \item \texttt{use\_amp} (bool) --- Activar precisión mixta FP16.
+    \item \texttt{resample\_balanced} (bool) --- Remuestrear a distribución balanceada sobre puntajes de similitud.
+    \item \texttt{standardize\_scores} (bool) --- Normalizar puntajes de similitud con puntuación Z.
+    \item \texttt{resample\_std} (float) --- Desviación estándar objetivo cuando \texttt{standardize\_scores=true}.
+    \item \texttt{optimizer} (object) --- Optimizador personalizado para SBERT (mismas clases que el entrenamiento MLM).
+    \item \texttt{wandb\_project} (string) --- Nombre del proyecto Weights \& Biases para telemetría.
+\end{itemize}
+
+\subsection{Reglas de Validación}
+
+El esquema impone las siguientes reglas de validación entre componentes, implementadas tanto en el JSON Schema (\texttt{\_conditional\_rules.yaml}) como en tiempo de ejecución en el cargador de configuración:
+
+\begin{enumerate}[nosep]
+    \item \texttt{additionalProperties: false} se aplica en todos los niveles de anidamiento. Cualquier clave no reconocida en cualquier objeto desencadena un error de validación.
+    \item \texttt{model.dims.hidden\_size} debe ser divisible por \texttt{model.dims.num\_heads}. La dimensión por cabeza es $\texttt{hidden\_size} / \texttt{num\_heads}$.
+    \item \texttt{model.dims.num\_kv\_heads} debe dividir \texttt{model.dims.num\_heads} exactamente cuando se usa Atención por Consultas Agrupadas.
+    \item \texttt{vocab\_size} debe coincidir con el tamaño de vocabulario del tokenizador. Una discrepancia causa corrupción de IDs de token y fallo de entrenamiento irrecuperable.
+    \item Cuando \texttt{base\_model} está configurado, \texttt{training.task} es obligatorio. Si \texttt{task=mlm}, \texttt{tokenizer.name\_or\_path} también es obligatorio.
+    \item \texttt{task: mlm} requiere \texttt{training.optimizer}; \texttt{task: sbert} requiere \texttt{training.sbert}.
+    \item \texttt{bitnet\_routers=true} requiere \texttt{use\_bitnet=true}. La bandera no tiene efecto en caso contrario.
+    \item \texttt{use\_mhc=true} (flujo residual de $n$ streams mHC) y \texttt{use\_mixture\_of\_depths=true} son mutuamente excluyentes. Habilitar ambos lanza un \texttt{ValueError}: el enrutamiento MoD de tokens opera sobre un flujo $C$-dimensional único, en conflicto con el flujo residual de $n$ streams.
+    \item \texttt{fasa\_attn} y \texttt{sparge\_attn} son tipos de capa solo para evaluación. Lanzan \texttt{RuntimeError} si se usan durante el entrenamiento. No deben aparecer en \texttt{model.dims.layer\_pattern} para ejecuciones de entrenamiento.
+    \item \texttt{model\_class: frankensteindecoder} fuerza \texttt{model.dims.mode: decoder} en tiempo de ejecución. Establecer \texttt{model.dims.mode: encoder} con esta clase se sobrescribe.
+    \item O bien \texttt{base\_model} debe estar presente, o bien tanto \texttt{model\_class} como \texttt{model} deben estar presentes. El esquema rechaza configuraciones que no proporcionen ninguno o una combinación incompleta.
+\end{enumerate}

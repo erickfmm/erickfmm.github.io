@@ -1,0 +1,83 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[numbers]{natbib}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+%Includes "References" in the table of contents
+\usepackage[nottoc]{tocbibind}
+
+\usetikzlibrary{arrows.meta,positioning,fit,calc,backgrounds,shapes.geometric,shapes.multipart}
+\geometry{margin=1in}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\tikzset{
+box/.style={draw, rounded corners, align=center, minimum height=1cm, inner sep=6pt},
+line/.style={-Latex, thick},
+group/.style={draw, dashed, rounded corners, inner sep=8pt}
+}
+
+\newcommand{\fitfigure}[1]{\adjustbox{max width=0.98\linewidth,max totalheight=0.42\textheight,keepaspectratio}{#1}}
+
+\title{Frankenstein Transformer:\\Unified Encoder-Decoder Library, CLI, and Research-Grounded Design Notes}
+\author{
+Erick F. Merino M. \\
+This work is not affiliated \\
+\texttt{erickfmm@gmail.com}
+}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Transformer architectures have become the dominant paradigm for sequence modeling across natural language processing, computer vision, and computational biology. Recent years have witnessed a rapid diversification of attention mechanisms and optimization strategies, with innovations spanning dense softmax variants, recurrent and retentive alternatives, sparse attention patterns, gated linear mechanisms, latent-space projections, and memory-augmented blocks. Concurrently, the optimizer landscape has expanded beyond classical AdamW to include variance-reduction methods, memory-efficient variants, schedule-free approaches, second-order preconditioners, and low-rank approximations. Despite this wealth of architectural and algorithmic advances, the research ecosystem remains fragmented: comparing sequence mixers and optimizers under consistent training conditions requires substantial engineering effort, hindering reproducibility and slowing scientific progress. In this work, we propose Frankenstein Transformer, a configuration-driven CLI toolkit (\texttt{frankenstein-transformer}) that unifies the definition, training, and deployment of transformer models through a strict YAML schema. The toolkit supports thirty-five sequence mixer variants across six families (dense, recurrent, sparse, gated, latent, and memory-augmented) and twenty-three optimizer families with prefixed per-parameter-group hyperparameter control. It provides subcommands for training (\texttt{train}), deployment (\texttt{deploy}), quantization (\texttt{quantize}), inference (\texttt{infer}), SBERT-style sentence-embedding training and inference (\texttt{sbert-train}, \texttt{sbert-infer}), HuggingFace-compatible export (\texttt{transformers-export}), BitNet-aware GGUF export (\texttt{bitnet-gguf}), and a web-based configuration builder (\texttt{web-server}). The system enforces reproducibility through a strict schema contract with \texttt{additionalProperties: false} constraints, offers a Streamlit-based web interface for schema-driven form rendering with real-time validation and CLI command generation, and provides end-to-end workflows for quantized deployment via ternary weight packing and sentence-embedding pipelines inspired by SBERT. A comprehensive automated testing suite with unit tests, YAML preset validation, and continuous integration ensures reliability across supported Python versions.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-system-design}
+\input{sections/04-architecture-taxonomy}
+\input{sections/05-optimizer-families}
+\input{sections/06-quantization-deployment}
+\input{sections/07-sbert-tasks}
+\input{sections/09-discussion}
+\input{sections/10-conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{../bibliography/other,../bibliography/optimizers,../bibliography/attention_types}
+
+\appendix
+\renewcommand{\thesection}{\arabic{section}}
+\addtocontents{toc}{\bigskip\noindent\textbf{Appendices}\par}
+\setcounter{section}{0}
+
+\input{appendices/annex-6-tutorial}
+\input{appendices/annex-schema}
+\input{appendices/annex-summary-tables}
+\input{appendices/annex-1-optimizers}
+\input{appendices/annex-2-recurrent-attention}
+\input{appendices/annex-3-latent-attention}
+\input{appendices/annex-4-sparse-attention}
+\input{appendices/annex-5-gated-attention}
+\input{appendices/annex-7-norm-bitnet-mod}
+\input{appendices/annex-8-activation-functions}
+\input{appendices/annex-9-mhc}
+
+\end{document}
