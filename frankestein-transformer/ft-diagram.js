@@ -439,13 +439,14 @@ var FTDiagram = (function () {
     // branches converging into scores, state recurrence, memory read/write
     // loops, etc.). Returns the id of the first and last node so callers
     // can wire NormPre → mixer-in and mixer-out → NormPost.
-    function _mixerSubgraph(L, t, ti, ind) {
+    function _mixerSubgraph(L, t, ti, ind, lbl) {
         ind = ind || '    ';
         var sub = resolveSub(t);
         var fam = catOf(t);
         var sgName = 'SG_MIXER_' + ti;
-        var sgLbl = esc(lblOf(t)) + ' (' + fam + ')';
+        var sgLbl = lbl !== undefined ? lbl : esc(lblOf(t)) + ' (' + fam + ')';
         L.push(ind + 'subgraph ' + sgName + ' ["' + sgLbl + '"]');
+        L.push(ind + '    direction TB');
         // Allocate nodes, indexed by label so `from` can resolve to ids.
         var byLabel = {};
         var byIdIdx = {};
@@ -489,9 +490,10 @@ var FTDiagram = (function () {
     }
 
     // FFN detail subgraph: x → (gate,up) → activation → down → y.
-    function _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, ind) {
+    function _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, ind, lbl) {
         ind = ind || '    ';
-        L.push(ind + 'subgraph SG_FFN ["Feed-Forward"]');
+        L.push(ind + 'subgraph SG_FFN ["' + (lbl !== undefined ? lbl : 'Feed-Forward') + '"]');
+        L.push(ind + '    direction TB');
         var isGlu = /glu|geglu|swiglu/i.test(String(fA || ''));
         var xId = nid(), aId = nid(), actId = nid(), dId = nid(), yId = nid();
         L.push(ind + '    ' + xId + '["x [B,n,H]"]:::ffn');
@@ -517,6 +519,7 @@ var FTDiagram = (function () {
 
         if (moe) {
             L.push(ind + 'subgraph SG_MOE ["MoE — ' + nE + ' experts, top-' + tK + '"]');
+            L.push(ind + '    direction TB');
             var nR = nid();
             L.push(ind + '    ' + nR + '["Router<br/>gate(x) → top-' + tK + '"]:::moe');
             L.push(ind + '    ' + xId + ' --"route"--> ' + nR);
@@ -549,6 +552,7 @@ var FTDiagram = (function () {
         var ckpt = pick(m, 'mhc.checkpoint', 'mhc_checkpoint', false);
         var sg = 'SG_MHC_' + (_id++);
         L.push(ind + 'subgraph ' + sg + ' ["mHC · n=' + n + ' (Sinkhorn ' + iters + ' iters, α=' + gInit + ')"]');
+        L.push(ind + '    direction TB');
         var a = nid(), b = nid(), c = nid(), d = nid(), e = nid();
         L.push(ind + '    ' + a + '["x [B,n,C]"]:::mhc');
         L.push(ind + '    ' + b + '["mhc_in_proj<br/>→ [B,n,n·C]"]:::mhc');
@@ -701,42 +705,70 @@ var FTDiagram = (function () {
                     det = '<br/>' + oS + ', ' + oSt + ' steps';
                 }
                 var nPre = nid();
-                var nMix = nid();
                 var nPost = nid();
-                var nFfnIn = nid();
-                var nFfnOut = nid();
                 L.push('        ' + nPre + '["L' + item.i + ' · ' + esc(normLbl) + ' pre"]:::norm');
-                L.push('        ' + nMix + '["L' + item.i + ': ' + esc(lb) + det + '"]:::' + fam);
                 L.push('        ' + nPost + '["L' + item.i + ' · ' + esc(normLbl) + ' post"]:::norm');
-                L.push('        ' + nFfnIn + '["FFN in<br/>H→' + fH + ' (' + fA + ')"]:::ffn');
-                L.push('        ' + nFfnOut + '["FFN out<br/>' + fH + '→H"]:::ffn');
                 L.push('        ' + prevOuter + ' --> ' + nPre);
-                L.push('        ' + nPre + ' --"x"--> ' + nMix);
-                L.push('        ' + nMix + ' --"O"--> ' + nPost);
-                L.push('        ' + nPost + ' --"+residual"--> ' + nFfnIn);
-                L.push('        ' + nFfnIn + ' --"Wup"--> ' + nFfnOut);
-                prevOuter = nFfnOut;
-                if (mhcEnabled) {
-                    var nMhc = nid();
-                    L.push('        ' + nMhc + '["mHC L' + item.i + '<br/>n=' + pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4) + '"]:::mhc');
-                    L.push('        ' + nFfnOut + ' --"+residual"--> ' + nMhc);
-                    prevOuter = nMhc;
-                }
-                // First occurrence of this mixer type: embed its detailed
-                // tensor dataflow subgraph inline (then stop showing it).
+
+                // Mixer: on the first occurrence of this type the detailed
+                // tensor subgraph replaces the simple node — the chain
+                // enters its first node and leaves its last node, so the
+                // subgraph sits centered in the flow. Later occurrences
+                // reuse a compact node.
+                var mixIn, mixOut;
                 if (!detailShown[t]) {
                     detailShown[t] = true;
-                    _mixerSubgraph(L, t, distinctTypes.indexOf(t), '        ');
+                    var mix = _mixerSubgraph(L, t, distinctTypes.indexOf(t), '        ', 'L' + item.i + ': ' + esc(lb) + det);
+                    mixIn = mix.first;
+                    mixOut = mix.last;
+                } else {
+                    var nMix = nid();
+                    L.push('        ' + nMix + '["L' + item.i + ': ' + esc(lb) + det + '"]:::' + fam);
+                    mixIn = nMix;
+                    mixOut = nMix;
                 }
-                // First layer: embed the FFN (and MoE) detail once.
-                if (!ffnShown) {
+                L.push('        ' + nPre + ' --"x"--> ' + mixIn);
+                L.push('        ' + mixOut + ' --"O"--> ' + nPost);
+
+                // FFN: on the first layer the detailed FFN (and MoE) subgraph
+                // replaces the compact FFN in/out nodes, centered in the flow.
+                var ffnIn, ffnOut;
+                var ffnDetailed = !ffnShown;
+                if (ffnDetailed) {
                     ffnShown = true;
-                    _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, '        ');
+                    var ffn = _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, '        ', 'L' + item.i + ': Feed-Forward');
+                    ffnIn = ffn.in;
+                    ffnOut = ffn.out;
+                } else {
+                    var nFfnIn = nid(), nFfnOut = nid();
+                    L.push('        ' + nFfnIn + '["FFN in<br/>H→' + fH + ' (' + fA + ')"]:::ffn');
+                    L.push('        ' + nFfnOut + '["FFN out<br/>' + fH + '→H"]:::ffn');
+                    ffnIn = nFfnIn;
+                    ffnOut = nFfnOut;
                 }
-                // First layer: embed the mHC block detail once when enabled.
-                if (mhcEnabled && !mhcShown) {
-                    mhcShown = true;
-                    _mhcBlock(L, m, '        ');
+                L.push('        ' + nPost + ' --"+residual"--> ' + ffnIn);
+                if (!ffnDetailed) {
+                    L.push('        ' + ffnIn + ' --"Wup"--> ' + ffnOut);
+                }
+                prevOuter = ffnOut;
+
+                // mHC: on the first layer the detailed mHC block replaces the
+                // compact node, centered in the flow.
+                if (mhcEnabled) {
+                    var mhcIn, mhcOut;
+                    if (!mhcShown) {
+                        mhcShown = true;
+                        var mhc = _mhcBlock(L, m, '        ');
+                        mhcIn = mhc.in;
+                        mhcOut = mhc.out;
+                    } else {
+                        var nMhc = nid();
+                        L.push('        ' + nMhc + '["mHC L' + item.i + '<br/>n=' + pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4) + '"]:::mhc');
+                        mhcIn = nMhc;
+                        mhcOut = nMhc;
+                    }
+                    L.push('        ' + prevOuter + ' --"+residual"--> ' + mhcIn);
+                    prevOuter = mhcOut;
                 }
             }
         }
