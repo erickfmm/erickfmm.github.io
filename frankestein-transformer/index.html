@@ -914,6 +914,7 @@ pre {
       <button class="btn btn-primary" onclick="renderDiagram()">🔄 Generate</button>
       <button class="btn" onclick="downloadDiagramPNG()">⬇ PNG</button>
       <button class="btn" onclick="copyMermaid()">📋 Copy Mermaid</button>
+      <button class="btn" id="diagram-orient-btn" onclick="toggleDiagramOrientation()" aria-label="Switch diagram orientation between vertical and horizontal" title="Switch orientation">⇅ Vertical</button>
       <div class="zoom-group" role="group" aria-label="Diagram zoom controls">
         <button type="button" class="zoom-btn" onclick="diagramZoom(-0.1)" aria-label="Zoom out" title="Zoom out">−</button>
         <span class="zoom-level" id="diagram-zoom-level">100%</span>
@@ -2976,6 +2977,19 @@ function restoreAllFormValues(saved, context) {
 
 // ====== DIAGRAM ======
 var _diagC = 0;
+var diagramOrientation = 'TD'; // 'TD' vertical (default) | 'LR' horizontal
+
+function toggleDiagramOrientation() {
+  diagramOrientation = (diagramOrientation === 'TD') ? 'LR' : 'TD';
+  var btn = document.getElementById('diagram-orient-btn');
+  if (btn) btn.textContent = (diagramOrientation === 'TD') ? '⇅ Vertical' : '⇆ Horizontal';
+  // Re-render with the new orientation if a diagram is already shown.
+  if (document.querySelector('#diagram-container svg')) {
+    renderDiagram();
+  } else {
+    setFeedback(t('diagramGenerateFirst'), 'error', 'assertive');
+  }
+}
 
 function initMermaid() {
   if (typeof mermaid === 'undefined') {
@@ -3097,7 +3111,7 @@ async function renderDiagram() {
     document.getElementById('diagram-container').innerHTML = '<p class="info">Build a config first in the Configuration Builder tab.</p>';
     return;
   }
-  var def = FTDiagram.generate(config);
+  var def = FTDiagram.generate(config, diagramOrientation);
   document.getElementById('mermaid-source').textContent = def;
   var container = document.getElementById('diagram-container');
   container.innerHTML = '<p class="info">Rendering...</p>';
