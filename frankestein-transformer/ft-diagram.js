@@ -398,9 +398,13 @@ var FTDiagram = (function () {
         return v === undefined ? dflt : v;
     }
 
-    function generate(config) {
+    var _dir = 'TB';
+
+    function generate(config, orientation) {
         _id = 0;
-        var L = ['graph TD'];
+        if (orientation === 'LR' || orientation === 'horizontal') _dir = 'LR';
+        else _dir = 'TD';
+        var L = ['graph ' + _dir];
         for (var k in STYLES) L.push('    classDef ' + k + ' ' + STYLES[k]);
         L.push('');
         if (config.base_model) _baseModel(L, config);
@@ -446,7 +450,7 @@ var FTDiagram = (function () {
         var sgName = 'SG_MIXER_' + ti;
         var sgLbl = lbl !== undefined ? lbl : esc(lblOf(t)) + ' (' + fam + ')';
         L.push(ind + 'subgraph ' + sgName + ' ["' + sgLbl + '"]');
-        L.push(ind + '    direction TB');
+        L.push(ind + '    direction ' + _dir);
         // Allocate nodes, indexed by label so `from` can resolve to ids.
         var byLabel = {};
         var byIdIdx = {};
@@ -493,7 +497,7 @@ var FTDiagram = (function () {
     function _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, ind, lbl) {
         ind = ind || '    ';
         L.push(ind + 'subgraph SG_FFN ["' + (lbl !== undefined ? lbl : 'Feed-Forward') + '"]');
-        L.push(ind + '    direction TB');
+        L.push(ind + '    direction ' + _dir);
         var isGlu = /glu|geglu|swiglu/i.test(String(fA || ''));
         var xId = nid(), aId = nid(), actId = nid(), dId = nid(), yId = nid();
         L.push(ind + '    ' + xId + '["x [B,n,H]"]:::ffn');
@@ -519,7 +523,7 @@ var FTDiagram = (function () {
 
         if (moe) {
             L.push(ind + 'subgraph SG_MOE ["MoE — ' + nE + ' experts, top-' + tK + '"]');
-            L.push(ind + '    direction TB');
+            L.push(ind + '    direction ' + _dir);
             var nR = nid();
             L.push(ind + '    ' + nR + '["Router<br/>gate(x) → top-' + tK + '"]:::moe');
             L.push(ind + '    ' + xId + ' --"route"--> ' + nR);
@@ -552,7 +556,7 @@ var FTDiagram = (function () {
         var ckpt = pick(m, 'mhc.checkpoint', 'mhc_checkpoint', false);
         var sg = 'SG_MHC_' + (_id++);
         L.push(ind + 'subgraph ' + sg + ' ["mHC · n=' + n + ' (Sinkhorn ' + iters + ' iters, α=' + gInit + ')"]');
-        L.push(ind + '    direction TB');
+        L.push(ind + '    direction ' + _dir);
         var a = nid(), b = nid(), c = nid(), d = nid(), e = nid();
         L.push(ind + '    ' + a + '["x [B,n,C]"]:::mhc');
         L.push(ind + '    ' + b + '["mhc_in_proj<br/>→ [B,n,n·C]"]:::mhc');
