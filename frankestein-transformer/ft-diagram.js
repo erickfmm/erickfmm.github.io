@@ -431,7 +431,6 @@ var FTDiagram = (function () {
             L.push('    ' + n1 + ' --> ' + n2);
             L.push('    ' + n2 + '["Output"]:::output');
         }
-        _trainBlock(L, tr);
     }
 
     // Render a single mixer subgraph from its SUBSTRUCT template. Nodes are
@@ -440,12 +439,13 @@ var FTDiagram = (function () {
     // branches converging into scores, state recurrence, memory read/write
     // loops, etc.). Returns the id of the first and last node so callers
     // can wire NormPre → mixer-in and mixer-out → NormPost.
-    function _mixerSubgraph(L, t, ti) {
+    function _mixerSubgraph(L, t, ti, ind) {
+        ind = ind || '    ';
         var sub = resolveSub(t);
         var fam = catOf(t);
         var sgName = 'SG_MIXER_' + ti;
         var sgLbl = esc(lblOf(t)) + ' (' + fam + ')';
-        L.push('    subgraph ' + sgName + ' ["' + sgLbl + '"]');
+        L.push(ind + 'subgraph ' + sgName + ' ["' + sgLbl + '"]');
         // Allocate nodes, indexed by label so `from` can resolve to ids.
         var byLabel = {};
         var byIdIdx = {};
@@ -454,12 +454,12 @@ var FTDiagram = (function () {
             var nd = sub[si];
             var nId = nid();
             var role = nd.c || fam;
-            L.push('        ' + nId + '["' + esc(nd.n) + '"]:::' + role);
+            L.push(ind + '    ' + nId + '["' + esc(nd.n) + '"]:::' + role);
             byLabel[nd.n] = nId;
             byIdIdx[si] = nId;
             ids.push(nId);
         }
-        L.push('    end');
+        L.push(ind + 'end');
         // Edges: for each node with `from`, emit labelled edges from each
         // source. Fall back to the previous node (chain) when no `from`.
         for (var si = 0; si < sub.length; si++) {
@@ -470,9 +470,9 @@ var FTDiagram = (function () {
                 var src = byLabel[sources[fi]];
                 if (!src) continue;
                 if (nd.e) {
-                    L.push('    ' + src + ' --"' + esc(nd.e) + '"--> ' + tgt);
+                    L.push(ind + ' ' + src + ' --"' + esc(nd.e) + '"--> ' + tgt);
                 } else {
-                    L.push('    ' + src + ' --> ' + tgt);
+                    L.push(ind + ' ' + src + ' --> ' + tgt);
                 }
             }
             // Recurrence loop: a node marked `loop` feeds back to an
@@ -480,7 +480,7 @@ var FTDiagram = (function () {
             if (nd.loop) {
                 var loopTarget = byLabel[nd.loop];
                 if (loopTarget) {
-                    L.push('    ' + tgt + ' -. "next" .-> ' + loopTarget);
+                    L.push(ind + ' ' + tgt + ' -. "next" .-> ' + loopTarget);
                 }
             }
         }
@@ -489,50 +489,51 @@ var FTDiagram = (function () {
     }
 
     // FFN detail subgraph: x → (gate,up) → activation → down → y.
-    function _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK) {
-        L.push('    subgraph SG_FFN ["Feed-Forward"]');
+    function _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, ind) {
+        ind = ind || '    ';
+        L.push(ind + 'subgraph SG_FFN ["Feed-Forward"]');
         var isGlu = /glu|geglu|swiglu/i.test(String(fA || ''));
         var xId = nid(), aId = nid(), actId = nid(), dId = nid(), yId = nid();
-        L.push('        ' + xId + '["x [B,n,H]"]:::ffn');
+        L.push(ind + '    ' + xId + '["x [B,n,H]"]:::ffn');
         if (isGlu) {
-            L.push('        ' + aId + '["gate,up: H→' + fH + '<br/>act: ' + fA + '"]:::ffn');
-            L.push('        ' + xId + ' --"Wg,Wu"--> ' + aId);
-            L.push('        ' + actId + '["swish(gate)⊙up [' + fH + ']"]:::ffn');
-            L.push('        ' + aId + ' --"⊙"--> ' + actId);
+            L.push(ind + '    ' + aId + '["gate,up: H→' + fH + '<br/>act: ' + fA + '"]:::ffn');
+            L.push(ind + '    ' + xId + ' --"Wg,Wu"--> ' + aId);
+            L.push(ind + '    ' + actId + '["swish(gate)⊙up [' + fH + ']"]:::ffn');
+            L.push(ind + '    ' + aId + ' --"⊙"--> ' + actId);
         } else {
-            L.push('        ' + aId + '["up: H→' + fH + '<br/>act: ' + fA + '"]:::ffn');
-            L.push('        ' + xId + ' --"Wup"--> ' + aId);
-            L.push('        ' + actId + '["' + fA + '(up) [' + fH + ']"]:::ffn');
-            L.push('        ' + aId + ' --"' + fA + '"--> ' + actId);
+            L.push(ind + '    ' + aId + '["up: H→' + fH + '<br/>act: ' + fA + '"]:::ffn');
+            L.push(ind + '    ' + xId + ' --"Wup"--> ' + aId);
+            L.push(ind + '    ' + actId + '["' + fA + '(up) [' + fH + ']"]:::ffn');
+            L.push(ind + '    ' + aId + ' --"' + fA + '"--> ' + actId);
         }
-        L.push('        ' + dId + '["down: ' + fH + '→H"]:::ffn');
-        L.push('        ' + actId + ' --"Wdown"--> ' + dId);
-        L.push('        ' + yId + '["y [B,n,H]"]:::ffn');
-        L.push('        ' + dId + ' --> ' + yId);
-        if (bit) L.push('        %% BitNet ternary on');
-        if (drp > 0) L.push('        %% dropout ' + drp);
-        L.push('    end');
+        L.push(ind + '    ' + dId + '["down: ' + fH + '→H"]:::ffn');
+        L.push(ind + '    ' + actId + ' --"Wdown"--> ' + dId);
+        L.push(ind + '    ' + yId + '["y [B,n,H]"]:::ffn');
+        L.push(ind + '    ' + dId + ' --> ' + yId);
+        if (bit) L.push(ind + '    %% BitNet ternary on');
+        if (drp > 0) L.push(ind + '    %% dropout ' + drp);
+        L.push(ind + 'end');
         L.push('');
 
         if (moe) {
-            L.push('    subgraph SG_MOE ["MoE — ' + nE + ' experts, top-' + tK + '"]');
+            L.push(ind + 'subgraph SG_MOE ["MoE — ' + nE + ' experts, top-' + tK + '"]');
             var nR = nid();
-            L.push('        ' + nR + '["Router<br/>gate(x) → top-' + tK + '"]:::moe');
-            L.push('        ' + xId + ' --"route"--> ' + nR);
+            L.push(ind + '    ' + nR + '["Router<br/>gate(x) → top-' + tK + '"]:::moe');
+            L.push(ind + '    ' + xId + ' --"route"--> ' + nR);
             var maxShow = Math.min(nE, 8);
             for (var e = 0; e < maxShow; e++) {
                 var nEi = nid();
-                L.push('        ' + nEi + '["Expert ' + e + '<br/>H→' + fH + '→H"]:::moe');
-                L.push('        ' + nR + ' --"top-' + tK + '"--> ' + nEi);
-                L.push('        ' + nEi + ' --"merge"--> ' + yId);
+                L.push(ind + '    ' + nEi + '["Expert ' + e + '<br/>H→' + fH + '→H"]:::moe');
+                L.push(ind + '    ' + nR + ' --"top-' + tK + '"--> ' + nEi);
+                L.push(ind + '    ' + nEi + ' --"merge"--> ' + yId);
             }
             if (nE > 8) {
                 var nM = nid();
-                L.push('        ' + nM + '["... +' + (nE - 8) + ' more"]:::moe');
-                L.push('        ' + nR + ' --> ' + nM);
-                L.push('        ' + nM + ' --"merge"--> ' + yId);
+                L.push(ind + '    ' + nM + '["... +' + (nE - 8) + ' more"]:::moe');
+                L.push(ind + '    ' + nR + ' --> ' + nM);
+                L.push(ind + '    ' + nM + ' --"merge"--> ' + yId);
             }
-            L.push('    end');
+            L.push(ind + 'end');
             L.push('');
         }
         return { in: xId, out: yId };
@@ -540,22 +541,23 @@ var FTDiagram = (function () {
 
     // mHC block subgraph (Manifold-Constrained Hyper-Connections). One block
     // sits after each layer's FFN and before the next NormPre when enabled.
-    function _mhcBlock(L, m) {
+    function _mhcBlock(L, m, ind) {
+        ind = ind || '    ';
         var n = pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4);
         var iters = pick(m, 'mhc.sinkhorn_iters', 'mhc_sinkhorn_iters', 20);
         var gInit = pick(m, 'mhc.gating_init', 'mhc_gating_init', 0.01);
         var ckpt = pick(m, 'mhc.checkpoint', 'mhc_checkpoint', false);
         var sg = 'SG_MHC_' + (_id++);
-        L.push('    subgraph ' + sg + ' ["mHC · n=' + n + ' (Sinkhorn ' + iters + ' iters, α=' + gInit + ')"]');
+        L.push(ind + 'subgraph ' + sg + ' ["mHC · n=' + n + ' (Sinkhorn ' + iters + ' iters, α=' + gInit + ')"]');
         var a = nid(), b = nid(), c = nid(), d = nid(), e = nid();
-        L.push('        ' + a + '["x [B,n,C]"]:::mhc');
-        L.push('        ' + b + '["mhc_in_proj<br/>→ [B,n,n·C]"]:::mhc');
-        L.push('        ' + c + '["H[res] (n×n doubly-stoch.)<br/>Sinkhorn-Knopp ' + iters + 'x"]:::mhc');
-        L.push('        ' + d + '["φ_l · α<br/>coef projection"]:::mhc');
-        L.push('        ' + e + '["mhc_out_proj<br/>→ [B,n,C]"]:::mhc');
-        L.push('        ' + a + ' --"W_in"--> ' + b + ' --"mix"--> ' + c + ' --"α"--> ' + d + ' --"W_out"--> ' + e);
-        if (ckpt) L.push('        %% gradient checkpointing on');
-        L.push('    end');
+        L.push(ind + '    ' + a + '["x [B,n,C]"]:::mhc');
+        L.push(ind + '    ' + b + '["mhc_in_proj<br/>→ [B,n,n·C]"]:::mhc');
+        L.push(ind + '    ' + c + '["H[res] (n×n doubly-stoch.)<br/>Sinkhorn-Knopp ' + iters + 'x"]:::mhc');
+        L.push(ind + '    ' + d + '["φ_l · α<br/>coef projection"]:::mhc');
+        L.push(ind + '    ' + e + '["mhc_out_proj<br/>→ [B,n,C]"]:::mhc');
+        L.push(ind + '    ' + a + ' --"W_in"--> ' + b + ' --"mix"--> ' + c + ' --"α"--> ' + d + ' --"W_out"--> ' + e);
+        if (ckpt) L.push(ind + '    %% gradient checkpointing on');
+        L.push(ind + 'end');
         L.push('');
         return { in: a, out: e };
     }
@@ -662,18 +664,21 @@ var FTDiagram = (function () {
             if (distinctTypes.indexOf(t) === -1) distinctTypes.push(t);
         });
 
-        // Pre-render one detailed mixer subgraph per distinct type, plus a
-        // shared FFN subgraph. Each visible layer then wires:
-        //   NormPre → mixer(type) → NormPost → FFN → [mHC] → next
-        // We render layer blocks for the visible slice, with the mixer
-        // subgraph reused by reference via a small "Mixer: <type>" node and
-        // the detailed subgraphs below.
+        // Each visible layer wires NormPre → mixer → NormPost → FFN →
+        // [mHC] → next. On the first occurrence of each distinct mixer
+        // type (and once for FFN/MoE, once for mHC) the detailed tensor
+        // subgraph is embedded inline inside SG_LAYERS so the dataflow of
+        // attention / MoE / etc. is visible without repeating it per layer.
         var normLbl = 'LayerNorm';
         if (nrm === 'dynamic_tanh') normLbl = 'DynamicTanh';
         else if (nrm === 'derf') normLbl = 'DynamicErf';
         else if (nrm === 'rms_norm') normLbl = 'RMSNorm';
         else if (nrm === 'prms_norm') normLbl = 'pRMSNorm';
         else if (nrm === 'flash_norm') normLbl = 'FlashNorm';
+
+        var detailShown = {};
+        var ffnShown = false;
+        var mhcShown = false;
 
         for (var vi = 0; vi < v.length; vi++) {
             var item = v[vi];
@@ -717,6 +722,22 @@ var FTDiagram = (function () {
                     L.push('        ' + nFfnOut + ' --"+residual"--> ' + nMhc);
                     prevOuter = nMhc;
                 }
+                // First occurrence of this mixer type: embed its detailed
+                // tensor dataflow subgraph inline (then stop showing it).
+                if (!detailShown[t]) {
+                    detailShown[t] = true;
+                    _mixerSubgraph(L, t, distinctTypes.indexOf(t), '        ');
+                }
+                // First layer: embed the FFN (and MoE) detail once.
+                if (!ffnShown) {
+                    ffnShown = true;
+                    _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK, '        ');
+                }
+                // First layer: embed the mHC block detail once when enabled.
+                if (mhcEnabled && !mhcShown) {
+                    mhcShown = true;
+                    _mhcBlock(L, m, '        ');
+                }
             }
         }
         L.push('    end');
@@ -741,38 +762,6 @@ var FTDiagram = (function () {
             L.push('    ' + nHead + ' --> ' + nOut);
             L.push('    ' + nOut + '["Output"]:::output');
         }
-
-        L.push('');
-        // Detailed mixer subgraphs (one per distinct type) — the tensor
-        // dataflow with explicit Q/K/V branches, recurrence loops, latent
-        // down/up projections, memory read/write, and labelled tensor edges.
-        distinctTypes.forEach(function (t, ti) {
-            _mixerSubgraph(L, t, ti);
-        });
-        // Detailed FFN subgraph (shared).
-        _ffnSubgraph(L, H, fH, fA, bit, drp, moe, nE, tK);
-        // mHC detailed block (shared) when enabled.
-        if (mhcEnabled) _mhcBlock(L, m);
-
-        _trainBlock(L, tr);
-    }
-
-    function _trainBlock(L, tr) {
-        var opt = tr.optimizer || {};
-        var optC = opt.optimizer_class || 'adamw';
-        var task = tr.task || 'mlm';
-        var sched = tr.scheduler_type || 'cosine';
-        var bs = tr.batch_size || '?';
-        var ml = tr.max_length || '?';
-        var ep = tr.num_epochs || '?';
-
-        L.push('');
-        L.push('    subgraph SG_TRAIN ["Training"]');
-        var t1 = nid(), t2 = nid(), t3 = nid();
-        L.push('        ' + t1 + '["Task: ' + esc(task.toUpperCase()) + '"]:::train');
-        L.push('        ' + t2 + '["Optimizer: ' + esc(optC) + '<br/>Scheduler: ' + esc(sched) + '"]:::train');
-        L.push('        ' + t3 + '["Batch: ' + bs + ' | Seq: ' + ml + '<br/>Epochs: ' + ep + '"]:::train');
-        L.push('    end');
     }
 
     function getInfo(cfg) {
