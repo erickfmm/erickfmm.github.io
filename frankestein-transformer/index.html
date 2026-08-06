@@ -991,6 +991,7 @@ const UI = {
   taskFields: { en:'Task-specific settings', es:'Configuracion segun tarea' },
   gpuFields: { en:'GPU thermal safeguards', es:'Protecciones termicas GPU' },
   sbertConfig: { en:'SBERT Configuration', es:'Configuracion SBERT' },
+  galoreSettings: { en:'GaLore (Low-Rank Gradient Projection)', es:'GaLore (Proyeccion de Gradientes de Bajo Rango)' },
   includeKey: { en:'Include key', es:'Incluir clave' },
   optimizerRequiredForMlm: { en:'optimizer is required when task is mlm.', es:'optimizer es obligatorio cuando task es mlm.' },
   sbertRequiredForSbert: { en:'sbert is required when task is sbert.', es:'sbert es obligatorio cuando task es sbert.' },
@@ -1254,12 +1255,11 @@ function validateBuilder() {
     if (!baseModelEl || !baseModelEl.value.trim()) addError(baseModelEl, t('fieldRequiredMessage'));
   }
 
+  // Schema (schema/_training.yaml) only marks `training.task` as required —
+  // num_epochs/batch_size/max_length/optimizer_class are optional. Conditional
+  // rules below enforce optimizer (mlm) / sbert (sbert) per _conditional_rules.yaml.
   const requiredFields = [
-    createId('training.task'),
-    createId('training.num_epochs'),
-    createId('training.batch_size'),
-    createId('training.max_length'),
-    createId('training.optimizer.optimizer_class')
+    createId('training.task')
   ];
 
   requiredFields.forEach((fieldId) => {
@@ -1306,16 +1306,16 @@ function validateBuilder() {
     }
   }
 
-  // Rule: if task==sbert -> training.sbert required. The sbert subsection has
-  // no schema-level required keys, so treat it as satisfied only when at least
-  // its dataset definition (dataset_name + dataset_type) is included & filled.
+  // Rule: if task==sbert -> training.sbert required (schema requires only that
+  // the `sbert` object exists; it has no schema-level required keys). The sbert
+  // object is emitted when at least one of its properties is included, so treat
+  // it as satisfied when any sbert property is included.
   if (currentTask === 'sbert') {
-    const dsNameEl = document.getElementById(createId('training.sbert.dataset_name'));
-    const dsTypeEl = document.getElementById(createId('training.sbert.dataset_type'));
-    const nameOk = dsNameEl && dsNameEl.value && dsNameEl.value.trim() && isFieldIncluded('training.sbert.dataset_name');
-    const typeOk = dsTypeEl && dsTypeEl.value && dsTypeEl.value.trim() && isFieldIncluded('training.sbert.dataset_type');
-    if (!(nameOk && typeOk)) {
-      addError(dsNameEl || dsTypeEl, t('sbertRequiredForSbert'));
+    const sbertProps = (SCHEMA.properties.training.properties.sbert.properties) || {};
+    const anyIncluded = Object.keys(sbertProps).some(prop => isFieldIncluded('training.sbert.' + prop));
+    if (!anyIncluded) {
+      const sbertSection = document.getElementById('sbert-section');
+      addError(sbertSection ? sbertSection.querySelector('input, select, textarea') : null, t('sbertRequiredForSbert'));
     }
   }
 
@@ -1696,7 +1696,8 @@ function buildTrainingSection() {
     (taskSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('') +
     `</select>`);
 
-  // General training params (num_epochs, batch_size, max_length required; mlm_probability conditional)
+  // General training params (num_epochs, batch_size, max_length optional per
+  // schema — only training.task is required; mlm_probability is mlm-only)
   const mlmProbField = `<div id="mlm-probability-field" class="conditional-field">` +
     createFieldWrapper('training.mlm_probability', false,
       createLabel(createId('training.mlm_probability'), getTitle(trainingProps.mlm_probability, 'MLM Prob'), false) +
@@ -1706,20 +1707,20 @@ function buildTrainingSection() {
 
   html += createFieldGroup(t('generalTraining'), false, '', `
     <div class="row">
-      ${createFieldWrapper('training.num_epochs', true,
-        createLabel(createId('training.num_epochs'), getTitle(trainingProps.num_epochs, 'Epochs'), true) +
+      ${createFieldWrapper('training.num_epochs', false,
+        createLabel(createId('training.num_epochs'), getTitle(trainingProps.num_epochs, 'Epochs'), false) +
         `<div class="desc">${getDesc(trainingProps.num_epochs)}</div>` +
-        `<input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1" required aria-required="true">`)}
-      ${createFieldWrapper('training.batch_size', true,
-        createLabel(createId('training.batch_size'), getTitle(trainingProps.batch_size, 'Batch Size'), true) +
+        `<input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1">`)}
+      ${createFieldWrapper('training.batch_size', false,
+        createLabel(createId('training.batch_size'), getTitle(trainingProps.batch_size, 'Batch Size'), false) +
         `<div class="desc">${getDesc(trainingProps.batch_size)}</div>` +
-        `<input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1" required aria-required="true">`)}
+        `<input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1">`)}
     </div>
     <div class="row">
-      ${createFieldWrapper('training.max_length', true,
-        createLabel(createId('training.max_length'), getTitle(trainingProps.max_length, 'Max Length'), true) +
+      ${createFieldWrapper('training.max_length', false,
+        createLabel(createId('training.max_length'), getTitle(trainingProps.max_length, 'Max Length'), false) +
         `<div class="desc">${getDesc(trainingProps.max_length)}</div>` +
-        `<input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1" required aria-required="true">`)}
+        `<input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1">`)}
       ${mlmProbField}
     </div>
   `);
@@ -1735,6 +1736,46 @@ function buildTrainingSection() {
         createLabel(createId('training.dataset_batch_size'), getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false) +
         `<div class="desc">${getDesc(trainingProps.dataset_batch_size)}</div>` +
         `<input type="number" id="${createId('training.dataset_batch_size')}" value="25000" min="1" step="1">`)}
+    </div>
+    <div class="row">
+      ${createFieldWrapper('training.dataloader_workers', false,
+        createLabel(createId('training.dataloader_workers'), getTitle(trainingProps.dataloader_workers, 'Dataloader Workers'), false) +
+        `<div class="desc">${getDesc(trainingProps.dataloader_workers)}</div>` +
+        `<input type="number" id="${createId('training.dataloader_workers')}" value="2" min="0" step="1">`)}
+      ${createFieldWrapper('training.num_workers', false,
+        createLabel(createId('training.num_workers'), getTitle(trainingProps.num_workers, 'Streaming Workers'), false) +
+        `<div class="desc">${getDesc(trainingProps.num_workers)}</div>` +
+        `<input type="number" id="${createId('training.num_workers')}" value="8" min="0" step="1">`)}
+    </div>
+    ${createFieldWrapper('training.cache_dir', false,
+      createLabel(createId('training.cache_dir'), getTitle(trainingProps.cache_dir, 'Cache Dir'), false) +
+      `<div class="desc">${getDesc(trainingProps.cache_dir)}</div>` +
+      `<input type="text" id="${createId('training.cache_dir')}" value="./temp_data/v2_dataset_cache">`)}
+    ${createFieldWrapper('training.local_parquet_dir', false,
+      createLabel(createId('training.local_parquet_dir'), getTitle(trainingProps.local_parquet_dir, 'Local Parquet Dir'), false) +
+      `<div class="desc">${getDesc(trainingProps.local_parquet_dir)}</div>` +
+      `<input type="text" id="${createId('training.local_parquet_dir')}" value="/path/to/parquet">`)}
+    <div class="row">
+      ${createFieldWrapper('training.prefer_local_cache', false,
+        `<div class="checkbox-wrap">
+          <input type="checkbox" id="${createId('training.prefer_local_cache')}" checked>
+          <label for="${createId('training.prefer_local_cache')}">${getTitle(trainingProps.prefer_local_cache, 'Prefer Local Cache')}</label>
+        </div>`)}
+      ${createFieldWrapper('training.stream_local_parquet', false,
+        `<div class="checkbox-wrap">
+          <input type="checkbox" id="${createId('training.stream_local_parquet')}" checked>
+          <label for="${createId('training.stream_local_parquet')}">${getTitle(trainingProps.stream_local_parquet, 'Stream Local Parquet')}</label>
+        </div>`)}
+    </div>
+    <div class="row">
+      ${createFieldWrapper('training.join_temp_data_context_window', false,
+        createLabel(createId('training.join_temp_data_context_window'), getTitle(trainingProps.join_temp_data_context_window, 'Join Context Window'), false) +
+        `<div class="desc">${getDesc(trainingProps.join_temp_data_context_window)}</div>` +
+        `<input type="number" id="${createId('training.join_temp_data_context_window')}" value="0" min="0" step="1">`)}
+      ${createFieldWrapper('training.join_temp_data_min_remainder_tokens', false,
+        createLabel(createId('training.join_temp_data_min_remainder_tokens'), getTitle(trainingProps.join_temp_data_min_remainder_tokens, 'Min Remainder Tokens'), false) +
+        `<div class="desc">${getDesc(trainingProps.join_temp_data_min_remainder_tokens)}</div>` +
+        `<input type="number" id="${createId('training.join_temp_data_min_remainder_tokens')}" value="128" min="0" step="1">`)}
     </div>
   `);
 
@@ -1784,6 +1825,20 @@ function buildTrainingSection() {
         `<div class="desc">${getDesc(trainingProps.grad_clip_max_norm)}</div>` +
         `<input type="number" id="${createId('training.grad_clip_max_norm')}" value="5.0" min="0" step="any">`)}
     </div>
+    <div class="row">
+      ${createFieldWrapper('training.inf_post_clip_threshold', false,
+        createLabel(createId('training.inf_post_clip_threshold'), getTitle(trainingProps.inf_post_clip_threshold, 'Inf Post-Clip Threshold'), false) +
+        `<div class="desc">${getDesc(trainingProps.inf_post_clip_threshold)}</div>` +
+        `<input type="number" id="${createId('training.inf_post_clip_threshold')}" value="100.0" min="0" step="any">`)}
+      ${createFieldWrapper('training.max_nan_retries', false,
+        createLabel(createId('training.max_nan_retries'), getTitle(trainingProps.max_nan_retries, 'Max NaN Retries'), false) +
+        `<div class="desc">${getDesc(trainingProps.max_nan_retries)}</div>` +
+        `<input type="number" id="${createId('training.max_nan_retries')}" value="3" min="0" step="1">`)}
+    </div>
+    ${createFieldWrapper('training.nan_check_interval', false,
+      createLabel(createId('training.nan_check_interval'), getTitle(trainingProps.nan_check_interval, 'NaN Check Interval'), false) +
+      `<div class="desc">${getDesc(trainingProps.nan_check_interval)}</div>` +
+      `<input type="number" id="${createId('training.nan_check_interval')}" value="10" min="1" step="1">`)}
   `);
 
   // Checkpoint settings
@@ -1798,10 +1853,16 @@ function buildTrainingSection() {
         `<div class="desc">${getDesc(trainingProps.max_rolling_checkpoints)}</div>` +
         `<input type="number" id="${createId('training.max_rolling_checkpoints')}" value="3" min="1" step="1">`)}
     </div>
-    ${createFieldWrapper('training.num_best_checkpoints', false,
-      createLabel(createId('training.num_best_checkpoints'), getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false) +
-      `<div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>` +
-      `<input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">`)}
+    <div class="row">
+      ${createFieldWrapper('training.num_best_checkpoints', false,
+        createLabel(createId('training.num_best_checkpoints'), getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false) +
+        `<div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>` +
+        `<input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">`)}
+      ${createFieldWrapper('training.resume_from_checkpoint', false,
+        createLabel(createId('training.resume_from_checkpoint'), getTitle(trainingProps.resume_from_checkpoint, 'Resume From'), false) +
+        `<div class="desc">${getDesc(trainingProps.resume_from_checkpoint)}</div>` +
+        `<input type="text" id="${createId('training.resume_from_checkpoint')}" value="auto">`)}
+    </div>
   `);
 
   // Logging
@@ -1810,6 +1871,18 @@ function buildTrainingSection() {
       createLabel(createId('training.csv_log_path'), getTitle(trainingProps.csv_log_path, 'CSV Log'), false) +
       `<div class="desc">${getDesc(trainingProps.csv_log_path)}</div>` +
       `<input type="text" id="${createId('training.csv_log_path')}" value="training_metrics.csv">`)}
+    <div class="row">
+      ${createFieldWrapper('training.csv_rotate_on_schema_change', false,
+        `<div class="checkbox-wrap">
+          <input type="checkbox" id="${createId('training.csv_rotate_on_schema_change')}" checked>
+          <label for="${createId('training.csv_rotate_on_schema_change')}">${getTitle(trainingProps.csv_rotate_on_schema_change, 'CSV Rotate on Schema Change')}</label>
+        </div>`)}
+      ${createFieldWrapper('training.enable_block_grad_norms', false,
+        `<div class="checkbox-wrap">
+          <input type="checkbox" id="${createId('training.enable_block_grad_norms')}" checked>
+          <label for="${createId('training.enable_block_grad_norms')}">${getTitle(trainingProps.enable_block_grad_norms, 'Per-Block Grad Norms')}</label>
+        </div>`)}
+    </div>
     <div class="row">
       ${createFieldWrapper('training.log_gradient_stats', false,
         `<div class="checkbox-wrap">
@@ -1820,10 +1893,26 @@ function buildTrainingSection() {
         createLabel(createId('training.gradient_log_interval'), getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false) +
         `<input type="number" id="${createId('training.gradient_log_interval')}" value="10" min="1" step="1">`)}
     </div>
+    ${createFieldWrapper('training.telemetry_log_interval', false,
+      createLabel(createId('training.telemetry_log_interval'), getTitle(trainingProps.telemetry_log_interval, 'Telemetry Log Interval'), false) +
+      `<div class="desc">${getDesc(trainingProps.telemetry_log_interval)}</div>` +
+      `<input type="number" id="${createId('training.telemetry_log_interval')}" value="1" min="1" step="1">`)}
   `);
 
   // GPU Settings
   html += createFieldGroup(t('gpuSettings'), false, '', `<div id="gpu-settings-group" class="conditional-field">
+    <div class="row">
+      ${createFieldWrapper('training.gpu_metrics_backend', false,
+        createLabel(createId('training.gpu_metrics_backend'), getTitle(trainingProps.gpu_metrics_backend, 'GPU Metrics Backend'), false) +
+        `<div class="desc">${getDesc(trainingProps.gpu_metrics_backend)}</div>` +
+        `<select id="${createId('training.gpu_metrics_backend')}">` +
+        (trainingProps.gpu_metrics_backend.enum || []).map(v => `<option value="${v}" ${v==='nvml'?'selected':''}>${v}</option>`).join('') +
+        `</select>`)}
+      ${createFieldWrapper('training.nvml_device_index', false,
+        createLabel(createId('training.nvml_device_index'), getTitle(trainingProps.nvml_device_index, 'NVML Device Index'), false) +
+        `<div class="desc">${getDesc(trainingProps.nvml_device_index)}</div>` +
+        `<input type="number" id="${createId('training.nvml_device_index')}" value="0" min="0" step="1">`)}
+    </div>
     ${createFieldWrapper('training.gpu_temp_guard_enabled', false,
       `<div class="checkbox-wrap">
         <input type="checkbox" id="${createId('training.gpu_temp_guard_enabled')}" checked>
@@ -1837,6 +1926,25 @@ function buildTrainingSection() {
         createLabel(createId('training.gpu_temp_resume_threshold_c'), getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false) +
         `<input type="number" id="${createId('training.gpu_temp_resume_threshold_c')}" value="80.0" min="0" step="any">`)}
     </div>
+    <div class="row">
+      ${createFieldWrapper('training.gpu_temp_critical_threshold_c', false,
+        createLabel(createId('training.gpu_temp_critical_threshold_c'), getTitle(trainingProps.gpu_temp_critical_threshold_c, 'Critical Temp'), false) +
+        `<div class="desc">${getDesc(trainingProps.gpu_temp_critical_threshold_c)}</div>` +
+        `<input type="number" id="${createId('training.gpu_temp_critical_threshold_c')}" value="95.0" min="0" step="any">`)}
+      ${createFieldWrapper('training.switch_on_thermal', false,
+        `<div class="checkbox-wrap">
+          <input type="checkbox" id="${createId('training.switch_on_thermal')}">
+          <label for="${createId('training.switch_on_thermal')}">${getTitle(trainingProps.switch_on_thermal, 'Switch on Thermal')}</label>
+        </div>`)}
+    </div>
+    <div class="row">
+      ${createFieldWrapper('training.gpu_temp_poll_interval_seconds', false,
+        createLabel(createId('training.gpu_temp_poll_interval_seconds'), getTitle(trainingProps.gpu_temp_poll_interval_seconds, 'Poll Interval (s)'), false) +
+        `<input type="number" id="${createId('training.gpu_temp_poll_interval_seconds')}" value="30.0" min="0" step="any">`)}
+      ${createFieldWrapper('training.gpu_temp_checkpoint_grace_seconds', false,
+        createLabel(createId('training.gpu_temp_checkpoint_grace_seconds'), getTitle(trainingProps.gpu_temp_checkpoint_grace_seconds, 'Checkpoint Grace (s)'), false) +
+        `<input type="number" id="${createId('training.gpu_temp_checkpoint_grace_seconds')}" value="30.0" min="0" step="any">`)}
+    </div>
   </div>`);
 
   // AMP
@@ -1845,6 +1953,41 @@ function buildTrainingSection() {
       <input type="checkbox" id="${createId('training.use_amp')}">
       <label for="${createId('training.use_amp')}">${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
     </div>`);
+
+  // GaLore (low-rank gradient projection)
+  html += createFieldGroup(t('galoreSettings'), false, '', `
+    ${createFieldWrapper('training.use_galore', false,
+      `<div class="checkbox-wrap">
+        <input type="checkbox" id="${createId('training.use_galore')}">
+        <label for="${createId('training.use_galore')}">${getTitle(trainingProps.use_galore, 'Enable GaLore')}</label>
+      </div>`)}
+    <div class="row">
+      ${createFieldWrapper('training.galore_rank', false,
+        createLabel(createId('training.galore_rank'), getTitle(trainingProps.galore_rank, 'GaLore Rank'), false) +
+        `<div class="desc">${getDesc(trainingProps.galore_rank)}</div>` +
+        `<input type="number" id="${createId('training.galore_rank')}" value="64" min="1" step="1">`)}
+      ${createFieldWrapper('training.galore_update_interval', false,
+        createLabel(createId('training.galore_update_interval'), getTitle(trainingProps.galore_update_interval, 'GaLore Update Interval'), false) +
+        `<div class="desc">${getDesc(trainingProps.galore_update_interval)}</div>` +
+        `<input type="number" id="${createId('training.galore_update_interval')}" value="1" min="1" step="1">`)}
+    </div>
+    <div class="row">
+      ${createFieldWrapper('training.galore_scale', false,
+        createLabel(createId('training.galore_scale'), getTitle(trainingProps.galore_scale, 'GaLore Scale'), false) +
+        `<div class="desc">${getDesc(trainingProps.galore_scale)}</div>` +
+        `<input type="number" id="${createId('training.galore_scale')}" value="1.0" min="0" step="any">`)}
+      ${createFieldWrapper('training.galore_max_dim', false,
+        createLabel(createId('training.galore_max_dim'), getTitle(trainingProps.galore_max_dim, 'GaLore Max Dim'), false) +
+        `<div class="desc">${getDesc(trainingProps.galore_max_dim)}</div>` +
+        `<input type="number" id="${createId('training.galore_max_dim')}" value="4096" min="1" step="1">`)}
+    </div>
+  `);
+
+  // HuggingFace output dir (base_model only)
+  html += createFieldWrapper('training.hf_output_dir', false,
+    createLabel(createId('training.hf_output_dir'), getTitle(trainingProps.hf_output_dir, 'HF Output Dir'), false) +
+    `<div class="desc">${getDesc(trainingProps.hf_output_dir)}</div>` +
+    `<input type="text" id="${createId('training.hf_output_dir')}" value="checkpoints/hf_final">`);
 
   // SBERT (task-specific; conditionally required when task==sbert)
   if (trainingProps.sbert) {
@@ -2054,33 +2197,60 @@ function buildConfig() {
   const training = {};
   const task = readFieldValue('task', trainingProps.task, 'training');
   training.task = task;
-  training.num_epochs = readFieldValue('num_epochs', trainingProps.num_epochs, 'training');
-  training.batch_size = readFieldValue('batch_size', trainingProps.batch_size, 'training');
-  training.max_length = readFieldValue('max_length', trainingProps.max_length, 'training');
 
   const optTraining = (key) => {
     if (!isFieldIncluded('training.' + key)) return;
     training[key] = readFieldValue(key, trainingProps[key], 'training');
   };
-  // mlm_probability only applies to the mlm task.
-  if (task === 'mlm') optTraining('mlm_probability');
+  optTraining('num_epochs');
+  optTraining('batch_size');
+  optTraining('max_length');
+  optTraining('dataloader_workers');
+  optTraining('num_workers');
+  optTraining('cache_dir');
+  optTraining('local_parquet_dir');
+  optTraining('prefer_local_cache');
+  optTraining('stream_local_parquet');
+  optTraining('join_temp_data_context_window');
+  optTraining('join_temp_data_min_remainder_tokens');
   optTraining('max_samples');
   optTraining('dataset_batch_size');
+  optTraining('use_amp');
   optTraining('gradient_accumulation_steps');
   optTraining('grad_clip_max_norm');
+  optTraining('inf_post_clip_threshold');
+  optTraining('max_nan_retries');
+  optTraining('nan_check_interval');
   optTraining('checkpoint_every_n_steps');
   optTraining('max_rolling_checkpoints');
   optTraining('num_best_checkpoints');
+  optTraining('resume_from_checkpoint');
   optTraining('scheduler_total_steps');
   optTraining('scheduler_warmup_ratio');
   optTraining('scheduler_type');
   optTraining('csv_log_path');
+  optTraining('csv_rotate_on_schema_change');
+  optTraining('enable_block_grad_norms');
   optTraining('log_gradient_stats');
   optTraining('gradient_log_interval');
-  optTraining('use_amp');
+  optTraining('telemetry_log_interval');
+  optTraining('gpu_metrics_backend');
+  optTraining('nvml_device_index');
   optTraining('gpu_temp_guard_enabled');
   optTraining('gpu_temp_pause_threshold_c');
   optTraining('gpu_temp_resume_threshold_c');
+  optTraining('gpu_temp_critical_threshold_c');
+  optTraining('switch_on_thermal');
+  optTraining('gpu_temp_poll_interval_seconds');
+  optTraining('gpu_temp_checkpoint_grace_seconds');
+  optTraining('use_galore');
+  optTraining('galore_rank');
+  optTraining('galore_update_interval');
+  optTraining('galore_scale');
+  optTraining('galore_max_dim');
+  optTraining('hf_output_dir');
+  // mlm_probability only applies to the mlm task.
+  if (task === 'mlm') optTraining('mlm_probability');
 
   // SBERT subsection (task-specific). Included only when its toggle is on.
   if (trainingProps.sbert && isFieldIncluded('training.sbert')) {
@@ -2564,7 +2734,7 @@ const PRESETS = {
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
     },
-    training: { task:'causal_lm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
+    training: { task:'mlm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
       dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
       num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:false, gpu_temp_guard_enabled:true,
@@ -2590,7 +2760,7 @@ const PRESETS = {
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
     },
-    training: { task:'causal_lm', batch_size:2, max_length:2048, mlm_probability:0.15, max_samples:10000000,
+    training: { task:'mlm', batch_size:2, max_length:2048, mlm_probability:0.15, max_samples:10000000,
       dataset_batch_size:15000, gradient_accumulation_steps:8, grad_clip_max_norm:5.0, scheduler_total_steps:20000,
       scheduler_warmup_ratio:0.1, scheduler_type:'cosine', checkpoint_every_n_steps:500, max_rolling_checkpoints:3,
       num_best_checkpoints:2, csv_log_path:'training_metrics.csv', use_amp:true, gpu_temp_guard_enabled:true,
