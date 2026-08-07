@@ -5,7 +5,7 @@ Portafolio profesional de Erick Francisco Merino Menares, AI Engineer especializ
 
 ## Sobre el Profesional
 - **Nombre**: Erick Francisco Merino Menares
-- **Rol**: AI Engineer · Backend · Datos
+- **Rol**: AI Engineer · Backend · Ciencia de Datos · Gobernanza de Datos · Machine Learning
 - **Ubicación**: Santiago de Chile
 - **Email**: erickfmm@gmail.com
 
