@@ -1,0 +1,718 @@
+\begin{thebibliography}{100}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abadi et~al.(2016)Abadi, Barham, Chen, Chen, Davis, Dean, Devin,
+  Ghemawat, Irving, Isard, Kudlur, Levenberg, Monga, Moore, Murray, Steiner,
+  Tucker, Vasudevan, Warden, Wicke, Yu, and Zheng]{abadi_tensorflow_2016}
+Mart{\'\i}n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen, Andy Davis, Jeffrey
+  Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey Irving, Michael Isard,
+  Manjunath Kudlur, Josh Levenberg, Rajat Monga, Sherry Moore, Derek~G. Murray,
+  Benoit Steiner, Paul Tucker, Vijay Vasudevan, Pete Warden, Martin Wicke, Yuan
+  Yu, and Xiaoqiang Zheng.
+\newblock {TensorFlow}: A system for large-scale machine learning.
+\newblock In \emph{12th USENIX Symposium on Operating Systems Design and
+  Implementation (OSDI)}, pages 265--283, 2016.
+
+\bibitem[Ainslie et~al.(2023)Ainslie, Lee-Thorp, de~Jong, Zemlyansky, Lebrón,
+  and Sanghai]{ainslie_gqa_2023}
+Joshua Ainslie, James Lee-Thorp, Michiel de~Jong, Yury Zemlyansky, Federico
+  Lebrón, and Sumit Sanghai.
+\newblock Gqa: Training generalized multi-query transformer models from
+  multi-head checkpoints, 2023.
+\newblock URL \url{https://arxiv.org/abs/2305.13245}.
+
+\bibitem[authors(2026)]{anon2026anon}
+Anonymous authors.
+\newblock Anon: Extrapolating adaptivity beyond sgd and adam, 2026.
+\newblock URL \url{https://arxiv.org/abs/2605.02317}.
+
+\bibitem[Ba et~al.(2016)Ba, Kiros, and Hinton]{ba2016layer}
+Jimmy~Lei Ba, Jamie~Ryan Kiros, and Geoffrey~E. Hinton.
+\newblock Layer normalization, 2016.
+\newblock URL \url{https://arxiv.org/abs/1607.06450}.
+
+\bibitem[Barron(2017)]{barron2017celu}
+Jonathan~T. Barron.
+\newblock Continuously differentiable exponential linear units.
+\newblock \emph{arXiv preprint arXiv:1704.07483}, 2017.
+
+\bibitem[Basirat and Roth(2019)]{basirat2019elish}
+Mina Basirat and Peter~M. Roth.
+\newblock The quest for a better {ReLU}: {ELiSH} and {HardELiSH} activation
+  functions.
+\newblock \emph{arXiv preprint arXiv:1905.10144}, 2019.
+
+\bibitem[Behrouz et~al.()Behrouz, Zhong, and Mirrokni]{behrouz_titans_2025}
+Ali Behrouz, Peilin Zhong, and Vahab Mirrokni.
+\newblock Titans: Learning to memorize at test time.
+\newblock URL \url{https://arxiv.org/abs/2501.00663}.
+\newblock Version Number: 1.
+
+\bibitem[Beltagy et~al.(2020)Beltagy, Peters, and
+  Cohan]{beltagy_longformer_2020}
+Iz~Beltagy, Matthew~E. Peters, and Arman Cohan.
+\newblock Longformer: The long-document transformer, 2020.
+\newblock URL \url{https://arxiv.org/abs/2004.05150}.
+
+\bibitem[Boissin et~al.()Boissin, Massena, Mamalet, and
+  Serrurier]{boissin_turbo-muon_2025}
+Thibaut Boissin, Thomas Massena, Franck Mamalet, and Mathieu Serrurier.
+\newblock Turbo-muon: Accelerating orthogonality-based optimization with
+  pre-conditioning.
+\newblock URL \url{https://arxiv.org/abs/2512.04632}.
+\newblock Version Number: 1.
+
+\bibitem[Bradbury et~al.(2018)Bradbury, Frostig, Hawkins, Johnson, Leary,
+  Maclaurin, Necula, Paszke, VanderPlas, Wanderman-Milne, and
+  Zhang]{bradbury_jax_2018}
+James Bradbury, Roy Frostig, Peter Hawkins, Matthew~J. Johnson, Chris Leary,
+  Dougal Maclaurin, George Necula, Adam Paszke, Jake VanderPlas, Skye
+  Wanderman-Milne, and Qiao Zhang.
+\newblock {JAX}: composable transformations of {Python}+{NumPy} programs, 2018.
+\newblock URL \url{http://github.com/jax-ml/jax}.
+
+\bibitem[Bravin et~al.()Bravin, Pavan, Shalby, Pittorino, and
+  Roveri]{bravin_embbert_2026}
+Riccardo Bravin, Massimo Pavan, Hazem Hesham~Yousef Shalby, Fabrizio Pittorino,
+  and Manuel Roveri.
+\newblock {EmbBERT}: Attention under 2 {MB} memory.
+\newblock URL \url{http://arxiv.org/abs/2502.10001}.
+
+\bibitem[Chen et~al.({\natexlab{a}})Chen, Lu, Zhu, Sun, and
+  Liu]{chen_stronger_2025}
+Mingzhi Chen, Taiming Lu, Jiachen Zhu, Mingjie Sun, and Zhuang Liu.
+\newblock Stronger normalization-free transformers, {\natexlab{a}}.
+\newblock URL \url{http://arxiv.org/abs/2512.10938}.
+
+\bibitem[Chen et~al.({\natexlab{b}})Chen, Liang, Huang, Real, Wang, Liu, Pham,
+  Dong, Luong, Hsieh, Lu, and Le]{chen_symbolic_2023}
+Xiangning Chen, Chen Liang, Da~Huang, Esteban Real, Kaiyuan Wang, Yao Liu, Hieu
+  Pham, Xuanyi Dong, Thang Luong, Cho-Jui Hsieh, Yifeng Lu, and Quoc~V. Le.
+\newblock Symbolic discovery of optimization algorithms, {\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2302.06675}.
+\newblock Version Number: 4.
+
+\bibitem[Cheng et~al.(2026)Cheng, Zeng, Dai, Chen, Wang, Xie, Huang, Yu, Hao,
+  Li, Zhang, Zhang, Zhao, and Liang]{cheng2026conditionalmemoryscalablelookup}
+Xin Cheng, Wangding Zeng, Damai Dai, Qinyu Chen, Bingxuan Wang, Zhenda Xie,
+  Kezhao Huang, Xingkai Yu, Zhewen Hao, Yukun Li, Han Zhang, Huishuai Zhang,
+  Dongyan Zhao, and Wenfeng Liang.
+\newblock Conditional memory via scalable lookup: A new axis of sparsity for
+  large language models, 2026.
+\newblock URL \url{https://arxiv.org/abs/2601.07372}.
+
+\bibitem[Child et~al.(2019)Child, Gray, Radford, and
+  Sutskever]{child_sparse_transformer_2019}
+Rewon Child, Scott Gray, Alec Radford, and Ilya Sutskever.
+\newblock Generating long sequences with sparse transformers, 2019.
+\newblock URL \url{https://arxiv.org/abs/1904.10509}.
+
+\bibitem[Clevert et~al.(2016)Clevert, Unterthiner, and
+  Hochreiter]{clevert2016elu}
+Djork-Arn{\'e} Clevert, Thomas Unterthiner, and Sepp Hochreiter.
+\newblock Fast and accurate deep network learning by exponential linear units
+  ({ELUs}).
+\newblock \emph{arXiv preprint arXiv:1511.07289}, 2016.
+
+\bibitem[Dai et~al.()Dai, Shan, Song, and Liang]{dai_hope_2025}
+Chang Dai, Hongyu Shan, Mingyang Song, and Di~Liang.
+\newblock {HoPE}: Hyperbolic rotary positional encoding for stable long-range
+  dependency modeling in large language models.
+\newblock URL \url{http://arxiv.org/abs/2509.05218}.
+
+\bibitem[Defazio et~al.()Defazio, Yang, Mehta, Mishchenko, Khaled, and
+  Cutkosky]{defazio_road_2024}
+Aaron Defazio, Xingyu~Alice Yang, Harsh Mehta, Konstantin Mishchenko, Ahmed
+  Khaled, and Ashok Cutkosky.
+\newblock The road less scheduled.
+\newblock URL \url{https://arxiv.org/abs/2405.15682}.
+\newblock Version Number: 4.
+
+\bibitem[Deng and Woodland(2025)]{deng_mtla_2025}
+Keqi Deng and Philip~C. Woodland.
+\newblock Multi-head temporal latent attention, 2025.
+\newblock URL \url{https://arxiv.org/abs/2505.13544}.
+
+\bibitem[Devlin et~al.()Devlin, Chang, Lee, and Toutanova]{devlin_bert_2019}
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova.
+\newblock {BERT}: Pre-training of deep bidirectional transformers for language
+  understanding.
+\newblock URL \url{http://arxiv.org/abs/1810.04805}.
+
+\bibitem[Dubey et~al.(2021)Dubey, Singh, and Chaudhuri]{dubey2021activations}
+Shiv~Ram Dubey, Satish~Kumar Singh, and Bidyut~Baran Chaudhuri.
+\newblock Activation functions in deep learning: A comprehensive survey and
+  benchmark.
+\newblock \emph{Neurocomputing}, 453:\penalty0 1--24, 2021.
+\newblock \doi{10.1016/j.neucom.2021.03.063}.
+
+\bibitem[Duvvuri et~al.(2026)Duvvuri, Ekbote, Bansal, Tiwari, Khatri,
+  Brandfonbrener, Liang, Dhillon, and Zaheer]{duvvuri_iha_2026}
+Sai~Surya Duvvuri, Chanakya Ekbote, Rachit Bansal, Rishabh Tiwari, Devvrit
+  Khatri, David Brandfonbrener, Paul Liang, Inderjit Dhillon, and Manzil
+  Zaheer.
+\newblock Interleaved head attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2602.21371}.
+
+\bibitem[Elfwing et~al.(2018)Elfwing, Uchibe, and Doya]{elfwing2018silu}
+Stefan Elfwing, Eiji Uchibe, and Kenji Doya.
+\newblock Sigmoid-weighted linear units for neural network function
+  approximation in reinforcement learning.
+\newblock \emph{Neural Networks}, 106:\penalty0 300--312, 2018.
+\newblock \doi{10.1016/j.neunet.2018.07.012}.
+
+\bibitem[Fang et~al.(2023)Fang, Lee, Moosavi, and Gurevych]{fang2023raft}
+Aiming Fang, Suhyune Lee, Nafise~Sadat Moosavi, and Iryna Gurevych.
+\newblock Transformers with learnable activation functions.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EACL 2023}, pages 1736--1746, 2023.
+\newblock \doi{10.48550/arXiv.2208.14111}.
+
+\bibitem[Figliola et~al.(2025)Figliola, Alonso, Iyer, Anthony, and
+  Millidge]{figliola_cca_2025}
+Tomas Figliola, Nicholas Alonso, Rishi Iyer, Quentin Anthony, and Beren
+  Millidge.
+\newblock Compressed convolutional attention: Efficient attention in a
+  compressed latent space, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.04476}.
+
+\bibitem[Fu et~al.(2026)Fu, Xiao, Dong, Han, and Villa]{fu_sparda_2026}
+Yaosheng Fu, Guangxuan Xiao, Xin Dong, Song Han, and Oreste Villa.
+\newblock Sparda: Sparse decoupled attention for efficient long-context llm
+  inference, 2026.
+\newblock URL \url{https://arxiv.org/abs/2606.04511}.
+
+\bibitem[Glorot et~al.(2011)Glorot, Bordes, and Bengio]{glorot2011softplus}
+Xavier Glorot, Antoine Bordes, and Yoshua Bengio.
+\newblock Deep sparse rectifier neural networks.
+\newblock \emph{Proceedings of the 14th International Conference on Artificial
+  Intelligence and Statistics (AISTATS)}, pages 315--323, 2011.
+
+\bibitem[Godfrey and Gashler(2015)]{godfrey2015softexp}
+Luke~B. Godfrey and Michael~S. Gashler.
+\newblock A continuum among logarithmic, linear, and exponential functions, and
+  its potential to improve generalization in neural networks.
+\newblock In \emph{Proceedings of the International Conference on Knowledge
+  Discovery and Information Retrieval (KDIR)}, 2015.
+
+\bibitem[Goodfellow et~al.(2013)Goodfellow, Warde-Farley, Mirza, Courville, and
+  Bengio]{goodfellow2013maxout}
+Ian~J. Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville, and Yoshua
+  Bengio.
+\newblock Maxout networks.
+\newblock In \emph{Proceedings of the 30th International Conference on Machine
+  Learning (ICML)}, pages 1319--1327, 2013.
+
+\bibitem[Graef et~al.()Graef, Makraduli, Wasielewski, and
+  Clapp]{graef2026flashnorm}
+Nils Graef, Filip Makraduli, Andrew Wasielewski, and Matthew Clapp.
+\newblock {FlashNorm}: Fast normalization for transformers.
+\newblock URL \url{http://arxiv.org/abs/2407.09577}.
+
+\bibitem[Gu and Dao()]{gu_mamba_2023}
+Albert Gu and Tri Dao.
+\newblock Mamba: Linear-time sequence modeling with selective state spaces.
+\newblock URL \url{https://arxiv.org/abs/2312.00752}.
+\newblock Version Number: 2.
+
+\bibitem[Gu et~al.(2024)Gu, Labs, et~al.]{gu_jamba_2024}
+Albert Gu, AI21 Labs, et~al.
+\newblock Jamba: A hybrid transformer-mamba language model, 2024.
+\newblock URL \url{https://arxiv.org/abs/2403.19887}.
+
+\bibitem[Gupta et~al.()Gupta, Koren, and Singer]{gupta_shampoo_2018}
+Vineet Gupta, Tomer Koren, and Yoram Singer.
+\newblock Shampoo: Preconditioned stochastic tensor optimization.
+\newblock URL \url{https://arxiv.org/abs/1802.09568}.
+\newblock Version Number: 2.
+
+\bibitem[Hatamizadeh et~al.(2026)Hatamizadeh, Choi, and
+  Kautz]{hatamizadeh_gated_deltanet2_2026}
+Ali Hatamizadeh, Yejin Choi, and Jan Kautz.
+\newblock Gated deltanet-2: Decoupling erase and write in linear attention,
+  2026.
+\newblock URL \url{https://arxiv.org/abs/2605.22791}.
+
+\bibitem[He et~al.()He, Zhang, Ren, and Sun]{he_deep_2016}
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+\newblock Deep residual learning for image recognition.
+\newblock In \emph{2016 {IEEE} Conference on Computer Vision and Pattern
+  Recognition ({CVPR})}, pages 770--778. {IEEE}.
+\newblock \doi{10.1109/CVPR.2016.90}.
+\newblock URL \url{http://arxiv.org/abs/1512.03385}.
+
+\bibitem[He et~al.(2015)He, Zhang, Ren, and Sun]{he2015prelu}
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+\newblock Delving deep into rectifiers: Surpassing human-level performance on
+  {ImageNet} classification.
+\newblock In \emph{Proceedings of the IEEE International Conference on Computer
+  Vision (ICCV)}, pages 1026--1034, 2015.
+
+\bibitem[Hendrycks and Gimpel(2016)]{hendrycks2016gelu}
+Dan Hendrycks and Kevin Gimpel.
+\newblock Gaussian error linear units ({GELU}).
+\newblock In \emph{arXiv preprint arXiv:1606.08415}, 2016.
+
+\bibitem[Howard et~al.(2019)Howard, Sandler, Chu, Chen, Chen, Tan, Wang, Zhu,
+  Pang, Vasudevan, Le, and Adam]{howard2019hardswish}
+Andrew Howard, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo~Chen, Mingxing
+  Tan, Weijun Wang, Yukun Zhu, Ruoming Pang, Vijay Vasudevan, Quoc~V. Le, and
+  Hartwig Adam.
+\newblock Searching for {MobileNetV3}.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision (ICCV)}, pages 1314--1325, 2019.
+
+\bibitem[Howard et~al.(2017)Howard, Zhu, Chen, Kalenichenko, Wang, Weyand,
+  Andreetto, and Adam]{howard2017mobile}
+Andrew~G. Howard, Menglong Zhu, Bo~Chen, Dmitry Kalenichenko, Weijun Wang,
+  Tobias Weyand, Marco Andreetto, and Hartwig Adam.
+\newblock {MobileNets}: Efficient convolutional neural networks for mobile
+  vision applications.
+\newblock In \emph{arXiv preprint arXiv:1704.04861}, 2017.
+
+\bibitem[Khosla et~al.(2020)Khosla, Teterwak, Wang, Sarna, Tian, Isola,
+  Maschinot, Liu, and Krishnan]{chen_supervised_2020}
+Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip
+  Isola, Aaron Maschinot, Ce~Liu, and Dilip Krishnan.
+\newblock Supervised contrastive learning, 2020.
+\newblock URL \url{https://arxiv.org/abs/2004.11362}.
+
+\bibitem[{Kimi Team} et~al.(2025){Kimi Team}, Zhang, Lin, Yao, Hu, Meng, Liu,
+  Men, Yang, Li, Li, Lu, Liu, Chen, Xu, Yu, Wang, Fan, Zhong, Yuan, Zhang,
+  Zhang, Liu, Wang, Fang, He, Liu, Li, Su, Qiu, Pang, Yan, Jiang, Huang, Yin,
+  You, Wei, Wang, Hong, Chen, Chen, Wang, Zheng, Wang, Liu, Dong, Zhang, Pan,
+  Wu, Wu, Guan, Tao, Fu, Xu, Wang, Lai, Wu, Zhou, Yang, and Du]{kimi_kda_2025}
+{Kimi Team}, Yu~Zhang, Zongyu Lin, Xingcheng Yao, Jiaxi Hu, Fanqing Meng,
+  Chengyin Liu, Xin Men, Songlin Yang, Zhiyuan Li, Wentao Li, Enzhe Lu, Weizhou
+  Liu, Yanru Chen, Weixin Xu, Longhui Yu, Yejie Wang, Yu~Fan, Longguang Zhong,
+  Enming Yuan, Dehao Zhang, Yizhi Zhang, T.~Y. Liu, Haiming Wang, Shengjun
+  Fang, Weiran He, Shaowei Liu, Yiwei Li, Jianlin Su, Jiezhong Qiu, Bo~Pang,
+  Junjie Yan, Zhejun Jiang, Weixiao Huang, Bohong Yin, Jiacheng You, Chu Wei,
+  Zhengtao Wang, Chao Hong, Yutian Chen, Guanduo Chen, Yucheng Wang, Huabin
+  Zheng, Feng Wang, Yibo Liu, Mengnan Dong, Zheng Zhang, Siyuan Pan, Wenhao Wu,
+  Yuhao Wu, Longyu Guan, Jiawen Tao, Guohong Fu, Xinran Xu, Yuzhi Wang, Guokun
+  Lai, Yuxin Wu, Xinyu Zhou, Zhilin Yang, and Yulun Du.
+\newblock Kimi linear: An expressive, efficient attention architecture, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.26692}.
+
+\bibitem[Klambauer et~al.(2017)Klambauer, Unterthiner, Mayr, and
+  Hochreiter]{klambauer2017selu}
+G{\"u}nter Klambauer, Thomas Unterthiner, Andreas Mayr, and Sepp Hochreiter.
+\newblock Self-normalizing neural networks.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2017.
+
+\bibitem[Klein et~al.(2026)Klein, Kusch, Sager, Schnake, and
+  Schotthöfer]{klein_tucker_2026}
+Timon Klein, Jonas Kusch, Sebastian Sager, Stefan Schnake, and Steffen
+  Schotthöfer.
+\newblock Tucker attention: A generalization of approximate attention
+  mechanisms, 2026.
+\newblock URL \url{https://arxiv.org/abs/2603.30033}.
+
+\bibitem[Lai et~al.(2026)Lai, Xu, Yang, Chen, Xu, Zeng, Li, Sun, Zhu, Zhang,
+  Hu, Li, Gao, Li, Zhu, Zhou, and Zhao]{lai_minimax_2026}
+Xunhao Lai, Weiqi Xu, Yufeng Yang, Qiaorui Chen, Yang Xu, Lunbin Zeng, Xiaolong
+  Li, Haohai Sun, Haichao Zhu, Vito Zhang, Jinkai Hu, Jiayao Li, Rui Gao, Zekun
+  Li, Songquan Zhu, Jingkai Zhou, and Pengyu Zhao.
+\newblock Minimax sparse attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2606.13392}.
+
+\bibitem[Lederer(2021)]{lederer2021activations}
+Johannes Lederer.
+\newblock Activation functions in artificial neural networks: A systematic
+  overview.
+\newblock \emph{arXiv preprint arXiv:2101.09957}, 2021.
+\newblock \doi{10.48550/arXiv.2101.09957}.
+
+\bibitem[Lewis et~al.(2021)Lewis, Bhosale, Dettmers, Kiela, and
+  Zettlemoyer]{lewis_moe_2021}
+Mike Lewis, Shruti Bhosale, Tim Dettmers, Douwe Kiela, and Luke Zettlemoyer.
+\newblock Base layers: Simplifying training of large, sparse models, 2021.
+\newblock URL \url{https://arxiv.org/abs/2103.16716}.
+
+\bibitem[Liang et~al.()Liang, Chen, Liu, and Liu]{liang_cautious_2024}
+Kaizhao Liang, Lizhang Chen, Bo~Liu, and Qiang Liu.
+\newblock Cautious optimizers: Improving training with one line of code.
+\newblock URL \url{https://arxiv.org/abs/2411.16085}.
+\newblock Version Number: 4.
+
+\bibitem[Lin et~al.(2025)Lin, Wang, et~al.]{lin_forgetting_transformer_2025}
+Zhixuan Lin, Ke~Wang, et~al.
+\newblock Forgetting transformer: Softmax attention with a forget gate, 2025.
+\newblock URL \url{https://arxiv.org/abs/2503.02130}.
+
+\bibitem[Liu et~al.({\natexlab{a}})Liu, Li, Hall, Liang, and
+  Ma]{liu_sophia_2023}
+Hong Liu, Zhiyuan Li, David Hall, Percy Liang, and Tengyu Ma.
+\newblock Sophia: A scalable stochastic second-order optimizer for language
+  model pre-training, {\natexlab{a}}.
+\newblock URL \url{https://arxiv.org/abs/2305.14342}.
+\newblock Version Number: 4.
+
+\bibitem[Liu et~al.({\natexlab{b}})Liu, Jiang, He, Chen, Liu, Gao, and
+  Han]{liu_variance_2019}
+Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng
+  Gao, and Jiawei Han.
+\newblock On the variance of the adaptive learning rate and beyond,
+  {\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/1908.03265}.
+\newblock Version Number: 4.
+
+\bibitem[Liu et~al.(2026)Liu, Peng, Zhang, Chen, and Guo]{liu_mlra_2026}
+Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
+\newblock Multi-head low-rank attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2603.02188}.
+
+\bibitem[Loshchilov and Hutter()]{loshchilov_decoupled_2017}
+Ilya Loshchilov and Frank Hutter.
+\newblock Decoupled weight decay regularization.
+\newblock URL \url{https://arxiv.org/abs/1711.05101}.
+\newblock Version Number: 3.
+
+\bibitem[Lou et~al.(2024)Lou, Chen, Yu, et~al.]{lou_sparsek_2024}
+Tianyu Lou, Zheyu Chen, Tao Yu, et~al.
+\newblock Efficient sparse attention for long-range transformers, 2024.
+\newblock URL \url{https://arxiv.org/abs/2406.16747}.
+
+\bibitem[Maas et~al.(2013)Maas, Hannun, and Ng]{maas2013leakyrelu}
+Andrew~L. Maas, Awni~Y. Hannun, and Andrew~Y. Ng.
+\newblock Rectifier nonlinearities improve neural network acoustic models.
+\newblock In \emph{Proc. ICML Workshop on Deep Learning for Audio, Speech and
+  Language Processing}, 2013.
+
+\bibitem[Mehta et~al.(2025)Mehta, Dandekar, Dandekar, and
+  Panat]{mehta_mla_2025}
+Sushant Mehta, Raj Dandekar, Rajat Dandekar, and Sreedath Panat.
+\newblock Latent multi-head attention for small language models, 2025.
+\newblock URL \url{https://arxiv.org/abs/2506.09342}.
+
+\bibitem[Meng(2026)]{meng_gqla_2026}
+Fanxu Meng.
+\newblock Gqla: Group-query latent attention for hardware-adaptive large
+  language model decoding, 2026.
+\newblock URL \url{https://arxiv.org/abs/2605.15250}.
+
+\bibitem[Mishchenko and Defazio()]{mishchenko_prodigy_2023}
+Konstantin Mishchenko and Aaron Defazio.
+\newblock Prodigy: An expeditiously adaptive parameter-free learner.
+\newblock URL \url{https://arxiv.org/abs/2306.06101}.
+\newblock Version Number: 4.
+
+\bibitem[Misra(2019)]{misra2019mish}
+Diganta Misra.
+\newblock Mish: A self regularized non-monotonic activation function.
+\newblock \emph{arXiv preprint arXiv:1908.08681}, 2019.
+
+\bibitem[Muennighoff et~al.(2022)]{muennighoff_matryoshka_2021}
+Niklas Muennighoff et~al.
+\newblock Matryoshka representation learning, 2022.
+\newblock URL \url{https://arxiv.org/abs/2205.13147}.
+
+\bibitem[Nair and Hinton(2010)]{nair2010relu}
+Vinod Nair and Geoffrey~E. Hinton.
+\newblock Rectified linear units improve restricted {Boltzmann} machines.
+\newblock In \emph{Proceedings of the 27th International Conference on Machine
+  Learning (ICML)}, pages 807--814, 2010.
+
+\bibitem[Pagliardini et~al.()Pagliardini, Ablin, and
+  Grangier]{pagliardini_ademamix_2024}
+Matteo Pagliardini, Pierre Ablin, and David Grangier.
+\newblock The {AdEMAMix} optimizer: Better, faster, older.
+\newblock URL \url{https://arxiv.org/abs/2409.03137}.
+\newblock Version Number: 2.
+
+\bibitem[Paszke et~al.(2019)Paszke, Gross, Massa, Lerer, Bradbury, Chanan,
+  Killeen, Lin, Gimelshein, Antiga, Desmaison, K{\"o}pf, Yang, DeVito, Raison,
+  Tejani, Chilamkurthy, Steiner, Fang, Bai, and Chintala]{paszke_pytorch_2019}
+Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory
+  Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, Alban
+  Desmaison, Andreas K{\"o}pf, Edward Yang, Zach DeVito, Martin Raison, Alykhan
+  Tejani, Sasank Chilamkurthy, Benoit Steiner, Lu~Fang, Junjie Bai, and Soumith
+  Chintala.
+\newblock {PyTorch}: An imperative style, high-performance deep learning
+  library.
+\newblock In \emph{Advances in Neural Information Processing Systems 32
+  (NeurIPS)}, pages 8024--8035, 2019.
+
+\bibitem[Pedregosa et~al.(2011)Pedregosa, Varoquaux, Gramfort, Michel, Thirion,
+  Grisel, Blondel, Prettenhofer, Weiss, Dubourg, Vanderplas, Passos,
+  Cournapeau, Brucher, Perrot, and Duchesnay]{pedregosa_scikit-learn_2011}
+Fabian Pedregosa, Ga{\"e}l Varoquaux, Alexandre Gramfort, Vincent Michel,
+  Bertrand Thirion, Olivier Grisel, Mathieu Blondel, Peter Prettenhofer, Ron
+  Weiss, Vincent Dubourg, Jake Vanderplas, Alexandre Passos, David Cournapeau,
+  Matthieu Brucher, Matthieu Perrot, and {\'E}douard Duchesnay.
+\newblock Scikit-learn: Machine learning in {Python}.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830,
+  2011.
+
+\bibitem[Polyak(1964)]{polyak_1964}
+Boris~T. Polyak.
+\newblock Some methods of speeding up the convergence of iteration methods.
+\newblock \emph{USSR Computational Mathematics and Mathematical Physics},
+  4\penalty0 (5):\penalty0 1--17, 1964.
+\newblock \doi{10.1016/0041-5553(64)90137-5}.
+
+\bibitem[Qin et~al.(2024)Qin, Han, et~al.]{qin_hgrn2_2024}
+Zhen Qin, Xu~Han, et~al.
+\newblock Hgrn2: Gated linear rnns with state expansion, 2024.
+\newblock URL \url{https://arxiv.org/abs/2404.07904}.
+
+\bibitem[Qiu et~al.(2025)Qiu, Team, et~al.]{qiu_gated_attention_2025}
+Yuxiang Qiu, Qwen Team, et~al.
+\newblock Gated attention for large language models, 2025.
+\newblock URL \url{https://arxiv.org/abs/2505.06708}.
+
+\bibitem[Ramachandran et~al.(2017)Ramachandran, Zoph, and
+  Le]{ramachandran2017swish}
+Prajit Ramachandran, Barret Zoph, and Quoc~V. Le.
+\newblock Searching for activation functions.
+\newblock In \emph{arXiv preprint arXiv:1710.05941}, 2017.
+
+\bibitem[Ramapuram et~al.()Ramapuram, Danieli, Dhekane, Weers, Busbridge,
+  Ablin, Likhomanenko, Digani, Gu, Shidani, and Webb]{ramapuram_theory_2024}
+Jason Ramapuram, Federico Danieli, Eeshan Dhekane, Floris Weers, Dan Busbridge,
+  Pierre Ablin, Tatiana Likhomanenko, Jagrit Digani, Zijin Gu, Amitis Shidani,
+  and Russ Webb.
+\newblock Theory, analysis, and best practices for sigmoid self-attention.
+\newblock URL \url{https://arxiv.org/abs/2409.04431}.
+\newblock Version Number: 2.
+
+\bibitem[Reimers and Gurevych()]{reimers_sentence-bert_2019}
+Nils Reimers and Iryna Gurevych.
+\newblock Sentence-{BERT}: Sentence embeddings using siamese {BERT}-networks.
+\newblock URL \url{http://arxiv.org/abs/1908.10084}.
+
+\bibitem[Roy et~al.(2019)Roy, Manna, Bagui, et~al.]{roy2019lisht}
+Susmita Roy, Souvik Manna, Subhash Bagui, et~al.
+\newblock {LiSHT}: Non-parametric linearly scaled hyperbolic tangent activation
+  function for neural networks.
+\newblock \emph{arXiv preprint arXiv:1811.05870}, 2019.
+
+\bibitem[Samson()]{samson_lightweight_2026}
+Hema~Hariharan Samson.
+\newblock Lightweight transformer architectures for edge devices in real-time
+  applications.
+\newblock URL \url{http://arxiv.org/abs/2601.03290}.
+
+\bibitem[Shazeer(2020)]{shazeer2020glu}
+Noam Shazeer.
+\newblock {GLU} variants improve transformer.
+\newblock \emph{arXiv preprint arXiv:2002.05202}, 2020.
+
+\bibitem[Shazeer and Stern()]{shazeer_adafactor_2018}
+Noam Shazeer and Mitchell Stern.
+\newblock Adafactor: Adaptive learning rates with sublinear memory cost.
+\newblock URL \url{https://arxiv.org/abs/1804.04235}.
+\newblock Version Number: 1.
+
+\bibitem[Shen et~al.()Shen, Huang, Huang, Shen, and
+  Zhang]{shen_convergence_2025}
+Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
+\newblock On the convergence analysis of muon.
+\newblock URL \url{https://arxiv.org/abs/2505.23737}.
+\newblock Version Number: 1.
+
+\bibitem[Soares et~al.(2024)]{soares_griffin_2024}
+Rafael Soares et~al.
+\newblock Griffin: Mixing gated linear recurrences with local attention for
+  efficient sequence modeling, 2024.
+\newblock URL \url{https://arxiv.org/abs/2402.19427}.
+
+\bibitem[Sun et~al.(2025)Sun, Deng, Jiang, Wu, Zhang, Chen, Ni, and
+  Wang]{sun_gta_2025}
+Luoyang Sun, Cheng Deng, Jiwen Jiang, Xinjian Wu, Haifeng Zhang, Lei Chen,
+  Lionel Ni, and Jun Wang.
+\newblock Gta: Grouped-head latent attention, 2025.
+\newblock URL \url{https://arxiv.org/abs/2506.17286}.
+
+\bibitem[Sun et~al.()Sun, Dong, Huang, Ma, Xia, Xue, Wang, and
+  Wei]{sun_retentive_2023}
+Yutao Sun, Li~Dong, Shaohan Huang, Shuming Ma, Yuqing Xia, Jilong Xue, Jianyong
+  Wang, and Furu Wei.
+\newblock Retentive network: A successor to transformer for large language
+  models.
+\newblock URL \url{https://arxiv.org/abs/2307.08621}.
+\newblock Version Number: 4.
+
+\bibitem[Taniguchi et~al.()Taniguchi, Harada, Minegishi, Oshima, Jeong,
+  Nagahara, Iiyama, Suzuki, Iwasawa, and Matsuo]{taniguchi_adopt_2024}
+Shohei Taniguchi, Keno Harada, Gouki Minegishi, Yuta Oshima, Seong~Cheol Jeong,
+  Go~Nagahara, Tomoshi Iiyama, Masahiro Suzuki, Yusuke Iwasawa, and Yutaka
+  Matsuo.
+\newblock {ADOPT}: Modified adam can converge with any $\beta_2$ with the
+  optimal rate.
+\newblock URL \url{https://arxiv.org/abs/2411.02853}.
+\newblock Version Number: 3.
+
+\bibitem[Trottier et~al.(2017)Trottier, Gigu{\`e}re, and
+  Chaib-draa]{trottier2017pelu}
+Ludovic Trottier, Philippe Gigu{\`e}re, and Brahim Chaib-draa.
+\newblock Parametric exponential linear unit for deep convolutional neural
+  networks.
+\newblock In \emph{Proceedings of the 16th IEEE International Conference on
+  Machine Learning and Applications (ICMLA)}, pages 207--214, 2017.
+\newblock \doi{10.1109/ICMLA.2017.0-133}.
+
+\bibitem[Vaswani et~al.()Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez,
+  Kaiser, and Polosukhin]{vaswani_attention_2017}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+  Aidan~N. Gomez, Lukasz Kaiser, and Illia Polosukhin.
+\newblock Attention is all you need.
+\newblock URL \url{https://arxiv.org/abs/1706.03762}.
+\newblock Version Number: 7.
+
+\bibitem[Vyas et~al.()Vyas, Morwani, Zhao, Kwun, Shapira, Brandfonbrener,
+  Janson, and Kakade]{vyas_soap_2024}
+Nikhil Vyas, Depen Morwani, Rosie Zhao, Mujin Kwun, Itai Shapira, David
+  Brandfonbrener, Lucas Janson, and Sham Kakade.
+\newblock {SOAP}: Improving and stabilizing shampoo using adam.
+\newblock URL \url{https://arxiv.org/abs/2409.11321}.
+\newblock Version Number: 2.
+
+\bibitem[Wang et~al.()Wang, Ma, Dong, Huang, Wang, Ma, Yang, Wang, Wu, and
+  Wei]{wang_bitnet_2023}
+Hongyu Wang, Shuming Ma, Li~Dong, Shaohan Huang, Huaijie Wang, Lingxiao Ma, Fan
+  Yang, Ruiping Wang, Yi~Wu, and Furu Wei.
+\newblock {BitNet}: Scaling 1-bit transformers for large language models.
+\newblock URL \url{http://arxiv.org/abs/2310.11453}.
+
+\bibitem[Wang et~al.(2026)Wang, Liu, et~al.]{wang_fasa_2026}
+Zhe Wang, Ming Liu, et~al.
+\newblock Fasa: Frequency-aware sparse attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2602.03152}.
+
+\bibitem[Wolf et~al.(2020)Wolf, Debut, Sanh, Chaumond, Delangue, Moi, Cistac,
+  Rault, Louf, Funtowicz, Davison, Shleifer, von Platen, Ma, Jernite, Plu, Xu,
+  Le~Scao, Gugger, Drame, Lhoest, and Rush]{wolf_huggingface_2020}
+Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue,
+  Anthony Moi, Pierric Cistac, Tim Rault, R{\'e}mi Louf, Morgan Funtowicz, Joe
+  Davison, Sam Shleifer, Patrick von Platen, Clara Ma, Yacine Jernite, Julien
+  Plu, Canwen Xu, Teven Le~Scao, Sylvain Gugger, Mariama Drame, Quentin Lhoest,
+  and Alexander~M. Rush.
+\newblock Transformers: State-of-the-art natural language processing.
+\newblock In \emph{Proceedings of the 2020 Conference on Empirical Methods in
+  Natural Language Processing: System Demonstrations (EMNLP)}, pages 38--45,
+  2020.
+
+\bibitem[Xie et~al.()Xie, Zhou, Li, Lin, and Yan]{xie_adan_2022}
+Xingyu Xie, Pan Zhou, Huan Li, Zhouchen Lin, and Shuicheng Yan.
+\newblock Adan: Adaptive nesterov momentum algorithm for faster optimizing deep
+  models.
+\newblock URL \url{https://arxiv.org/abs/2208.06677}.
+\newblock Version Number: 5.
+
+\bibitem[Xie et~al.(2025)Xie, Wei, Cao, Zhao, Deng, Li, Dai, Gao, Chang, Yu,
+  Zhao, Zhou, Xu, Zhang, Zeng, Hu, Wang, Yuan, Wang, and Liang]{xie_mhc_2025}
+Zhenda Xie, Yixuan Wei, Huanqi Cao, Chenggang Zhao, Chengqi Deng, Jiashi Li,
+  Damai Dai, Huazuo Gao, Jiang Chang, Kuai Yu, Liang Zhao, Shangyan Zhou, Zhean
+  Xu, Zhengyan Zhang, Wangding Zeng, Shengding Hu, Yuqing Wang, Jingyang Yuan,
+  Lean Wang, and Wenfeng Liang.
+\newblock mhc: Manifold-constrained hyper-connections, 2025.
+\newblock URL \url{https://arxiv.org/abs/2512.24880}.
+
+\bibitem[Yang et~al.(2023)Yang, Wang, et~al.]{yang_gla_2023}
+Songlin Yang, Bailin Wang, et~al.
+\newblock Gated linear attention transformers with hardware-efficient training,
+  2023.
+\newblock URL \url{https://arxiv.org/abs/2312.06635}.
+
+\bibitem[Yang et~al.(2024{\natexlab{a}})Yang, Wang, et~al.]{yang_deltanet_2024}
+Songlin Yang, Bailin Wang, et~al.
+\newblock Parallelizing linear transformers with the delta rule over sequence
+  length, 2024{\natexlab{a}}.
+\newblock URL \url{https://arxiv.org/abs/2406.06484}.
+
+\bibitem[Yang et~al.(2024{\natexlab{b}})Yang, Wang,
+  et~al.]{yang_gated_deltanet_2024}
+Songlin Yang, Bailin Wang, et~al.
+\newblock Gated delta networks: Improving mamba2 with delta rule,
+  2024{\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2412.06464}.
+
+\bibitem[You et~al.()You, Li, Reddi, Hseu, Kumar, Bhojanapalli, Song, Demmel,
+  and Hsieh]{you_largebatch_2020}
+Yang You, Jing Li, Sashank Reddi, Jonathan Hseu, Sanjiv Kumar, Srinadh
+  Bhojanapalli, Xiaodan Song, James Demmel, and Cho-Jui Hsieh.
+\newblock Large batch optimization for deep learning: Training {BERT} in 76
+  minutes.
+\newblock URL \url{https://arxiv.org/abs/1904.00962}.
+\newblock Version Number: 3.
+
+\bibitem[Yuan et~al.(2025)Yuan, DeepSeek-AI, et~al.]{yuan_nsa_2025}
+Han Yuan, DeepSeek-AI, et~al.
+\newblock Native sparse attention: Hardware-aligned and natively trainable
+  sparse attention, 2025.
+\newblock URL \url{https://arxiv.org/abs/2502.11089}.
+
+\bibitem[Yuan et~al.()Yuan, Liu, Wu, Zhou, and Gu]{yuan_mars_2024}
+Huizhuo Yuan, Yifeng Liu, Shuang Wu, Xun Zhou, and Quanquan Gu.
+\newblock {MARS}: Unleashing the power of variance reduction for training large
+  models.
+\newblock URL \url{https://arxiv.org/abs/2411.10438}.
+\newblock Version Number: 4.
+
+\bibitem[Zaheer et~al.(2020)Zaheer, Guruganesh, Dubey, Ainslie, Alberti,
+  Ontanon, Pham, Ravula, Wang, Yang, and Ahmed]{zaheer_bigbird_2020}
+Manzil Zaheer, Guru Guruganesh, Kumar~Avinava Dubey, Joshua Ainslie, Chris
+  Alberti, Santiago Ontanon, Pike Pham, Anirudh Ravula, Qifan Wang, Li~Yang,
+  and Amr Ahmed.
+\newblock Big bird: Transformers for longer sequences.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
+\newblock \doi{10.48550/ARXIV.2007.14062}.
+\newblock URL \url{https://arxiv.org/abs/2007.14062}.
+
+\bibitem[Zhang and Sennrich()]{zhang_root_2019}
+Biao Zhang and Rico Sennrich.
+\newblock {Root Mean Square Layer Normalization}.
+\newblock URL \url{http://arxiv.org/abs/1910.07467}.
+
+\bibitem[Zhang et~al.()Zhang, Zhang, Kong, Wei, and
+  Jiang]{zhang_continuous_2021}
+Jing Zhang, Peng Zhang, Baiwen Kong, Junqiu Wei, and Xin Jiang.
+\newblock Continuous self-attention models with neural {ODE} networks.
+\newblock 35\penalty0 (16):\penalty0 14393--14401.
+\newblock ISSN 2374-3468, 2159-5399.
+\newblock \doi{10.1609/aaai.v35i16.17692}.
+\newblock URL \url{https://ojs.aaai.org/index.php/AAAI/article/view/17692}.
+
+\bibitem[Zhang et~al.(2025)Zhang, Wang, et~al.]{zhang_spargeattn_2025}
+Yichi Zhang, Yizhong Wang, et~al.
+\newblock Accurate and training-free sparse attention accelerating any model
+  inference, 2025.
+\newblock URL \url{https://arxiv.org/abs/2502.18137}.
+
+\bibitem[Zhao et~al.()Zhao, Zhang, Chen, Wang, Anandkumar, and
+  Tian]{zhao_galore_2024}
+Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima Anandkumar, and
+  Yuandong Tian.
+\newblock {GaLore}: Memory-efficient {LLM} training by gradient low-rank
+  projection.
+\newblock URL \url{https://arxiv.org/abs/2403.03507}.
+\newblock Version Number: 2.
+
+\bibitem[Zhu et~al.(2025)Zhu, Zhang, Cong, Liu, Park, Chandra, Long, Pan, Wang,
+  and Lee]{zhu2025apollosgdlikememoryadamwlevel}
+Hanqing Zhu, Zhenyu Zhang, Wenyan Cong, Xi~Liu, Sem Park, Vikas Chandra,
+  Bo~Long, David~Z. Pan, Zhangyang Wang, and Jinwon Lee.
+\newblock Apollo: Sgd-like memory, adamw-level performance, 2025.
+\newblock URL \url{https://arxiv.org/abs/2412.05270}.
+
+\bibitem[Zhu et~al.()Zhu, Chen, He, {LeCun}, and Liu]{zhu_transformers_2025}
+Jiachen Zhu, Xinlei Chen, Kaiming He, Yann {LeCun}, and Zhuang Liu.
+\newblock Transformers without normalization.
+\newblock URL \url{http://arxiv.org/abs/2503.10622}.
+
+\bibitem[Zhu et~al.(2026)Zhu, Fang, Liao, Wang, Cheng, Huang, Chen, Wei, Zeng,
+  Wang, Lin, Li, and Wang]{zhu2026mixtureofdepthsattention}
+Lianghui Zhu, Yuxin Fang, Bencheng Liao, Shijie Wang, Tianheng Cheng, Zilong
+  Huang, Chen Chen, Lai Wei, Yutao Zeng, Ya~Wang, Yi~Lin, Yu~Li, and Xinggang
+  Wang.
+\newblock Mixture-of-depths attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2603.15619}.
+
+\end{thebibliography}
