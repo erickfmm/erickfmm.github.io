@@ -2304,6 +2304,11 @@ function buildConfig() {
   training.optimizer = { optimizer_class: optClass, parameters: optParams };
   config.training = training;
 
+  // Carry through top-level sections not represented by the form (image,
+  // dataset) so vision/ViT presets keep these blocks in the generated YAML.
+  if (configData && configData.image) config.image = configData.image;
+  if (configData && configData.dataset) config.dataset = configData.dataset;
+
   configData = config;
   setFeedback(t('configReady'), 'info');
   return config;
@@ -2850,7 +2855,7 @@ const EXAMPLE_BASE_URL = '/frankestein-transformer/examples/';
 const EXAMPLE_SUB_URL = EXAMPLE_BASE_URL + 'examples/';
 
 const EXAMPLE_FILES_TOP = [
-  'mini.yaml','standard.yaml','standard_hope.yaml','frankenstein.yaml','frankensteindecoder.yaml','tinybert.yaml','embbert.yaml',
+  'mini.yaml','standard.yaml','standard_hope.yaml','frankenstein.yaml','frankensteindecoder.yaml','frankenstein_vit_base.yaml','tinybert.yaml','embbert.yaml',
   'bert_base_uncased.yaml','bert_large_uncased.yaml',
   'modernbert_base.yaml','modernbert_large.yaml','modernbert_continual.yaml','modernbert_sbert.yaml','modernbert_sbert_continual.yaml',
   'gpt1_117m.yaml','gpt2_small.yaml','gpt2_medium.yaml','gpt2_large.yaml','gpt2_xl.yaml',
