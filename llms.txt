@@ -34,7 +34,7 @@ Profesional de Centro de Innovación en el Ministerio de Educación (MINEDUC) de
 
 ### Frankenstein Transformer (⭐ Proyecto Estrella)
 Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers. Permite configurar y entrenar modelos con Mixture of Experts (MoE), BitNet 1.58, Titan Memory y más mediante archivos de configuración YAML/JSON. Diseñada para facilitar la investigación en NLP.
-- **Config Builder (Interactivo)**: https://erickfmm.github.io/frankestein-transformer/index.html
+- **Config Builder (Interactivo)**: https://erickfmm.github.io/frankenstein-transformer/index.html
 - GitHub: https://github.com/erickfmm/transformer-encoder-frankestein
 - Paper oficial: https://jaigp.org/paper/38/markdown
 - Tecnologías: Python, Library, CLI, Config-Driven, Transformers, Research
@@ -126,7 +126,7 @@ Perfil: https://huggingface.co/erickfmm
 
 ## Enlaces Principales
 - Portfolio: https://erickfmm.github.io
-- **Config Builder (Frankestein Transformer)**: https://erickfmm.github.io/frankestein-transformer/index.html
+- **Config Builder (Frankestein Transformer)**: https://erickfmm.github.io/frankenstein-transformer/index.html
 - **ANMetaL (Metaheurísticas y optimización)**: https://erickfmm.github.io/anmetal
 - GitHub: https://github.com/erickfmm (28 repositorios públicos)
 - LinkedIn: https://www.linkedin.com/in/erickfmm/

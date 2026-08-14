@@ -35,7 +35,7 @@ paper/
 
 ## Full rebuild
 
-From this directory (`frankestein-transformer/paper/`):
+From this directory (`frankenstein-transformer/paper/`):
 
 ```bash
 # 1) Compile each language: pdflatex → bibtex → pdflatex → pdflatex
@@ -71,7 +71,7 @@ pandoc /tmp/paper-es-flat.tex -f latex -t html5 \
 
 - TikZ diagrams do not render in the HTML output. The web app already shows a
   banner telling readers to download the PDF for figures and algorithms.
-- The compiled PDFs are also served at `/frankestein-transformer/paper/en.pdf`
+- The compiled PDFs are also served at `/frankenstein-transformer/paper/en.pdf`
   and `es.pdf` (the top-level copies kept in sync with `en/paper.pdf` and
   `es/paper-es.pdf`).
 - Bibtex emits warnings for a few citations not present in the `.bib` files
