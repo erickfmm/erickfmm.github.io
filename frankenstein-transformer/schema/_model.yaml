@@ -33,6 +33,10 @@ properties:
     $ref: "_model/_norm.yaml"
   embedding:
     $ref: "_model/_embedding.yaml"
+  positional_encoding:
+    $ref: "_model/_positional_encoding.yaml#/properties/positional_encoding"
+  positional_encoding_parameters:
+    $ref: "_model/_positional_encoding.yaml#/properties/positional_encoding_parameters"
   attention:
     type: object
     description: |-
@@ -75,6 +79,8 @@ properties:
         $ref: "_model/_attention_sparse.yaml#/properties/sparda"
       engram:
         $ref: "_model/_attention_engram.yaml#/properties/engram"
+      gma:
+        $ref: "_model/_attention_gma.yaml#/properties/gma"
   mhc:
     $ref: "_model/_mhc.yaml"
   residuals:
@@ -108,3 +114,9 @@ properties:
     $ref: "_model/_model_flat.yaml#/properties/ffn_activation"
   ffn_activation_config:
     $ref: "_model/_model_flat.yaml#/properties/ffn_activation_config"
+  classification_head:
+    $ref: "_model/_model_flat.yaml#/properties/classification_head"
+  num_labels:
+    $ref: "_model/_model_flat.yaml#/properties/num_labels"
+  encoder_pooling_mode:
+    $ref: "_model/_model_flat.yaml#/properties/encoder_pooling_mode"
