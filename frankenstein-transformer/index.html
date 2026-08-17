@@ -203,6 +203,7 @@ label .req { color: var(--danger); margin-left: 2px; }
   color: var(--text-muted);
   margin: 2px 0 8px;
   line-height: 1.55;
+  clear: right;
 }
 .desc p { margin: 0 0 6px; }
 .desc p:last-child { margin-bottom: 0; }
@@ -436,7 +437,8 @@ pre {
 .section { margin-bottom: 10px; position: relative; }
 /* Per-field include/exclude toggle. Required fields are locked-on (checked+disabled). */
 .section > .field-include {
-  position: absolute; top: 0; right: 0;
+  float: right;
+  margin-top: 12px;
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 11px; color: var(--text-muted); font-weight: 500;
   cursor: pointer; user-select: none; z-index: 1;
