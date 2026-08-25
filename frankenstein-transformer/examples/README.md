@@ -279,6 +279,14 @@ The `model` block is organized into hierarchical sub-objects: `dims`, `norm`,
 - `ffn_hidden_size`: FFN intermediate dimension.
 - `ffn_activation`: `silu` or `gelu` (or any of the 43 supported activations).
 - `ffn_activation_config`: nested object for learnable/parametric activations.
+- `use_ssmax`: enable Scalable Softmax (SSMax, arXiv:2505.22842), a transversal
+  logit rescale `s·ln(n)` applicable to every `positional_encoding`. Adds
+  `num_heads` learnable scalars (init `ssmax_s_init`). Default `false`.
+- `ssmax_s_init`: initial value for the per-head SSMax scalar `s` (default `1.0`).
+- `bam_learn_mu`: if true, BAM location θ_µ is learnable (default `false`).
+- `bam_theta_init`: initial value for BAM θ_α/θ_β (default `0.0` = Uniform prior).
+- `bam_eps`: BAM numerical-stability floor for `β < 0` (default `1e-5`).
+- `bam_mu_init`: initial value for BAM θ_µ (default `0.0`; used only when `bam_learn_mu=true`).
 
 ### Latent / KV-compression family (model.attention.*)
 
@@ -319,6 +327,17 @@ The `model` block is organized into hierarchical sub-objects: `dims`, `norm`,
 - `model.attention.sparda.block_size`: KV block size for `sparda_attn` (default 128).
 - `model.attention.sparda.topk_blocks`: blocks selected per GQA group (default 16).
 - `model.attention.sparda.forecast_dim`: Forecast projection dim (default 64).
+
+### SSOG — Separable Sum of Gaussians (model.attention.ssog)
+
+- `model.attention.ssog.num_atoms`: Gaussian atoms per head for `ssog_attn` (default 4; each atom is 5 numbers — μy, μx, σy, σx, λ).
+- `model.attention.ssog.lookat`: content-conditioned steering on μ/σ/λ (default true; `false` = fixed content-blind field).
+- `model.attention.ssog.max_offset`: bound on per-token μ travel in grid cells (default 4.0; small grids want 1–2).
+- `model.attention.ssog.cold_init`: start steering gates at ≈0, frozen geometry at init (default true; warm-start loses ~1 pt).
+- `model.attention.ssog.sigma_floor`: minimum atom width in grid cells (default 0.25).
+- `model.attention.ssog.grid_h` / `model.attention.ssog.grid_w`: token grid raster (default: derived from `image_height // patch_size` × `image_width // patch_size`; set explicitly for non-vision grids — `grid_h: 1, grid_w: max_len` gives a 1D positional field).
+- Constraints: `ssog_attn` is encoder-only (`mode: encoder`), sequence length must equal `grid_h * grid_w`, and `frankenstein_vit` configs must use `image.cls_token: false` (with `pooling_mode: gap`).
+- Examples: `configs/examples/vit_ssog_mnist.yaml` (ViT), `configs/examples/es_arch_ssog_adamw.yaml` (1D NLP grid).
 
 ### Manifold-Constrained Hyper-Connections (model.mhc)
 

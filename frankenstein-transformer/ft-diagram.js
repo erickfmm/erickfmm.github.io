@@ -36,7 +36,9 @@ var FTDiagram = (function () {
         ccgqa_attn: { c: 'attn', l: 'Compressed Conv GQA' },
         msa_attn: { c: 'sparse', l: 'MiniMax Sparse Attn' },
         sparda_attn: { c: 'sparse', l: 'SparDA Attn' },
-        kda_attn: { c: 'recur', l: 'Kimi Delta Attn' }
+        kda_attn: { c: 'recur', l: 'Kimi Delta Attn' },
+        gma_attn: { c: 'attn', l: 'Gaussian Mixture Attn' },
+        ssog_attn: { c: 'field', l: 'SSOG Attn' }
     };
 
     var STYLES = {
@@ -46,6 +48,7 @@ var FTDiagram = (function () {
         ode: 'fill:#db61a2,stroke:#bf4b8a,color:#fff',
         sparse: 'fill:#d2991d,stroke:#b07c16,color:#fff',
         eval: 'fill:#f85149,stroke:#da3633,color:#fff',
+        field: 'fill:#39d2c0,stroke:#1e9e8f,color:#04302b',
         emb: 'fill:#39d2c0,stroke:#2ab5a5,color:#fff',
         norm: 'fill:#768390,stroke:#57606a,color:#fff',
         ffn: 'fill:#6e7681,stroke:#484f58,color:#fff',
@@ -173,6 +176,32 @@ var FTDiagram = (function () {
             { n: 'K̃ = kernel(Q,K,h)', c: 'recur', e: 'kernel', from: ['Q,K (kernel proj)', 'bandwidth gate h'] },
             { n: 'V = Wv·x [B,n,H]', c: 'recur', e: 'Wv', from: ['x'] },
             { n: 'O = K̃·V [B,n,H]', c: 'recur', e: 'read', from: ['K̃ = kernel(Q,K,h)', 'V = Wv·x [B,n,H]'] }
+        ],
+        // Gaussian Mixture Attention: probabilistic GMM routing through a
+        // K-slot latent memory (no N x N matrix). O(NK) for fixed K.
+        gma_attn: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'Q = Wq·x [B,nh,dr]', c: 'attn', e: 'Wq', from: ['x'] },
+            { n: 'K = Wk·x [B,nh,dr]', c: 'attn', e: 'Wk', from: ['x'] },
+            { n: 'V = Wv·x [B,nh,dv]', c: 'attn', e: 'Wv', from: ['x'] },
+            { n: 'GMM μ,σ²,α per head [K]', c: 'attn', id: 'gmm' },
+            { n: 'resp_k = α·N(K;μ,σ²)', c: 'attn', e: 'responsibilities', from: ['K = Wk·x [B,nh,dr]', 'GMM μ,σ²,α per head [K]'] },
+            { n: 'M = Σₜ resp_k·V [K,dv]', c: 'attn', e: 'write', from: ['resp_k = α·N(K;μ,σ²)', 'V = Wv·x [B,nh,dv]'] },
+            { n: 'resp_q = α·N(Q;μ,σ²)', c: 'attn', e: 'responsibilities', from: ['Q = Wq·x [B,nh,dr]', 'GMM μ,σ²,α per head [K]'] },
+            { n: 'O = Wo·(resp_q·M) [B,n,H]', c: 'attn', e: 'read', from: ['M = Σₜ resp_k·V [K,dv]', 'resp_q = α·N(Q;μ,σ²)'] }
+        ],
+        // SSOG: separable sum of R Gaussian atoms per head over a 2D token
+        // raster. The N x N matrix never exists; two 1D filter passes per
+        // atom give O(R·N·√N·d). Content steering (lookat) optional.
+        ssog_attn: [
+            { n: 'x [B,gh·gw,H] raster', c: 'field', id: 'x' },
+            { n: 'V = Wv·x [B,gh,gw,nh,hd]', c: 'field', e: 'Wv', from: ['x [B,gh·gw,H] raster'] },
+            { n: 'atoms μ,σ,λ [nh,R,5]', c: 'field', id: 'atoms' },
+            { n: 'probes Δμ,Δσ,λ = W·x', c: 'field', e: 'lookat', from: ['x [B,gh·gw,H] raster'] },
+            { n: 'row pass Σ gauss(col)', c: 'field', e: '1D filter', from: ['V = Wv·x [B,gh,gw,nh,hd]', 'atoms μ,σ,λ [nh,R,5]', 'probes Δμ,Δσ,λ = W·x'] },
+            { n: 'col pass Σ gauss(row)', c: 'field', e: '1D filter', from: ['row pass Σ gauss(col)'] },
+            { n: 'y = field·V [B,n,nh,hd]', c: 'field', e: 'soft(λ,T)', from: ['col pass Σ gauss(row)'] },
+            { n: 'O = Wo·y [B,n,H]', c: 'field', e: 'Wo', from: ['y = field·V [B,n,nh,hd]'] }
         ],
         // Sparse: Q,K,V + mask/selector + blocked scores.
         sparse_transformer_attn: [

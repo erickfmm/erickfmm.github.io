@@ -1,4 +1,4 @@
-\begin{thebibliography}{100}
+\begin{thebibliography}{111}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -57,6 +57,14 @@ Ali Behrouz, Peilin Zhong, and Vahab Mirrokni.
 Iz~Beltagy, Matthew~E. Peters, and Arman Cohan.
 \newblock Longformer: The long-document transformer, 2020.
 \newblock URL \url{https://arxiv.org/abs/2004.05150}.
+
+\bibitem[Bianchessi et~al.()Bianchessi, Aguirre, Barros, and
+  Kupssinsk{\"u}]{bianchessi_bam_2025}
+Arthur~S. Bianchessi, Yasmin~C. Aguirre, Rodrigo~C. Barros, and Lucas~S.
+  Kupssinsk{\"u}.
+\newblock Bayesian attention mechanism: A probabilistic framework for
+  positional encoding and context length extrapolation.
+\newblock URL \url{http://arxiv.org/abs/2505.22842}.
 
 \bibitem[Boissin et~al.()Boissin, Massena, Mamalet, and
   Serrurier]{boissin_turbo-muon_2025}
@@ -142,6 +150,16 @@ Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova.
 \newblock {BERT}: Pre-training of deep bidirectional transformers for language
   understanding.
 \newblock URL \url{http://arxiv.org/abs/1810.04805}.
+
+\bibitem[Dosovitskiy et~al.()Dosovitskiy, Beyer, Kolesnikov, Weissenborn, Zhai,
+  Unterthiner, Dehghani, Minderer, Heigold, Gelly, Uszkoreit, and
+  Houlsby]{dosovitskiy2021vit}
+Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn,
+  Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg
+  Heigold, Sylvain Gelly, Jakob Uszkoreit, and Neil Houlsby.
+\newblock {An Image is Worth 16x16 Words: Transformers for Image Recognition at
+  Scale}.
+\newblock URL \url{http://arxiv.org/abs/2010.11929}.
 
 \bibitem[Dubey et~al.(2021)Dubey, Singh, and Chaudhuri]{dubey2021activations}
 Shiv~Ram Dubey, Satish~Kumar Singh, and Bidyut~Baran Chaudhuri.
@@ -237,11 +255,18 @@ Ali Hatamizadeh, Yejin Choi, and Jan Kautz.
   2026.
 \newblock URL \url{https://arxiv.org/abs/2605.22791}.
 
-\bibitem[He et~al.()He, Zhang, Ren, and Sun]{he_deep_2016}
+\bibitem[He et~al.({\natexlab{a}})He, Chen, Xie, Li, Doll{\'a}r, and
+  Girshick]{he2022mae}
+Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'a}r, and Ross
+  Girshick.
+\newblock {Masked Autoencoders Are Scalable Vision Learners}, {\natexlab{a}}.
+\newblock URL \url{http://arxiv.org/abs/2111.06377}.
+
+\bibitem[He et~al.({\natexlab{b}})He, Zhang, Ren, and Sun]{he_deep_2016}
 Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
 \newblock Deep residual learning for image recognition.
 \newblock In \emph{2016 {IEEE} Conference on Computer Vision and Pattern
-  Recognition ({CVPR})}, pages 770--778. {IEEE}.
+  Recognition ({CVPR})}, pages 770--778. {IEEE}, {\natexlab{b}}.
 \newblock \doi{10.1109/CVPR.2016.90}.
 \newblock URL \url{http://arxiv.org/abs/1512.03385}.
 
@@ -273,6 +298,29 @@ Andrew~G. Howard, Menglong Zhu, Bo~Chen, Dmitry Kalenichenko, Weijun Wang,
 \newblock {MobileNets}: Efficient convolutional neural networks for mobile
   vision applications.
 \newblock In \emph{arXiv preprint arXiv:1704.04861}, 2017.
+
+\bibitem[Huang and Raza(2026)]{huang_gma_2026}
+Yongchao Huang and Hassan Raza.
+\newblock Gaussian mixture attention: Linear-time sequence mixing via
+  probabilistic latent routing, 2026.
+\newblock URL \url{https://arxiv.org/abs/2606.18283}.
+
+\bibitem[Kazemnejad et~al.()Kazemnejad, Padhi, Natesan~Ramamurthy, Das, and
+  Reddy]{kazemnejad_nope_2023}
+Amirhossein Kazemnejad, Inkit Padhi, Karthikeyan Natesan~Ramamurthy, Payel Das,
+  and Siva Reddy.
+\newblock The impact of positional encoding on length generalization in
+  transformers.
+\newblock URL \url{http://arxiv.org/abs/2305.19466}.
+
+\bibitem[Kerssies et~al.()Kerssies, Sartenaer, Ferraro, da~Silva, Maan, Galon,
+  Nagrani, Beeler, Twardowski, van~de Weijer, Dangovski, and
+  Berton]{kerssies2025eomt}
+Daan Kerssies, Quentin Sartenaer, Fabio Ferraro, Gabriel~Y. da~Silva,
+  Harkanwarpreet Maan, Matthieu Galon, Arsha Nagrani, Nathan Beeler, Bartlomiej
+  Twardowski, Joost van~de Weijer, Robert Dangovski, and Luca Berton.
+\newblock {Your ViT is Secretly an Image Segmentation Model}.
+\newblock URL \url{http://arxiv.org/abs/2503.19108}.
 
 \bibitem[Khosla et~al.(2020)Khosla, Teterwak, Wang, Sarna, Tian, Isola,
   Maschinot, Liu, and Krishnan]{chen_supervised_2020}
@@ -419,6 +467,15 @@ Vinod Nair and Geoffrey~E. Hinton.
 \newblock In \emph{Proceedings of the 27th International Conference on Machine
   Learning (ICML)}, pages 807--814, 2010.
 
+\bibitem[{\O}hrstr{\o}m et~al.(){\O}hrstr{\o}m, Cabral~Muchacho, Dong,
+  Moumtzidellis, G{\"u}ldenring, Pokorny, and Nalpantidis]{ohrstrom_pape_2026}
+Christoffer~Koo {\O}hrstr{\o}m, Rafael~I. Cabral~Muchacho, Yifei Dong, Filippos
+  Moumtzidellis, Ronja G{\"u}ldenring, Florian~T. Pokorny, and Lazaros
+  Nalpantidis.
+\newblock Parabolic position encoding: Vision-centric, principled,
+  extrapolatable, general.
+\newblock URL \url{http://arxiv.org/abs/2602.01418}.
+
 \bibitem[Pagliardini et~al.()Pagliardini, Ablin, and
   Grangier]{pagliardini_ademamix_2024}
 Matteo Pagliardini, Pierre Ablin, and David Grangier.
@@ -450,12 +507,25 @@ Fabian Pedregosa, Ga{\"e}l Varoquaux, Alexandre Gramfort, Vincent Michel,
 \newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830,
   2011.
 
+\bibitem[Pisoni(2026)]{pisoni_ssog_2026}
+Raphael Pisoni.
+\newblock A few gaussians is all you need: Ssog-attention that steers instead
+  of scores, 2026.
+\newblock URL \url{https://www.pisoni.ai/posts/ssog/}.
+\newblock Reference implementation: \url{https://github.com/4rtemi5/ssog}.
+
 \bibitem[Polyak(1964)]{polyak_1964}
 Boris~T. Polyak.
 \newblock Some methods of speeding up the convergence of iteration methods.
 \newblock \emph{USSR Computational Mathematics and Mathematical Physics},
   4\penalty0 (5):\penalty0 1--17, 1964.
 \newblock \doi{10.1016/0041-5553(64)90137-5}.
+
+\bibitem[Press et~al.()Press, Smith, and Lewis]{press_alibi_2022}
+Ofir Press, Noah~A. Smith, and Mike Lewis.
+\newblock Train short, test long: Attention with linear biases enables input
+  length extrapolation.
+\newblock URL \url{http://arxiv.org/abs/2108.12409}.
 
 \bibitem[Qin et~al.(2024)Qin, Han, et~al.]{qin_hgrn2_2024}
 Zhen Qin, Xu~Han, et~al.
@@ -523,6 +593,11 @@ Rafael Soares et~al.
   efficient sequence modeling, 2024.
 \newblock URL \url{https://arxiv.org/abs/2402.19427}.
 
+\bibitem[Su et~al.()Su, Lu, Pan, Murtadha, Wen, and Liu]{su_rope_2024}
+Jianlin Su, Yu~Lu, Shengfeng Pan, Ahmed Murtadha, Bo~Wen, and Yunfeng Liu.
+\newblock {RoFormer}: Enhanced transformer with rotary position embedding.
+\newblock URL \url{http://arxiv.org/abs/2104.09864}.
+
 \bibitem[Sun et~al.(2025)Sun, Deng, Jiang, Wu, Zhang, Chen, Ni, and
   Wang]{sun_gta_2025}
 Luoyang Sun, Cheng Deng, Jiwen Jiang, Xinjian Wu, Haifeng Zhang, Lei Chen,
@@ -530,14 +605,19 @@ Luoyang Sun, Cheng Deng, Jiwen Jiang, Xinjian Wu, Haifeng Zhang, Lei Chen,
 \newblock Gta: Grouped-head latent attention, 2025.
 \newblock URL \url{https://arxiv.org/abs/2506.17286}.
 
-\bibitem[Sun et~al.()Sun, Dong, Huang, Ma, Xia, Xue, Wang, and
+\bibitem[Sun et~al.({\natexlab{a}})Sun, Dong, Huang, Ma, Xia, Xue, Wang, and
   Wei]{sun_retentive_2023}
 Yutao Sun, Li~Dong, Shaohan Huang, Shuming Ma, Yuqing Xia, Jilong Xue, Jianyong
   Wang, and Furu Wei.
 \newblock Retentive network: A successor to transformer for large language
-  models.
+  models, {\natexlab{a}}.
 \newblock URL \url{https://arxiv.org/abs/2307.08621}.
 \newblock Version Number: 4.
+
+\bibitem[Sun et~al.({\natexlab{b}})]{sun_attnres_2026}
+Yutao Sun et~al.
+\newblock Attention residuals, {\natexlab{b}}.
+\newblock URL \url{http://arxiv.org/abs/2603.15031}.
 
 \bibitem[Taniguchi et~al.()Taniguchi, Harada, Minegishi, Oshima, Jeong,
   Nagahara, Iiyama, Suzuki, Iwasawa, and Matsuo]{taniguchi_adopt_2024}
