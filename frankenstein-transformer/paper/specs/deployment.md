@@ -10,6 +10,37 @@ Trained checkpoint → Weight packing (ternary / low-bit) → Activation scaling
 
 The codebase treats quantization as a deploy-stage transformation rather than a separate model family. The pipeline is accessed via the `deploy` and `quantize` CLI subcommands.
 
+### End-to-end walkthrough
+
+Here is a full deploy → infer round trip using a quantized BitNet model:
+
+```bash
+# 1. Deploy the trained checkpoint to a quantized artifact
+frankenstein-transformer deploy \
+  --checkpoint checkpoints/model.pt \
+  --output ./deployed \
+  --format quantized \
+  --config my_experiment.yaml \
+  --validate
+
+# 2. Inspect what was produced
+ls -la ./deployed
+# config.json            model_quantized.pt     deployment_info.json
+
+# 3. Run a single-text inference
+frankenstein-transformer infer \
+  --model ./deployed \
+  --text "El modelo funciona correctamente"
+
+# 4. Batch-infer a file and write JSON results
+frankenstein-transformer infer \
+  --model ./deployed \
+  --input texts.txt --output results.json --batch-size 8
+```
+
+The same checkpoint can be deployed in standard (FP32) format for maximum
+fidelity, or exported to HuggingFace / GGUF for other runtimes.
+
 ## Quantization Methods
 
 ### Ternary Weight Packing (BitNet b1.58)
@@ -39,7 +70,7 @@ automatically honours the schema flags:
 
 | Schema flag | Default | What it controls |
 |---|---|---|
-| `use_bitnet` | `true` (UltraConfig) / `false` (example) | Q/K/V/O, FFN up/down, embeddings `proj`, LM head, and all recurrent-state **gates** (alpha/beta/forget/erase/write/merge/gk) → `BitLinear` |
+| `use_bitnet` | `true` (FrankensteinModelConfig) / `false` (example) | Q/K/V/O, FFN up/down, embeddings `proj`, LM head, and all recurrent-state **gates** (alpha/beta/forget/erase/write/merge/gk) → `BitLinear` |
 | `bitnet_routers` | `false` | When `true`, also quantizes routing/scoring: MoE router, MoD router, sparse block-index/forecast, top-k score nets. Default `false` keeps them full-precision for routing stability |
 | `use_bitnet_conv` | `false` | When `true` (and `use_embedding_conv`), replaces the embedding `Conv1d` with `BitConv1d`. Off by default; the conv runs over the reduced embedding stream where ternary noise can be costly |
 
@@ -120,8 +151,8 @@ The `quantize` subcommand is a convenience wrapper that calls `deploy` with `--f
 
 ```bash
 # These are equivalent:
-frankestein-transformer quantize --checkpoint model.pt --output ./out
-frankestein-transformer deploy --checkpoint model.pt --output ./out --format quantized
+frankenstein-transformer quantize --checkpoint model.pt --output ./out
+frankenstein-transformer deploy --checkpoint model.pt --output ./out --format quantized
 ```
 
 ## Validation
@@ -130,6 +161,20 @@ The `--validate` flag on `deploy`/`quantize` runs a forward pass with the quanti
 - Output tensor shapes match expectations
 - No NaN/Inf in activations
 - Numerical consistency within tolerance vs FP32 reference
+
+### If validation fails
+
+`--validate` does not corrupt your source checkpoint — it only reports
+problems. If it fails, the usual causes and fixes are:
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| NaN/Inf in activations | The checkpoint was still being trained (STE master weights not stable) or the architecture is incompatible | Finish training first; re-export without `--validate` to inspect artifacts |
+| Shape mismatch | `vocab_size` differs from the tokenizer, or the config used to deploy differs from training | Re-deploy with the **same** YAML used for training |
+| Numeric drift beyond tolerance | Extreme quantization on a sensitive architecture | Use `--format standard`, or disable BitNet on routing layers |
+
+Re-deploying with the correct source config resolves most failures; the
+source `.pt` checkpoint is always left untouched.
 
 ## HuggingFace Transformers Export
 
@@ -162,7 +207,7 @@ When `use_bitnet: true`, the export additionally:
    (routing/scoring projections remain full-precision — the recommended
    default for routing stability).
 
-The generated `modeling_frankestein.py` rebuilds `BitLinear`/`BitConv1d` from
+The generated `modeling_frankenstein.py` rebuilds `BitLinear`/`BitConv1d` from
 source and applies runtime quantization via STE on load, so the exported
 model is loadable with `trust_remote_code=True` and produces ternary-aware
 forward passes. Encoder (MLM) and decoder (causal) variants are both
@@ -180,7 +225,7 @@ quantization type (ternary `{-1, 0, 1}` weights + per-tensor fp scale).
 
 bitnet.cpp only supports architectures registered in llama.cpp (Llama,
 Falcon3, Falcon-E, and the official BitNet b1.58 models). The Frankenstein
-**hybrid** model (33 mixer families, custom code) **cannot run in
+**hybrid** model (36 mixer families, custom code) **cannot run in
 bitnet.cpp** because its compute graph is not registered. Therefore the GGUF
 exporter only accepts models configured with a **single mixer type
 `standard_attn`** (pure encoder or decoder), whose attention/FFN graph maps
@@ -189,10 +234,10 @@ to the Llama-style tensor naming. Any other `layer_pattern` (e.g.
 
 ```bash
 # Compatibility check (returns is_compatible + reason)
-frankestein-transformer bitnet-gguf --yaml cfg.yaml --output out.gguf --check
+frankenstein-transformer bitnet-gguf --yaml cfg.yaml --output out.gguf --check
 
 # Export a standard_attn-only BitNet model to i2_s GGUF
-frankestein-transformer bitnet-gguf --model ckpt.pt --yaml cfg.yaml --output out.gguf
+frankenstein-transformer bitnet-gguf --model ckpt.pt --yaml cfg.yaml --output out.gguf
 ```
 
 The writer is a self-contained GGUF v3 emitter (no dependency on the

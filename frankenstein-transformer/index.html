@@ -2345,9 +2345,11 @@ function updateParamEstimate() {
       '<li>Attention: <span>' + FTParamEstimator.format(b.attention||0) + '</span></li>' +
       '<li>FFN: <span>' + FTParamEstimator.format(b.ffn||0) + '</span></li>' +
       '<li>Norm: <span>' + FTParamEstimator.format(b.norm||0) + '</span></li>' +
+      '<li>Positional: <span>' + FTParamEstimator.format(b.pos||0) + '</span></li>' +
       '<li>Head: <span>' + FTParamEstimator.format(b.head||0) + '</span></li>' +
       (b.mhc ? '<li>mHC: <span>' + FTParamEstimator.format(b.mhc) + '</span></li>' : '') +
       (b.router ? '<li>Router: <span>' + FTParamEstimator.format(b.router) + '</span></li>' : '') +
+      (b.residual ? '<li>AttnRes: <span>' + FTParamEstimator.format(b.residual) + '</span></li>' : '') +
     '</ul></details>';
 }
 
@@ -2866,7 +2868,32 @@ const EXAMPLE_FILES_TOP = [
   'deepseek_v2.yaml','deepseek_v3.yaml','kimi_k2.yaml','minimax_text01.yaml'
 ];
 
-const EXAMPLE_FILES_SUB = [];
+// Newer presets under examples/examples/ (mirrored from
+// transformer-encoder-frankestein/configs/examples/).
+const EXAMPLE_FILES_SUB = [
+  'activation_mish_pre_adamw.yaml','activation_raf_adamw.yaml','activation_swiglu_adamw.yaml','bitnet_decoder.yaml',
+  'block_attn_res_adamw.yaml','causal_lm_decoder.yaml','decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml',
+  'decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml','es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml',
+  'es_arch_bitnet_factorized_mars_adamw.yaml','es_arch_cca_adamw.yaml','es_arch_ccgqa_adamw.yaml','es_arch_gated_deltanet2_lion.yaml',
+  'es_arch_gla_deltanet_lion.yaml','es_arch_gma_adamw.yaml','es_arch_gqa_adamw.yaml','es_arch_gqla_adamw.yaml',
+  'es_arch_gta_adamw.yaml','es_arch_hgrn2_fox_gated_softmax_adamw.yaml','es_arch_hybrid_turbo_muon.yaml','es_arch_iha_adamw.yaml',
+  'es_arch_kda_adamw.yaml','es_arch_mhc_adamw.yaml','es_arch_mini_cautious_adamw.yaml','es_arch_mla_adamw.yaml',
+  'es_arch_mlra_adamw.yaml','es_arch_moe_titan_ademamix.yaml','es_arch_msa_adamw.yaml','es_arch_mtla_adamw.yaml',
+  'es_arch_nsa_retnet_radam.yaml','es_arch_sigmoid_derf_muon.yaml','es_arch_sparda_adamw.yaml','es_arch_sparse_longformer_adamw.yaml',
+  'es_arch_ssog_adamw.yaml','es_arch_standard_layer_norm_prodigy.yaml','es_arch_standard_sigmoid_adopt.yaml','es_arch_titan_dynamic_tanh_sgd_momentum.yaml',
+  'es_arch_titan_hope_adan.yaml','es_arch_tucker_adamw.yaml','es_mlm_albert_sophia.yaml','es_mlm_bertin_apollo.yaml',
+  'es_mlm_bertin_lion.yaml','es_mlm_beto_adamw.yaml','es_mlm_deberta_soap.yaml','es_mlm_distilmbert_lamb.yaml',
+  'es_mlm_maria_roberta_adafactor.yaml','es_mlm_mbert_apollo_mini.yaml','es_mlm_mbert_schedulefree_adamw.yaml','es_mlm_mdeberta_shampoo.yaml',
+  'es_mlm_modernbert_galore_adamw.yaml','es_mlm_modernbert_q_apollo.yaml','es_mlm_xlmr_radam.yaml','es_sbert_bertin_cls.yaml',
+  'es_sbert_beto_mean.yaml','es_sbert_maria_max.yaml','es_sbert_modernbert_mean.yaml','es_sbert_xlmr_mean.yaml',
+  'full_attn_res_adamw.yaml','mhc_full_attn_res_adamw.yaml','norm_flashnorm.yaml','pe_alibi_ssmax.yaml',
+  'pe_alibi.yaml','pe_bam_ssmax.yaml','pe_bam.yaml','pe_hope.yaml',
+  'pe_learned_absolute.yaml','pe_mixed_use_pe.yaml','pe_nope.yaml','pe_pape_efficient.yaml',
+  'pe_pape_ri.yaml','pe_pape.yaml','pe_rope.yaml','pe_sinusoidal_absolute.yaml',
+  'pe_sinusoidal_rotary.yaml','prms_norm_adamw.yaml','rms_norm_adamw.yaml','vit_classification_adamw.yaml',
+  'vit_gma_mnist.yaml','vit_patch_prediction_adamw.yaml','vit_segmentation_eomt_adamw.yaml','vit_segmentation_pixel_adamw.yaml',
+  'vit_ssog_mnist.yaml'
+];
 
 function populateRepoExamples() {
   const sel = document.getElementById('repo-examples-select');

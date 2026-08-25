@@ -4,19 +4,50 @@
 
 ## Taxonomy Overview
 
-The system implements **20 sequence mixer architectures** organized into five functional categories, with two additional latent attention variants documented for reference. The taxonomy figure from the paper:
+The system implements **38 sequence mixer architectures** (the full
+`layer_pattern` enum) organized into six functional categories. The taxonomy
+figure from the paper:
 
 ```
-Sequence Mixer Registry (20 variants)
+Sequence Mixer Registry (38 variants)
 ├── Dense (2): standard_attn, sigmoid_attn
 ├── GQA (1): gqa_attn
-├── Recurrent (5): retnet/retnet_attn, mamba, ode, titan_attn, engram_attn
-├── Sparse (7): sparse_transformer_attn, longformer_attn, bigbird_attn,
-│                sparsek_attn, nsa_attn, sparge_attn, fasa_attn
-├── Gated (6): gla_attn, deltanet_attn, gated_deltanet_attn,
-│              hgrn2_attn, fox_attn, gated_softmax_attn
-└── Latent (documented): cca_attn, ccgqa_attn
+├── Recurrent / Retentive (6): retnet/retnet_attn, mamba, ode, titan_attn,
+│                               engram_attn
+├── Sparse (9): sparse_transformer_attn, longformer_attn, bigbird_attn,
+│               sparsek_attn, nsa_attn, sparge_attn, fasa_attn, msa_attn,
+│               sparda_attn
+├── Gated (8): gla_attn, deltanet_attn, gated_deltanet_attn,
+│              gated_deltanet2_attn, hgrn2_attn, fox_attn, gated_softmax_attn,
+│              kda_attn
+├── Latent / KV-compression (10): mla_attn, gqla_attn, mlra_attn, tucker_attn,
+│                                  iha_attn, gta_attn, mtla_attn, cca_attn,
+│                                  ccgqa_attn, gma_attn
+└── Geometric Field (1): ssog_attn
 ```
+
+> The detailed per-mixer attribute tables below cover the most commonly used
+> and best-documented families. The authoritative list of all 38 names is the
+> `layer_pattern` enum in `src/schema/_model/_dims.yaml`.
+
+### How to pick a mixer (plain English)
+
+The core question is: **how much context do you need, and how much
+memory/speed budget do you have?**
+
+| Your situation | Suggested mixers |
+|---|---|
+| Standard-length text, max quality | `standard_attn`, `sigmoid_attn`, `gqa_attn` |
+| Very long sequences, tight memory | `retnet`, `mamba`, `gla_attn`, `deltanet_attn` |
+| Linear training + constant inference | `mamba`, `retnet`, `gated` family |
+| >1M-token context / associative recall | `titan_attn`, `engram_attn` |
+| Long-context but want softmax quality | `longformer_attn`, `bigbird_attn`, `nsa_attn`, `sparsek_attn` |
+| Shrink KV cache / params in latent space | `mla_attn`, `cca_attn`, `ccgqa_attn`, `gma_attn` |
+| Vision / grid data, or small-data geometric prior | `ssog_attn` (encoder-only; needs a `grid_h × grid_w` row-major raster) |
+| Inference-only speedup (no training) | `sparge_attn`, `fasa_attn` (eval-only) |
+
+You can mix families freely within a `layer_pattern` — the dispatcher routes
+each position independently.
 
 ## Training-Free Policy
 
@@ -62,7 +93,7 @@ Sequence Mixer Registry (20 variants)
 | Pros | Quality close to MHA with speed almost matching MQA; reduces KV-cache memory by num_heads/num_kv_heads × ; can be uptrained from MHA checkpoints via mean-pooling |
 | Cons | Still O(n²) quadratic; KV cache larger than pure MQA; optimal group count is model-size dependent |
 
-## Recurrent and Retentive Architectures (5)
+## Recurrent and Retentive Architectures (6)
 
 ### `retnet` / `retnet_attn` — Retentive Network
 
@@ -124,7 +155,7 @@ Sequence Mixer Registry (20 variants)
 | Pros | New axis of sparsity; constant-time context retrieval; complementary to attention |
 | Cons | Hash collisions; embedding table count grows quadratically with max N-gram size |
 
-## Sparse Attention Patterns (7)
+## Sparse Attention Patterns (9)
 
 ### Sparse Attention Design Strategies
 
@@ -219,7 +250,7 @@ Token sequence
 | Pros | Near-oracle accuracy with ≤256 tokens; 2.56× speedup; 8× KV cache compression |
 | Cons | Requires RoPE-based models; offline calibration step needed |
 
-## Gated Attention Mechanisms (6)
+## Gated Attention Mechanisms (8)
 
 ### Generic Gating Template
 
@@ -301,7 +332,7 @@ Previous state S_{t−1} → Gate(s) α_t, β_t, G_t, f_t → New key/value or S
 | Pros | Eliminates attention sink; improves training stability; <2% latency overhead; drop-in improvement |
 | Cons | Still O(n²) quadratic; marginal benefit for short-context tasks |
 
-## Latent Attention Mechanisms (2)
+## Latent Attention Mechanisms (10)
 
 ### `cca_attn` — Compressed Convolutional Attention
 
@@ -328,6 +359,40 @@ Previous state S_{t−1} → Gate(s) α_t, β_t, G_t, f_t → New key/value or S
 | Config Knobs | `query_compression` (C₁), `kv_compression` (C₂), `num_kv_heads` (must satisfy C₂/C₁ = num_heads/num_kv_heads), `cca_qk_mean`, `cca_value_shift`, `cca_learnable_temp`, `cca_conv_kernel_size`, `cca_conv_groups` |
 | Pros | Decoupled compression; smooth Pareto; same arithmetic intensity as GQA; best loss at 8× cache reduction |
 | Cons | Still quadratic in S²; fused kernel required; C₂/C₁ ratio constraint on num_heads/num_kv_heads |
+
+### `gma_attn` — Gaussian Mixture Attention
+
+| Attribute | Value |
+|---|---|
+| Paper | Huang & Raza (2026) — arXiv:2606.18283 |
+| Core Equation | Γ^Q, Γ^K = posterior responsibilities over K learned Gaussian components; Ṽ = (Γ^K)ᵀ V_X; Z = (Γ^K)ᵀ 1_N; O = Γ^Q Ṽ / (Γ^Q Z + ε); causal via prefix cumsums |
+| Training Complexity | O(NKd_r + NKd_v) — linear in sequence length N for fixed K |
+| Inference Complexity | O(K) per step, O(NK) activation storage |
+| Key Characteristics | Replaces pairwise QKᵀ with probabilistic routing through K per-head Gaussian-mixture components (means μ, diagonal covariances σ²=softplus(ω)+ε_σ, priors π=softmax(α)); writes values into a K-slot latent memory via key responsibilities, reads via query responsibilities; implicit normalised affinity A^GMA = diag(d)⁻¹ Γ^Q (Γ^K)ᵀ never materialised; bidirectional + causal variants; fully differentiable GMM params (no EM loop) |
+| Config Knobs | `num_components` (K ≥ 1), `routing_dim` (d_r, default head_dim), `epsilon` (read normalizer ε > 0), `sigma_eps` (covariance floor ε_σ > 0), `init_mean_std` (μ init std) |
+| Pros | Fixed-K linear-time sequence mixing; probabilistic interpretable routing; non-negative low-rank affinity; bidirectional + causal |
+| Cons | Quality depends on K and d_r; causal GMA trails optimised SDPA and state-space models on WikiText-103 in the paper; not a universal softmax-attention replacement |
+
+## Geometric Field Attention (1)
+
+### `ssog_attn` — SSOG (Separable Sum of Gaussians)
+
+| Attribute | Value |
+|---|---|
+| Paper | Pisoni (2026) — https://www.pisoni.ai/posts/ssog/ |
+| Core Equation | A(p,q) = softmax_q(τ⁻¹ · logsumexp_r(log λ_r + log N(p−q; μ_r, σ_r))); applied as two 1D softmaxed kernel passes per atom (rows × columns) + λ-mix; steering: μ←μ₀+s_μ·max_offset·tanh(W_μx), σ←σ₀·e^{s_σ tanh(W_σx)}, λ←softmax(log λ₀+s_λ tanh(W_λx)) |
+| Training Complexity | O(R·N·√N·d) for R atoms — the N×N matrix never exists |
+| Inference Complexity | O(R·N·√N·d) per forward (no KV cache semantics; encoder-only) |
+| Key Characteristics | No Q/K projections (2d² instead of 4d² per layer); each head owns R Gaussian atoms over *relative position* (5 numbers per atom: μy, μx, σy, σx, λ); same shared field for every input; content only *steers* via zero-init probes behind cold-started softplus gates (softplus(−8) ≈ 3e-4); geometry is the positional encoding (no PE consumed); field lives on coordinates → zero-shot resolution transfer; `grid_h=1` degenerates to a 1D positional field for sequences |
+| Config Knobs | `num_atoms` (R ≥ 1, default 4), `lookat` (bool, default true), `max_offset` (cells, default 4.0), `cold_init` (bool, default true), `sigma_floor` (default 0.25), `grid_h`/`grid_w` (default: derived from image/patch size; set explicitly for non-vision grids) |
+| Pros | Near-linear cost by geometry alone; +17 pts over SDPA on small data (CIFAR-100, matched recipe); beats SDPA on ImageNet-1k at 12M params while 20% smaller / 30% cheaper; fully interpretable (each head is a few plottable blobs); free zero-shot resolution transfer |
+| Cons | Encoder-only (no causal formulation); requires a fixed `grid_h × grid_w` raster (ViT needs `cls_token: false`; NLP needs an explicit 1×L grid); per-query steering kernels add memory in the steered path; language results unproven (content scoring is likely load-bearing there) |
+
+**Constraints** (enforced at config load and runtime):
+- `model.dims.mode` must be `encoder` (`ssog_attn` + decoder raises).
+- Sequence length must equal `grid_h * grid_w` (clear error otherwise).
+- With `frankenstein_vit`: `image.cls_token: false` (a prepended [CLS]
+  token breaks the raster); use `pooling_mode: gap` for pooling.
 
 ## Comprehensive Comparison Table
 
@@ -356,3 +421,48 @@ Previous state S_{t−1} → Gate(s) α_t, β_t, G_t, f_t → New key/value or S
 | `gated_softmax_attn` | Gated | O(n²d) | O(n)/step | Yes | Post-SDPA sigmoid gating |
 | `cca_attn` | Latent | O(n²d/C) | O(n)/step | Yes | Latent-space attention, C× FLOP reduction |
 | `ccgqa_attn` | Latent | O(n²d/C₁) | O(n)/step | Yes | Decoupled latent compression + GQA head sharing |
+| `gma_attn` | Latent | O(nKd_r+nKd_v) | O(K)/step | Yes | Probabilistic Gaussian-mixture routing, linear-time for fixed K |
+| `ssog_attn` | Geometric field | O(R·n√n·d) | O(R·n√n·d)/forward | Yes | Separable Gaussian field; content steers, never scores |
+
+## Config knobs and example assembly
+
+Mixers are selected by name in `layer_pattern` and tuned by per-mixer config
+keys that live under `model.attention.<mixer>`. Here is a small reference for
+the most common knobs (see [Schema Reference](schema-reference.md) for the
+full list):
+
+| Mixer | Example config keys |
+|---|---|
+| `gqa_attn` | `num_kv_heads` |
+| `retnet` / `retnet_attn` | `retention_heads`, `retnet_chunk_size` |
+| `titan_attn` | `positional_encoding` (`rope`/`hope`), RoPE/HoPE base |
+| `ode` | `ode_solver` (`rk4`/`euler`), `ode_steps` |
+| `engram_attn` | `engram_max_ngram_size`, `engram_n_heads_per_ngram`, `engram_embed_dim_per_head`, `engram_kernel_size` |
+| `sparsek_attn` | `sparsek_k` |
+| `longformer_attn` | window size |
+| `cca_attn` | `compression_factor`, `cca_qk_mean`, `cca_value_shift`, `cca_learnable_temp`, `cca_conv_kernel_size`, `cca_conv_groups` |
+| `ccgqa_attn` | `query_compression`, `kv_compression`, `num_kv_heads`, CCA flags |
+| `ssog_attn` | `num_atoms`, `lookat`, `max_offset`, `cold_init`, `sigma_floor`, `grid_h`, `grid_w` |
+
+### Building a hybrid network
+
+You can combine a dense baseline, a linear-recurrent mixer, and a sparse
+mixer in one model. For a 4-layer encoder:
+
+```yaml
+model:
+  dims:
+    num_layers: 4
+    hidden_size: 512
+    num_heads: 8
+    layer_pattern:
+      - standard_attn   # full attention at the bottom
+      - gla_attn        # linear gated attention for long-range
+      - longformer_attn # windowed attention to keep memory low
+      - standard_attn   # full attention near the head
+  attention:
+    gqa_attn:
+      num_kv_heads: 4   # (only applies to gqa_attn layers)
+```
+
+Every position reads its own mixer class, so per-layer mixing is trivial.

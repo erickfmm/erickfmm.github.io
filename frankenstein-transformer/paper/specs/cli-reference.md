@@ -5,7 +5,7 @@
 ## Entrypoint
 
 ```
-frankestein-transformer <subcommand> [flags]
+frankenstein-transformer <subcommand> [flags]
 ```
 
 ## Subcommand Overview
@@ -13,7 +13,6 @@ frankestein-transformer <subcommand> [flags]
 | Subcommand | Purpose |
 |---|---|
 | `train` | Run main MLM/decoder training |
-| `finetune` | Fine-tune a pretrained model |
 | `deploy` | Convert checkpoint to deployment artifacts |
 | `quantize` | Export checkpoint in quantized format |
 | `infer` | Run deployed model inference |
@@ -21,6 +20,19 @@ frankestein-transformer <subcommand> [flags]
 | `sbert-infer` | Run SBERT inference (similarity/search/cluster/encode) |
 | `web-server` | Launch Streamlit configuration builder |
 | `transformers-export` | Export checkpoint + YAML to HuggingFace Transformers format |
+| `bitnet-gguf` | Export a BitNet model to GGUF (i2_s) for bitnet.cpp |
+
+### Global flags
+
+Every subcommand accepts the standard Python argparse flags:
+
+| Flag | Description |
+|---|---|
+| `--help` / `-h` | Show the subcommand's help and exit |
+| `--version` | Print the version and exit (where supported) |
+
+Run `frankenstein-transformer <subcommand> --help` to see the exact flags and
+defaults for that subcommand.
 
 ## Device Choices
 
@@ -38,10 +50,10 @@ All subcommands that involve model computation accept `--device`:
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--config` | string | — | Path to custom YAML config file |
-| `--config-name` | string | `mini` | Named preset from `configs/` directory |
+| `--config-name` | string | `frankenstein` | Named preset from `configs/` directory |
 | `--list-configs` | flag | — | List available config presets and exit |
 | `--batch-size` | int | — | Override config batch size |
-| `--model-mode` | choice | — | Override model class: `frankenstein`, `mini`, `frankesteindecoder` |
+| `--model-mode` | choice | — | Override model class: `frankenstein`, `frankensteindecoder` |
 | `--device` | choice | `auto` | `auto`, `cpu`, `cuda`, `mps` |
 | `--gpu-temp-guard` / `--no-gpu-temp-guard` | flag | — | Enable/disable GPU thermal guard |
 | `--gpu-temp-pause-threshold-c` | float | — | Temperature to pause training (°C) |
@@ -54,17 +66,17 @@ All subcommands that involve model computation accept `--device`:
 ### Examples
 
 ```bash
-# Train with default mini preset
-frankestein-transformer train
+# Train with default frankenstein preset
+frankenstein-transformer train
 
 # Train with custom config
-frankestein-transformer train --config my_experiment.yaml
+frankenstein-transformer train --config my_experiment.yaml
 
 # Train with GPU thermal guard
-frankestein-transformer train --config-name frankenstein --gpu-temp-guard --gpu-temp-pause-threshold-c 80
+frankenstein-transformer train --config-name frankenstein --gpu-temp-guard --gpu-temp-pause-threshold-c 80
 
 # List available presets
-frankestein-transformer train --list-configs
+frankenstein-transformer train --list-configs
 ```
 
 ## `deploy` — Deployment Artifact Creation
@@ -83,8 +95,8 @@ frankestein-transformer train --list-configs
 ### Examples
 
 ```bash
-frankestein-transformer deploy --checkpoint checkpoints/model.pt --output ./deployed
-frankestein-transformer deploy --checkpoint checkpoints/model.pt --output ./deployed --format standard --validate
+frankenstein-transformer deploy --checkpoint checkpoints/model.pt --output ./deployed
+frankenstein-transformer deploy --checkpoint checkpoints/model.pt --output ./deployed --format standard --validate
 ```
 
 ## `quantize` — Quantized Export
@@ -102,7 +114,7 @@ frankestein-transformer deploy --checkpoint checkpoints/model.pt --output ./depl
 ### Examples
 
 ```bash
-frankestein-transformer quantize --checkpoint checkpoints/model.pt --output ./quantized --validate
+frankenstein-transformer quantize --checkpoint checkpoints/model.pt --output ./quantized --validate
 ```
 
 ## `infer` — Model Inference
@@ -122,13 +134,13 @@ frankestein-transformer quantize --checkpoint checkpoints/model.pt --output ./qu
 
 ```bash
 # Single text inference
-frankestein-transformer infer --model ./deployed --text "Hello world"
+frankenstein-transformer infer --model ./deployed --text "Hello world"
 
 # Batch file inference
-frankestein-transformer infer --model ./deployed --input texts.txt --output results.json
+frankenstein-transformer infer --model ./deployed --input texts.txt --output results.json
 
 # Benchmark
-frankestein-transformer infer --model ./deployed --benchmark --fp16
+frankenstein-transformer infer --model ./deployed --benchmark --fp16
 ```
 
 ## `sbert-train` — SBERT Training
@@ -137,7 +149,7 @@ frankestein-transformer infer --model ./deployed --benchmark --fp16
 |---|---|---|---|
 | `--base-model` | string | — | HuggingFace model identifier |
 | `--pretrained` | string | — | Path to pretrained checkpoint |
-| `--output_dir` | string | `./output/sbert_tormented_v2` | Output directory |
+| `--output_dir` | string | `./output/sbert_frankenstein_v2` | Output directory |
 | `--dataset_name` | string | `erickfmm/agentlans__multilingual-sentences__paired_10_sts` | HuggingFace dataset |
 | `--batch_size` | int | `16` | Training batch size |
 | `--epochs` | int | `4` | Training epochs |
@@ -160,8 +172,8 @@ frankestein-transformer infer --model ./deployed --benchmark --fp16
 ### Examples
 
 ```bash
-frankestein-transformer sbert-train --base-model answerdotai/ModernBERT-base
-frankestein-transformer sbert-train --pretrained checkpoints/model.pt --pooling_mode cls
+frankenstein-transformer sbert-train --base-model answerdotai/ModernBERT-base
+frankenstein-transformer sbert-train --pretrained checkpoints/model.pt --pooling_mode cls
 ```
 
 ## `sbert-infer` — SBERT Inference
@@ -186,16 +198,16 @@ frankestein-transformer sbert-train --pretrained checkpoints/model.pt --pooling_
 
 ```bash
 # Pairwise similarity
-frankestein-transformer sbert-infer --model_path ./output/sbert --mode similarity --sentence1 "Hello" --sentence2 "Hi"
+frankenstein-transformer sbert-infer --model_path ./output/sbert --mode similarity --sentence1 "Hello" --sentence2 "Hi"
 
 # Corpus search
-frankestein-transformer sbert-infer --model_path ./output/sbert --mode search --query "machine learning" --corpus_file docs.txt --top_k 10
+frankenstein-transformer sbert-infer --model_path ./output/sbert --mode search --query "machine learning" --corpus_file docs.txt --top_k 10
 
 # Clustering
-frankestein-transformer sbert-infer --model_path ./output/sbert --mode cluster --sentences_file texts.txt --n_clusters 8
+frankenstein-transformer sbert-infer --model_path ./output/sbert --mode cluster --sentences_file texts.txt --n_clusters 8
 
 # Encode and export
-frankestein-transformer sbert-infer --model_path ./output/sbert --mode encode --input_file texts.txt --output_file embeddings.npy
+frankenstein-transformer sbert-infer --model_path ./output/sbert --mode encode --input_file texts.txt --output_file embeddings.npy
 ```
 
 ## `web-server` — Streamlit Configuration Builder
@@ -210,8 +222,8 @@ frankestein-transformer sbert-infer --model_path ./output/sbert --mode encode --
 ### Examples
 
 ```bash
-frankestein-transformer web-server
-frankestein-transformer web-server --server-port 8080 --server-headless
+frankenstein-transformer web-server
+frankenstein-transformer web-server --server-port 8080 --server-headless
 ```
 
 ## `transformers-export` — HuggingFace Export
@@ -225,8 +237,47 @@ frankestein-transformer web-server --server-port 8080 --server-headless
 ### Examples
 
 ```bash
-frankestein-transformer transformers-export --model checkpoints/model.pt --yaml config.yaml --output ./hf-export
+frankenstein-transformer transformers-export --model checkpoints/model.pt --yaml config.yaml --output ./hf-export
 ```
+
+## `bitnet-gguf` — BitNet GGUF Export
+
+Exports a BitNet-configured model (single `standard_attn` mixer,
+`use_bitnet: true`) to the GGUF `i2_s` ternary format for
+[bitnet.cpp](https://github.com/microsoft/BitNet). See
+[Deployment](deployment.md) for the format details and limitations.
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--model` | string | — | Path to checkpoint (required for export) |
+| `--yaml` | string | **Required** | Path to training YAML |
+| `--output` | string | — | Output `.gguf` file path (required for export) |
+| `--check` | flag | — | Only check compatibility, then exit (no export) |
+
+### Examples
+
+```bash
+# Compatibility check only
+frankenstein-transformer bitnet-gguf --yaml cfg.yaml --output out.gguf --check
+
+# Export a standard_attn-only BitNet model
+frankenstein-transformer bitnet-gguf --model ckpt.pt --yaml cfg.yaml --output out.gguf
+```
+
+> ⚠️ Hybrid mixers (`retnet`, `mamba`, `gla_attn`, …) are **not** supported by
+> this exporter — `check_gguf_compatibility` rejects them because llama.cpp has
+> no equivalent compute graph.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `error: unrecognized arguments` | Wrong flags for the subcommand | Run `<subcommand> --help` to confirm flag names |
+| Config fails validation with "additional properties" | An unknown YAML key | Remove the key or add it to the schema |
+| `--yaml required` error on `deploy`/`quantize` | `--transformers-export` needs the source YAML | Pass `--yaml config.yaml` |
+| Model loads but produces garbage | Vocab mismatch between checkpoint and tokenizer | Ensure `vocab_size` matches the tokenizer |
+| FP16 ignored on `infer` | The model uses BitNet (`BitLinear`) | FP16 is disabled for BitNet models by design |
+| Training aborts at a temperature | GPU thermal guard hit `critical_threshold` | Raise the threshold or improve cooling |
 
 ## GPU Thermal Guard Flags
 
