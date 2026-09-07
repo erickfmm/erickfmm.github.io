@@ -817,6 +817,7 @@ pre {
     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="downloadYaml()">⬇ Download YAML</button>
       <button class="btn" onclick="copyYaml()">📋 Copy to Clipboard</button>
+      <button class="btn" onclick="copyJson()">📋 Copy JSON to Clipboard</button>
     </div>
   </div>
 
@@ -980,6 +981,7 @@ const UI = {
   invalidNumberMessage: { en:'Enter a valid number.', es:'Ingresa un numero valido.' },
   invalidListMessage: { en:'Enter a valid JSON array like [0.9, 0.95].', es:'Ingresa un arreglo JSON valido como [0.9, 0.95].' },
   yamlCopied: { en:'YAML copied to clipboard.', es:'YAML copiado al portapapeles.' },
+  jsonCopied: { en:'JSON copied to clipboard.', es:'JSON copiado al portapapeles.' },
   commandCopied: { en:'Command copied to clipboard.', es:'Comando copiado al portapapeles.' },
   mermaidCopied: { en:'Mermaid source copied to clipboard.', es:'Codigo Mermaid copiado al portapapeles.' },
   schemaLoaded: { en:'Schema loaded successfully.', es:'Schema cargado correctamente.' },
@@ -2425,6 +2427,15 @@ function downloadYaml() {
 function copyYaml() {
   const yaml = document.getElementById('yaml-output').textContent;
   navigator.clipboard.writeText(yaml).then(() => setFeedback(t('yamlCopied'), 'success')).catch(() => setFeedback(t('yamlCopied'), 'error', 'assertive'));
+}
+
+function copyJson() {
+  try {
+    const json = JSON.stringify(buildConfig());
+    navigator.clipboard.writeText(json).then(() => setFeedback(t('jsonCopied'), 'success')).catch(() => setFeedback(t('jsonCopied'), 'error', 'assertive'));
+  } catch (e) {
+    setFeedback('Error: ' + e.message, 'error', 'assertive');
+  }
 }
 
 // ====== COMMAND ======
