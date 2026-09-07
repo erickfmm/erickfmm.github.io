@@ -950,8 +950,8 @@ que proporciona:</p>
 <ol>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto y validado que garantiza la reproducibilidad
-mientras admite cuarenta y dos variantes de mezcladores de secuencia en
-siete familias y veintitrés familias de optimizadores.</p></li>
+mientras admite cuarenta y tres variantes de mezcladores de secuencia en
+ocho familias y veintitrés familias de optimizadores.</p></li>
 <li><p><strong>Entrenamiento Agnóstico a la Arquitectura</strong>:
 Infraestructura de entrenamiento común que soporta líneas base de
 atención densa (estándar, sigmoide), alternativas recurrentes (RetNet,
@@ -1014,11 +1014,12 @@ comportamiento del modelo y la dinámica de entrenamiento.</p>
 <ol>
 <li><p><strong>Esquema de Configuración Unificado</strong>: Un contrato
 de esquema basado en YAML con validación estricta que soporta cuarenta y
-dos variantes de mezcladores de secuencia en siete familias (densa,
-recurrente, dispersa, con compuerta, latente, con aumento de memoria y
-de peso rápido), junto con controles de profundidad adaptativa y memoria
-condicional, mientras garantiza la reproducibilidad mediante
-restricciones <code>additionalProperties: false</code>.</p></li>
+tres variantes de mezcladores de secuencia en ocho familias (densa,
+recurrente, dispersa, con compuerta, latente, con aumento de memoria, de
+peso rápido y de campo geométrico), junto con controles de profundidad
+adaptativa y memoria condicional, mientras garantiza la reproducibilidad
+mediante restricciones
+<code>additionalProperties: false</code>.</p></li>
 <li><p><strong>Soporte Integral de Arquitecturas</strong>:
 Implementación de variantes modernas de transformers incluyendo atención
 softmax estándar <span class="citation"
@@ -1378,7 +1379,7 @@ generación tipo decoder (predicción causal autorregresiva) a través de
 una interfaz de configuración unificada.</p>
 <p><strong>Selección de Patrones de Mezcladores de Secuencia</strong>:
 El campo <code>layer_pattern</code> acepta una lista ordenada de
-identificadores de mezcladores que abarcan siete familias: líneas base
+identificadores de mezcladores que abarcan ocho familias: líneas base
 densas (<code>standard_attn</code>, <code>sigmoid_attn</code>,
 <code>gqa</code>), recurrentes/retentivas (<code>retnet</code>,
 <code>retnet_attn</code>, <code>mamba</code>, <code>ode</code>,
@@ -1395,11 +1396,12 @@ latente (<code>mla_attn</code>, <code>gqla_attn</code>,
 <code>mlra_attn</code>, <code>tucker_attn</code>, <code>iha_attn</code>,
 <code>gta_attn</code>, <code>mtla_attn</code>, <code>cca_attn</code>,
 <code>ccgqa_attn</code>, <code>gma_attn</code>) memoria condicional
-(<code>engram_attn</code>) y atención de peso rápido
+(<code>engram_attn</code>) atención de peso rápido
 (<code>falcon1_attn</code>, <code>falcon2_attn</code>,
 <code>falcon3_attn</code>, <code>falcon1a_attn</code>,
-<code>falcon2a_attn</code>, <code>falcon3a_attn</code>). La taxonomía
-completa con referencias se proporciona en la Sección <a
+<code>falcon2a_attn</code>, <code>falcon3a_attn</code>) y campo
+geométrico (<code>ssog_attn</code>). La taxonomía completa con
+referencias se proporciona en la Sección <a
 href="#sec:architecture-taxonomy" data-reference-type="ref"
 data-reference="sec:architecture-taxonomy">4</a> y el Apéndice <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
@@ -3571,7 +3573,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-42 mezcladores de secuencia en siete familias, 23 optimizadores, 6
+43 mezcladores de secuencia en ocho familias, 23 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
