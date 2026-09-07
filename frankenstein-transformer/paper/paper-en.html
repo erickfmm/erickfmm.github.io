@@ -197,14 +197,14 @@ scientific progress. In this work, we propose Frankenstein Transformer,
 a configuration-driven CLI toolkit
 (<code>frankenstein-transformer</code>) that unifies the definition,
 training, and deployment of transformer models through a strict YAML
-schema. The toolkit supports thirty-five sequence mixer variants across
-six families (dense, recurrent, sparse, gated, latent, and
-memory-augmented) and twenty-three optimizer families with prefixed
-per-parameter-group hyperparameter control. It provides subcommands for
-training (<code>train</code>), deployment (<code>deploy</code>),
-quantization (<code>quantize</code>), inference (<code>infer</code>),
-SBERT-style sentence-embedding training and inference
-(<code>sbert-train</code>, <code>sbert-infer</code>),
+schema. The toolkit supports forty-two sequence mixer variants across
+seven families (dense, recurrent, sparse, gated, latent,
+memory-augmented, and fast-weight) and twenty-three optimizer families
+with prefixed per-parameter-group hyperparameter control. It provides
+subcommands for training (<code>train</code>), deployment
+(<code>deploy</code>), quantization (<code>quantize</code>), inference
+(<code>infer</code>), SBERT-style sentence-embedding training and
+inference (<code>sbert-train</code>, <code>sbert-infer</code>),
 HuggingFace-compatible export (<code>transformers-export</code>),
 BitNet-aware GGUF export (<code>bitnet-gguf</code>), and a web-based
 configuration builder (<code>web-server</code>). The toolkit further
@@ -282,6 +282,14 @@ Dynamics</a></li>
 Quantization and Activation Scaling</a></li>
 </ul></li>
 <li><a href="#sec:sbert">SBERT Downstream Tasks</a></li>
+<li><a href="#sec:dashai-plugin">No-Code Integration: The
+<code>dashai-frankenstein</code> Plugin</a>
+<ul>
+<li><a href="#registered-components">Registered Components</a></li>
+<li><a href="#passthrough-configuration-schema">Passthrough
+Configuration Schema</a></li>
+<li><a href="#work-in-progress">Work in Progress</a></li>
+</ul></li>
 <li><a href="#sec:discussion">Discussion</a>
 <ul>
 <li><a href="#schema-driven-design-trade-offs">Schema-Driven Design
@@ -822,6 +830,37 @@ Formulation</a></li>
 <li><a href="#algorithmic-pseudocode-18">Algorithmic Pseudocode</a></li>
 <li><a href="#key-characteristics-19">Key Characteristics</a></li>
 </ul></li>
+<li><a href="#sec:annex-fast-weight">Fast-Weight Attention for Continual
+Learning</a>
+<ul>
+<li><a
+href="#preliminaries-alignment-normalization-and-stability">Preliminaries:
+Alignment, Normalization, and Stability</a></li>
+<li><a href="#the-regression-family-falcon-123">The Regression Family
+(Falcon-1/2/3)</a>
+<ul>
+<li><a href="#falcon-1-scalar-nlms-regression">Falcon-1: Scalar NLMS
+Regression</a></li>
+<li><a href="#falcon-2-per-column-nlms-regression">Falcon-2: Per-Column
+NLMS Regression</a></li>
+<li><a href="#falcon-3-sliding-window-minibatch-regression">Falcon-3:
+Sliding-Window Minibatch Regression</a></li>
+</ul></li>
+<li><a href="#the-inner-product-family-falcon-1a2a3a">The Inner-Product
+Family (Falcon-1A/2A/3A)</a>
+<ul>
+<li><a href="#falcon-1a-and-falcon-2a">Falcon-1A and Falcon-2A</a></li>
+<li><a href="#falcon-3a-sliding-window-inner-product">Falcon-3A:
+Sliding-Window Inner-Product</a></li>
+</ul></li>
+<li><a href="#configuration-interface">Configuration Interface</a></li>
+<li><a href="#published-results">Published Results</a></li>
+<li><a href="#relation-to-prior-work">Relation to Prior Work</a>
+<ul>
+<li><a href="#when-to-use-each-variant">When to Use Each
+Variant</a></li>
+</ul></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introduction">Introduction</h1>
@@ -870,7 +909,7 @@ that provides:</p>
 <ol>
 <li><p><strong>Schema-First Design</strong>: A strict, validated
 configuration contract that enforces reproducibility while supporting
-thirty-six sequence mixer variants across six families and twenty-three
+forty-two sequence mixer variants across seven families and twenty-three
 optimizer families.</p></li>
 <li><p><strong>Architecture Agnostic Training</strong>: Common training
 infrastructure supporting dense attention baselines (standard, sigmoid),
@@ -881,9 +920,11 @@ blocks (Engram) <span class="citation"
 data-cites="cheng2026conditionalmemoryscalablelookup"></span>,
 manifold-constrained residual connections (mHC) <span class="citation"
 data-cites="xie_mhc_2025"></span>, sparse attention patterns (Sparse
-Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA), and
-gated mechanisms (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2,
-HGRN2, FoX, Gated Softmax).</p></li>
+Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA), gated
+mechanisms (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX,
+Gated Softmax), and fast-weight attention (Falcon-1/2/3 and
+Falcon-1A/2A/3A) <span class="citation"
+data-cites="zhang_falcon_2026"></span>.</p></li>
 <li><p><strong>Optimizer Routing Framework</strong>: Prefixed
 hyperparameter groups enabling fine-grained control over embeddings,
 normalization layers, recurrent blocks, attention blocks, and other
@@ -929,10 +970,10 @@ dynamics.</p>
 <p>This work makes the following primary contributions:</p>
 <ol>
 <li><p><strong>Unified Configuration Schema</strong>: A YAML-based
-schema contract with strict validation that supports thirty-six sequence
-mixer variants across six families (dense, recurrent, sparse, gated,
-latent, and memory-augmented), alongside adaptive depth and conditional
-memory controls, while enforcing reproducibility through
+schema contract with strict validation that supports forty-two sequence
+mixer variants across seven families (dense, recurrent, sparse, gated,
+latent, memory-augmented, and fast-weight), alongside adaptive depth and
+conditional memory controls, while enforcing reproducibility through
 <code>additionalProperties: false</code> constraints.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
 Implementation of modern transformer variants including standard softmax
@@ -951,11 +992,13 @@ Mixture-of-Depths token routing <span class="citation"
 data-cites="zhu2026mixtureofdepthsattention"></span>, sparse attention
 mechanisms <span class="citation"
 data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026"></span>,
-and gated attention architectures <span class="citation"
-data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025"></span>.
-System supports both encoder-mode training with bidirectional attention
-for masked language modeling (MLM) and decoder-mode training with causal
-masking for autoregressive next-token prediction.</p></li>
+gated attention architectures <span class="citation"
+data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025"></span>,
+and fast-weight attention for continual learning <span class="citation"
+data-cites="zhang_falcon_2026"></span>. System supports both
+encoder-mode training with bidirectional attention for masked language
+modeling (MLM) and decoder-mode training with causal masking for
+autoregressive next-token prediction.</p></li>
 <li><p><strong>Optimizer Routing Framework</strong>: Prefixed
 hyperparameter system enabling per-parameter-group control across
 twenty-three optimizers, including the adaptivity-tunable Anon <span
@@ -988,7 +1031,7 @@ operational concerns:</p>
 <ol>
 <li><p><strong>Prerequisites</strong>: Appendix <a
 href="#sec:annex-tutorial" data-reference-type="ref"
-data-reference="sec:annex-tutorial">10</a> provides an accessible
+data-reference="sec:annex-tutorial">11</a> provides an accessible
 introduction to transformers and attention mechanisms for readers new to
 the field.</p></li>
 <li><p><strong>Configuration Contract</strong>: Section <a
@@ -1003,24 +1046,24 @@ href="#sec:attention-families" data-reference-type="ref"
 data-reference="sec:attention-families">4.1</a> provides comprehensive
 comparison of sequence mixer families; Appendices <a
 href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">14</a>, <a
+data-reference="sec:annex-transformer">15</a>, <a
 href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">15</a>, <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">16</a>, and
+data-reference="sec:annex-latent">16</a>, <a href="#sec:annex-sparse"
+data-reference-type="ref" data-reference="sec:annex-sparse">17</a>, and
 <a href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">17</a> synthesize supporting
+data-reference="sec:annex-gated">18</a> synthesize supporting
 literature; Appendix <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a> details normalization
+data-reference="sec:annex-norm-bitnet-mod">19</a> details normalization
 variants, BitNet quantization, Mixture-of-Depths routing, and Engram
 conditional memory; Appendix <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">20</a> details
+data-reference-type="ref" data-reference="sec:annex-mhc">21</a> details
 manifold-constrained residual connections (mHC).</p></li>
 <li><p><strong>Optimization Dynamics</strong>: Section <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> details optimizer routing
 and training dynamics; Appendix <a href="#sec:annex-optimizers"
-data-reference-type="ref" data-reference="sec:annex-optimizers">13</a>
+data-reference-type="ref" data-reference="sec:annex-optimizers">14</a>
 provides comprehensive optimizer family analysis.</p></li>
 <li><p><strong>Deployment and Inference</strong>: Sections <a
 href="#sec:quantization" data-reference-type="ref"
@@ -1143,13 +1186,26 @@ CUDA kernels and optimized Triton operations. It supports GGUF export
 for quantized deployment and integrates with the Hugging Face ecosystem.
 Unsloth’s focus is on making fine-tuning faster and more
 memory-efficient, not on architectural exploration.</p>
-<p><strong>dashAI</strong> (<code>https://www.dash-ai.com</code>, 2024)
-is a desktop application for no-code machine learning training with a
-schema-driven UI. It allows users to configure datasets, models, and
-training parameters through a graphical interface without writing code.
-While dashAI demonstrates the value of schema-driven configuration for
-accessibility, it targets classical ML workflows rather than transformer
-architecture experimentation.</p>
+<p><strong>dashAI</strong>
+(<code>https://github.com/DashAISoftware/dashAI</code>, v0.9.7.post2,
+2026) is an open-source, local-first desktop workbench for machine
+learning developed by a Chilean academic consortium (Universidad de
+Chile/FCFM, CENIA, IMFD, and ANID funding). Its interface is fully
+schema-driven: configuration forms are generated directly from Pydantic
+component schemas with no hand-written frontend code, and its catalog
+spans roughly 76 multitask models—tabular classifiers, NLP models,
+translation, open-weight LLMs, and text-to-image generation—unified
+behind a dozen typed base abstractions. Extensibility is central to its
+design: plugins are ordinary PyPI packages discovered through the
+<code>dashai.plugins</code> entry-points group and installable from the
+UI, a mechanism comprehensive enough that even dashAI’s own generative
+capabilities (e.g., Stable Diffusion, Flux) are distributed as plugins.
+Where earlier releases targeted classical ML workflows, the current
+platform spans predictive and generative modeling across domains, making
+it a natural host for transformer components via its plugin system;
+Section <a href="#sec:dashai-plugin" data-reference-type="ref"
+data-reference="sec:dashai-plugin">8</a> presents the
+<code>dashai-frankenstein</code> adapter built on this mechanism.</p>
 <h2 id="configuration-driven-experimentation">Configuration-Driven
 Experimentation</h2>
 <p>A common thread across the tools surveyed above is their focus on
@@ -1246,7 +1302,7 @@ decoder-style generation (causal autoregressive prediction) through a
 unified configuration interface.</p>
 <p><strong>Sequence Mixer Pattern Selection</strong>: The
 <code>layer_pattern</code> field accepts an ordered list of mixer
-identifiers spanning six families: dense baselines
+identifiers spanning seven families: dense baselines
 (<code>standard_attn</code>, <code>sigmoid_attn</code>,
 <code>gqa</code>), recurrent/retentive (<code>retnet</code>,
 <code>retnet_attn</code>, <code>mamba</code>, <code>ode</code>,
@@ -1262,13 +1318,16 @@ identifiers spanning six families: dense baselines
 compression (<code>mla_attn</code>, <code>gqla_attn</code>,
 <code>mlra_attn</code>, <code>tucker_attn</code>, <code>iha_attn</code>,
 <code>gta_attn</code>, <code>mtla_attn</code>, <code>cca_attn</code>,
-<code>ccgqa_attn</code>, <code>gma_attn</code>), and conditional memory
-(<code>engram_attn</code>). The complete taxonomy with references is
-provided in Section <a href="#sec:architecture-taxonomy"
-data-reference-type="ref"
+<code>ccgqa_attn</code>, <code>gma_attn</code>), conditional memory
+(<code>engram_attn</code>), and fast-weight attention
+(<code>falcon1_attn</code>, <code>falcon2_attn</code>,
+<code>falcon3_attn</code>, <code>falcon1a_attn</code>,
+<code>falcon2a_attn</code>, <code>falcon3a_attn</code>). The complete
+taxonomy with references is provided in Section <a
+href="#sec:architecture-taxonomy" data-reference-type="ref"
 data-reference="sec:architecture-taxonomy">4</a> and Appendix <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
-data-reference="sec:annex-summary-tables">12</a>.</p>
+data-reference="sec:annex-summary-tables">13</a>.</p>
 <p>The <code>training.optimizer.optimizer_class</code> supports a broad
 optimizer family: <code>sgd_momentum</code>, <code>adamw</code>,
 <code>adafactor</code>, <code>galore_adamw</code>, <code>prodigy</code>,
@@ -1294,7 +1353,7 @@ class="math display">\[\texttt{norm\_type} \in \{\texttt{layer\_norm},
 <p>The complete model and training configuration schema, including all
 fields, types, ranges, and validation rules, is documented in
 Appendix <a href="#sec:annex-schema" data-reference-type="ref"
-data-reference="sec:annex-schema">11</a>. The schema enforces
+data-reference="sec:annex-schema">12</a>. The schema enforces
 <code>additionalProperties: false</code> at all levels, guaranteeing
 that unknown keys fail fast.</p>
 <p>Looped depth induced by schema is: <span
@@ -1356,7 +1415,7 @@ families via <code>optimizer_class</code> and provides
 per-parameter-group hyperparameter control through a prefixed naming
 convention. The complete optimizer prefix contract and supported
 families are documented in Appendix <a href="#sec:annex-schema"
-data-reference-type="ref" data-reference="sec:annex-schema">11</a>.</p>
+data-reference-type="ref" data-reference="sec:annex-schema">12</a>.</p>
 <h2 id="training-safety-and-runtime-semantics">Training Safety and
 Runtime Semantics</h2>
 <p>Schema-level safety features include accumulation, clipping,
@@ -1373,7 +1432,7 @@ gradient accumulation, global-norm clipping, post-clip explosion guards,
 bounded NaN/Inf retries, scheduler dispatch, and rolling/best checkpoint
 rotation—is deferred to Appendix <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:normalization">Normalization Variants</h2>
 <p>Normalization controls activation scale across depth and is also a
 schema compatibility question, since the accepted <code>norm_type</code>
@@ -1385,7 +1444,7 @@ data-cites="zhu_transformers_2025"></span>, and Dynamic Erf (Derf) <span
 class="citation" data-cites="chen_stronger_2025"></span>, together with
 a comparison table, are detailed in Appendix <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:residual-stream">Residual-Stream Architectures</h2>
 <p>The residual connection is not only a modeling choice but also a
 macro-design decision. The system exposes four residual-connection
@@ -1416,7 +1475,7 @@ standard residual at step zero.</p></li>
 <li><p><strong>Manifold-Constrained Hyper-Connections</strong>
 (<code>residual_type</code> combined with <code>mhc.enabled=true</code>,
 documented separately in Appendix <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">20</a>): the
+data-reference-type="ref" data-reference="sec:annex-mhc">21</a>): the
 n-stream residual <span class="citation"
 data-cites="xie_mhc_2025"></span> whose stream-mixing matrix is
 constrained to the Birkhoff polytope via Sinkhorn–Knopp.</p></li>
@@ -1428,15 +1487,15 @@ jointly over the flattened <span class="math inline">\(nC\)</span>
 projection (<code>joint</code>) when mHC is active. The full
 formulation, the four strategies, the implementation wiring, and the
 reported results are detailed in Appendix <a href="#sec:annex-attnres"
-data-reference-type="ref" data-reference="sec:annex-attnres">21</a>. mHC
+data-reference-type="ref" data-reference="sec:annex-attnres">22</a>. mHC
 alone is detailed in Appendix <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">20</a>.</p>
+data-reference-type="ref" data-reference="sec:annex-mhc">21</a>.</p>
 <h1 id="sec:architecture-taxonomy">Architecture Taxonomy and
 Implementation</h1>
 <h2 id="sec:attention-families">Attention and Sequence-Mixer
 Families</h2>
-<p>This system implements thirty-six sequence mixer variants organized
-into six functional categories reflecting research trends in sequence
+<p>This system implements forty-two sequence mixer variants organized
+into seven functional categories reflecting research trends in sequence
 modeling design. The taxonomical organization reflects evolving
 understanding of how to balance expressivity, computational efficiency,
 and memory constraints.</p>
@@ -1469,6 +1528,12 @@ savings.</p></li>
 <li><p><strong>Conditional Memory</strong> (1): Engram provides
 test-time memory through learned read/write operations over an external
 memory bank.</p></li>
+<li><p><strong>Fast-Weight Attention</strong> (6): Falcon-1, Falcon-2,
+Falcon-3, Falcon-1A, Falcon-2A, and Falcon-3A <span class="citation"
+data-cites="zhang_falcon_2026"></span> treat the recurrent fast-weight
+state transition as an online continual-learning rule under
+read-after-write semantics, with normalized step sizes, explicit ridge
+forgetting, and optional bounded sliding-window rehearsal.</p></li>
 </ol>
 <h2 id="dense-and-recurrent-families">Dense and Recurrent Families</h2>
 <p>The dense baselines (standard softmax <span class="citation"
@@ -1484,7 +1549,7 @@ expressiveness-versus-efficiency tradeoff. Mathematical formulations,
 parallel and recurrent forms, algorithmic pseudocode, and an
 architectural comparison table are collected in Appendix <a
 href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">14</a>. The pattern-driven mixer
+data-reference="sec:annex-transformer">15</a>. The pattern-driven mixer
 dispatch algorithm (including the training-free enforcement policy for
 <code>fasa_attn</code> and <code>sparge_attn</code>) is likewise
 detailed there.</p>
@@ -1507,7 +1572,7 @@ class="math inline">\(\mathcal{O}(NK)\)</span> activation storage for
 fixed <span class="math inline">\(K\)</span>. Full formulations,
 pseudocode, and a comparison table are collected in Appendix <a
 href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">15</a>.</p>
+data-reference="sec:annex-latent">16</a>.</p>
 <h2 id="sparse-attention-extensions">Sparse Attention Extensions</h2>
 <p>The mixer registry includes nine sparse blocks:
 <code>sparse_transformer_attn</code>, <code>longformer_attn</code>,
@@ -1522,7 +1587,7 @@ training-free sparse methods: <code>fasa_attn</code> and
 errors if used while the model is in training mode. Mathematical
 formulations, algorithmic pseudocode, per-block characteristics, and a
 comparison table are collected in Appendix <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">16</a>.</p>
+data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
 <h2 id="gated-attention-extensions">Gated Attention Extensions</h2>
 <p>The mixer registry includes eight gated blocks:
 <code>gla_attn</code>, <code>deltanet_attn</code>,
@@ -1540,7 +1605,26 @@ especially useful when the model must trade off recall, recency, and
 bounded memory. Mathematical formulations, algorithmic pseudocode, a
 generic gating template, and a comparison table are collected in
 Appendix <a href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">17</a>.</p>
+data-reference="sec:annex-gated">18</a>.</p>
+<p>A sixth family recasts the recurrent fast-weight update itself as an
+online continual-learning rule: the mixer registry includes six
+fast-weight blocks — <code>falcon1_attn</code>,
+<code>falcon2_attn</code>, <code>falcon3_attn</code>,
+<code>falcon1a_attn</code>, <code>falcon2a_attn</code>, and
+<code>falcon3a_attn</code> <span class="citation"
+data-cites="zhang_falcon_2026"></span>. Falcon unifies DeltaNet-style
+regression and linear-attention-style additive writes under
+read-after-write (prefix-aligned) semantics with normalized step sizes
+<span class="math inline">\(\eta_t = \beta_t/(\text{statistic}_t +
+\lambda_t + \varepsilon)\)</span>, an objective-derived carry <span
+class="math inline">\(\gamma_t = 1 - \eta_t\lambda_t\)</span>, and
+bounded sliding-window rehearsal in the Falcon-3 variants. Every variant
+ships a recurrent reference scan and an SSD-style chunk-parallel kernel,
+sharing one configuration block. Mathematical formulations, algorithmic
+pseudocode, the positive-decay renormalization, configuration knobs, and
+published results are collected in Appendix <a
+href="#sec:annex-fast-weight" data-reference-type="ref"
+data-reference="sec:annex-fast-weight">26</a>.</p>
 <h1 id="sec:optimizer-families">Optimizer Families and Training
 Dynamics</h1>
 <p>Optimization of highly parameterized transformer architectures
@@ -1558,7 +1642,7 @@ Turbo-Muon), and (7) adaptivity-tunable optimizers (Anon). Detailed
 algorithmic descriptions, pseudocode, and a memory/complexity comparison
 table for all optimizers are provided in Appendix <a
 href="#sec:annex-optimizers" data-reference-type="ref"
-data-reference="sec:annex-optimizers">13</a>.</p>
+data-reference="sec:annex-optimizers">14</a>.</p>
 <h1 id="sec:quantization">Quantization and Deployment</h1>
 <p>The deploy stack uses ternary weight packing plus INT8 activation
 quantization for efficient artifacts.</p>
@@ -1574,7 +1658,7 @@ mathematical formulations of the ternary weight scaling, the INT8
 activation quantization/dequantization, and the FP32/FP16/1.58-bit size
 estimates are deferred to Appendix <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h1 id="sec:sbert">SBERT Downstream Tasks</h1>
 <p>Sentence embedding is built on Siamese-style training <span
 class="citation" data-cites="reimers_sentence-bert_2019"></span>. For
@@ -1601,7 +1685,141 @@ retrieval.</p></li>
 similarity, search, cluster, and encode modes over a shared encoder—is
 deferred to Appendix <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+<h1 id="sec:dashai-plugin">No-Code Integration: The
+<code>dashai-frankenstein</code> Plugin</h1>
+<p>The schema-driven CLI and web builder described in Section <a
+href="#sec:system-design" data-reference-type="ref"
+data-reference="sec:system-design">3</a> serve researchers who are
+comfortable with YAML configuration files. A complementary
+audience—domain specialists, educators, and analysts who need a trained
+model but not a training script—is better served by a graphical, no-code
+environment. To reach that audience, Frankenstein Transformer ships a
+companion adapter package, <code>dashai-frankenstein</code>, that
+registers the Frankenstein model classes as components of
+<strong>dashAI</strong>
+(<code>https://github.com/DashAISoftware/dashAI</code>), an open-source,
+local-first desktop workbench for machine learning developed by a
+Chilean academic consortium (Universidad de Chile/FCFM, CENIA, IMFD, and
+ANID funding). Because both systems are schema-driven at heart—dashAI
+renders its configuration forms directly from Pydantic schemas, while
+Frankenstein validates its YAML against a strict JSON Schema—the
+integration required no changes to dashAI’s backend: the plugin is
+discovered through the standard <code>dashai.plugins</code> entry-points
+group on startup, exactly as documented in dashAI’s plugin guide
+(<code>https://docs.dash-ai.com/learn/guides/plugins/</code>), where
+plugins are ordinary PyPI packages whose first-party generative
+capabilities are themselves distributed as plugins.</p>
+<h2 id="registered-components">Registered Components</h2>
+<p>A single <code>dashai.plugins</code> entry-points group registers
+five components in the dashAI component registry, covering the full
+breadth of the toolkit’s model classes:</p>
+<ul>
+<li><p><strong><code>FrankensteinMLMModel</code></strong>
+(<code>BaseModel</code>) — binds to dashAI’s
+<code>TextClassificationTask</code>. It trains the Frankenstein encoder
+with a full-precision classification head pooled over the encoder output
+(Strategy A of the integration audit), inheriting all sequence mixers,
+normalizers, and optimizer families from the underlying engine;
+<code>predict</code> returns a per-class probability matrix.</p></li>
+<li><p><strong><code>FrankensteinDecoderModel</code></strong>
+(<code>BaseGenerativeModel</code>) — binds to
+<code>TextToTextGenerationTask</code>. It forces
+<code>model_class: frankensteindecoder</code> (which in turn forces
+<code>mode: decoder</code>) and exposes autoregressive top-<em>k</em>
+sampling; generation-specific parameters (<code>max_new_tokens</code>,
+<code>temperature</code>, <code>top_k</code>) remain as native dashAI
+form fields because they are inference-time knobs with no home in the
+Frankenstein training schema.</p></li>
+<li><p><strong><code>FrankensteinViTClassifier</code></strong>
+(<code>BaseModel</code>) — binds to
+<code>ImageClassificationTask</code>, reusing the Vision Transformer’s
+built-in classification head (Appendix <a href="#sec:annex-vision"
+data-reference-type="ref"
+data-reference="sec:annex-vision">23</a>).</p></li>
+<li><p><strong><code>FrankensteinViTSegmenter</code></strong>
+(<code>BaseModel</code>) — binds to a plugin-provided
+<code>SegmentationTask</code>, a new <code>BaseTask</code> component
+that dashAI does not ship; it uses the ViT segmentation head and returns
+per-pixel class maps.</p></li>
+<li><p><strong><code>SegmentationTask</code></strong>
+(<code>BaseTask</code>) — the companion task declaring image-in/mask-out
+column types for the segmenter.</p></li>
+</ul>
+<p>All five components share one thin engine facade over Frankenstein’s
+reusable engine API (the non-CLI, non-supervisor interface extracted in
+Phase 0 of the integration plan), so there is exactly one heavy
+dependency (<code>frankenstein-transformer</code>) behind the
+plugin.</p>
+<h2 id="passthrough-configuration-schema">Passthrough Configuration
+Schema</h2>
+<p>The integration preserves Frankenstein’s schema-first philosophy
+(Section <a href="#sec:system-design" data-reference-type="ref"
+data-reference="sec:system-design">3</a>) by keeping the Frankenstein
+JSON Schema as the single source of truth rather than translating its
+<span class="math inline">\(150+\)</span> model and <span
+class="math inline">\(38\)</span> training fields into native dashAI
+form fields—a translation that would be brittle against an actively
+evolving schema. Instead, each component exposes a minimal Pydantic
+schema whose only user-facing field, <code>frankenstein_json</code>, is
+a string containing a complete Frankenstein training config as a
+<em>single-line JSON</em> document (a concession to dashAI’s single-line
+text fields; users build the YAML with the schema-driven web builder and
+convert it with a one-liner). Before any training or model construction
+launches, the adapter runs a three-stage validation pipeline:</p>
+<ol>
+<li><p><strong>JSON parsing</strong> — catches syntax errors in the
+single-line payload.</p></li>
+<li><p><strong>JSON Schema validation</strong> —
+<code>jsonschema.validate</code> against the resolved Frankenstein
+schema, enforcing <code>additionalProperties: false</code> and every
+enum range (mixers, optimizers, norms, activations).</p></li>
+<li><p><strong>Config-loader validation</strong> — Frankenstein’s own
+<code>load_training_config</code> enforces the cross-component
+constraints (divisibility of <code>hidden_size</code> by
+<code>num_heads</code>, <code>num_kv_heads</code> dividing
+<code>num_heads</code>, vocabulary/tokenizer agreement, BitNet flag
+rules, optimizer presence per task, <code>frankensteindecoder</code>
+forcing <code>mode: decoder</code>).</p></li>
+</ol>
+<p>Any failure surfaces to the dashAI user as a single readable
+<code>ValueError</code> tagged with the failing stage, so invalid
+configurations never reach the training loop—the same fail-fast contract
+the CLI provides. Dataset injection is handled by adapters that map
+dashAI’s <code>DashAIDataset</code> (a Hugging Face
+<code>datasets</code> wrapper) onto Frankenstein’s dataset expectations,
+inject <code>vocab_size</code> from the resolved tokenizer so the
+embedding matrix matches the vocabulary, and stream per-epoch metrics
+back into dashAI’s metric store so training progress is visible in the
+UI.</p>
+<h2 id="work-in-progress">Work in Progress</h2>
+<p>The plugin is a work in progress. Its phases are implemented—the MLM
+text-classification MVP (Phase 1), the generative decoder and ViT
+classifier (Phase 2), and the ViT segmenter plus the plugin-provided
+<code>SegmentationTask</code> (Phase 3)—but the package has not yet been
+executed inside a live dashAI instance: the component contract was
+implemented from an audit of dashAI’s plugin registry, base classes, and
+job-queue architecture rather than validated end-to-end. Publication to
+PyPI is likewise pending, both for the plugin itself and for its
+dependency floor (<code>frankenstein-transformer&gt;=1.1.0</code>, the
+engine-API release that supersedes the pre-engine <code>1.0.0</code>
+already on PyPI). Known limitations carried into the next iteration
+include: the MLM component runs a direct supervised classification loop
+rather than an MLM-pretrain-then-finetune recipe; the passthrough schema
+defers curated native form fields for high-leverage knobs (model class,
+mixer pattern, optimizer family) to a future version; and dashAI’s
+ability to render segmentation-mask output columns is unconfirmed and
+may require a local frontend addition. These items are tracked in the
+repository’s integration audit
+(<code>https://github.com/erickfmm/frankenstein-transformer</code>), and
+the design intentionally leaves dashAI’s backend core untouched, so
+future dashAI releases cannot break the adapter through coupling.</p>
+<p>The integration completes the toolkit’s accessibility story: the same
+validated configuration contract that drives the CLI, the Streamlit
+builder, and the export pipeline now also drives a third-party no-code
+workbench, allowing Frankenstein’s architecture space to be explored
+from a graphical interface without sacrificing the schema guarantees on
+which reproducibility depends.</p>
 <h1 id="sec:discussion">Discussion</h1>
 <p>The design choices in Transformer Encoder Frankenstein reflect
 several engineering and research tensions in modern deep learning
@@ -1640,17 +1858,18 @@ training-free methods (FASA, SpargeAttn) raises runtime errors during
 training, reflecting architectural constraints: these methods require
 pretrained checkpoints from full-attention models or specific
 fine-tuning procedures that are not currently automated.</p>
-<p>The gated mechanism coverage is strong across major categories (GLA,
-DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax).
-Residual-stream macro-design is covered through the manifold-constrained
-n-stream residual (mHC) <span class="citation"
-data-cites="xie_mhc_2025"></span>, whose Sinkhorn–Knopp projection onto
-the Birkhoff polytope restores the identity-mapping property lost by
-unconstrained Hyper-Connections; mHC is validated only at the level of
-the published 3B–27B MoE experiments, and the framework would benefit
-from independent reproductions at smaller scales (see Appendix <a
-href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">20</a>).</p>
+<p>The gated and fast-weight mechanism coverage is strong across major
+categories (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX,
+Gated Softmax, and the six Falcon variants <span class="citation"
+data-cites="zhang_falcon_2026"></span>). Residual-stream macro-design is
+covered through the manifold-constrained n-stream residual (mHC) <span
+class="citation" data-cites="xie_mhc_2025"></span>, whose Sinkhorn–Knopp
+projection onto the Birkhoff polytope restores the identity-mapping
+property lost by unconstrained Hyper-Connections; mHC is validated only
+at the level of the published 3B–27B MoE experiments, and the framework
+would benefit from independent reproductions at smaller scales (see
+Appendix <a href="#sec:annex-mhc" data-reference-type="ref"
+data-reference="sec:annex-mhc">21</a>).</p>
 <h2 id="optimizer-landscape-fragmentation">Optimizer Landscape
 Fragmentation</h2>
 <p>The support for twenty-two optimizer families across six algorithmic
@@ -1701,12 +1920,12 @@ particularly HPC clusters without web access.</p>
 <p>Transformer Encoder Frankenstein presents a unified,
 configuration-driven experimentation platform addressing critical
 challenges in modern deep learning research: architectural fragmentation
-across dense attention, recurrent models, sparse patterns, and gated
-mechanisms; optimizer landscape complexity spanning classical baselines,
-variance-reduction methods, memory-efficient variants, schedule-free
-approaches, curvature-aware algorithms, and geometry-oriented methods;
-and end-to-end deployment workflows spanning quantization and sentence
-embedding applications.</p>
+across dense attention, recurrent models, sparse patterns, gated
+mechanisms, and fast-weight memories; optimizer landscape complexity
+spanning classical baselines, variance-reduction methods,
+memory-efficient variants, schedule-free approaches, curvature-aware
+algorithms, and geometry-oriented methods; and end-to-end deployment
+workflows spanning quantization and sentence embedding applications.</p>
 <p>The system’s primary contributions are:</p>
 <ol>
 <li><p><strong>Schema-First Design</strong>: A strict YAML-based
@@ -1717,9 +1936,10 @@ architectures and twenty-three optimizer families.</p></li>
 Implementation spanning major research categories including dense
 baselines (standard, sigmoid attention), recurrent alternatives (RetNet,
 Mamba, ODE-style, Titans), sparse attention (Sparse Transformer,
-Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA), and gated
-mechanisms (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX,
-Gated Softmax).</p></li>
+Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA), gated mechanisms
+(GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated
+Softmax, KDA), and fast-weight attention (Falcon-1/2/3, Falcon-1A/2A/3A)
+<span class="citation" data-cites="zhang_falcon_2026"></span>.</p></li>
 <li><p><strong>Unified Optimizer Framework</strong>: Prefixed
 hyperparameter groups enabling fine-grained control over embeddings,
 normalization layers, recurrent blocks, attention weights, and FFN
@@ -1797,7 +2017,7 @@ convergence accelerates, enabling researchers to systematically explore
 this expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>111</span> urlstyle</p>
+<p><span>113</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2111,6 +2331,11 @@ On the convergence analysis of muon. URL
 <p>Rafael Soares et al. Griffin: Mixing gated linear recurrences with
 local attention for efficient sequence modeling, 2024. URL
 <code>https://arxiv.org/abs/2402.19427</code>.</p>
+<p>Rupesh Kumar Srivastava, Klaus Greff, and J<span>ü</span>rgen
+Schmidhuber. Training very deep networks. In <em>Advances in Neural
+Information Processing Systems</em>, volume 28. Curran Associates, Inc.,
+2015. URL
+<code>https://proceedings.neurips.cc/paper_files/paper/2015/hash/a58f4765a99bf77336cf034926677066-Abstract.html</code>.</p>
 <p>Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng
 Liu. : Enhanced transformer with rotary position embedding. URL
 <code>http://arxiv.org/abs/2104.09864</code>.</p>
@@ -2203,6 +2428,10 @@ Continuous self-attention models with neural <span>ODE</span> networks.
 <p>Yichi Zhang, Yizhong Wang, et al. Accurate and training-free sparse
 attention accelerating any model inference, 2025. URL
 <code>https://arxiv.org/abs/2502.18137</code>.</p>
+<p>Yifan Zhang, Steve Ta, Jasper Zhang, Jichen Feng, Shuzhen Li, Yongxin
+Zhang, Yifeng Liu, Huizhuo Yuan, Mengdi Wang, Quanquan Gu, and Andrew
+Chi-Chih Yao. Fast weight attention for continual learning, 2026. URL
+<code>https://arxiv.org/abs/2608.27763</code>.</p>
 <p>Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
 training by gradient low-rank projection. URL
@@ -2452,12 +2681,12 @@ and <code>trust_remote_code</code> (bool). Required when using
 Required when <code>base_model</code> is not set.</p></li>
 <li><p><code>model</code> (object) — Model architecture parameters (see
 §<a href="#subsec:model-config" data-reference-type="ref"
-data-reference="subsec:model-config">11.2</a>). Required when
+data-reference="subsec:model-config">12.2</a>). Required when
 <code>base_model</code> is not set.</p></li>
 <li><p><code>training</code> (object, <strong>required</strong>) —
 Training configuration (see §<a href="#subsec:training-config"
 data-reference-type="ref"
-data-reference="subsec:training-config">11.3</a>).</p></li>
+data-reference="subsec:training-config">12.3</a>).</p></li>
 </ul>
 <p>The schema enforces a mutual-exclusivity rule: either
 <code>base_model</code> must be present, or both
@@ -2508,7 +2737,7 @@ dims.layer_pattern &amp; array of enum (required) &amp; Ordered sequence
 of layer types. Length must equal <code>num_layers</code>. 35+ mixer
 types available (see Table <a href="#tab:layer-pattern"
 data-reference-type="ref"
-data-reference="tab:layer-pattern">11.2.1</a>).<br />
+data-reference="tab:layer-pattern">12.2.1</a>).<br />
 <br />
 norm.type &amp; enum &amp; Normalization strategy:
 <code>layer_norm</code>, <code>dynamic_tanh</code>, <code>derf</code>,
@@ -2790,6 +3019,10 @@ sparda_attn &amp; SparDA — decoupled sparse attention with Forecast
 projection &amp; &amp;<br />
 kda_attn &amp; Kimi Delta Attention — channel-wise decay + scalar write
 gate &amp; &amp;<br />
+falcon1_attn / falcon2_attn / falcon3_attn &amp; Falcon regression
+family — RAW prefix-aligned NLMS delta rule &amp; &amp;<br />
+falcon1a_attn / falcon2a_attn / falcon3a_attn &amp; Falcon inner-product
+family — shifted additive writes with ridge decay &amp; &amp;<br />
 mla_attn &amp; Multi-Head Latent Attention + RoPE &amp; &amp;<br />
 gqla_attn &amp; Group-Query Latent Attention — two decoding paths &amp;
 &amp;<br />
@@ -2869,11 +3102,11 @@ gradient_accumulation_steps &amp; int <span class="math inline">\(\ge
 optimizer step.<br />
 optimizer &amp; object &amp; Optimizer configuration (see §<a
 href="#subsec:optimizer-config" data-reference-type="ref"
-data-reference="subsec:optimizer-config">11.4</a>). Required when
+data-reference="subsec:optimizer-config">12.4</a>). Required when
 <code>task=mlm</code> or <code>task=causal_lm</code>.<br />
 sbert &amp; object &amp; SBERT training configuration (see §<a
 href="#subsec:sbert-config" data-reference-type="ref"
-data-reference="subsec:sbert-config">11.5</a>). Required when
+data-reference="subsec:sbert-config">12.5</a>). Required when
 <code>task=sbert</code>.<br />
 scheduler_total_steps &amp; int <span class="math inline">\(\ge
 1\)</span> &amp; Total optimizer steps for LR schedule.<br />
@@ -3133,8 +3366,8 @@ combination.</p></li>
 </ol>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
-implemented in the Frankenstein Transformer codebase: 36 sequence mixers
-across six families, 23 optimizers, 6 normalization variants, 43
+implemented in the Frankenstein Transformer codebase: 42 sequence mixers
+across seven families, 23 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -3294,6 +3527,40 @@ d^2)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Channel-wise decay
 + scalar write; Kimi Linear design &amp; <span class="citation"
 data-cites="kimi_kda_2025"></span><br />
+</p>
+<p><br />
+falcon1_attn &amp; Fast-weight &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Prefix-aligned
+NLMS delta rule; best LM perplexity of the family &amp; <span
+class="citation" data-cites="zhang_falcon_2026"></span><br />
+falcon2_attn &amp; Fast-weight &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Per-value-channel
+NLMS step sizes &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
+falcon3_attn &amp; Fast-weight &amp; <span
+class="math inline">\(\mathcal{O}(L d^2 B)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> + <span
+class="math inline">\(\mathcal{O}(B)\)</span> tail &amp; Sliding-window
+minibatch rehearsal with exact window statistics &amp; <span
+class="citation" data-cites="zhang_falcon_2026"></span><br />
+falcon1a_attn &amp; Fast-weight &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Shifted additive
+linear attention with ridge decay &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
+falcon2a_attn &amp; Fast-weight &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Per-channel
+additive decays &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
+falcon3a_attn &amp; Fast-weight &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> + <span
+class="math inline">\(\mathcal{O}(B)\)</span> tail &amp; Windowed
+additive; best length extrapolation &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
 </p>
 <p><br />
 mla_attn &amp; Latent &amp; <span class="math inline">\(\mathcal{O}(n^2
@@ -5286,7 +5553,7 @@ choice of architecture reflects the fundamental engineering constraint:
 expressiveness versus deployment cost. The latent-attention family,
 which compresses the KV cache into a low-rank latent, is covered in
 Appendix <a href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">15</a>.</p>
+data-reference="sec:annex-latent">16</a>.</p>
 <h1 id="sec:annex-latent">Latent and Low-Rank Attention Families</h1>
 <p>This annex covers the latent / low-rank KV compression family of
 attention mechanisms. These architectures compress the per-token
@@ -7706,37 +7973,20 @@ softmax models with minimal code changes; best for practitioners wanting
 immediate gains without major refactoring.</p></li>
 </ol>
 <h3 id="hardware-considerations">Hardware Considerations</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Hardware Target</strong></th>
-<th style="text-align: left;"><strong>Recommended
-Architectures</strong></th>
-<th style="text-align: left;"><strong>Notes</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">GPU (H100/A100)</td>
-<td style="text-align: left;">Gated Softmax, FoX, Gated DeltaNet, Gated
-DeltaNet-2</td>
-<td style="text-align: left;">Mature softmax/linear implementations.
-GLA/DeltaNet require custom kernels.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">TPU (high memory)</td>
-<td style="text-align: left;">GLA, DeltaNet, Gated DeltaNet, Gated
-DeltaNet-2, HGRN2</td>
-<td style="text-align: left;">Hardware supports efficient matmuls;
-linear recurrent methods shine.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Mobile/Edge</td>
-<td style="text-align: left;">RetNet, lightweight Gated Softmax</td>
-<td style="text-align: left;">Constant-memory inference critical.</td>
-</tr>
-</tbody>
-</table>
+<div class="tabularx">
+<p><span>0.95</span><span>Xp<span>3.5cm</span>p<span>3.5cm</span></span>
+<strong>Hardware Target</strong> &amp; <strong>Recommended
+Architectures</strong> &amp; <strong>Notes</strong><br />
+GPU (H100/A100) &amp; Gated Softmax, FoX, Gated DeltaNet, Gated
+DeltaNet-2 &amp; Mature softmax/linear implementations. GLA/DeltaNet
+require custom kernels.<br />
+TPU (high memory) &amp; GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2,
+HGRN2 &amp; Hardware supports efficient matmuls; linear recurrent
+methods shine.<br />
+Mobile/Edge &amp; RetNet, lightweight Gated Softmax &amp;
+Constant-memory inference critical.<br />
+</p>
+</div>
 <h1 id="sec:annex-norm-bitnet-mod">Normalization, Quantization, Depth
 Routing, and Runtime Algorithms</h1>
 <p>This annex collects the implementation-level detail for normalization
@@ -7868,7 +8118,7 @@ auto-applied in this repository but is documented for completeness.</p>
 <h4 id="partial-rms-composition.">Partial-RMS composition.</h4>
 <p>FlashNorm composes naturally with the pRMSNorm trick (§<a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>, pRMSNorm subsection):
+data-reference="sec:annex-norm-bitnet-mod">19</a>, pRMSNorm subsection):
 when <code>flashnorm_partial_ratio</code> <span
 class="math inline">\(=p&gt;0\)</span>, the RMS is estimated from the
 first <span class="math inline">\(k=\lceil d\cdot p\rceil\)</span>
@@ -8003,76 +8253,41 @@ word_ppl, MMLU 5-shot, HellaSwag 0-shot) stays within benchmark noise
 (worst <span class="math inline">\(\Delta=+0.0017\)</span>
 word_ppl).</p>
 <h3 id="comparison">Comparison</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Method</strong></th>
-<th style="text-align: left;"><strong>Formula</strong></th>
-<th style="text-align: left;"><strong>Stats Needed</strong></th>
-<th style="text-align: left;"><strong>Notes</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">LayerNorm</td>
-<td style="text-align: left;"><span class="math inline">\(\gamma_i (x_i
-- \mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i\)</span></td>
-<td style="text-align: left;">mean + variance</td>
-<td style="text-align: left;">Default; full centering and rescaling
-<span class="citation" data-cites="ba2016layer"></span>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">RMSNorm</td>
-<td style="text-align: left;"><span class="math inline">\(\gamma_i
-x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}\)</span></td>
-<td style="text-align: left;">RMS only</td>
-<td style="text-align: left;">Lower overhead; widely used baseline <span
-class="citation" data-cites="zhang_root_2019"></span>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pRMSNorm</td>
-<td style="text-align: left;"><span class="math inline">\(\gamma_i
-x_i/\sqrt{\frac{1}{k}\sum_{j\le k} x_j^2+\epsilon}\)</span></td>
-<td style="text-align: left;">Partial RMS</td>
-<td style="text-align: left;">RMS from first <span
-class="math inline">\(p\)</span>% of dims;
-<code>prms_partial_ratio</code> default <span
+<div class="longtable">
+<p><span>p<span>2.2cm</span>p<span>3.4cm</span>p<span>2.0cm</span>p<span>4.0cm</span></span>
+<strong>Method</strong> &amp; <strong>Formula</strong> &amp;
+<strong>Stats Needed</strong> &amp; <strong>Notes</strong><br />
+LayerNorm &amp; <span class="math inline">\(\gamma_i (x_i -
+\mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i\)</span> &amp; mean + variance
+&amp; Default; full centering and rescaling <span class="citation"
+data-cites="ba2016layer"></span>.<br />
+RMSNorm &amp; <span class="math inline">\(\gamma_i
+x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}\)</span> &amp; RMS only
+&amp; Lower overhead; widely used baseline <span class="citation"
+data-cites="zhang_root_2019"></span>.<br />
+pRMSNorm &amp; <span class="math inline">\(\gamma_i
+x_i/\sqrt{\frac{1}{k}\sum_{j\le k} x_j^2+\epsilon}\)</span> &amp;
+Partial RMS &amp; RMS from first <span class="math inline">\(p\)</span>%
+of dims; <code>prms_partial_ratio</code> default <span
 class="math inline">\(6.25\%\)</span> <span class="citation"
-data-cites="zhang_root_2019"></span>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Dynamic Tanh</td>
-<td style="text-align: left;"><span class="math inline">\(\tanh(\alpha
-x)\)</span></td>
-<td style="text-align: left;">none</td>
-<td style="text-align: left;">Normalization-free bounded transform;
-drop-in replacement <span class="citation"
-data-cites="zhu_transformers_2025"></span>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Dynamic Erf</td>
-<td style="text-align: left;"><span
-class="math inline">\(\mathrm{erf}(\alpha x+s)\)</span></td>
-<td style="text-align: left;">none</td>
-<td style="text-align: left;">Normalization-free alternative; improves
+data-cites="zhang_root_2019"></span>.<br />
+Dynamic Tanh &amp; <span class="math inline">\(\tanh(\alpha x)\)</span>
+&amp; none &amp; Normalization-free bounded transform; drop-in
+replacement <span class="citation"
+data-cites="zhu_transformers_2025"></span>.<br />
+Dynamic Erf &amp; <span class="math inline">\(\mathrm{erf}(\alpha
+x+s)\)</span> &amp; none &amp; Normalization-free alternative; improves
 over DyT <span class="citation"
-data-cites="chen_stronger_2025"></span>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">FlashNorm</td>
-<td style="text-align: left;"><span
-class="math inline">\(x_i/\sqrt{\frac{1}{d}\sum_j
-x_j^2+\epsilon}\)</span> (weightless)</td>
-<td style="text-align: left;">RMS only</td>
-<td style="text-align: left;">Exact rewrite of RMSNorm<span
-class="math inline">\(\to\)</span>Linear: folds <span
+data-cites="chen_stronger_2025"></span>.<br />
+FlashNorm &amp; <span class="math inline">\(x_i/\sqrt{\frac{1}{d}\sum_j
+x_j^2+\epsilon}\)</span> (weightless) &amp; RMS only &amp; Exact rewrite
+of RMSNorm<span class="math inline">\(\to\)</span>Linear: folds <span
 class="math inline">\(\mathbf{g}\)</span> into <span
 class="math inline">\(\mathbf{W}\)</span> (Prop. 1), defers scalar RMS
 to matmul output (Prop. 2); 12–35% latency reduction on T4 GPU <span
-class="citation" data-cites="graef2026flashnorm"></span>.</td>
-</tr>
-</tbody>
-</table>
+class="citation" data-cites="graef2026flashnorm"></span>.<br />
+</p>
+</div>
 <h2 id="bitnet-ternary-quantization-path">BitNet Ternary Quantization
 Path</h2>
 <p>When <code>use_bitnet=true</code>, BitLinear layers replace standard
@@ -9249,7 +9464,7 @@ D)\)</span>, faithful to the original ViT. The alternative
 <code>none</code> drops the explicit embedding and relies on RoPE/HoPE
 applied inside the attention mixers (§<a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>), which is consistent
+data-reference="sec:annex-norm-bitnet-mod">19</a>), which is consistent
 with the encoder’s modality-agnostic handling of rotary embeddings.</p>
 <h4 id="cls-token."><code>[CLS]</code> token.</h4>
 <p>A learnable <code>[CLS]</code> token is optionally prepended at
@@ -9470,8 +9685,9 @@ One Shared Module, Per-Mixer Opt-Out</h2>
 attention mixers, <code>False</code> for recurrent/decay mixers such as
 <code>retnet</code>, <code>mamba</code>, <code>ode</code>,
 <code>gla_attn</code>, <code>deltanet_attn</code>,
-<code>mtla_attn</code>). When <code>use_pe</code> is <code>False</code>
-the mixer ignores the injected module entirely.</p>
+<code>mtla_attn</code>, and the six Falcon mixers
+<code>falcon{1,2,3,1a,2a,3a}_attn</code>). When <code>use_pe</code> is
+<code>False</code> the mixer ignores the injected module entirely.</p>
 <p>The PE is applied in two phases via the shared helpers
 <code>apply_pe_to_qk()</code> (called before the attention-score
 computation) and <code>apply_pe_to_scores()</code> (called after). The
@@ -9705,153 +9921,65 @@ restricted PE to <code>{hope, rope, none, nope}</code> has been removed
 <h2 id="architectural-profile-positional-encodings">Architectural
 Profile: Positional Encodings</h2>
 <p>Table <a href="#tab:all-pos-enc" data-reference-type="ref"
-data-reference="tab:all-pos-enc">3</a> summarises the 12 supported
-positional encodings.</p>
-<div id="tab:all-pos-enc">
-<table>
-<caption>Positional encoding catalog. “Style” is the injection mechanism
-(rotation, score-bias, Q/K-augmentation, additive). “Params” lists the
-principal config knobs.</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Name</strong></th>
-<th style="text-align: left;"><strong>Style</strong></th>
-<th style="text-align: left;"><strong>Key Idea</strong></th>
-<th style="text-align: left;"><strong>Params</strong></th>
-<th style="text-align: left;"><strong>Reference</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Name</strong></td>
-<td style="text-align: left;"><strong>Style</strong></td>
-<td style="text-align: left;"><strong>Key Idea</strong></td>
-<td style="text-align: left;"><strong>Params</strong></td>
-<td style="text-align: left;"><strong>Reference</strong></td>
-</tr>
-<tr class="even">
-<td colspan="5" style="text-align: right;"><em>continued on next
-page</em></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">rope</td>
-<td style="text-align: left;">Rotation</td>
-<td style="text-align: left;">Frequency-based rotation of Q/K; relative
-position via inner-product geometry</td>
-<td style="text-align: left;"><code>rope_base</code>,
-<code>rope_scaling</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="su_rope_2024"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">hope</td>
-<td style="text-align: left;">Rotation</td>
-<td style="text-align: left;">Hyperbolic Lorentz rotation; monotonic
-attention decay with distance</td>
-<td style="text-align: left;"><code>hope_base</code>,
-<code>hope_damping</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="dai_hope_2025"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">nope</td>
-<td style="text-align: left;">None</td>
-<td style="text-align: left;">Explicit no-PE; model learns position
-implicitly from causal mask</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;"><span class="citation"
-data-cites="kazemnejad_nope_2023"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">alibi</td>
-<td style="text-align: left;">Score bias</td>
-<td style="text-align: left;">Static linear distance penalty added to
-attention scores; length extrapolation</td>
-<td style="text-align: left;"><code>alibi_num_heads</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="press_alibi_2022"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bam</td>
-<td style="text-align: left;">Score bias</td>
-<td style="text-align: left;">Generalized-Gaussian relative-position
-bias; learnable per-head shape (<span
-class="math inline">\(\beta\)</span>) and scale (<span
-class="math inline">\(\alpha\)</span>); recovers ALiBi at <span
-class="math inline">\(\beta=1\)</span>; SSMax rescale via
-<code>use_ssmax</code></td>
-<td style="text-align: left;"><code>bam_theta_init</code>,
+data-reference="tab:all-pos-enc">[tab:all-pos-enc]</a> summarises the 12
+supported positional encodings.</p>
+<div class="longtable">
+<p><span>p<span>2.4cm</span>p<span>1.7cm</span>p<span>4.2cm</span>p<span>2.0cm</span>p<span>2.0cm</span></span>
+<strong>Name</strong> &amp; <strong>Style</strong> &amp; <strong>Key
+Idea</strong> &amp; <strong>Params</strong> &amp;
+<strong>Reference</strong><br />
+<strong>Name</strong> &amp; <strong>Style</strong> &amp; <strong>Key
+Idea</strong> &amp; <strong>Params</strong> &amp;
+<strong>Reference</strong><br />
+<br />
+</p>
+<p>rope &amp; Rotation &amp; Frequency-based rotation of Q/K; relative
+position via inner-product geometry &amp; <code>rope_base</code>,
+<code>rope_scaling</code> &amp; <span class="citation"
+data-cites="su_rope_2024"></span><br />
+hope &amp; Rotation &amp; Hyperbolic Lorentz rotation; monotonic
+attention decay with distance &amp; <code>hope_base</code>,
+<code>hope_damping</code> &amp; <span class="citation"
+data-cites="dai_hope_2025"></span><br />
+nope &amp; None &amp; Explicit no-PE; model learns position implicitly
+from causal mask &amp; — &amp; <span class="citation"
+data-cites="kazemnejad_nope_2023"></span><br />
+alibi &amp; Score bias &amp; Static linear distance penalty added to
+attention scores; length extrapolation &amp;
+<code>alibi_num_heads</code> &amp; <span class="citation"
+data-cites="press_alibi_2022"></span><br />
+bam &amp; Score bias &amp; Generalized-Gaussian relative-position bias;
+learnable per-head shape (<span class="math inline">\(\beta\)</span>)
+and scale (<span class="math inline">\(\alpha\)</span>); recovers ALiBi
+at <span class="math inline">\(\beta=1\)</span>; SSMax rescale via
+<code>use_ssmax</code> &amp; <code>bam_theta_init</code>,
 <code>bam_learn_mu</code>, <code>bam_eps</code>, <code>use_ssmax</code>,
-<code>ssmax_s_init</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="bianchessi_bam_2025"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">pape</td>
-<td style="text-align: left;">Q/K aug.</td>
-<td style="text-align: left;">Parabolic basis functions concatenated to
-Q/K; vision-centric, <span class="math inline">\(n\)</span>-D</td>
-<td style="text-align: left;"><code>pape_num_parabolas</code>,
-<code>pape_num_positions</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="ohrstrom_pape_2026"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pape_efficient</td>
-<td style="text-align: left;">Q/K aug.</td>
-<td style="text-align: left;">Pure-PyTorch PaPE; no custom Triton
-kernels</td>
-<td style="text-align: left;">same as pape</td>
-<td style="text-align: left;"><span class="citation"
-data-cites="ohrstrom_pape_2026"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">pape_ri</td>
-<td style="text-align: left;">Q/K aug.</td>
-<td style="text-align: left;">Rotation-invariant PaPE (PaPE-RI)</td>
-<td style="text-align: left;"><code>pape_rotation_invariant</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="ohrstrom_pape_2026"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">sinusoidal_absolute</td>
-<td style="text-align: left;">Additive</td>
-<td style="text-align: left;">Fixed sinusoidal added to embeddings
-(original Transformer)</td>
-<td style="text-align: left;"><code>sinusoidal_base</code>,
-<code>sinusoidal_max_len</code>, <code>sinusoidal_scale</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="vaswani_attention_2017"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">sinusoidal_rotary</td>
-<td style="text-align: left;">Rotation</td>
-<td style="text-align: left;">Sinusoidal frequencies as a rotation
-matrix on Q/K</td>
-<td style="text-align: left;">same as sinusoidal</td>
-<td style="text-align: left;"><span class="citation"
-data-cites="vaswani_attention_2017"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">learned_absolute</td>
-<td style="text-align: left;">Additive</td>
-<td style="text-align: left;">Learnable parameter matrix added to
-embeddings</td>
-<td style="text-align: left;"><code>learned_max_len</code>,
-<code>learned_init_std</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="vaswani_attention_2017"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">none</td>
-<td style="text-align: left;">None</td>
-<td style="text-align: left;">Null module; no positional information
-injected</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;">—</td>
-</tr>
-</tbody>
-</table>
+<code>ssmax_s_init</code> &amp; <span class="citation"
+data-cites="bianchessi_bam_2025"></span><br />
+pape &amp; Q/K aug. &amp; Parabolic basis functions concatenated to Q/K;
+vision-centric, <span class="math inline">\(n\)</span>-D &amp;
+<code>pape_num_parabolas</code>, <code>pape_num_positions</code> &amp;
+<span class="citation" data-cites="ohrstrom_pape_2026"></span><br />
+pape_efficient &amp; Q/K aug. &amp; Pure-PyTorch PaPE; no custom Triton
+kernels &amp; same as pape &amp; <span class="citation"
+data-cites="ohrstrom_pape_2026"></span><br />
+pape_ri &amp; Q/K aug. &amp; Rotation-invariant PaPE (PaPE-RI) &amp;
+<code>pape_rotation_invariant</code> &amp; <span class="citation"
+data-cites="ohrstrom_pape_2026"></span><br />
+sinusoidal_absolute &amp; Additive &amp; Fixed sinusoidal added to
+embeddings (original Transformer) &amp; <code>sinusoidal_base</code>,
+<code>sinusoidal_max_len</code>, <code>sinusoidal_scale</code> &amp;
+<span class="citation" data-cites="vaswani_attention_2017"></span><br />
+sinusoidal_rotary &amp; Rotation &amp; Sinusoidal frequencies as a
+rotation matrix on Q/K &amp; same as sinusoidal &amp; <span
+class="citation" data-cites="vaswani_attention_2017"></span><br />
+learned_absolute &amp; Additive &amp; Learnable parameter matrix added
+to embeddings &amp; <code>learned_max_len</code>,
+<code>learned_init_std</code> &amp; <span class="citation"
+data-cites="vaswani_attention_2017"></span><br />
+none &amp; None &amp; Null module; no positional information injected
+&amp; — &amp; —<br />
+</p>
 </div>
 <h1 id="sec:annex-ssog">SSOG: Separable Sum of Gaussians Attention</h1>
 <p>This annex covers SSOG (Separable Sum of Gaussians), a
@@ -9971,5 +10099,410 @@ granting zero-shot resolution transfer.</p></li>
 steering kernels add a memory term; language results are
 unproven—content scoring is likely load-bearing there.</p></li>
 </ul>
+<h1 id="sec:annex-fast-weight">Fast-Weight Attention for Continual
+Learning</h1>
+<p>This annex covers the Falcon family <span class="citation"
+data-cites="zhang_falcon_2026"></span>, a fast-weight attention
+framework that treats the recurrent fast-weight state transition as an
+<strong>online continual-learning rule</strong> under
+<em>read-after-write</em> (RAW) autoregressive semantics. The
+framework’s central observation is one of temporal alignment: for the
+prefix-prediction objective, the local fast-memory example revealed at
+step <span class="math inline">\(t\)</span> is the
+<strong>prefix-aligned pair</strong> <span class="math inline">\((x_t,
+y_t) = (\phi(k_{t-1}),\, v_t)\)</span> — one step shifted relative to
+the same-step association <span class="math inline">\((\phi(k_t),
+v_t)\)</span> used by DeltaNet and standard linear attention. The
+same-step pairing remains causal, but it optimizes a different internal
+objective. The framework derives <strong>normalized first-order
+updates</strong> for two objectives (squared-error regression and
+negative inner product) and three step-size structures (scalar,
+per-column, sliding window), giving six variants: Falcon-1/2/3
+(regression family) and Falcon-1A/2A/3A (inner-product family). All six
+are implemented in the codebase under
+<code>model.attention.falcon</code> with a shared configuration block,
+each providing both a recurrent reference scan and an SSD-style
+chunk-parallel kernel.</p>
+<h2
+id="preliminaries-alignment-normalization-and-stability">Preliminaries:
+Alignment, Normalization, and Stability</h2>
+<h4 id="read-after-write-semantics.">Read-after-write semantics.</h4>
+<p>With feature maps <span class="math inline">\(\phi(k_t)\)</span>
+(QK-RMSNorm by default, <span class="math inline">\(\ell_2\)</span> norm
+optional), the prefix-aligned stream sets <span
+class="math inline">\(x_t = \phi(k_{t-1})\)</span> for <span
+class="math inline">\(t \ge 2\)</span> with boundary sentinel <span
+class="math inline">\(x_1 = 0\)</span>; the readout is <span
+class="math inline">\(o_t = S_t^\top \phi(q_t)\)</span>. The write at
+step <span class="math inline">\(t\)</span> therefore updates the memory
+<em>before</em> the query at step <span
+class="math inline">\(t+1\)</span> reads it, so no token’s key ever
+associates with its own value.</p>
+<h4 id="normalized-first-order-step-sizes.">Normalized first-order step
+sizes.</h4>
+<p>A gradient step on the local objective <span
+class="math inline">\(\ell_t(S)\)</span> with the objective-matched
+denominator gives <span class="math display">\[\eta_t =
+\frac{\beta_t}{\text{statistic}_t + \lambda_t + \varepsilon}, \qquad
+\beta_t \in (0, 2),\]</span> where the statistic is the squared key
+energy <span class="math inline">\(\|x_t\|^2\)</span>
+(Falcon-1/1A/2/2A), the window spectral statistic <span
+class="math inline">\(\mu_t^{(B)} = \lambda_{\max}(X^\top
+X)/B_t\)</span> (Falcon-3), or the window mean energy <span
+class="math inline">\(\bar{E}_t^{(B)}\)</span> (Falcon-3A).
+Objective-matched normalization guarantees per-step descent and removes
+the scale sensitivity of fixed learning rates. The
+<strong>plasticity</strong> gain <span
+class="math inline">\(\beta_t\)</span>, the <strong>forgetting</strong>
+ridge <span class="math inline">\(\lambda_t\)</span>, the temporal
+<strong>alignment</strong>, and the rehearsal window <span
+class="math inline">\(B\)</span> are thereby four previously entangled
+knobs, separated.</p>
+<h4 id="positive-decay-renormalization.">Positive-decay
+renormalization.</h4>
+<p>When <span class="math inline">\(\lambda_t &gt; 0\)</span>, the
+per-step shrinkage <span class="math inline">\(\alpha_t = \min(\eta_t
+\lambda_t,\, 1 - \varepsilon_\gamma)\)</span> must be applied stably.
+The implementation clamps <span class="math inline">\(\alpha_t\)</span>
+strictly below <span class="math inline">\(1\)</span>, computes
+chunk-local log-prefixes in fp32 via <span class="math inline">\(\log(1
+- \alpha_t)\)</span> and cumulative sums, rescales the drivers to the
+no-decay domain (<span class="math inline">\(\tilde{\eta}_t = \eta_t /
+\gamma_t\)</span>, <span class="math inline">\(\tilde{v}_t = v_t /
+c_{t-1}\)</span> with <span class="math inline">\(c_{t-1} = \prod_{r \le
+t-1} \gamma_r\)</span>), and rescales outputs and the emitted state back
+by the accumulated <span class="math inline">\(\delta\)</span>. Boundary
+sentinels are <span class="math inline">\((\alpha_1, \gamma_1) = (0,
+1)\)</span> and <span class="math inline">\(\eta_1 = 0\)</span>, so the
+first step is a pure read.</p>
+<h2 id="the-regression-family-falcon-123">The Regression Family
+(Falcon-1/2/3)</h2>
+<p>The squared-error objective on the shifted pair is <span
+class="math display">\[\ell_t(S) = \tfrac{1}{2}\|v_t - S^\top x_t\|^2 +
+\tfrac{\lambda_t}{2}\|S\|_F^2,
+\qquad
+\nabla_S \ell_t = x_t (S^\top x_t - v_t)^\top + \lambda_t S,\]</span>
+which is <span class="math inline">\(L_t\)</span>-smooth with <span
+class="math inline">\(L_t = \|x_t\|^2 + \lambda_t\)</span>.</p>
+<h3 id="falcon-1-scalar-nlms-regression">Falcon-1: Scalar NLMS
+Regression</h3>
+<p>The scalar delta-rule variant — the classical NLMS recursion of
+adaptive filtering upgraded with the shifted write stream and an
+explicit ridge: <span class="math display">\[S_t = (1 - \eta_t
+\lambda_t)\, S_{t-1} + \eta_t\, x_t \big(v_t - S_{t-1}^\top
+x_t\big)^\top,
+\qquad
+o_t = S_t^\top \phi(q_t).\]</span> With <span
+class="math inline">\(\varepsilon = 0\)</span>, <span
+class="math inline">\(\lambda_t = 0\)</span> and the unshifted
+assignment <span class="math inline">\(x_t = \phi(k_t)\)</span> this
+recovers DeltaNet exactly. The eigenstructure of the transition <span
+class="math inline">\(A_t = \gamma_t I - \eta_t x_t x_t^\top\)</span>
+(with <span class="math inline">\(\gamma_t = 1 -
+\eta_t\lambda_t\)</span>) shows that the write direction contracts by
+<span class="math inline">\(1 - \beta_t\)</span> while the orthogonal
+subspace carries <span class="math inline">\(\gamma_t\)</span>: <span
+class="math inline">\(\beta_t &gt; 1\)</span> yields a stable sign-flip
+along the write direction, useful for state tracking. The chunk-parallel
+form uses the WY representation <span class="math inline">\(\prod_s (I -
+\eta_s x_s x_s^\top) = I - U T U^\top\)</span> with a single-residual
+unit-lower-triangular solve <span class="math inline">\(L =
+\operatorname{tril}(G, -1) + I\)</span> where <span
+class="math inline">\(G = X^\top X\)</span> (Algorithm 8 of the paper),
+after the positive-decay renormalization.</p>
+<h3 id="falcon-2-per-column-nlms-regression">Falcon-2: Per-Column NLMS
+Regression</h3>
+<p>The ridge loss decomposes across value coordinates, so each value
+channel <span class="math inline">\(j\)</span> receives its own step
+size while sharing the NLMS normalizer: <span
+class="math display">\[\eta_{j,t} = \frac{\beta_{j,t}}{\|x_t\|^2 +
+\lambda_t + \varepsilon},
+\qquad
+S_t = S_{t-1}\big(I - \lambda_t
+\operatorname{Diag}(\boldsymbol{\eta}_t)\big) + x_t
+\big(\boldsymbol{\eta}_t \odot \mathbf{r}_t\big)^\top .\]</span> The
+chunk-parallel kernel forms the shared key Gram <span
+class="math inline">\(G = X^\top X\)</span> and solves the batch of
+per-channel unit-lower-triangular systems <span
+class="math inline">\(L_j = I + \operatorname{tril}\big(G \odot
+(\Sigma_j \Sigma_j^\top), -1\big)\)</span> with <span
+class="math inline">\(\Sigma = \sqrt{\tilde{\boldsymbol{\eta}}}\)</span>
+(Algorithm 1). Defined but not separately benchmarked in the paper.</p>
+<h3 id="falcon-3-sliding-window-minibatch-regression">Falcon-3:
+Sliding-Window Minibatch Regression</h3>
+<p>Bounded rehearsal: each step regresses the fast memory on the last
+<span class="math inline">\(B_t \le B\)</span> prefix-aligned pairs,
+with <em>all window residuals evaluated at the pre-update state</em>
+<span class="math inline">\(S_{t-1}\)</span>: <span
+class="math display">\[\mu_t =
+\frac{\lambda_{\max}\big(X_{\mathcal{I}_t}^\top
+X_{\mathcal{I}_t}\big)}{B_t},
+\qquad
+\eta_t = \frac{\beta_t}{\mu_t + \lambda_t + \varepsilon},
+\qquad
+S_t = (1 - \eta_t \lambda_t)\, S_{t-1} + \frac{\eta_t}{B_t} \sum_{j \in
+\mathcal{I}_t} x_j \big(v_j - S_{t-1}^\top x_j\big)^\top ,\]</span> with
+<span class="math inline">\(\mathcal{I}_t = \{\max(2, t - B + 1), \dots,
+t\}\)</span>. Window-averaging keeps the update magnitude invariant to
+<span class="math inline">\(B\)</span>: each pair is replayed in exactly
+<span class="math inline">\(B\)</span> consecutive updates at weight
+<span class="math inline">\(1/B\)</span>, so its cumulative injection is
+<span class="math inline">\(\eta\)</span>-independent of <span
+class="math inline">\(B\)</span>. The state alone is <em>not</em>
+Markov: exact continuation requires a FIFO tail of the last <span
+class="math inline">\(B - 1\)</span> pairs, and the chunk kernels gather
+an extended slice with <span class="math inline">\(|\mathcal{J}| \le C +
+B - 1\)</span>. The chunk-parallel form is a rank-<span
+class="math inline">\(B\)</span> affine recurrence solved by block
+forward substitution over the (time <span
+class="math inline">\(\times\)</span> rank) extended index space, with
+same-time rank components uncoupled (Algorithm 3).</p>
+<h2 id="the-inner-product-family-falcon-1a2a3a">The Inner-Product Family
+(Falcon-1A/2A/3A)</h2>
+<p>The negative inner-product objective <span
+class="math display">\[\ell_t^{\mathrm{ip}}(S) = -\langle S^\top x_t,\,
+v_t \rangle + \tfrac{\lambda_t}{2}\|S\|_F^2
+\qquad \Rightarrow \qquad
+\nabla_S \ell_t^{\mathrm{ip}} = -x_t v_t^\top + \lambda_t S\]</span>
+yields purely additive (Hebbian) writes with energy-normalized
+gains.</p>
+<h3 id="falcon-1a-and-falcon-2a">Falcon-1A and Falcon-2A</h3>
+<p><span class="math display">\[\text{Falcon-1A:}\quad S_t = \gamma_t
+S_{t-1} + \eta_t\, x_t v_t^\top,
+\quad \gamma_t = 1 - \min(\eta_t \lambda_t,\, 1 - \varepsilon_\gamma);
+\qquad
+\text{Falcon-2A:}\quad S_t =
+S_{t-1}\operatorname{Diag}(\boldsymbol{\gamma}_t) + x_t
+(\boldsymbol{\eta}_t \odot v_t)^\top .\]</span> With <span
+class="math inline">\(\lambda_t = 0\)</span> and the unshifted
+assignment this is exactly standard linear attention / Mamba-2
+accumulation; the shifted stream makes it the one-step-shifted
+next-latent variant. The A-family’s denominator is not required by
+curvature (the objective is linear) — it retains the energy-normalized
+write as a magnitude stabilizer. The chunk-parallel form is decay-mask
+linear attention with <span class="math inline">\(M_{t,i} = \eta_i
+\prod_{r=i+1}^{t} \gamma_r\)</span> (per-channel masks for
+Falcon-2A).</p>
+<h3 id="falcon-3a-sliding-window-inner-product">Falcon-3A:
+Sliding-Window Inner-Product</h3>
+<p>The windowed additive variant — the family’s best
+length-extrapolation configuration: <span
+class="math display">\[\bar{N}_t^{(B)} = \frac{1}{B_t} \sum_{j \in
+\mathcal{I}_t} x_j v_j^\top,
+\qquad
+\bar{E}_t^{(B)} = \frac{1}{B_t} \sum_{j \in \mathcal{I}_t} \|x_j\|^2,
+\qquad
+\eta_t = \frac{\beta_t}{\bar{E}_t^{(B)} + \lambda_t + \varepsilon},
+\qquad
+S_t = \gamma_t S_{t-1} + \eta_t\, \bar{N}_t^{(B)} .\]</span> The
+window-banded decay mask factors as <span class="math inline">\(M = D
+\cdot \operatorname{Diag}(\boldsymbol{\eta}) \cdot A\)</span>, where
+<span class="math inline">\(A\)</span> is the <span
+class="math inline">\(B\)</span>-banded window operator and <span
+class="math inline">\(D\)</span> the causal decay kernel, evaluated over
+the extended slice (Algorithm 4).</p>
+<h2 id="configuration-interface">Configuration Interface</h2>
+<p>All six variants share one nested block,
+<code>model.attention.falcon</code>, selected through the
+<code>layer_pattern</code> entries <code>falcon1_attn</code>,
+<code>falcon2_attn</code>, <code>falcon3_attn</code>,
+<code>falcon1a_attn</code>, <code>falcon2a_attn</code>,
+<code>falcon3a_attn</code>:</p>
+<div id="tab:falcon-knobs">
+<table>
+<caption>Shared Falcon configuration knobs
+(<code>model.attention.falcon</code>). Each variant additionally exposes
+a per-mixer positional-encoding opt-out
+<code>falcon{1,2,3,1a,2a,3a}_attn_use_pe</code>, default
+<code>False</code> like other recurrent/decay mixers.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Key</strong></th>
+<th style="text-align: left;"><strong>Default</strong></th>
+<th style="text-align: left;"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>chunk_size</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(64\)</span></td>
+<td style="text-align: left;">Chunk size of the chunk-parallel kernels;
+<code>null</code> selects the recurrent reference scan</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>qk_norm</code></td>
+<td style="text-align: left;"><code>rms_norm</code></td>
+<td style="text-align: left;">QK normalization (<code>rms_norm</code> or
+<code>l2_norm</code>); RMSNorm computed in fp32</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>beta_mode</code></td>
+<td style="text-align: left;"><code>ctx_eta</code></td>
+<td style="text-align: left;">Plasticity gate parameterization:
+<code>static</code>, <code>ctx_beta</code> (content-conditioned gain),
+or <code>ctx_eta</code> (content-conditioned normalized step)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>lambda_mode</code></td>
+<td style="text-align: left;"><code>ctx</code></td>
+<td style="text-align: left;">Forgetting gate: <code>static</code> or
+<code>ctx</code> (scale-couples with the detached curvature
+statistic)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>beta</code> /
+<code>lambda</code></td>
+<td style="text-align: left;"><span class="math inline">\(1.0\)</span> /
+<span class="math inline">\(0.0\)</span></td>
+<td style="text-align: left;">Static gain and ridge (used when the
+corresponding mode is <code>static</code>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>window</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(4\)</span></td>
+<td style="text-align: left;">Sliding window <span
+class="math inline">\(B\)</span> (Falcon-3 / Falcon-3A only)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>short_conv</code> /
+<code>conv_kernel</code></td>
+<td style="text-align: left;"><code>true</code> / <span
+class="math inline">\(4\)</span></td>
+<td style="text-align: left;">Causal depth-wise short convolutions on
+the q/k/v projections</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>eps</code> /
+<code>eps_gamma</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(10^{-6}\)</span> / <span
+class="math inline">\(10^{-4}\)</span></td>
+<td style="text-align: left;">Step-size stabilizer and positive-decay
+clamp floor</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Implementation notes: the recurrent and chunk-parallel kernels are
+verified numerically equivalent (chunk <span
+class="math inline">\(\equiv\)</span> recurrent to <span
+class="math inline">\(\le 3.6 \times 10^{-7}\)</span> across all six
+variants, including decay, multi-chunk, and windowed paths); gradients
+flow through the fp32 triangular-solve islands (feature drivers take
+only <span class="math inline">\(\sqrt{\tilde{\eta}}\)</span> while
+value targets take <span class="math inline">\(\sqrt{\tilde{\eta}}\,
+e^{-u_{t-1}}\)</span>, with the square root clamped at <span
+class="math inline">\(10^{-12}\)</span> for NaN-free backward at the
+<span class="math inline">\(\eta = 0\)</span> boundary); positive
+exponents are clamped at <span class="math inline">\(80\)</span>.</p>
+<h2 id="published-results">Published Results</h2>
+<div id="tab:falcon-results">
+<table>
+<caption>Language modeling results reported by <span class="citation"
+data-cites="zhang_falcon_2026"></span> at 124M parameters. On
+variable-digit addition length extrapolation (33–48 digits), Falcon-3A.3
+reaches <strong>87.2%</strong> mean accuracy versus 65.8% for a RoPE
+Transformer and 85.9% for Falcon-1A.3: the inner-product family carries
+arithmetic, while the regression family carries perplexity.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Model (124M, 49.2B FineWeb-Edu
+tokens)</strong></th>
+<th style="text-align: center;"><strong>WikiText ppl</strong></th>
+<th style="text-align: center;"><strong>LMB. ppl</strong></th>
+<th style="text-align: center;"><strong>FineEdu ppl</strong></th>
+<th style="text-align: center;"><strong>0-shot avg</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Transformer (RoPE)</td>
+<td style="text-align: center;">33.25</td>
+<td style="text-align: center;">47.43</td>
+<td style="text-align: center;">17.38</td>
+<td style="text-align: center;">48.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mamba-2</td>
+<td style="text-align: center;">34.53</td>
+<td style="text-align: center;">48.74</td>
+<td style="text-align: center;">17.70</td>
+<td style="text-align: center;">48.80</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DeltaNet</td>
+<td style="text-align: center;">34.19</td>
+<td style="text-align: center;">52.84</td>
+<td style="text-align: center;">17.84</td>
+<td style="text-align: center;">48.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gated DeltaNet</td>
+<td style="text-align: center;">30.99</td>
+<td style="text-align: center;">46.70</td>
+<td style="text-align: center;">17.32</td>
+<td style="text-align: center;">48.78</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Falcon-1A.3</td>
+<td style="text-align: center;">34.02</td>
+<td style="text-align: center;">49.84</td>
+<td style="text-align: center;">17.40</td>
+<td style="text-align: center;">48.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Falcon-1.3</td>
+<td style="text-align: center;">33.00</td>
+<td style="text-align: center;">48.70</td>
+<td style="text-align: center;"><strong>17.10</strong></td>
+<td style="text-align: center;"><strong>49.18</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="relation-to-prior-work">Relation to Prior Work</h2>
+<ul>
+<li><p><strong>DeltaNet</strong>: the delta rule is the squared-error
+one-gradient-descent step with the same-step pairing; Falcon recovers it
+with the critical index shift plus objective-matched normalization and
+explicit <span class="math inline">\(\lambda_t\)</span>
+shrinkage.</p></li>
+<li><p><strong>Gated DeltaNet</strong>: adds a free learned carry gate;
+Falcon <em>derives</em> the carry <span class="math inline">\(\gamma_t =
+1 - \eta_t \lambda_t\)</span> from the local objective and the
+normalized step-size parameterization instead of adding an independent
+gate, and defaults to QK-RMSNorm rather than <span
+class="math inline">\(\ell_2\)</span> normalization.</p></li>
+<li><p><strong>Linear attention / Mamba-2</strong>: the additive
+numerator is one gradient step on the inner-product objective with the
+unshifted assignment; the chunkwise kernels reuse the SSD
+scheme.</p></li>
+<li><p><strong>TTT / Titans / ATLAS</strong>: fast-weight updates as
+test-time training; Falcon-3 is a sliding-window specialization of the
+internal-objective view with strict next-latent alignment.</p></li>
+<li><p><strong>Adaptive filtering (LMS/NLMS/RLS)</strong>: Falcon
+imports the stability and normalization principles of NLMS into
+fast-weight attention under strict causality.</p></li>
+</ul>
+<h3 id="when-to-use-each-variant">When to Use Each Variant</h3>
+<ol>
+<li><p><strong>Falcon-1</strong>: best language-modeling perplexity of
+the family (FineEdu 17.10, beating Gated DeltaNet 17.32); principled
+forgetting tied to the local objective.</p></li>
+<li><p><strong>Falcon-2</strong>: finer-grained plasticity than Falcon-1
+at the cost of heavier per-channel chunk kernels; unbenchmarked in the
+paper.</p></li>
+<li><p><strong>Falcon-3</strong>: controlled rehearsal horizon with
+exact window statistics; most complex kernel.</p></li>
+<li><p><strong>Falcon-1A</strong>: simple and stable additive variant;
+second-best length extrapolation (85.9%).</p></li>
+<li><p><strong>Falcon-2A</strong>: channel-wise forgetting granularity;
+unbenchmarked.</p></li>
+<li><p><strong>Falcon-3A</strong>: best length extrapolation of the
+paper (87.2% on 33–48-digit addition); carries arithmetic
+tasks.</p></li>
+</ol>
 </body>
 </html>

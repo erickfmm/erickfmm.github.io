@@ -1,4 +1,4 @@
-\begin{thebibliography}{111}
+\begin{thebibliography}{113}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -593,6 +593,15 @@ Rafael Soares et~al.
   efficient sequence modeling, 2024.
 \newblock URL \url{https://arxiv.org/abs/2402.19427}.
 
+\bibitem[Srivastava et~al.(2015)Srivastava, Greff, and
+  Schmidhuber]{srivastava_highway_2015}
+Rupesh~Kumar Srivastava, Klaus Greff, and J{\"u}rgen Schmidhuber.
+\newblock Training very deep networks.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~28. Curran Associates, Inc., 2015.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper_files/paper/2015/hash/a58f4765a99bf77336cf034926677066-Abstract.html}.
+
 \bibitem[Su et~al.()Su, Lu, Pan, Murtadha, Wen, and Liu]{su_rope_2024}
 Jianlin Su, Yu~Lu, Shengfeng Pan, Ahmed Murtadha, Bo~Wen, and Yunfeng Liu.
 \newblock {RoFormer}: Enhanced transformer with rotary position embedding.
@@ -765,6 +774,13 @@ Yichi Zhang, Yizhong Wang, et~al.
 \newblock Accurate and training-free sparse attention accelerating any model
   inference, 2025.
 \newblock URL \url{https://arxiv.org/abs/2502.18137}.
+
+\bibitem[Zhang et~al.(2026)Zhang, Ta, Zhang, Feng, Li, Zhang, Liu, Yuan, Wang,
+  Gu, and Yao]{zhang_falcon_2026}
+Yifan Zhang, Steve Ta, Jasper Zhang, Jichen Feng, Shuzhen Li, Yongxin Zhang,
+  Yifeng Liu, Huizhuo Yuan, Mengdi Wang, Quanquan Gu, and Andrew Chi-Chih Yao.
+\newblock Fast weight attention for continual learning, 2026.
+\newblock URL \url{https://arxiv.org/abs/2608.27763}.
 
 \bibitem[Zhao et~al.()Zhao, Zhang, Chen, Wang, Anandkumar, and
   Tian]{zhao_galore_2024}
