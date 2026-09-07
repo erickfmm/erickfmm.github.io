@@ -90,8 +90,8 @@ var FTDiagram = (function () {
             { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,n,H]', c: 'attn', e: 'Wk', from: ['x'] },
             { n: 'V = Wv·x [B,n,H]', c: 'attn', e: 'Wv', from: ['x'] },
-            { n: 'scores = QKᵀ [B,nh,n]', c: 'attn', e: 'QKᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,H]'] },
-            { n: 'A = σ(scores)', c: 'attn', e: 'sigmoid', from: ['scores = QKᵀ [B,nh,n]'] },
+            { n: 'scores = QKᵀ/√d + b [B,nh,n]', c: 'attn', e: 'QKᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,H]'] },
+            { n: 'A = σ(scores)', c: 'attn', e: 'sigmoid', from: ['scores = QKᵀ/√d + b [B,nh,n]'] },
             { n: 'O = A·V [B,n,H]', c: 'attn', e: 'A·V', from: ['A = σ(scores)', 'V = Wv·x [B,n,H]'] }
         ],
         gated_softmax_attn: [
@@ -126,11 +126,12 @@ var FTDiagram = (function () {
         retnet_attn: 'retnet',
         mamba: [
             { n: 'x [B,n,H]', c: 'ssm', id: 'x' },
-            { n: 'select Δ,B,C', c: 'ssm', e: 'select', from: ['x'] },
+            { n: 'conv1d (causal)', c: 'ssm', e: 'conv', from: ['x'] },
+            { n: 'select Δ,B,C', c: 'ssm', e: 'select', from: ['conv1d (causal)'] },
             { n: 'discretize Ā,B̄ (ZOH)', c: 'ssm', e: 'ZOH', from: ['select Δ,B,C'] },
-            { n: 'conv1d', c: 'ssm', e: 'conv', from: ['discretize Ā,B̄ (ZOH)'] },
-            { n: 'hₜ = Ā·hₜ₋₁ + B̄·x', c: 'ssm', e: 'scan', from: ['conv1d'], id: 'hprev' },
-            { n: 'O = C·hₜ [B,n,H]', c: 'ssm', e: 'read', from: ['hₜ = Ā·hₜ₋₁ + B̄·x'], loop: 'hprev' }
+            { n: 'hₜ₋₁ [d,N]', c: 'ssm', id: 'hprev' },
+            { n: 'hₜ = Ā·hₜ₋₁ + B̄·x', c: 'ssm', e: 'scan', from: ['discretize Ā,B̄ (ZOH)', 'hₜ₋₁ [d,N]'], loop: 'hprev' },
+            { n: 'O = C·hₜ [B,n,H]', c: 'ssm', e: 'read', from: ['hₜ = Ā·hₜ₋₁ + B̄·x'] }
         ],
         ode: [
             { n: 'x₀ [B,n,H]', c: 'ode', id: 'x0' },
@@ -140,62 +141,83 @@ var FTDiagram = (function () {
         ],
         gla_attn: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
-            { n: 'Q,K,V [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
-            { n: 'gate αₜ = σ(Wα·x)', c: 'attn', e: 'Wα', from: ['x'] },
-            { n: 'Sₜ = αₜ⊗Sₜ₋₁+(1-αₜ)V', c: 'attn', e: 'update', from: ['Q,K,V [B,n,H]', 'gate αₜ = σ(Wα·x)'], id: 'Sprev' },
-            { n: 'O = Q·Sₜ [B,n,H]', c: 'attn', e: 'read', from: ['Sₜ = αₜ⊗Sₜ₋₁+(1-αₜ)V', 'Q,K,V [B,n,H]'], loop: 'Sprev' }
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
+            { n: 'gate αₜ = σ(Wα·x)^(1/τ)', c: 'attn', e: 'Wα', from: ['x'] },
+            { n: 'Sₜ₋₁ [dk,dv]', c: 'attn', id: 'Sprev' },
+            { n: 'Sₜ = αₜ⊗Sₜ₋₁ + V·Kᵀ', c: 'attn', e: 'update', from: ['Q,K,V = W·x [B,n,H]', 'gate αₜ = σ(Wα·x)^(1/τ)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
+            { n: 'O = Q·Sₜ [B,n,H]', c: 'attn', e: 'read', from: ['Sₜ = αₜ⊗Sₜ₋₁ + V·Kᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
         deltanet_attn: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
-            { n: 'Q,K,V [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
             { n: 'βₜ = σ(Wβ·x)', c: 'recur', e: 'Wβ', from: ['x'] },
-            { n: 'Sₜ = βₜ⊗Sₜ₋₁+(1-βₜ)V', c: 'recur', e: 'correct', from: ['Q,K,V [B,n,H]', 'βₜ = σ(Wβ·x)'], id: 'Sprev' },
-            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = βₜ⊗Sₜ₋₁+(1-βₜ)V', 'Q,K,V [B,n,H]'], loop: 'Sprev' }
+            { n: 'Sₜ₋₁ [dk,dv]', c: 'recur', id: 'Sprev' },
+            { n: 'Sₜ = Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', c: 'recur', e: 'delta rule', from: ['Q,K,V = W·x [B,n,H]', 'βₜ = σ(Wβ·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
+            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
-        gated_deltanet_attn: 'deltanet_attn',
+        gated_deltanet_attn: [
+            { n: 'x [B,n,H]', c: 'recur', id: 'x' },
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
+            { n: 'decay αₜ = f(Wα·x)', c: 'recur', e: 'Wα', from: ['x'] },
+            { n: 'write βₜ = σ(Wβ·x)', c: 'recur', e: 'Wβ', from: ['x'] },
+            { n: 'Sₜ₋₁ [dk,dv]', c: 'recur', id: 'Sprev' },
+            { n: 'Sₜ = αₜ·Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', c: 'recur', e: 'update', from: ['Q,K,V = W·x [B,n,H]', 'decay αₜ = f(Wα·x)', 'write βₜ = σ(Wβ·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
+            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = αₜ·Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', 'Q,K,V = W·x [B,n,H]'] }
+        ],
         gated_deltanet2_attn: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
-            { n: 'Q,K,V [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
-            { n: 'erase gate βₜ', c: 'recur', e: 'Wβ', from: ['x'] },
-            { n: 'write gate αₜ', c: 'recur', e: 'Wα', from: ['x'] },
-            { n: 'Sₜ = βₜ⊗Sₜ₋₁+αₜ⊗V', c: 'recur', e: 'update', from: ['Q,K,V [B,n,H]', 'erase gate βₜ', 'write gate αₜ'], id: 'Sprev' },
-            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = βₜ⊗Sₜ₋₁+αₜ⊗V', 'Q,K,V [B,n,H]'], loop: 'Sprev' }
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
+            { n: 'erase bₜ = σ(Wb·x) [dk]', c: 'recur', e: 'Wb', from: ['x'] },
+            { n: 'write wₜ = σ(Ww·x) [dv]', c: 'recur', e: 'Ww', from: ['x'] },
+            { n: 'decay Dₜ = Diag(αₜ)', c: 'recur', e: 'Wα', from: ['x'] },
+            { n: 'Sₜ₋₁ [dk,dv]', c: 'recur', id: 'Sprev' },
+            { n: 'Sₜ = (I − kₜ(bₜ⊙kₜ)ᵀ)·Dₜ·Sₜ₋₁ + kₜ(wₜ⊙vₜ)ᵀ', c: 'recur', e: 'update', from: ['Q,K,V = W·x [B,n,H]', 'erase bₜ = σ(Wb·x) [dk]', 'write wₜ = σ(Ww·x) [dv]', 'decay Dₜ = Diag(αₜ)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
+            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = (I − kₜ(bₜ⊙kₜ)ᵀ)·Dₜ·Sₜ₋₁ + kₜ(wₜ⊙vₜ)ᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
         hgrn2_attn: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
-            { n: 'Q,K,V [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
-            { n: 'forget gate fₜ', c: 'recur', e: 'Wf', from: ['x'] },
-            { n: 'Sₜ = fₜ⊗Sₜ₋₁+fₜ⊗V', c: 'recur', e: 'outer', from: ['Q,K,V [B,n,H]', 'forget gate fₜ'], id: 'Sprev' },
-            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = fₜ⊗Sₜ₋₁+fₜ⊗V', 'Q,K,V [B,n,H]'], loop: 'Sprev' }
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
+            { n: 'gate gₜ = b+(1−b)σ(Wg·x)', c: 'recur', e: 'Wg', from: ['x'] },
+            { n: 'Sₜ₋₁ [dk,dv]', c: 'recur', id: 'Sprev' },
+            { n: 'Sₜ = gₜ⊗Sₜ₋₁ + V·Kᵀ', c: 'recur', e: 'outer', from: ['Q,K,V = W·x [B,n,H]', 'gate gₜ = b+(1−b)σ(Wg·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
+            { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = gₜ⊗Sₜ₋₁ + V·Kᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
         fox_attn: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
-            { n: 'Q,K,V [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
-            { n: 'forget fₜ in logit', c: 'attn', e: 'Wf', from: ['x'] },
-            { n: 'scores = fₜ⊗QKᵀ', c: 'attn', e: 'gate', from: ['Q,K,V [B,n,H]', 'forget fₜ in logit'] },
-            { n: 'softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = fₜ⊗QKᵀ'] },
-            { n: 'O = Wo·softmax·V', c: 'attn', e: 'Wo', from: ['softmax(scores)', 'Q,K,V [B,n,H]'] }
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
+            { n: 'forget fₜ = σ(Wf·x)', c: 'attn', e: 'Wf', from: ['x'] },
+            { n: 'log-bias Dᵢⱼ = Σₗ log fₗ', c: 'attn', e: 'cumsum', from: ['forget fₜ = σ(Wf·x)'] },
+            { n: 'scores = QKᵀ/√d + D', c: 'attn', e: 'add bias', from: ['Q,K,V = W·x [B,n,H]', 'log-bias Dᵢⱼ = Σₗ log fₗ'] },
+            { n: 'softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d + D'] },
+            { n: 'O = Wo·softmax·V', c: 'attn', e: 'Wo', from: ['softmax(scores)', 'Q,K,V = W·x [B,n,H]'] }
         ],
+        // KDA (Kimi Delta Attention, arXiv:2510.26692): gated delta-rule
+        // recurrence with channel-wise decay Dₜ = Diag(exp(a − softplus(δ)))
+        // applied before the delta edit; scalar write gate βₜ; oₜ = Sₜᵀqₜ.
         kda_attn: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
-            { n: 'Q,K (kernel proj)', c: 'recur', e: 'Wqk', from: ['x'] },
-            { n: 'bandwidth gate h', c: 'recur', e: 'Wh', from: ['x'] },
-            { n: 'K̃ = kernel(Q,K,h)', c: 'recur', e: 'kernel', from: ['Q,K (kernel proj)', 'bandwidth gate h'] },
-            { n: 'V = Wv·x [B,n,H]', c: 'recur', e: 'Wv', from: ['x'] },
-            { n: 'O = K̃·V [B,n,H]', c: 'recur', e: 'read', from: ['K̃ = kernel(Q,K,h)', 'V = Wv·x [B,n,H]'] }
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
+            { n: 'decay Dₜ = exp(a−softplus(δ)) [dk]', c: 'recur', e: 'channel', from: ['x'] },
+            { n: 'write βₜ = σ(Wβ·x)', c: 'recur', e: 'Wβ', from: ['x'] },
+            { n: 'Sₜ₋₁ [dk,dv]', c: 'recur', id: 'Sprev' },
+            { n: 'Sₜ = (I − βₜkₜkₜᵀ)·Dₜ·Sₜ₋₁ + βₜvₜkₜᵀ', c: 'recur', e: 'delta rule', from: ['Q,K,V = W·x [B,n,H]', 'decay Dₜ = exp(a−softplus(δ)) [dk]', 'write βₜ = σ(Wβ·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
+            { n: 'O = Sₜᵀ·Q [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = (I − βₜkₜkₜᵀ)·Dₜ·Sₜ₋₁ + βₜvₜkₜᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
         // Gaussian Mixture Attention: probabilistic GMM routing through a
         // K-slot latent memory (no N x N matrix). O(NK) for fixed K.
+        // Responsibilities are softmax-normalized posteriors; the read is
+        // normalized by Z = Σₜ respₖ (annex-3: O = Γq·M/(Γq·Z+ε)).
         gma_attn: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Wq·x [B,nh,dr]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,nh,dr]', c: 'attn', e: 'Wk', from: ['x'] },
             { n: 'V = Wv·x [B,nh,dv]', c: 'attn', e: 'Wv', from: ['x'] },
-            { n: 'GMM μ,σ²,α per head [K]', c: 'attn', id: 'gmm' },
-            { n: 'resp_k = α·N(K;μ,σ²)', c: 'attn', e: 'responsibilities', from: ['K = Wk·x [B,nh,dr]', 'GMM μ,σ²,α per head [K]'] },
-            { n: 'M = Σₜ resp_k·V [K,dv]', c: 'attn', e: 'write', from: ['resp_k = α·N(K;μ,σ²)', 'V = Wv·x [B,nh,dv]'] },
-            { n: 'resp_q = α·N(Q;μ,σ²)', c: 'attn', e: 'responsibilities', from: ['Q = Wq·x [B,nh,dr]', 'GMM μ,σ²,α per head [K]'] },
-            { n: 'O = Wo·(resp_q·M) [B,n,H]', c: 'attn', e: 'read', from: ['M = Σₜ resp_k·V [K,dv]', 'resp_q = α·N(Q;μ,σ²)'] }
+            { n: 'GMM μ,σ²,π per head [K]', c: 'attn', id: 'gmm' },
+            { n: 'resp_k = norm(π·N(K;μ,σ²))', c: 'attn', e: 'responsibilities', from: ['K = Wk·x [B,nh,dr]', 'GMM μ,σ²,π per head [K]'] },
+            { n: 'M = Σₜ respₖ·V [K,dv]', c: 'attn', e: 'write', from: ['resp_k = norm(π·N(K;μ,σ²))', 'V = Wv·x [B,nh,dv]'] },
+            { n: 'Z = Σₜ respₖ [K]', c: 'attn', e: 'normalizer', from: ['resp_k = norm(π·N(K;μ,σ²))'] },
+            { n: 'resp_q = norm(π·N(Q;μ,σ²))', c: 'attn', e: 'responsibilities', from: ['Q = Wq·x [B,nh,dr]', 'GMM μ,σ²,π per head [K]'] },
+            { n: 'O = Wo·(resp_q·M/(resp_q·Z+ε)) [B,n,H]', c: 'attn', e: 'read', from: ['M = Σₜ respₖ·V [K,dv]', 'Z = Σₜ respₖ [K]', 'resp_q = norm(π·N(Q;μ,σ²))'] }
         ],
         // SSOG: separable sum of R Gaussian atoms per head over a 2D token
         // raster. The N x N matrix never exists; two 1D filter passes per
@@ -367,67 +389,77 @@ var FTDiagram = (function () {
         // read-after-write semantics: the revealed pair at step t is
         // (xₜ, yₜ) = (φ(kₜ₋₁), vₜ) — one step shifted vs DeltaNet.
         // Regression family (Falcon-1/2/3): NLMS delta-rule correction
-        // rₜ = yₜ − Sᵀxₜ; additive family (Falcon-1A/2A/3A): outer-product
-        // write. Gates: ηₜ (ctx_eta/ctx_beta) and ridge λₜ (ctx).
+        // rₜ = vₜ − Sₜ₋₁ᵀxₜ with ηₜ = βₜ/(‖xₜ‖²+λₜ+ε); additive family
+        // (Falcon-1A/2A/3A): outer-product write. Ridge shrinkage enters
+        // multiplicatively as (1−ηₜλₜ) (or per-column Diag). The read
+        // after writing is oₜ = Sₜᵀ·φ(qₜ) (Fig. 3 of the paper).
         falcon1_attn: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
-            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
             { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
-            { n: 'rₜ = vₜ − Sᵀxₜ; ηₜ=β/(‖xₜ‖²+λ+ε)', c: 'fastw', e: 'NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ, λ̄ₜ = Wg·x'] },
-            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', c: 'fastw', e: 'delta-rule', from: ['rₜ = vₜ − Sᵀxₜ; ηₜ=β/(‖xₜ‖²+λ+ε)'], id: 'Sprev', loop: 'Sprev' },
-            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', 'Q,K,V = W·x + shortconv'] },
-            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+            { n: 'Sₜ₋₁ [dx,dv]', c: 'fastw', id: 'Sprev' },
+            { n: 'rₜ = vₜ − Sₜ₋₁ᵀxₜ; ηₜ = βₜ/(‖xₜ‖²+λₜ+ε)', c: 'fastw', e: 'NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates βₜ, λ̄ₜ = Wg·x', 'Sₜ₋₁ [dx,dv]'] },
+            { n: 'Sₜ = (1−ηₜλₜ)Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', c: 'fastw', e: 'delta-rule', from: ['rₜ = vₜ − Sₜ₋₁ᵀxₜ; ηₜ = βₜ/(‖xₜ‖²+λₜ+ε)', 'Sₜ₋₁ [dx,dv]'], loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = (1−ηₜλₜ)Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         falcon2_attn: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
-            { n: 'gates ηₜ [H,d], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'gates βₜ [dv], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
             { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
-            { n: 'rₜ = vₜ − Sᵀxₜ; ηₜ,ⱼ per column', c: 'fastw', e: 'per-col NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ [H,d], λ̄ₜ = Wg·x'] },
-            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙rₜ)ᵀ', c: 'fastw', e: 'delta-rule', from: ['rₜ = vₜ − Sᵀxₜ; ηₜ,ⱼ per column'], id: 'Sprev2', loop: 'Sprev2' },
-            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙rₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
-            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+            { n: 'Sₜ₋₁ [dx,dv]', c: 'fastw', id: 'Sprev' },
+            { n: 'rₜ = vₜ − Sₜ₋₁ᵀxₜ; ηₜ,ⱼ per column', c: 'fastw', e: 'per-col NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates βₜ [dv], λ̄ₜ = Wg·x', 'Sₜ₋₁ [dx,dv]'] },
+            { n: 'Sₜ = Sₜ₋₁(I − λₜDiag(ηₜ)) + xₜ(ηₜ⊙rₜ)ᵀ', c: 'fastw', e: 'delta-rule', from: ['rₜ = vₜ − Sₜ₋₁ᵀxₜ; ηₜ,ⱼ per column', 'Sₜ₋₁ [dx,dv]'], loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = Sₜ₋₁(I − λₜDiag(ηₜ)) + xₜ(ηₜ⊙rₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         falcon3_attn: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
-            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
             { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
-            { n: 'window statistic μₜ⁽ᴮ⁾', c: 'fastw', e: 'spectral B', from: ['xₜ = φ(kₜ₋₁) (RAW shift)'] },
-            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', c: 'fastw', e: 'minibatch', from: ['window statistic μₜ⁽ᴮ⁾', 'gates ηₜ, λ̄ₜ = Wg·x'], id: 'Sprev3', loop: 'Sprev3' },
-            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', 'Q,K,V = W·x + shortconv'] },
-            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+            { n: 'Sₜ₋₁ [dx,dv]', c: 'fastw', id: 'Sprev' },
+            { n: 'window μₜ⁽ᴮ⁾ = λmax(Σxⱼxⱼᵀ)/B', c: 'fastw', e: 'spectral B', from: ['xₜ = φ(kₜ₋₁) (RAW shift)'] },
+            { n: 'window residuals rⱼ = vⱼ − Sₜ₋₁ᵀxⱼ', c: 'fastw', e: 'B replays', from: ['window μₜ⁽ᴮ⁾ = λmax(Σxⱼxⱼᵀ)/B', 'Sₜ₋₁ [dx,dv]'] },
+            { n: 'Sₜ = (1−ηₜλₜ)Sₜ₋₁ + (ηₜ/Bₜ)Σⱼxⱼrⱼᵀ', c: 'fastw', e: 'minibatch', from: ['window residuals rⱼ = vⱼ − Sₜ₋₁ᵀxⱼ', 'gates βₜ, λ̄ₜ = Wg·x', 'Sₜ₋₁ [dx,dv]'], loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = (1−ηₜλₜ)Sₜ₋₁ + (ηₜ/Bₜ)Σⱼxⱼrⱼᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         falcon1a_attn: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
-            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
             { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
-            { n: 'ηₜ = β/(‖xₜ‖²+λ+ε)', c: 'fastw', e: 'NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ, λ̄ₜ = Wg·x'] },
-            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·vₜᵀ', c: 'fastw', e: 'outer product', from: ['ηₜ = β/(‖xₜ‖²+λ+ε)'], id: 'SprevA', loop: 'SprevA' },
-            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·vₜᵀ', 'Q,K,V = W·x + shortconv'] },
-            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+            { n: 'Sₜ₋₁ [dx,dv]', c: 'fastw', id: 'Sprev' },
+            { n: 'ηₜ = βₜ/(‖xₜ‖²+λₜ+ε)', c: 'fastw', e: 'NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates βₜ, λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = γₜSₜ₋₁ + ηₜ·xₜ·vₜᵀ; γₜ=1−min(ηₜλₜ,1−ε)', c: 'fastw', e: 'outer product', from: ['ηₜ = βₜ/(‖xₜ‖²+λₜ+ε)', 'Sₜ₋₁ [dx,dv]'], loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜSₜ₋₁ + ηₜ·xₜ·vₜᵀ; γₜ=1−min(ηₜλₜ,1−ε)', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         falcon2a_attn: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
-            { n: 'gates ηₜ [H,d], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'gates βₜ [dv], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
             { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
-            { n: 'ηₜ,ⱼ per column', c: 'fastw', e: 'per-col NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ [H,d], λ̄ₜ = Wg·x'] },
-            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙vₜ)ᵀ', c: 'fastw', e: 'outer product', from: ['ηₜ,ⱼ per column'], id: 'Sprev2A', loop: 'Sprev2A' },
-            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙vₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
-            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+            { n: 'Sₜ₋₁ [dx,dv]', c: 'fastw', id: 'Sprev' },
+            { n: 'ηₜ,ⱼ per column', c: 'fastw', e: 'per-col NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates βₜ [dv], λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = Sₜ₋₁·Diag(γₜ) + xₜ(ηₜ⊙vₜ)ᵀ', c: 'fastw', e: 'outer product', from: ['ηₜ,ⱼ per column', 'Sₜ₋₁ [dx,dv]'], loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = Sₜ₋₁·Diag(γₜ) + xₜ(ηₜ⊙vₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         falcon3a_attn: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
-            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
             { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
-            { n: 'window energy Ēₜ⁽ᴮ⁾', c: 'fastw', e: 'energy B', from: ['xₜ = φ(kₜ₋₁) (RAW shift)'] },
-            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', c: 'fastw', e: 'window write', from: ['window energy Ēₜ⁽ᴮ⁾', 'gates ηₜ, λ̄ₜ = Wg·x'], id: 'Sprev3A', loop: 'Sprev3A' },
-            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', 'Q,K,V = W·x + shortconv'] },
-            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+            { n: 'Sₜ₋₁ [dx,dv]', c: 'fastw', id: 'Sprev' },
+            { n: 'window N̄ₜ⁽ᴮ⁾ = (1/Bₜ)Σxⱼvⱼᵀ', c: 'fastw', e: 'B replays', from: ['xₜ = φ(kₜ₋₁) (RAW shift)'] },
+            { n: 'Ēₜ⁽ᴮ⁾ = (1/Bₜ)Σ‖xⱼ‖²; ηₜ = β̄ₜ/(Ēₜ⁽ᴮ⁾+λₜ+ε)', c: 'fastw', e: 'energy B', from: ['window N̄ₜ⁽ᴮ⁾ = (1/Bₜ)Σxⱼvⱼᵀ', 'gates βₜ, λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = γₜSₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾; γₜ=1−min(ηₜλₜ,1−ε)', c: 'fastw', e: 'window write', from: ['Ēₜ⁽ᴮ⁾ = (1/Bₜ)Σ‖xⱼ‖²; ηₜ = β̄ₜ/(Ēₜ⁽ᴮ⁾+λₜ+ε)', 'Sₜ₋₁ [dx,dv]'], loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜSₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾; γₜ=1−min(ηₜλₜ,1−ε)', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         // Memory: dense QKV/O + memory bank read/write.
         titan_attn: [
@@ -554,7 +586,9 @@ var FTDiagram = (function () {
         var sgLbl = lbl !== undefined ? lbl : esc(lblOf(t)) + ' (' + fam + ')';
         L.push(ind + 'subgraph ' + sgName + ' ["' + sgLbl + '"]');
         L.push(ind + '    direction ' + _dir);
-        // Allocate nodes, indexed by label so `from` can resolve to ids.
+        // Allocate nodes, indexed by label AND by id so `from`/`loop`
+        // references can use either form (labels for computed nodes,
+        // ids for the input/state/memory anchors like x / Sₜ₋₁ / M).
         var byLabel = {};
         var byIdIdx = {};
         var ids = [];
@@ -564,6 +598,7 @@ var FTDiagram = (function () {
             var role = nd.c || fam;
             L.push(ind + '    ' + nId + '["' + esc(nd.n) + '"]:::' + role);
             byLabel[nd.n] = nId;
+            if (nd.id) byLabel[nd.id] = nId;
             byIdIdx[si] = nId;
             ids.push(nId);
         }
@@ -657,7 +692,7 @@ var FTDiagram = (function () {
         var iters = pick(m, 'mhc.sinkhorn_iters', 'mhc_sinkhorn_iters', 20);
         var gInit = pick(m, 'mhc.gating_init', 'mhc_gating_init', 0.01);
         var ckpt = pick(m, 'mhc.checkpoint', 'mhc_checkpoint', false);
-        var sg = 'SG_MHC_' + (_id++);
+        var sg = 'SG_MHC_' + nid();
         L.push(ind + 'subgraph ' + sg + ' ["mHC · n=' + n + ' (Sinkhorn ' + iters + ' iters, α=' + gInit + ')"]');
         L.push(ind + '    direction ' + _dir);
         var a = nid(), b = nid(), c = nid(), d = nid(), e = nid();
