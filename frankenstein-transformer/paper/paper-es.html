@@ -200,32 +200,32 @@ el progreso científico. En este trabajo proponemos Frankenstein
 Transformer, un conjunto de herramientas CLI basado en configuración
 (<code>frankenstein-transformer</code>) que unifica la definición, el
 entrenamiento y el despliegue de modelos transformer mediante un esquema
-YAML estricto. El conjunto de herramientas soporta cuarenta y dos
-variantes de mezcladores de secuencia en siete familias (densa,
-recurrente, dispersa, con compuerta, latente, con aumento de memoria y
-de peso rápido) y veintitrés familias de optimizadores con control de
-hiperparámetros por grupo de parámetros mediante prefijos. El toolkit
-además soporta una clase de modelo Vision Transformer
-(<code>frankenstein_vit</code>) para tareas de comprensión de imágenes
-incluyendo predicción autosupervisada de parches enmascarados,
-clasificación y segmentación, reutilizando la misma infraestructura de
-mezcladores de atención y optimizadores. Proporciona subcomandos para
-entrenamiento (<code>train</code>), despliegue (<code>deploy</code>),
-cuantización (<code>quantize</code>), inferencia (<code>infer</code>),
-entrenamiento e inferencia de incrustaciones de oraciones estilo SBERT
-(<code>sbert-train</code>, <code>sbert-infer</code>), exportación
-compatible con HuggingFace (<code>transformers-export</code>),
-exportación GGUF con soporte BitNet (<code>bitnet-gguf</code>) y un
-constructor de configuración basado en web (<code>web-server</code>). El
-sistema impone la reproducibilidad mediante un contrato de esquema
-estricto con restricciones <code>additionalProperties: false</code>,
-ofrece una interfaz web basada en Streamlit para la construcción de
-configuraciones guiada por esquema e incluye tuberías de despliegue de
-extremo a extremo con cuantización ternaria de pesos y flujos de trabajo
-de incrustación de oraciones inspirados en SBERT. Las pruebas
-automatizadas integrales con suites de pruebas unitarias, validación de
-presets YAML y ejecución de CI en múltiples versiones de Python
-garantizan la confiabilidad.</p>
+YAML estricto. El conjunto de herramientas soporta cuarenta y tres
+variantes de mezcladores de secuencia en ocho familias (densa,
+recurrente, dispersa, con compuerta, latente, con aumento de memoria, de
+peso rápido y de campo geométrico) y veintitrés familias de
+optimizadores con control de hiperparámetros por grupo de parámetros
+mediante prefijos. El conjunto de herramientas además soporta una clase
+de modelo Vision Transformer (<code>frankenstein_vit</code>) para tareas
+de comprensión de imágenes incluyendo predicción autosupervisada de
+parches enmascarados, clasificación y segmentación, reutilizando la
+misma infraestructura de mezcladores de atención y optimizadores.
+Proporciona subcomandos para entrenamiento (<code>train</code>),
+despliegue (<code>deploy</code>), cuantización (<code>quantize</code>),
+inferencia (<code>infer</code>), entrenamiento e inferencia de
+incrustaciones de oraciones estilo SBERT (<code>sbert-train</code>,
+<code>sbert-infer</code>), exportación compatible con HuggingFace
+(<code>transformers-export</code>), exportación GGUF con soporte BitNet
+(<code>bitnet-gguf</code>) y un constructor de configuración basado en
+web (<code>web-server</code>). El sistema impone la reproducibilidad
+mediante un contrato de esquema estricto con restricciones
+<code>additionalProperties: false</code>, ofrece una interfaz web basada
+en Streamlit para la construcción de configuraciones guiada por esquema
+e incluye tuberías de despliegue de extremo a extremo con cuantización
+ternaria de pesos y flujos de trabajo de incrustación de oraciones
+inspirados en SBERT. Las pruebas automatizadas integrales con suites de
+pruebas unitarias, validación de presets YAML y ejecución de CI en
+múltiples versiones de Python garantizan la confiabilidad.</p>
 </div>
 </header>
 <nav id="TOC" role="doc-toc">
@@ -1586,8 +1586,8 @@ data-reference="sec:annex-mhc">21</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencias</h2>
-<p>Este sistema implementa cuarenta y dos variantes de mezcladores de
-secuencia organizadas en siete categorías funcionales que reflejan las
+<p>Este sistema implementa cuarenta y tres variantes de mezcladores de
+secuencia organizadas en ocho categorías funcionales que reflejan las
 tendencias de investigación en el diseño de modelado de secuencias. La
 organización taxonómica refleja la comprensión evolutiva de cómo
 equilibrar expresividad, eficiencia computacional y restricciones de
@@ -1629,6 +1629,12 @@ del estado de peso rápido como una regla de aprendizaje continuo en
 línea bajo semántica de lectura tras escritura, con tamaños de paso
 normalizados, olvido por ridge explícito y repetición opcional con
 ventana deslizante acotada.</p></li>
+<li><p><strong>Campo Geométrico</strong> (1): SSOG <span
+class="citation" data-cites="pisoni_ssog_2026"></span> aplica un campo
+geométrico/de dispersión estructurada sobre la matriz de atención,
+codificando sesgos inductivos espaciales o de estructura de grafo
+específicos del dominio que las otras siete familias no
+capturan.</p></li>
 </ol>
 <h2 id="familias-densas-y-recurrentes">Familias Densas y
 Recurrentes</h2>
@@ -1699,13 +1705,17 @@ La idea unificadora es que las compuertas controlan <em>qué información
 sobrevive</em>: algunas compuertas actúan sobre actualizaciones de
 estado recurrente (GLA, variantes de DeltaNet, HGRN2), mientras que
 otras modifican la ruta de atención completa (FoX y Gated Softmax). KDA
-introduce atención dinámica kernelizada con compuertas aprendibles sobre
-el ancho de banda del kernel. Esto hace que las compuertas sean
-especialmente útiles cuando el modelo debe equilibrar recuerdo,
-actualidad y memoria limitada. Las formulaciones matemáticas, el
-pseudocódigo algorítmico, una plantilla de compuerta genérica y una
-tabla comparativa se recopilan en el Apéndice <a href="#sec:annex-gated"
-data-reference-type="ref" data-reference="sec:annex-gated">18</a>.</p>
+extiende Gated DeltaNet con un mecanismo de compuerta (decaimiento) más
+fino y por canal sobre la actualización de estado de la regla delta
+<span class="math inline">\(S_t = (I - \beta_t k_t k_t^\top)D_t S_{t-1}
++ \beta_t k_t v_t^\top\)</span>, donde <span class="math inline">\(D_t =
+\mathrm{Diag}(d_t)\)</span> aplica un decaimiento por canal. Esto hace
+que las compuertas sean especialmente útiles cuando el modelo debe
+equilibrar recuerdo, actualidad y memoria limitada. Las formulaciones
+matemáticas, el pseudocódigo algorítmico, una plantilla de compuerta
+genérica y una tabla comparativa se recopilan en el Apéndice <a
+href="#sec:annex-gated" data-reference-type="ref"
+data-reference="sec:annex-gated">18</a>.</p>
 <p>Una sexta familia replantea la propia actualización recurrente de
 peso rápido como una regla de aprendizaje continuo en línea: el registro
 de mezcladores incluye seis bloques de peso rápido —
@@ -2185,7 +2195,7 @@ units. <em>arXiv preprint arXiv:1704.07483</em>, 2017.</p>
 activation functions. <em>arXiv preprint arXiv:1905.10144</em>,
 2019.</p>
 <p>Ali Behrouz, Peilin Zhong, and Vahab Mirrokni. Titans: Learning to
-memorize at test time. URL
+memorize at test time, 2025. URL
 <code>https://arxiv.org/abs/2501.00663</code>. Version Number: 1.</p>
 <p>Iz Beltagy, Matthew E. Peters, and Arman Cohan. Longformer: The
 long-document transformer, 2020. URL
@@ -2193,10 +2203,11 @@ long-document transformer, 2020. URL
 <p>Arthur S. Bianchessi, Yasmin C. Aguirre, Rodrigo C. Barros, and
 Lucas S. Kupssinsk<span>ü</span>. Bayesian attention mechanism: A
 probabilistic framework for positional encoding and context length
-extrapolation. URL <code>http://arxiv.org/abs/2505.22842</code>.</p>
+extrapolation, 2025. URL
+<code>http://arxiv.org/abs/2505.22842</code>.</p>
 <p>Thibaut Boissin, Thomas Massena, Franck Mamalet, and Mathieu
 Serrurier. Turbo-muon: Accelerating orthogonality-based optimization
-with pre-conditioning. URL
+with pre-conditioning, 2025. URL
 <code>https://arxiv.org/abs/2512.04632</code>. Version Number: 1.</p>
 <p>James Bradbury, Roy Frostig, Peter Hawkins, Matthew J. Johnson, Chris
 Leary, Dougal Maclaurin, George Necula, Adam Paszke, Jake VanderPlas,
@@ -2205,15 +2216,14 @@ Skye Wanderman-Milne, and Qiao Zhang. : composable transformations of
 <code>http://github.com/jax-ml/jax</code>.</p>
 <p>Riccardo Bravin, Massimo Pavan, Hazem Hesham Yousef Shalby, Fabrizio
 Pittorino, and Manuel Roveri. : Attention under 2 <span>MB</span>
-memory. URL <code>http://arxiv.org/abs/2502.10001</code>.</p>
+memory, 2026. URL <code>http://arxiv.org/abs/2502.10001</code>.</p>
 <p>Mingzhi Chen, Taiming Lu, Jiachen Zhu, Mingjie Sun, and Zhuang Liu.
-Stronger normalization-free transformers, <span>a</span>. URL
+Stronger normalization-free transformers, 2025. URL
 <code>http://arxiv.org/abs/2512.10938</code>.</p>
 <p>Xiangning Chen, Chen Liang, Da Huang, Esteban Real, Kaiyuan Wang, Yao
 Liu, Hieu Pham, Xuanyi Dong, Thang Luong, Cho-Jui Hsieh, Yifeng Lu, and
-Quoc V. Le. Symbolic discovery of optimization algorithms,
-<span>b</span>. URL <code>https://arxiv.org/abs/2302.06675</code>.
-Version Number: 4.</p>
+Quoc V. Le. Symbolic discovery of optimization algorithms, 2023. URL
+<code>https://arxiv.org/abs/2302.06675</code>. Version Number: 4.</p>
 <p>Xin Cheng, Wangding Zeng, Damai Dai, Qinyu Chen, Bingxuan Wang,
 Zhenda Xie, Kezhao Huang, Xingkai Yu, Zhewen Hao, Yukun Li, Han Zhang,
 Huishuai Zhang, Dongyan Zhao, and Wenfeng Liang. Conditional memory via
@@ -2228,20 +2238,22 @@ linear units (<span>ELUs</span>). <em>arXiv preprint
 arXiv:1511.07289</em>, 2016.</p>
 <p>Chang Dai, Hongyu Shan, Mingyang Song, and Di Liang. : Hyperbolic
 rotary positional encoding for stable long-range dependency modeling in
-large language models. URL
+large language models, 2025. URL
 <code>http://arxiv.org/abs/2509.05218</code>.</p>
 <p>Aaron Defazio, Xingyu Alice Yang, Harsh Mehta, Konstantin Mishchenko,
-Ahmed Khaled, and Ashok Cutkosky. The road less scheduled. URL
+Ahmed Khaled, and Ashok Cutkosky. The road less scheduled, 2024. URL
 <code>https://arxiv.org/abs/2405.15682</code>. Version Number: 4.</p>
 <p>Keqi Deng and Philip C. Woodland. Multi-head temporal latent
 attention, 2025. URL <code>https://arxiv.org/abs/2505.13544</code>.</p>
 <p>Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. :
 Pre-training of deep bidirectional transformers for language
-understanding. URL <code>http://arxiv.org/abs/1810.04805</code>.</p>
+understanding, 2019. URL
+<code>http://arxiv.org/abs/1810.04805</code>.</p>
 <p>Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk
 Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani,
 Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, and
-Neil Houlsby. . URL <code>http://arxiv.org/abs/2010.11929</code>.</p>
+Neil Houlsby. , 2021. URL
+<code>http://arxiv.org/abs/2010.11929</code>.</p>
 <p>Shiv Ram Dubey, Satish Kumar Singh, and Bidyut Baran Chaudhuri.
 Activation functions in deep learning: A comprehensive survey and
 benchmark. <em>Neurocomputing</em>, 453: 1–24, 2021. doi:
@@ -2279,34 +2291,33 @@ and Yoshua Bengio. Maxout networks. In <em>Proceedings of the 30th
 International Conference on Machine Learning (ICML)</em>, pages
 1319–1327, 2013.</p>
 <p>Nils Graef, Filip Makraduli, Andrew Wasielewski, and Matthew Clapp. :
-Fast normalization for transformers. URL
+Fast normalization for transformers, 2026. URL
 <code>http://arxiv.org/abs/2407.09577</code>.</p>
 <p>Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with
-selective state spaces. URL
+selective state spaces, 2023. URL
 <code>https://arxiv.org/abs/2312.00752</code>. Version Number: 2.</p>
 <p>Albert Gu, AI21 Labs, et al. Jamba: A hybrid transformer-mamba
 language model, 2024. URL
 <code>https://arxiv.org/abs/2403.19887</code>.</p>
 <p>Vineet Gupta, Tomer Koren, and Yoram Singer. Shampoo: Preconditioned
-stochastic tensor optimization. URL
+stochastic tensor optimization, 2018. URL
 <code>https://arxiv.org/abs/1802.09568</code>. Version Number: 2.</p>
 <p>Ali Hatamizadeh, Yejin Choi, and Jan Kautz. Gated deltanet-2:
 Decoupling erase and write in linear attention, 2026. URL
 <code>https://arxiv.org/abs/2605.22791</code>.</p>
-<p>Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr
-Doll<span>á</span>r, and Ross Girshick. , <span>a</span>. URL
-<code>http://arxiv.org/abs/2111.06377</code>.</p>
-<p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual
-learning for image recognition. In <em>2016 <span>IEEE</span> Conference
-on Computer Vision and Pattern Recognition (<span>CVPR</span>)</em>,
-pages 770–778. <span>IEEE</span>, <span>b</span>. doi:
-10.1109/CVPR.2016.90. URL
-<code>http://arxiv.org/abs/1512.03385</code>.</p>
 <p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Delving deep
 into rectifiers: Surpassing human-level performance on
 <span>ImageNet</span> classification. In <em>Proceedings of the IEEE
 International Conference on Computer Vision (ICCV)</em>, pages
 1026–1034, 2015.</p>
+<p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual
+learning for image recognition. In <em>2016 <span>IEEE</span> Conference
+on Computer Vision and Pattern Recognition (<span>CVPR</span>)</em>,
+pages 770–778. <span>IEEE</span>, 2016. doi: 10.1109/CVPR.2016.90. URL
+<code>http://arxiv.org/abs/1512.03385</code>.</p>
+<p>Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr
+Doll<span>á</span>r, and Ross Girshick. , 2022. URL
+<code>http://arxiv.org/abs/2111.06377</code>.</p>
 <p>Dan Hendrycks and Kevin Gimpel. Gaussian error linear units
 (<span>GELU</span>). In <em>arXiv preprint arXiv:1606.08415</em>,
 2016.</p>
@@ -2324,12 +2335,12 @@ Linear-time sequence mixing via probabilistic latent routing, 2026. URL
 <code>https://arxiv.org/abs/2606.18283</code>.</p>
 <p>Amirhossein Kazemnejad, Inkit Padhi, Karthikeyan Natesan Ramamurthy,
 Payel Das, and Siva Reddy. The impact of positional encoding on length
-generalization in transformers. URL
+generalization in transformers, 2023. URL
 <code>http://arxiv.org/abs/2305.19466</code>.</p>
 <p>Daan Kerssies, Quentin Sartenaer, Fabio Ferraro, Gabriel Y. da Silva,
 Harkanwarpreet Maan, Matthieu Galon, Arsha Nagrani, Nathan Beeler,
 Bartlomiej Twardowski, Joost van de Weijer, Robert Dangovski, and Luca
-Berton. . URL <code>http://arxiv.org/abs/2503.19108</code>.</p>
+Berton. , 2025. URL <code>http://arxiv.org/abs/2503.19108</code>.</p>
 <p>Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong
 Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan.
 Supervised contrastive learning, 2020. URL
@@ -2366,24 +2377,24 @@ doi: 10.48550/arXiv.2101.09957.</p>
 Zettlemoyer. Base layers: Simplifying training of large, sparse models,
 2021. URL <code>https://arxiv.org/abs/2103.16716</code>.</p>
 <p>Kaizhao Liang, Lizhang Chen, Bo Liu, and Qiang Liu. Cautious
-optimizers: Improving training with one line of code. URL
+optimizers: Improving training with one line of code, 2024. URL
 <code>https://arxiv.org/abs/2411.16085</code>. Version Number: 4.</p>
 <p>Zhixuan Lin, Ke Wang, et al. Forgetting transformer: Softmax
 attention with a forget gate, 2025. URL
 <code>https://arxiv.org/abs/2503.02130</code>.</p>
 <p>Hong Liu, Zhiyuan Li, David Hall, Percy Liang, and Tengyu Ma. Sophia:
 A scalable stochastic second-order optimizer for language model
-pre-training, <span>a</span>. URL
-<code>https://arxiv.org/abs/2305.14342</code>. Version Number: 4.</p>
+pre-training, 2023. URL <code>https://arxiv.org/abs/2305.14342</code>.
+Version Number: 4.</p>
 <p>Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu,
 Jianfeng Gao, and Jiawei Han. On the variance of the adaptive learning
-rate and beyond, <span>b</span>. URL
+rate and beyond, 2019. URL
 <code>https://arxiv.org/abs/1908.03265</code>. Version Number: 4.</p>
 <p>Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
 Multi-head low-rank attention, 2026. URL
 <code>https://arxiv.org/abs/2603.02188</code>.</p>
 <p>Ilya Loshchilov and Frank Hutter. Decoupled weight decay
-regularization. URL <code>https://arxiv.org/abs/1711.05101</code>.
+regularization, 2017. URL <code>https://arxiv.org/abs/1711.05101</code>.
 Version Number: 3.</p>
 <p>Tianyu Lou, Zheyu Chen, Tao Yu, et al. Efficient sparse attention for
 long-range transformers, 2024. URL
@@ -2399,7 +2410,7 @@ Latent multi-head attention for small language models, 2025. URL
 large language model decoding, 2026. URL
 <code>https://arxiv.org/abs/2605.15250</code>.</p>
 <p>Konstantin Mishchenko and Aaron Defazio. Prodigy: An expeditiously
-adaptive parameter-free learner. URL
+adaptive parameter-free learner, 2023. URL
 <code>https://arxiv.org/abs/2306.06101</code>. Version Number: 4.</p>
 <p>Diganta Misra. Mish: A self regularized non-monotonic activation
 function. <em>arXiv preprint arXiv:1908.08681</em>, 2019.</p>
@@ -2413,9 +2424,9 @@ restricted <span>Boltzmann</span> machines. In <em>Proceedings of the
 Cabral Muchacho, Yifei Dong, Filippos Moumtzidellis, Ronja
 G<span>ü</span>ldenring, Florian T. Pokorny, and Lazaros Nalpantidis.
 Parabolic position encoding: Vision-centric, principled, extrapolatable,
-general. URL <code>http://arxiv.org/abs/2602.01418</code>.</p>
+general, 2026. URL <code>http://arxiv.org/abs/2602.01418</code>.</p>
 <p>Matteo Pagliardini, Pierre Ablin, and David Grangier. The
-<span>AdEMAMix</span> optimizer: Better, faster, older. URL
+<span>AdEMAMix</span> optimizer: Better, faster, older, 2024. URL
 <code>https://arxiv.org/abs/2409.03137</code>. Version Number: 2.</p>
 <p>Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury,
 Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca
@@ -2440,8 +2451,8 @@ implementation: <code>https://github.com/4rtemi5/ssog</code>.</p>
 iteration methods. <em>USSR Computational Mathematics and Mathematical
 Physics</em>, 4 (5): 1–17, 1964. doi: 10.1016/0041-5553(64)90137-5.</p>
 <p>Ofir Press, Noah A. Smith, and Mike Lewis. Train short, test long:
-Attention with linear biases enables input length extrapolation. URL
-<code>http://arxiv.org/abs/2108.12409</code>.</p>
+Attention with linear biases enables input length extrapolation, 2022.
+URL <code>http://arxiv.org/abs/2108.12409</code>.</p>
 <p>Zhen Qin, Xu Han, et al. Hgrn2: Gated linear rnns with state
 expansion, 2024. URL <code>https://arxiv.org/abs/2404.07904</code>.</p>
 <p>Yuxiang Qiu, Qwen Team, et al. Gated attention for large language
@@ -2452,24 +2463,24 @@ activation functions. In <em>arXiv preprint arXiv:1710.05941</em>,
 <p>Jason Ramapuram, Federico Danieli, Eeshan Dhekane, Floris Weers, Dan
 Busbridge, Pierre Ablin, Tatiana Likhomanenko, Jagrit Digani, Zijin Gu,
 Amitis Shidani, and Russ Webb. Theory, analysis, and best practices for
-sigmoid self-attention. URL
+sigmoid self-attention, 2024. URL
 <code>https://arxiv.org/abs/2409.04431</code>. Version Number: 2.</p>
 <p>Nils Reimers and Iryna Gurevych. Sentence-<span>BERT</span>: Sentence
-embeddings using siamese <span>BERT</span>-networks. URL
+embeddings using siamese <span>BERT</span>-networks, 2019. URL
 <code>http://arxiv.org/abs/1908.10084</code>.</p>
 <p>Susmita Roy, Souvik Manna, Subhash Bagui, et al. : Non-parametric
 linearly scaled hyperbolic tangent activation function for neural
 networks. <em>arXiv preprint arXiv:1811.05870</em>, 2019.</p>
 <p>Hema Hariharan Samson. Lightweight transformer architectures for edge
-devices in real-time applications. URL
+devices in real-time applications, 2026. URL
 <code>http://arxiv.org/abs/2601.03290</code>.</p>
 <p>Noam Shazeer. variants improve transformer. <em>arXiv preprint
 arXiv:2002.05202</em>, 2020.</p>
 <p>Noam Shazeer and Mitchell Stern. Adafactor: Adaptive learning rates
-with sublinear memory cost. URL
+with sublinear memory cost, 2018. URL
 <code>https://arxiv.org/abs/1804.04235</code>. Version Number: 1.</p>
 <p>Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
-On the convergence analysis of muon. URL
+On the convergence analysis of muon, 2025. URL
 <code>https://arxiv.org/abs/2505.23737</code>. Version Number: 1.</p>
 <p>Rafael Soares et al. Griffin: Mixing gated linear recurrences with
 local attention for efficient sequence modeling, 2024. URL
@@ -2480,21 +2491,21 @@ Information Processing Systems</em>, volume 28. Curran Associates, Inc.,
 2015. URL
 <code>https://proceedings.neurips.cc/paper_files/paper/2015/hash/a58f4765a99bf77336cf034926677066-Abstract.html</code>.</p>
 <p>Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng
-Liu. : Enhanced transformer with rotary position embedding. URL
+Liu. : Enhanced transformer with rotary position embedding, 2024. URL
 <code>http://arxiv.org/abs/2104.09864</code>.</p>
 <p>Luoyang Sun, Cheng Deng, Jiwen Jiang, Xinjian Wu, Haifeng Zhang, Lei
 Chen, Lionel Ni, and Jun Wang. Gta: Grouped-head latent attention, 2025.
 URL <code>https://arxiv.org/abs/2506.17286</code>.</p>
 <p>Yutao Sun, Li Dong, Shaohan Huang, Shuming Ma, Yuqing Xia, Jilong
 Xue, Jianyong Wang, and Furu Wei. Retentive network: A successor to
-transformer for large language models, <span>a</span>. URL
+transformer for large language models, 2023. URL
 <code>https://arxiv.org/abs/2307.08621</code>. Version Number: 4.</p>
-<p>Yutao Sun et al. Attention residuals, <span>b</span>. URL
+<p>Yutao Sun et al. Attention residuals. URL
 <code>http://arxiv.org/abs/2603.15031</code>.</p>
 <p>Shohei Taniguchi, Keno Harada, Gouki Minegishi, Yuta Oshima,
 Seong Cheol Jeong, Go Nagahara, Tomoshi Iiyama, Masahiro Suzuki, Yusuke
 Iwasawa, and Yutaka Matsuo. : Modified adam can converge with any <span
-class="math inline">\(\beta_2\)</span> with the optimal rate. URL
+class="math inline">\(\beta_2\)</span> with the optimal rate, 2024. URL
 <code>https://arxiv.org/abs/2411.02853</code>. Version Number: 3.</p>
 <p>Ludovic Trottier, Philippe Gigu<span>è</span>re, and Brahim
 Chaib-draa. Parametric exponential linear unit for deep convolutional
@@ -2503,15 +2514,15 @@ Conference on Machine Learning and Applications (ICMLA)</em>, pages
 207–214, 2017. doi: 10.1109/ICMLA.2017.0-133.</p>
 <p>Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion
 Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. Attention is
-all you need. URL <code>https://arxiv.org/abs/1706.03762</code>. Version
-Number: 7.</p>
+all you need, 2017. URL <code>https://arxiv.org/abs/1706.03762</code>.
+Version Number: 7.</p>
 <p>Nikhil Vyas, Depen Morwani, Rosie Zhao, Mujin Kwun, Itai Shapira,
 David Brandfonbrener, Lucas Janson, and Sham Kakade. : Improving and
-stabilizing shampoo using adam. URL
+stabilizing shampoo using adam, 2024. URL
 <code>https://arxiv.org/abs/2409.11321</code>. Version Number: 2.</p>
 <p>Hongyu Wang, Shuming Ma, Li Dong, Shaohan Huang, Huaijie Wang,
 Lingxiao Ma, Fan Yang, Ruiping Wang, Yi Wu, and Furu Wei. : Scaling
-1-bit transformers for large language models. URL
+1-bit transformers for large language models, 2023. URL
 <code>http://arxiv.org/abs/2310.11453</code>.</p>
 <p>Zhe Wang, Ming Liu, et al. Fasa: Frequency-aware sparse attention,
 2026. URL <code>https://arxiv.org/abs/2602.03152</code>.</p>
@@ -2525,8 +2536,8 @@ Transformers: State-of-the-art natural language processing. In
 Language Processing: System Demonstrations (EMNLP)</em>, pages 38–45,
 2020.</p>
 <p>Xingyu Xie, Pan Zhou, Huan Li, Zhouchen Lin, and Shuicheng Yan. Adan:
-Adaptive nesterov momentum algorithm for faster optimizing deep models.
-URL <code>https://arxiv.org/abs/2208.06677</code>. Version Number:
+Adaptive nesterov momentum algorithm for faster optimizing deep models,
+2022. URL <code>https://arxiv.org/abs/2208.06677</code>. Version Number:
 5.</p>
 <p>Zhenda Xie, Yixuan Wei, Huanqi Cao, Chenggang Zhao, Chengqi Deng,
 Jiashi Li, Damai Dai, Huazuo Gao, Jiang Chang, Kuai Yu, Liang Zhao,
@@ -2546,14 +2557,14 @@ mamba2 with delta rule, 2024<span>b</span>. URL
 <p>Yang You, Jing Li, Sashank Reddi, Jonathan Hseu, Sanjiv Kumar,
 Srinadh Bhojanapalli, Xiaodan Song, James Demmel, and Cho-Jui Hsieh.
 Large batch optimization for deep learning: Training <span>BERT</span>
-in 76 minutes. URL <code>https://arxiv.org/abs/1904.00962</code>.
+in 76 minutes, 2020. URL <code>https://arxiv.org/abs/1904.00962</code>.
 Version Number: 3.</p>
 <p>Han Yuan, DeepSeek-AI, et al. Native sparse attention:
 Hardware-aligned and natively trainable sparse attention, 2025. URL
 <code>https://arxiv.org/abs/2502.11089</code>.</p>
 <p>Huizhuo Yuan, Yifeng Liu, Shuang Wu, Xun Zhou, and Quanquan Gu. :
-Unleashing the power of variance reduction for training large models.
-URL <code>https://arxiv.org/abs/2411.10438</code>. Version Number:
+Unleashing the power of variance reduction for training large models,
+2024. URL <code>https://arxiv.org/abs/2411.10438</code>. Version Number:
 4.</p>
 <p>Manzil Zaheer, Guru Guruganesh, Kumar Avinava Dubey, Joshua Ainslie,
 Chris Alberti, Santiago Ontanon, Pike Pham, Anirudh Ravula, Qifan Wang,
@@ -2561,12 +2572,13 @@ Li Yang, and Amr Ahmed. Big bird: Transformers for longer sequences. In
 <em>Advances in Neural Information Processing Systems</em>, 2020. doi:
 10.48550/ARXIV.2007.14062. URL
 <code>https://arxiv.org/abs/2007.14062</code>.</p>
-<p>Biao Zhang and Rico Sennrich. . URL
+<p>Biao Zhang and Rico Sennrich. , 2019. URL
 <code>http://arxiv.org/abs/1910.07467</code>.</p>
 <p>Jing Zhang, Peng Zhang, Baiwen Kong, Junqiu Wei, and Xin Jiang.
 Continuous self-attention models with neural <span>ODE</span> networks.
-(16): 14393–14401. ISSN 2374-3468, 2159-5399. doi:
-10.1609/aaai.v35i16.17692. URL
+<em>Proceedings of the <span>AAAI</span> Conference on Artificial
+Intelligence</em>, 35 (16): 14393–14401, 2021. ISSN 2374-3468,
+2159-5399. doi: 10.1609/aaai.v35i16.17692. URL
 <code>https://ojs.aaai.org/index.php/AAAI/article/view/17692</code>.</p>
 <p>Yichi Zhang, Yizhong Wang, et al. Accurate and training-free sparse
 attention accelerating any model inference, 2025. URL
@@ -2577,14 +2589,14 @@ Chi-Chih Yao. Fast weight attention for continual learning, 2026. URL
 <code>https://arxiv.org/abs/2608.27763</code>.</p>
 <p>Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
-training by gradient low-rank projection. URL
+training by gradient low-rank projection, 2024. URL
 <code>https://arxiv.org/abs/2403.03507</code>. Version Number: 2.</p>
 <p>Hanqing Zhu, Zhenyu Zhang, Wenyan Cong, Xi Liu, Sem Park, Vikas
 Chandra, Bo Long, David Z. Pan, Zhangyang Wang, and Jinwon Lee. Apollo:
-Sgd-like memory, adamw-level performance, 2025. URL
+Sgd-like memory, adamw-level performance, 2025<span>a</span>. URL
 <code>https://arxiv.org/abs/2412.05270</code>.</p>
 <p>Jiachen Zhu, Xinlei Chen, Kaiming He, Yann <span>LeCun</span>, and
-Zhuang Liu. Transformers without normalization. URL
+Zhuang Liu. Transformers without normalization, 2025<span>b</span>. URL
 <code>http://arxiv.org/abs/2503.10622</code>.</p>
 <p>Lianghui Zhu, Yuxin Fang, Bencheng Liao, Shijie Wang, Tianheng Cheng,
 Zilong Huang, Chen Chen, Lai Wei, Yutao Zeng, Ya Wang, Yi Lin, Yu Li,
@@ -7077,11 +7089,11 @@ class="math inline">\(\mathbf{q}^{(fc)}, \mathbf{k}_i^{(fc)}\)</span>
 \text{softmax}(\mathbf{q}^{(fc)} \mathbf{k}_i^{(fc)\top} /
 \sqrt{d})\)</span> <span class="math inline">\(s_i \gets s_i +
 s_i^{(fc)}\)</span> <span class="math inline">\(\mathcal{T}_t \gets
-\mathrm{TopK-Índices}([s_1, \ldots, s_t], N_{\text{fac}})\)</span>
-<strong>Etapa 2: Cálculo de Atención Enfocada (FAC)</strong> <span
-class="math inline">\(\text{puntajes}_{\text{fac}} \gets \mathbf{q}_t
-\mathbf{K}_{\mathcal{T}_t}^\top / \sqrt{d}\)</span> <span
-class="math inline">\(\alpha_{\text{fac}} \gets
+\mathrm{TopK}\text{-Índices}([s_1, \ldots, s_t],
+N_{\text{fac}})\)</span> <strong>Etapa 2: Cálculo de Atención Enfocada
+(FAC)</strong> <span class="math inline">\(\text{puntajes}_{\text{fac}}
+\gets \mathbf{q}_t \mathbf{K}_{\mathcal{T}_t}^\top / \sqrt{d}\)</span>
+<span class="math inline">\(\alpha_{\text{fac}} \gets
 \text{softmax}(\text{puntajes}_{\text{fac}})\)</span> <span
 class="math inline">\(\mathbf{o}_t \gets \alpha_{\text{fac}}
 \mathbf{V}_{\mathcal{T}_t}\)</span> <span
