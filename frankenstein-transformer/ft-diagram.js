@@ -67,6 +67,28 @@ var FTDiagram = (function () {
         mhc: 'fill:#f0883e,stroke:#d18616,color:#fff'
     };
 
+    // Print palette (PNG export): pastel fills, dark strokes and dark text so
+    // the diagram stays legible on plain white paper.
+    var STYLES_PRINT = {
+        attn: 'fill:#dbeafe,stroke:#1d4ed8,color:#111827',
+        recur: 'fill:#dcfce7,stroke:#15803d,color:#111827',
+        ssm: 'fill:#ede9fe,stroke:#6d28d9,color:#111827',
+        ode: 'fill:#fce7f3,stroke:#a21caf,color:#111827',
+        sparse: 'fill:#fef3c7,stroke:#a16207,color:#111827',
+        eval: 'fill:#fee2e2,stroke:#b91c1c,color:#111827',
+        field: 'fill:#ccfbf1,stroke:#0f766e,color:#111827',
+        fastw: 'fill:#ffe4e6,stroke:#9f1239,color:#111827',
+        emb: 'fill:#ccfbf1,stroke:#0d9488,color:#111827',
+        norm: 'fill:#e5e7eb,stroke:#4b5563,color:#111827',
+        ffn: 'fill:#e5e7eb,stroke:#374151,color:#111827',
+        moe: 'fill:#ffedd5,stroke:#c2410c,color:#111827',
+        output: 'fill:#f3e8ff,stroke:#7c3aed,color:#111827',
+        train: 'fill:#dbeafe,stroke:#1e40af,color:#111827',
+        input: 'fill:#ccfbf1,stroke:#0d9488,color:#111827',
+        info: 'fill:#f3f4f6,stroke:#6b7280,color:#111827',
+        mhc: 'fill:#ffedd5,stroke:#b45309,color:#111827'
+    };
+
     // Per-mixer tensor flow templates. Each entry is a list of nodes, each
     // node: { n: label, c: cat, e?: edge-label-from-prev, from?: [idx] (fork),
     //         to?: [idx] (merge into these later nodes), loop?: idx (recurrence)
@@ -535,12 +557,15 @@ var FTDiagram = (function () {
 
     var _dir = 'TB';
 
-    function generate(config, orientation) {
+    // palette: undefined/'screen' uses the dark-UI classDef styles; 'print'
+    // swaps in STYLES_PRINT (pastel fills, dark strokes/text) for PNG export.
+    function generate(config, orientation, palette) {
         _id = 0;
         if (orientation === 'LR' || orientation === 'horizontal') _dir = 'LR';
         else _dir = 'TD';
+        var styles = palette === 'print' ? STYLES_PRINT : STYLES;
         var L = ['graph ' + _dir];
-        for (var k in STYLES) L.push('    classDef ' + k + ' ' + STYLES[k]);
+        for (var k in styles) L.push('    classDef ' + k + ' ' + styles[k]);
         L.push('');
         if (config.base_model) _baseModel(L, config);
         else _custom(L, config);
