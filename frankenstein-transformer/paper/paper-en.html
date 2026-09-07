@@ -909,8 +909,8 @@ that provides:</p>
 <ol>
 <li><p><strong>Schema-First Design</strong>: A strict, validated
 configuration contract that enforces reproducibility while supporting
-forty-two sequence mixer variants across seven families and twenty-three
-optimizer families.</p></li>
+forty-three sequence mixer variants across eight families and
+twenty-three optimizer families.</p></li>
 <li><p><strong>Architecture Agnostic Training</strong>: Common training
 infrastructure supporting dense attention baselines (standard, sigmoid),
 recurrent alternatives (RetNet, Mamba, ODE-style blocks), adaptive depth
@@ -970,10 +970,11 @@ dynamics.</p>
 <p>This work makes the following primary contributions:</p>
 <ol>
 <li><p><strong>Unified Configuration Schema</strong>: A YAML-based
-schema contract with strict validation that supports forty-two sequence
-mixer variants across seven families (dense, recurrent, sparse, gated,
-latent, memory-augmented, and fast-weight), alongside adaptive depth and
-conditional memory controls, while enforcing reproducibility through
+schema contract with strict validation that supports forty-three
+sequence mixer variants across eight families (dense, recurrent, sparse,
+gated, latent, memory-augmented, fast-weight, and geometric-field),
+alongside adaptive depth and conditional memory controls, while
+enforcing reproducibility through
 <code>additionalProperties: false</code> constraints.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
 Implementation of modern transformer variants including standard softmax
@@ -1302,7 +1303,7 @@ decoder-style generation (causal autoregressive prediction) through a
 unified configuration interface.</p>
 <p><strong>Sequence Mixer Pattern Selection</strong>: The
 <code>layer_pattern</code> field accepts an ordered list of mixer
-identifiers spanning seven families: dense baselines
+identifiers spanning eight families: dense baselines
 (<code>standard_attn</code>, <code>sigmoid_attn</code>,
 <code>gqa</code>), recurrent/retentive (<code>retnet</code>,
 <code>retnet_attn</code>, <code>mamba</code>, <code>ode</code>,
@@ -1319,12 +1320,13 @@ compression (<code>mla_attn</code>, <code>gqla_attn</code>,
 <code>mlra_attn</code>, <code>tucker_attn</code>, <code>iha_attn</code>,
 <code>gta_attn</code>, <code>mtla_attn</code>, <code>cca_attn</code>,
 <code>ccgqa_attn</code>, <code>gma_attn</code>), conditional memory
-(<code>engram_attn</code>), and fast-weight attention
+(<code>engram_attn</code>), fast-weight attention
 (<code>falcon1_attn</code>, <code>falcon2_attn</code>,
 <code>falcon3_attn</code>, <code>falcon1a_attn</code>,
-<code>falcon2a_attn</code>, <code>falcon3a_attn</code>). The complete
-taxonomy with references is provided in Section <a
-href="#sec:architecture-taxonomy" data-reference-type="ref"
+<code>falcon2a_attn</code>, <code>falcon3a_attn</code>), and geometric
+field (<code>ssog_attn</code>). The complete taxonomy with references is
+provided in Section <a href="#sec:architecture-taxonomy"
+data-reference-type="ref"
 data-reference="sec:architecture-taxonomy">4</a> and Appendix <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">13</a>.</p>
@@ -3376,8 +3378,8 @@ combination.</p></li>
 </ol>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
-implemented in the Frankenstein Transformer codebase: 42 sequence mixers
-across seven families, 23 optimizers, 6 normalization variants, 43
+implemented in the Frankenstein Transformer codebase: 43 sequence mixers
+across eight families, 23 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
