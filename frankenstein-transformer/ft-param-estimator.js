@@ -82,8 +82,9 @@ var FTParamEstimator = (function () {
     var r;                            // latent rank (per-variant below)
     switch (t) {
       // ---- Dense ----
-      case 'standard_attn':
       case 'sigmoid_attn':
+        return 4 * H * H + nH;      // Q,K,V,O (bias-free) + per-head logit bias b
+      case 'standard_attn':
       case 'titan_attn':
       case 'sparse_transformer_attn':
       case 'longformer_attn':
@@ -111,13 +112,13 @@ var FTParamEstimator = (function () {
       case 'gated_deltanet_attn':
         return 5 * H * H + 2 * (H * nH + nH) + 2 * H; // alpha+beta + norm
       case 'gated_deltanet2_attn':
-        return 5 * H * H + 2 * (H * (H + 1)) + 2 * H; // erase+write (biased) + norm
+        return 5 * H * H + 2 * (H * (H + 1)) + 2 * H + 2 * H; // erase+write (biased) + norm + log_decay_base/delta (channel decay)
       case 'hgrn2_attn':
         return 5 * H * H + H * (H + 1) + 2 * H; // forget_proj (biased) + norm
       case 'fox_attn':
         return 4 * H * H + (H * nH + nH); // f_proj (biased)
       case 'kda_attn':
-        return 5 * H * H + (H * nH + nH) + 2 * H; // beta_proj + norm
+        return 5 * H * H + (H * nH + nH) + 2 * H + 2 * H; // beta_proj + norm + log_decay_base/delta (channel decay)
       // ---- Fast-weight (Falcon family, arXiv:2608.27763) ----
       // q,k,v,out (4H², bias-free) + 3 depth-wise causal short convs
       // (H·kernel each, no bias, default on) + FalconGates: plasticity
