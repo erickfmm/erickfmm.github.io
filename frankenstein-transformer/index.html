@@ -2841,8 +2841,12 @@ function applyPreset(name) {
     }
   }
 
-  // Reflect loaded keys on the include/exclude toggles.
-  syncIncludesFromConfig(preset);
+  // Reflect loaded keys on the include/exclude toggles. Preset model keys are
+  // flat-dotted ('dims.layer_pattern'), so un-flatten them into nested shape —
+  // otherwise getPath('model.dims.layer_pattern') misses and every dims field
+  // (incl. layer_pattern) is excluded from buildConfig, making the diagram and
+  // YAML fall back to standard_attn defaults.
+  syncIncludesFromConfig(Object.assign({}, preset, { model: unflattenDottedKeys(preset.model || {}) }));
   if (preset.training && preset.training.task) onTaskChange();
 
   updateYamlOutput();
@@ -3033,6 +3037,27 @@ function applyYamlConfig(config) {
   updateParamEstimate();
 }
 
+// Inverse of the dotted-key flattening used by PRESETS: turn flat dotted keys
+// ({ 'dims.layer_pattern': [...] }) back into nested objects
+// ({ dims: { layer_pattern: [...] } }) with deep merge. Scalar/array values are
+// kept as-is; only plain objects are recursed. Lets syncIncludesFromConfig's
+// getPath() walk preset configs that store model keys flat-dotted.
+function unflattenDottedKeys(obj) {
+  const out = {};
+  if (!obj || typeof obj !== 'object') return out;
+  for (const [key, val] of Object.entries(obj)) {
+    const parts = key.split('.');
+    let cur = out;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const p = parts[i];
+      if (cur[p] === undefined || typeof cur[p] !== 'object' || Array.isArray(cur[p])) cur[p] = {};
+      cur = cur[p];
+    }
+    cur[parts[parts.length - 1]] = val;
+  }
+  return out;
+}
+
 // Flatten a model object into dotted keys matching the rendered form ids,
 // bridging the legacy flat schema (vocab_size, norm_type, use_hope, ...) and
 // the current hierarchical schema (dims.*, norm.*, embedding.*, attention.titan.*).
@@ -3221,7 +3246,10 @@ function mermaidThemeVars() {
     primaryColor: cs.getPropertyValue('--accent').trim(),
     primaryTextColor: cs.getPropertyValue('--text').trim(),
     primaryBorderColor: cs.getPropertyValue('--accent').trim(),
-    lineColor: cs.getPropertyValue('--border').trim(),
+    // Accent-blue edges: --border is near-black on dark and pale celeste on
+    // light, both barely visible. Arrows/arrowheads follow lineColor.
+    lineColor: light ? '#0969da' : '#58a6ff',
+    edgeLabelBackground: light ? '#ffffff' : (cs.getPropertyValue('--surface').trim() || '#161b22'),
     secondaryColor: cs.getPropertyValue('--surface-2').trim(),
     tertiaryColor: cs.getPropertyValue('--surface').trim(),
     textColor: cs.getPropertyValue('--text').trim(),
@@ -3342,34 +3370,128 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
-function downloadDiagramPNG() {
+// PNG export in print mode: white background + pastel palette. Mermaid SVGs
+// contain <foreignObject> labels with non-XHTML markup, which both taint the
+// canvas on toBlob() (SecurityError) and break raw string serialization — so we
+// re-render offscreen with htmlLabels:false (plain SVG <text>), DOM round-trip
+// the output, convert any leftover foreignObject, and export via blob URL.
+async function downloadDiagramPNG() {
   var svg = document.querySelector('#diagram-container svg');
   if (!svg) { setFeedback(t('diagramGenerateFirst'), 'error', 'assertive'); return; }
-  var data = new XMLSerializer().serializeToString(svg);
-  var blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
-  var url = URL.createObjectURL(blob);
-  var img = new Image();
-  img.onload = function () {
+  try {
+    var config = buildConfig();
+    var def = FTDiagram.generate(config, diagramOrientation, 'print');
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      flowchart: { htmlLabels: false, useMaxWidth: false },
+      themeVariables: {
+        background: '#ffffff',
+        lineColor: '#334155',
+        textColor: '#0f172a',
+        primaryTextColor: '#0f172a',
+        clusterBkg: '#f8fafc',
+        clusterBorder: '#94a3b8',
+        edgeLabelBackground: '#ffffff',
+        fontSize: '13px'
+      }
+    });
+    var result = await mermaid.render('mPrint-' + (_diagC++), def);
+    var exportSvg = buildPrintSvg(result.svg);
+    var data = new XMLSerializer().serializeToString(exportSvg);
+    var blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    await new Promise(function (resolve, reject) {
+      img.onload = resolve;
+      img.onerror = function () { reject(new Error('SVG image failed to load')); };
+      img.src = url;
+    });
     var c = document.createElement('canvas');
     c.width = img.naturalWidth * 2;
     c.height = img.naturalHeight * 2;
     var ctx = c.getContext('2d');
-    var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-elev').trim() || '#ffffff';
-    ctx.fillStyle = bgColor;
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, c.width, c.height);
     ctx.scale(2, 2);
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
-    c.toBlob(function (b) {
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(b);
-      a.download = 'architecture_diagram.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }, 'image/png');
-  };
-  img.src = url;
+    var png = await new Promise(function (resolve, reject) {
+      c.toBlob(function (b) { b ? resolve(b) : reject(new Error('toBlob returned null')); }, 'image/png');
+    });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(png);
+    a.download = 'architecture_diagram.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+    setFeedback('PNG downloaded (print mode).', 'success');
+  } catch (e) {
+    console.error('PNG export failed:', e);
+    setFeedback('PNG export failed: ' + e.message, 'error', 'assertive');
+  } finally {
+    // Restore the on-screen mermaid theme so future renders are unaffected.
+    refreshMermaidTheme();
+  }
+}
+
+// Prepare an offscreen mermaid SVG for print export: DOM round-trip (fixes the
+// invalid XML mermaid emits), convert remaining foreignObject labels to plain
+// <text>, pin width/height from the viewBox and add a white background rect.
+function buildPrintSvg(svgHtml) {
+  var holder = document.createElement('div');
+  holder.innerHTML = svgHtml;
+  var el = holder.firstElementChild;
+  el.querySelectorAll('foreignObject').forEach(function (fo) {
+    var x = parseFloat(fo.getAttribute('x')) || 0;
+    var y = parseFloat(fo.getAttribute('y')) || 0;
+    var w = parseFloat(fo.getAttribute('width')) || 100;
+    var h = parseFloat(fo.getAttribute('height')) || 20;
+    // Clone and mark line boundaries (br + block p/div boundaries) so
+    // textContent keeps the label's line structure.
+    var clone = fo.cloneNode(true);
+    clone.querySelectorAll('br').forEach(function (br) {
+      br.parentNode.insertBefore(document.createTextNode('\n'), br);
+      br.parentNode.removeChild(br);
+    });
+    clone.querySelectorAll('p,div').forEach(function (blk) {
+      blk.appendChild(document.createTextNode('\n'));
+    });
+    var lines = (clone.textContent || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!lines.length) lines = [''];
+    var lh = 15;
+    var cy = y + h / 2 - ((lines.length - 1) * lh) / 2;
+    var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', String(x + w / 2));
+    text.setAttribute('y', String(cy));
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('font-family', 'sans-serif');
+    text.setAttribute('font-size', '13');
+    text.setAttribute('fill', '#0f172a');
+    lines.forEach(function (ln, i) {
+      var ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      ts.setAttribute('x', String(x + w / 2));
+      ts.setAttribute('dy', i === 0 ? '0' : String(lh));
+      ts.textContent = ln;
+      text.appendChild(ts);
+    });
+    fo.parentNode.replaceChild(text, fo);
+  });
+  var vb = (el.getAttribute('viewBox') || '').split(/\s+/).map(parseFloat);
+  if (vb.length === 4 && vb.every(function (n) { return !isNaN(n); })) {
+    el.setAttribute('width', String(Math.ceil(vb[2])));
+    el.setAttribute('height', String(Math.ceil(vb[3])));
+  }
+  var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('x', '0');
+  bg.setAttribute('y', '0');
+  bg.setAttribute('width', '100%');
+  bg.setAttribute('height', '100%');
+  bg.setAttribute('fill', '#ffffff');
+  el.insertBefore(bg, el.firstChild);
+  return el;
 }
 
 function copyMermaid() {
