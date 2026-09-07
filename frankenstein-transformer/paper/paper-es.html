@@ -200,31 +200,32 @@ el progreso científico. En este trabajo proponemos Frankenstein
 Transformer, un conjunto de herramientas CLI basado en configuración
 (<code>frankenstein-transformer</code>) que unifica la definición, el
 entrenamiento y el despliegue de modelos transformer mediante un esquema
-YAML estricto. El conjunto de herramientas soporta treinta y cinco
-variantes de mezcladores de secuencia en seis familias (densa,
-recurrente, dispersa, con compuerta, latente y con aumento de memoria) y
-veintitrés familias de optimizadores con control de hiperparámetros por
-grupo de parámetros mediante prefijos. El toolkit además soporta una
-clase de modelo Vision Transformer (<code>frankenstein_vit</code>) para
-tareas de comprensión de imágenes incluyendo predicción autosupervisada
-de parches enmascarados, clasificación y segmentación, reutilizando la
-misma infraestructura de mezcladores de atención y optimizadores.
-Proporciona subcomandos para entrenamiento (<code>train</code>),
-despliegue (<code>deploy</code>), cuantización (<code>quantize</code>),
-inferencia (<code>infer</code>), entrenamiento e inferencia de
-incrustaciones de oraciones estilo SBERT (<code>sbert-train</code>,
-<code>sbert-infer</code>), exportación compatible con HuggingFace
-(<code>transformers-export</code>), exportación GGUF con soporte BitNet
-(<code>bitnet-gguf</code>) y un constructor de configuración basado en
-web (<code>web-server</code>). El sistema impone la reproducibilidad
-mediante un contrato de esquema estricto con restricciones
-<code>additionalProperties: false</code>, ofrece una interfaz web basada
-en Streamlit para la construcción de configuraciones guiada por esquema
-e incluye tuberías de despliegue de extremo a extremo con cuantización
-ternaria de pesos y flujos de trabajo de incrustación de oraciones
-inspirados en SBERT. Las pruebas automatizadas integrales con suites de
-pruebas unitarias, validación de presets YAML y ejecución de CI en
-múltiples versiones de Python garantizan la confiabilidad.</p>
+YAML estricto. El conjunto de herramientas soporta cuarenta y dos
+variantes de mezcladores de secuencia en siete familias (densa,
+recurrente, dispersa, con compuerta, latente, con aumento de memoria y
+de peso rápido) y veintitrés familias de optimizadores con control de
+hiperparámetros por grupo de parámetros mediante prefijos. El toolkit
+además soporta una clase de modelo Vision Transformer
+(<code>frankenstein_vit</code>) para tareas de comprensión de imágenes
+incluyendo predicción autosupervisada de parches enmascarados,
+clasificación y segmentación, reutilizando la misma infraestructura de
+mezcladores de atención y optimizadores. Proporciona subcomandos para
+entrenamiento (<code>train</code>), despliegue (<code>deploy</code>),
+cuantización (<code>quantize</code>), inferencia (<code>infer</code>),
+entrenamiento e inferencia de incrustaciones de oraciones estilo SBERT
+(<code>sbert-train</code>, <code>sbert-infer</code>), exportación
+compatible con HuggingFace (<code>transformers-export</code>),
+exportación GGUF con soporte BitNet (<code>bitnet-gguf</code>) y un
+constructor de configuración basado en web (<code>web-server</code>). El
+sistema impone la reproducibilidad mediante un contrato de esquema
+estricto con restricciones <code>additionalProperties: false</code>,
+ofrece una interfaz web basada en Streamlit para la construcción de
+configuraciones guiada por esquema e incluye tuberías de despliegue de
+extremo a extremo con cuantización ternaria de pesos y flujos de trabajo
+de incrustación de oraciones inspirados en SBERT. Las pruebas
+automatizadas integrales con suites de pruebas unitarias, validación de
+presets YAML y ejecución de CI en múltiples versiones de Python
+garantizan la confiabilidad.</p>
 </div>
 </header>
 <nav id="TOC" role="doc-toc">
@@ -291,6 +292,14 @@ href="#cuantización-ternaria-y-escalado-de-activaciones">Cuantización
 Ternaria y Escalado de Activaciones</a></li>
 </ul></li>
 <li><a href="#sec:sbert">Tareas Posteriores de SBERT</a></li>
+<li><a href="#sec:dashai-plugin">Integración Sin Código: El Plugin
+<code>dashai-frankenstein</code></a>
+<ul>
+<li><a href="#componentes-registrados">Componentes Registrados</a></li>
+<li><a href="#esquema-de-configuración-de-passthrough">Esquema de
+Configuración de Passthrough</a></li>
+<li><a href="#trabajo-en-proceso">Trabajo en Proceso</a></li>
+</ul></li>
 <li><a href="#sec:discussion">Discusión</a>
 <ul>
 <li><a href="#compromisos-de-diseño-basado-en-esquemas">Compromisos de
@@ -852,6 +861,41 @@ Gaussians</a>
 Algorítmico</a></li>
 <li><a href="#características-clave-19">Características Clave</a></li>
 </ul></li>
+<li><a href="#sec:annex-fast-weight">Atención de Peso Rápido para
+Aprendizaje Continuo</a>
+<ul>
+<li><a
+href="#preliminares-alineación-normalización-renormalización">Preliminares:
+Alineación, Normalización, Renormalización</a></li>
+<li><a href="#la-familia-de-regresión-falcon-123">La Familia de
+Regresión (Falcon-1/2/3)</a>
+<ul>
+<li><a href="#falcon-1-regresión-nlms-escalar">Falcon-1: Regresión NLMS
+Escalar</a></li>
+<li><a href="#falcon-2-regresión-nlms-por-columnas">Falcon-2: Regresión
+NLMS por Columnas</a></li>
+<li><a
+href="#falcon-3-regresión-de-minilote-con-ventana-deslizante">Falcon-3:
+Regresión de Minilote con Ventana Deslizante</a></li>
+</ul></li>
+<li><a href="#la-familia-de-producto-interno-falcon-1a2a3a">La Familia
+de Producto Interno (Falcon-1A/2A/3A)</a>
+<ul>
+<li><a href="#falcon-1a-y-falcon-2a">Falcon-1A y Falcon-2A</a></li>
+<li><a
+href="#falcon-3a-producto-interno-con-ventana-deslizante">Falcon-3A:
+Producto Interno con Ventana Deslizante</a></li>
+</ul></li>
+<li><a href="#interfaz-de-configuración">Interfaz de
+Configuración</a></li>
+<li><a href="#resultados-publicados">Resultados Publicados</a></li>
+<li><a href="#relación-con-trabajos-previos">Relación con Trabajos
+Previos</a>
+<ul>
+<li><a href="#cuándo-usar-cada-variante">Cuándo Usar Cada
+Variante</a></li>
+</ul></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introducción">Introducción</h1>
@@ -906,8 +950,8 @@ que proporciona:</p>
 <ol>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto y validado que garantiza la reproducibilidad
-mientras admite treinta y seis variantes de mezcladores de secuencia en
-seis familias y veintitrés familias de optimizadores.</p></li>
+mientras admite cuarenta y dos variantes de mezcladores de secuencia en
+siete familias y veintitrés familias de optimizadores.</p></li>
 <li><p><strong>Entrenamiento Agnóstico a la Arquitectura</strong>:
 Infraestructura de entrenamiento común que soporta líneas base de
 atención densa (estándar, sigmoide), alternativas recurrentes (RetNet,
@@ -969,12 +1013,12 @@ comportamiento del modelo y la dinámica de entrenamiento.</p>
 <p>Este trabajo realiza las siguientes contribuciones principales:</p>
 <ol>
 <li><p><strong>Esquema de Configuración Unificado</strong>: Un contrato
-de esquema basado en YAML con validación estricta que soporta treinta y
-seis variantes de mezcladores de secuencia en seis familias (densa,
-recurrente, dispersa, con compuerta, latente y con aumento de memoria),
-junto con controles de profundidad adaptativa y memoria condicional,
-mientras garantiza la reproducibilidad mediante restricciones
-<code>additionalProperties: false</code>.</p></li>
+de esquema basado en YAML con validación estricta que soporta cuarenta y
+dos variantes de mezcladores de secuencia en siete familias (densa,
+recurrente, dispersa, con compuerta, latente, con aumento de memoria y
+de peso rápido), junto con controles de profundidad adaptativa y memoria
+condicional, mientras garantiza la reproducibilidad mediante
+restricciones <code>additionalProperties: false</code>.</p></li>
 <li><p><strong>Soporte Integral de Arquitecturas</strong>:
 Implementación de variantes modernas de transformers incluyendo atención
 softmax estándar <span class="citation"
@@ -1035,7 +1079,7 @@ cuatro preocupaciones operativas:</p>
 <ol>
 <li><p><strong>Requisitos Previos</strong>: El Apéndice <a
 href="#sec:annex-tutorial" data-reference-type="ref"
-data-reference="sec:annex-tutorial">10</a> proporciona una introducción
+data-reference="sec:annex-tutorial">11</a> proporciona una introducción
 accesible a los transformers y mecanismos de atención para lectores
 nuevos en el campo.</p></li>
 <li><p><strong>Contrato de Configuración</strong>: La Sección <a
@@ -1050,26 +1094,26 @@ href="#sec:attention-families" data-reference-type="ref"
 data-reference="sec:attention-families">4.1</a> proporciona una
 comparación exhaustiva de las familias de mezcladores de secuencia; los
 Apéndices <a href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">14</a>, <a
+data-reference="sec:annex-transformer">15</a>, <a
 href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">15</a>, <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">16</a> y <a
+data-reference="sec:annex-latent">16</a>, <a href="#sec:annex-sparse"
+data-reference-type="ref" data-reference="sec:annex-sparse">17</a> y <a
 href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">17</a> sintetizan la literatura de
+data-reference="sec:annex-gated">18</a> sintetizan la literatura de
 respaldo; el Apéndice <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a> detalla las variantes
+data-reference="sec:annex-norm-bitnet-mod">19</a> detalla las variantes
 de normalización, la cuantización BitNet, el enrutamiento
 Mixture-of-Depths y la memoria condicional Engram; el Apéndice <a
 href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">20</a> detalla las conexiones residuales
+data-reference="sec:annex-mhc">21</a> detalla las conexiones residuales
 restringidas por variedad (mHC).</p></li>
 <li><p><strong>Dinámica de Optimización</strong>: La Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> detalla el enrutamiento de
 optimizadores y la dinámica de entrenamiento; el Apéndice <a
 href="#sec:annex-optimizers" data-reference-type="ref"
-data-reference="sec:annex-optimizers">13</a> proporciona un análisis
+data-reference="sec:annex-optimizers">14</a> proporciona un análisis
 exhaustivo de las familias de optimizadores.</p></li>
 <li><p><strong>Despliegue e Inferencia</strong>: Las Secciones <a
 href="#sec:quantization" data-reference-type="ref"
@@ -1202,14 +1246,29 @@ operaciones Triton optimizadas. Soporta exportación GGUF para despliegue
 cuantizado y se integra con el ecosistema Hugging Face. El enfoque de
 Unsloth está en hacer el ajuste fino más rápido y eficiente en memoria,
 no en exploración arquitectónica.</p>
-<p><strong>dashAI</strong> (<code>https://www.dash-ai.com</code>, 2024)
-es una aplicación de escritorio para entrenamiento de aprendizaje
-automático sin código con una interfaz basada en esquemas. Permite a los
-usuarios configurar conjuntos de datos, modelos y parámetros de
-entrenamiento a través de una interfaz gráfica sin escribir código.
-Aunque dashAI demuestra el valor de la configuración basada en esquemas
-para la accesibilidad, se enfoca en flujos de trabajo de ML clásico en
-lugar de experimentación con arquitecturas transformer.</p>
+<p><strong>dashAI</strong>
+(<code>https://github.com/DashAISoftware/dashAI</code>, v0.9.7.post2,
+2026) es una aplicación de escritorio open-source y local-first para
+aprendizaje automático desarrollada por un consorcio académico chileno
+(Universidad de Chile/FCFM, CENIA, IMFD y financiamiento ANID). Su
+interfaz es completamente basada en esquemas: los formularios de
+configuración se generan directamente desde esquemas Pydantic de los
+componentes sin código frontend escrito a mano, y su catálogo abarca
+unos 76 modelos multitask—clasificadores tabulares, modelos de NLP,
+traducción, LLMs de pesos abiertos y generación de texto a
+imagen—unificados tras una docena de abstracciones base tipadas. La
+extensibilidad es central en su diseño: los plugins son paquetes PyPI
+ordinarios descubiertos mediante el grupo de entry-points
+<code>dashai.plugins</code> e instalables desde la UI, un mecanismo lo
+bastante central que incluso las capacidades generativas propias de
+dashAI (p. ej., Stable Diffusion, Flux) se distribuyen como plugins.
+Mientras que releases anteriores se enfocaban en ML clásico, la
+plataforma actual abarca modelado predictivo y generativo en múltiples
+dominios, lo que la convierte en un anfitrión natural para componentes
+transformer vía su sistema de plugins; la Sección <a
+href="#sec:dashai-plugin" data-reference-type="ref"
+data-reference="sec:dashai-plugin">8</a> presenta el adaptador
+<code>dashai-frankenstein</code> construido sobre este mecanismo.</p>
 <h2 id="experimentación-basada-en-configuración">Experimentación Basada
 en Configuración</h2>
 <p>Un hilo común entre las herramientas examinadas anteriormente es su
@@ -1319,7 +1378,7 @@ generación tipo decoder (predicción causal autorregresiva) a través de
 una interfaz de configuración unificada.</p>
 <p><strong>Selección de Patrones de Mezcladores de Secuencia</strong>:
 El campo <code>layer_pattern</code> acepta una lista ordenada de
-identificadores de mezcladores que abarcan seis familias: líneas base
+identificadores de mezcladores que abarcan siete familias: líneas base
 densas (<code>standard_attn</code>, <code>sigmoid_attn</code>,
 <code>gqa</code>), recurrentes/retentivas (<code>retnet</code>,
 <code>retnet_attn</code>, <code>mamba</code>, <code>ode</code>,
@@ -1335,13 +1394,16 @@ compuerta (<code>gla_attn</code>, <code>deltanet_attn</code>,
 latente (<code>mla_attn</code>, <code>gqla_attn</code>,
 <code>mlra_attn</code>, <code>tucker_attn</code>, <code>iha_attn</code>,
 <code>gta_attn</code>, <code>mtla_attn</code>, <code>cca_attn</code>,
-<code>ccgqa_attn</code>, <code>gma_attn</code>) y memoria condicional
-(<code>engram_attn</code>). La taxonomía completa con referencias se
-proporciona en la Sección <a href="#sec:architecture-taxonomy"
-data-reference-type="ref"
+<code>ccgqa_attn</code>, <code>gma_attn</code>) memoria condicional
+(<code>engram_attn</code>) y atención de peso rápido
+(<code>falcon1_attn</code>, <code>falcon2_attn</code>,
+<code>falcon3_attn</code>, <code>falcon1a_attn</code>,
+<code>falcon2a_attn</code>, <code>falcon3a_attn</code>). La taxonomía
+completa con referencias se proporciona en la Sección <a
+href="#sec:architecture-taxonomy" data-reference-type="ref"
 data-reference="sec:architecture-taxonomy">4</a> y el Apéndice <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
-data-reference="sec:annex-summary-tables">12</a>.</p>
+data-reference="sec:annex-summary-tables">13</a>.</p>
 <p>El <code>training.optimizer.optimizer_class</code> soporta una amplia
 familia de optimizadores: <code>sgd_momentum</code>, <code>adamw</code>,
 <code>adafactor</code>, <code>galore_adamw</code>, <code>prodigy</code>,
@@ -1369,7 +1431,7 @@ son: <span class="math display">\[\texttt{norm\_type} \in
 <p>El esquema completo de configuración del modelo y entrenamiento,
 incluyendo todos los campos, tipos, rangos y reglas de validación, se
 documenta en el Apéndice <a href="#sec:annex-schema"
-data-reference-type="ref" data-reference="sec:annex-schema">11</a>. El
+data-reference-type="ref" data-reference="sec:annex-schema">12</a>. El
 esquema impone <code>additionalProperties: false</code> en todos los
 niveles, garantizando que las claves desconocidas fallen
 rápidamente.</p>
@@ -1440,7 +1502,7 @@ proporciona control de hiperparámetros por grupo de parámetros a través
 de una convención de nombres con prefijos. El contrato completo de
 prefijos del optimizador y las familias soportadas se documentan en el
 Apéndice <a href="#sec:annex-schema" data-reference-type="ref"
-data-reference="sec:annex-schema">11</a>.</p>
+data-reference="sec:annex-schema">12</a>.</p>
 <h2 id="seguridad-de-entrenamiento-y-semántica-de-ejecución">Seguridad
 de Entrenamiento y Semántica de Ejecución</h2>
 <p>Las características de seguridad a nivel de esquema incluyen
@@ -1459,7 +1521,7 @@ guardas de explosión post-recorte, reintentos acotados de NaN/Inf,
 despacho del scheduler y rotación de checkpoints rodantes/mejores—se
 difiere al Apéndice <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:normalization">Variantes de Normalización</h2>
 <p>La normalización controla la escala de activación a través de la
 profundidad y es también una cuestión de compatibilidad con el esquema,
@@ -1472,7 +1534,7 @@ y Erf Dinámico (Derf) <span class="citation"
 data-cites="chen_stronger_2025"></span>, junto con una tabla
 comparativa, se detallan en el Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:residual-stream">Arquitecturas de Flujo Residual</h2>
 <p>La conexión residual no es solo una elección de modelado, sino
 también una decisión de macro-diseño. El sistema expone cuatro
@@ -1504,7 +1566,7 @@ cero.</p></li>
 <li><p><strong>Hyper-Connexiones Restringidas por Variedad</strong>
 (<code>residual_type</code> combinado con <code>mhc.enabled=true</code>,
 documentado por separado en el Apéndice <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">20</a>): el
+data-reference-type="ref" data-reference="sec:annex-mhc">21</a>): el
 residual de n streams <span class="citation"
 data-cites="xie_mhc_2025"></span> cuya matriz de mezcla de flujo se
 restringe al politopo de Birkhoff mediante Sinkhorn–Knopp.</p></li>
@@ -1517,15 +1579,15 @@ atención sobre la profundidad corre por stream
 está activo. La formulación completa, las cuatro estrategias, el
 cableado de implementación y los resultados reportados se detallan en el
 Apéndice <a href="#sec:annex-attnres" data-reference-type="ref"
-data-reference="sec:annex-attnres">21</a>. mHC por sí solo se detalla en
+data-reference="sec:annex-attnres">22</a>. mHC por sí solo se detalla en
 el Apéndice <a href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">20</a>.</p>
+data-reference="sec:annex-mhc">21</a>.</p>
 <h1 id="sec:architecture-taxonomy">Taxonomía de Arquitectura e
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencias</h2>
-<p>Este sistema implementa treinta y seis variantes de mezcladores de
-secuencia organizadas en seis categorías funcionales que reflejan las
+<p>Este sistema implementa cuarenta y dos variantes de mezcladores de
+secuencia organizadas en siete categorías funcionales que reflejan las
 tendencias de investigación en el diseño de modelado de secuencias. La
 organización taxonómica refleja la comprensión evolutiva de cómo
 equilibrar expresividad, eficiencia computacional y restricciones de
@@ -1560,6 +1622,13 @@ por ahorros sustanciales de memoria y cómputo.</p></li>
 <li><p><strong>Memoria Condicional</strong> (1): Engram proporciona
 memoria en tiempo de prueba mediante operaciones de lectura/escritura
 aprendidas sobre un banco de memoria externo.</p></li>
+<li><p><strong>Atención de Peso Rápido</strong> (6): Falcon-1, Falcon-2,
+Falcon-3, Falcon-1A, Falcon-2A y Falcon-3A <span class="citation"
+data-cites="zhang_falcon_2026"></span> tratan la transición recurrente
+del estado de peso rápido como una regla de aprendizaje continuo en
+línea bajo semántica de lectura tras escritura, con tamaños de paso
+normalizados, olvido por ridge explícito y repetición opcional con
+ventana deslizante acotada.</p></li>
 </ol>
 <h2 id="familias-densas-y-recurrentes">Familias Densas y
 Recurrentes</h2>
@@ -1576,7 +1645,7 @@ fundamental entre expresividad y eficiencia. Las formulaciones
 matemáticas, las formas paralela y recurrente, el pseudocódigo
 algorítmico y una tabla comparativa arquitectónica se recopilan en el
 Apéndice <a href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">14</a>. El algoritmo de despacho
+data-reference="sec:annex-transformer">15</a>. El algoritmo de despacho
 de mezclador guiado por patrón (incluyendo la política de cumplimiento
 sin entrenamiento para <code>fasa_attn</code> y
 <code>sparge_attn</code>) se detalla igualmente allí.</p>
@@ -1600,7 +1669,7 @@ de activaciones <span class="math inline">\(\mathcal{O}(NK)\)</span>
 para <span class="math inline">\(K\)</span> fijo. Las formulaciones
 completas, el pseudocódigo y una tabla comparativa se recopilan en el
 Apéndice <a href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">15</a>.</p>
+data-reference="sec:annex-latent">16</a>.</p>
 <h2 id="extensiones-de-atención-dispersa">Extensiones de Atención
 Dispersa</h2>
 <p>El registro de mezcladores incluye nueve bloques dispersos:
@@ -1616,7 +1685,7 @@ errores en tiempo de ejecución si se usan mientras el modelo está en
 modo de entrenamiento. Las formulaciones matemáticas, el pseudocódigo
 algorítmico, las características por bloque y una tabla comparativa se
 recopilan en el Apéndice <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">16</a>.</p>
+data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
 <h2 id="extensiones-de-atención-con-compuerta">Extensiones de Atención
 con Compuerta</h2>
 <p>El registro de mezcladores incluye ocho bloques con compuerta:
@@ -1636,7 +1705,28 @@ especialmente útiles cuando el modelo debe equilibrar recuerdo,
 actualidad y memoria limitada. Las formulaciones matemáticas, el
 pseudocódigo algorítmico, una plantilla de compuerta genérica y una
 tabla comparativa se recopilan en el Apéndice <a href="#sec:annex-gated"
-data-reference-type="ref" data-reference="sec:annex-gated">17</a>.</p>
+data-reference-type="ref" data-reference="sec:annex-gated">18</a>.</p>
+<p>Una sexta familia replantea la propia actualización recurrente de
+peso rápido como una regla de aprendizaje continuo en línea: el registro
+de mezcladores incluye seis bloques de peso rápido —
+<code>falcon1_attn</code>, <code>falcon2_attn</code>,
+<code>falcon3_attn</code>, <code>falcon1a_attn</code>,
+<code>falcon2a_attn</code> y <code>falcon3a_attn</code> <span
+class="citation" data-cites="zhang_falcon_2026"></span>. Falcon unifica
+las escrituras aditivas estilo DeltaNet y de atención lineal bajo
+semántica de lectura tras escritura (RAW), con tamaños de paso
+normalizados <span class="math inline">\(\eta_t =
+\beta_t/(\text{estadístico}_t + \lambda_t + \varepsilon)\)</span>, un
+arrastre derivado del objetivo <span class="math inline">\(\gamma_t = 1
+- \eta_t\lambda_t\)</span> y repetición acotada con ventana deslizante
+en las variantes Falcon-3. Cada variante proporciona un escaneo
+recurrente de referencia y un kernel chunk-parallel estilo SSD,
+compartiendo un único bloque de configuración. Las formulaciones
+matemáticas, el pseudocódigo algorítmico, la renormalización de
+decaimiento positivo, las perillas de configuración y los resultados
+publicados se recopilan en el Apéndice <a href="#sec:annex-fast-weight"
+data-reference-type="ref"
+data-reference="sec:annex-fast-weight">26</a>.</p>
 <h1 id="sec:optimizer-families">Familias de Optimizadores y Dinámicas de
 Entrenamiento</h1>
 <p>La optimización de arquitecturas transformer altamente parametrizadas
@@ -1655,7 +1745,7 @@ optimizadores con adaptabilidad ajustable (Anon). Las descripciones
 algorítmicas detalladas, pseudocódigo y una tabla comparativa de
 memoria/complejidad para todos los optimizadores se proporcionan en el
 Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
-data-reference="sec:annex-optimizers">13</a>.</p>
+data-reference="sec:annex-optimizers">14</a>.</p>
 <h1 id="sec:quantization">Cuantización y Despliegue</h1>
 <p>El stack de despliegue utiliza empaquetado ternario de pesos más
 cuantización de activaciones INT8 para producir artefactos
@@ -1672,7 +1762,7 @@ formulaciones matemáticas del escalado ternario de pesos, la
 cuantización/des-cuantización de activaciones INT8 y las estimaciones de
 tamaño FP32/FP16/1.58 bits se difieren al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h1 id="sec:sbert">Tareas Posteriores de SBERT</h1>
 <p>El embedding de oraciones se construye sobre entrenamiento estilo
 Siamese <span class="citation"
@@ -1699,7 +1789,158 @@ embeddings para recuperación posterior.</p></li>
 entre los modos de similitud, búsqueda, cluster y codificación sobre un
 codificador compartido—se difiere al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+<h1 id="sec:dashai-plugin">Integración Sin Código: El Plugin
+<code>dashai-frankenstein</code></h1>
+<p>El CLI basado en esquemas y el generador web descritos en la
+Sección <a href="#sec:system-design" data-reference-type="ref"
+data-reference="sec:system-design">3</a> sirven a investigadores cómodos
+con archivos de configuración YAML. Una audiencia
+complementaria—especialistas de dominio, educadores y analistas que
+necesitan un modelo entrenado pero no un script de entrenamiento—está
+mejor servida por un entorno gráfico sin código. Para alcanzar a esa
+audiencia, Frankenstein Transformer distribuye un paquete adaptador
+complementario, <code>dashai-frankenstein</code>, que registra las
+clases de modelo de Frankenstein como componentes de
+<strong>dashAI</strong>
+(<code>https://github.com/DashAISoftware/dashAI</code>), una aplicación
+de escritorio open-source y local-first para aprendizaje automático
+desarrollada por un consorcio académico chileno (Universidad de
+Chile/FCFM, CENIA, IMFD y financiamiento ANID). Como ambos sistemas son
+basados en esquemas en esencia—dashAI genera sus formularios de
+configuración directamente desde esquemas Pydantic, mientras que
+Frankenstein valida su YAML contra un JSON Schema estricto—la
+integración no requirió cambios en el backend de dashAI: el plugin se
+descubre mediante el grupo de entry-points estándar
+<code>dashai.plugins</code> al inicio, exactamente como documenta la
+guía de plugins de dashAI
+(<code>https://docs.dash-ai.com/learn/guides/plugins/</code>), donde los
+plugins son paquetes PyPI ordinarios cuyas capacidades generativas de
+primera parte se distribuyen ellos mismos como plugins.</p>
+<h2 id="componentes-registrados">Componentes Registrados</h2>
+<p>Un único grupo de entry-points <code>dashai.plugins</code> registra
+cinco componentes en el registro de componentes de dashAI, cubriendo
+toda la amplitud de las clases de modelo del toolkit:</p>
+<ul>
+<li><p><strong><code>FrankensteinMLMModel</code></strong>
+(<code>BaseModel</code>) — se vincula a la
+<code>TextClassificationTask</code> de dashAI. Entrena el encoder de
+Frankenstein con una cabeza de clasificación de precisión completa con
+pooling sobre la salida del encoder (Estrategia A de la auditoría de
+integración), heredando todos los mezcladores de secuencia,
+normalizadores y familias de optimizadores del motor subyacente;
+<code>predict</code> devuelve una matriz de probabilidades por
+clase.</p></li>
+<li><p><strong><code>FrankensteinDecoderModel</code></strong>
+(<code>BaseGenerativeModel</code>) — se vincula a
+<code>TextToTextGenerationTask</code>. Fuerza
+<code>model_class: frankensteindecoder</code> (que a su vez fuerza
+<code>mode: decoder</code>) y expone muestreo autorregresivo
+top-<em>k</em>; los parámetros de generación
+(<code>max_new_tokens</code>, <code>temperature</code>,
+<code>top_k</code>) permanecen como campos nativos del formulario de
+dashAI porque son ajustes de tiempo de inferencia sin lugar en el
+esquema de entrenamiento de Frankenstein.</p></li>
+<li><p><strong><code>FrankensteinViTClassifier</code></strong>
+(<code>BaseModel</code>) — se vincula a
+<code>ImageClassificationTask</code>, reutilizando la cabeza de
+clasificación integrada del Vision Transformer (Apéndice <a
+href="#sec:annex-vision" data-reference-type="ref"
+data-reference="sec:annex-vision">23</a>).</p></li>
+<li><p><strong><code>FrankensteinViTSegmenter</code></strong>
+(<code>BaseModel</code>) — se vincula a una
+<code>SegmentationTask</code> proporcionada por el plugin, una nueva
+componente <code>BaseTask</code> que dashAI no incluye; usa la cabeza de
+segmentación del ViT y devuelve mapas de clases por píxel.</p></li>
+<li><p><strong><code>SegmentationTask</code></strong>
+(<code>BaseTask</code>) — la tarea complementaria que declara tipos de
+columna imagen-entrada/máscara-salida para el segmentador.</p></li>
+</ul>
+<p>Los cinco componentes comparten una fachada delgada sobre la API de
+motor reutilizable de Frankenstein (la interfaz sin CLI y sin supervisor
+extraída en la Fase 0 del plan de integración), de modo que existe
+exactamente una dependencia pesada
+(<code>frankenstein-transformer</code>) detrás del plugin.</p>
+<h2 id="esquema-de-configuración-de-passthrough">Esquema de
+Configuración de Passthrough</h2>
+<p>La integración preserva la filosofía basada en esquemas de
+Frankenstein (Sección <a href="#sec:system-design"
+data-reference-type="ref" data-reference="sec:system-design">3</a>)
+manteniendo el JSON Schema de Frankenstein como la única fuente de
+verdad en lugar de traducir sus más de <span
+class="math inline">\(150\)</span> campos de modelo y <span
+class="math inline">\(38\)</span> campos de entrenamiento a campos
+nativos de formulario de dashAI—una traducción que sería frágil frente a
+un esquema en evolución activa. En su lugar, cada componente expone un
+esquema Pydantic mínimo cuyo único campo visible para el usuario,
+<code>frankenstein_json</code>, es una cadena que contiene una
+configuración completa de entrenamiento de Frankenstein como documento
+<em>JSON de una sola línea</em> (una concesión a los campos de texto de
+una sola línea de dashAI; los usuarios construyen el YAML con el
+generador web basado en esquemas y lo convierten con una sola línea).
+Antes de que cualquier entrenamiento o construcción de modelo se lance,
+el adaptador ejecuta un pipeline de validación de tres etapas:</p>
+<ol>
+<li><p><strong>Parseo JSON</strong> — detecta errores de sintaxis en la
+carga de una sola línea.</p></li>
+<li><p><strong>Validación JSON Schema</strong> —
+<code>jsonschema.validate</code> contra el esquema de Frankenstein
+resuelto, imponiendo <code>additionalProperties: false</code> y todos
+los rangos de enums (mezcladores, optimizadores, normalizaciones,
+activaciones).</p></li>
+<li><p><strong>Validación del cargador de configuración</strong> — el
+propio <code>load_training_config</code> de Frankenstein impone las
+restricciones cruzadas entre componentes (divisibilidad de
+<code>hidden_size</code> entre <code>num_heads</code>,
+<code>num_kv_heads</code> dividiendo <code>num_heads</code>, acuerdo
+vocabulario/tokenizador, reglas de flags BitNet, presencia del
+optimizador por tarea, <code>frankensteindecoder</code> forzando
+<code>mode: decoder</code>).</p></li>
+</ol>
+<p>Cualquier fallo se presenta al usuario de dashAI como un único
+<code>ValueError</code> legible etiquetado con la etapa fallida, de modo
+que las configuraciones inválidas nunca alcanzan el bucle de
+entrenamiento—el mismo contrato fail-fast que provee el CLI. La
+inyección de datasets la manejan adaptadores que mapean el
+<code>DashAIDataset</code> de dashAI (un envoltorio de Hugging Face
+<code>datasets</code>) sobre las expectativas de dataset de
+Frankenstein, inyectan <code>vocab_size</code> desde el tokenizador
+resuelto para que la matriz de embeddings coincida con el vocabulario, y
+transmiten las métricas por época de vuelta al almacén de métricas de
+dashAI para que el progreso del entrenamiento sea visible en la UI.</p>
+<h2 id="trabajo-en-proceso">Trabajo en Proceso</h2>
+<p>El plugin es un trabajo en proceso. Sus fases están implementadas—el
+MVP de clasificación de texto MLM (Fase 1), el decoder generativo y el
+clasificador ViT (Fase 2), y el segmentador ViT más la
+<code>SegmentationTask</code> proporcionada por el plugin (Fase 3)—pero
+el paquete aún no se ha ejecutado dentro de una instancia viva de
+dashAI: el contrato de componentes se implementó a partir de una
+auditoría del registro de plugins, las clases base y la arquitectura de
+cola de trabajos de dashAI en lugar de validarse de extremo a extremo.
+La publicación en PyPI también está pendiente, tanto del propio plugin
+como de su piso de dependencia
+(<code>frankenstein-transformer&gt;=1.1.0</code>, el release con la API
+de motor que reemplaza al <code>1.0.0</code> pre-motor ya en PyPI). Las
+limitaciones conocidas que se arrastran a la siguiente iteración
+incluyen: el componente MLM ejecuta un bucle de clasificación
+supervisada directa en lugar de una receta de preentrenamiento MLM
+seguido de ajuste fino; el esquema de passthrough difiere los campos
+nativos curados para ajustes de alto impacto (clase de modelo, patrón de
+mezclador, familia de optimizador) a una versión futura; y la capacidad
+de dashAI para renderizar columnas de salida de máscaras de segmentación
+no está confirmada y puede requerir una adición local al frontend. Estos
+ítems están registrados en la auditoría de integración del repositorio
+(<code>https://github.com/erickfmm/frankenstein-transformer</code>), y
+el diseño deja intencionalmente el núcleo del backend de dashAI intacto,
+de modo que futuros releases de dashAI no puedan romper el adaptador
+mediante acoplamiento.</p>
+<p>La integración completa la historia de accesibilidad del toolkit: el
+mismo contrato de configuración validado que impulsa el CLI, el
+generador Streamlit y el pipeline de exportación ahora también impulsa
+una aplicación de trabajo sin código de terceros, permitiendo que el
+espacio arquitectónico de Frankenstein se explore desde una interfaz
+gráfica sin sacrificar las garantías de esquema de las que depende la
+reproducibilidad.</p>
 <h1 id="sec:discussion">Discusión</h1>
 <p>Las decisiones de diseño en Transformer Encoder Frankenstein reflejan
 varias tensiones de ingeniería e investigación en las herramientas
@@ -1743,18 +1984,19 @@ de ejecución durante el entrenamiento, reflejando restricciones
 arquitectónicas: estos métodos requieren checkpoints preentrenados de
 modelos de atención completa o procedimientos específicos de ajuste fino
 que actualmente no están automatizados.</p>
-<p>La cobertura de mecanismos de compuerta es sólida en todas las
-categorías principales (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2,
-HGRN2, FoX, Gated Softmax). El macro-diseño del flujo residual está
-cubierto mediante el flujo residual de <span
-class="math inline">\(n\)</span> streams restringido por variedad (mHC)
-<span class="citation" data-cites="xie_mhc_2025"></span>, cuya
-proyección Sinkhorn–Knopp sobre el politopo de Birkhoff restaura la
+<p>La cobertura de mecanismos de compuerta y peso rápido es sólida en
+todas las categorías principales (GLA, DeltaNet, Gated DeltaNet, Gated
+DeltaNet-2, HGRN2, FoX, Gated Softmax y las seis variantes Falcon <span
+class="citation" data-cites="zhang_falcon_2026"></span>). El
+macro-diseño del flujo residual está cubierto mediante el flujo residual
+de <span class="math inline">\(n\)</span> streams restringido por
+variedad (mHC) <span class="citation" data-cites="xie_mhc_2025"></span>,
+cuya proyección Sinkhorn–Knopp sobre el politopo de Birkhoff restaura la
 propiedad de mapeo de identidad que pierden las Hyper-Connexions sin
 restricción; mHC está validado solo al nivel de los experimentos MoE
 publicados de 3B–27B, y el marco se beneficiaría de reproducciones
 independientes a escalas menores (ver Apéndice <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">20</a>).</p>
+data-reference-type="ref" data-reference="sec:annex-mhc">21</a>).</p>
 <h2 id="fragmentación-del-panorama-de-optimizadores">Fragmentación del
 Panorama de Optimizadores</h2>
 <p>El soporte para veintidós familias de optimizadores en seis
@@ -1810,12 +2052,13 @@ acceso web.</p>
 experimentación unificada, impulsada por configuración, que aborda
 desafíos críticos en la investigación moderna de aprendizaje profundo:
 fragmentación arquitectónica entre atención densa, modelos recurrentes,
-patrones dispersos y mecanismos de compuerta; complejidad del panorama
-de optimizadores que abarca líneas base clásicas, métodos de reducción
-de varianza, variantes eficientes en memoria, enfoques sin programación,
-algoritmos conscientes de curvatura y métodos orientados a geometría; y
-flujos de trabajo de despliegue de extremo a extremo que abarcan
-cuantización y aplicaciones de embeddings de oraciones.</p>
+patrones dispersos, mecanismos de compuerta y memorias de peso rápido;
+complejidad del panorama de optimizadores que abarca líneas base
+clásicas, métodos de reducción de varianza, variantes eficientes en
+memoria, enfoques sin programación, algoritmos conscientes de curvatura
+y métodos orientados a geometría; y flujos de trabajo de despliegue de
+extremo a extremo que abarcan cuantización y aplicaciones de embeddings
+de oraciones.</p>
 <p>Las contribuciones principales del sistema son:</p>
 <ol>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
@@ -1827,9 +2070,11 @@ optimizadores.</p></li>
 que abarca las principales categorías de investigación incluyendo líneas
 base densas (atención estándar, sigmoide), alternativas recurrentes
 (RetNet, Mamba, estilo EDO, Titans), atención dispersa (Sparse
-Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA) y
+Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA)
 mecanismos de compuerta (GLA, DeltaNet, Gated DeltaNet, Gated
-DeltaNet-2, HGRN2, FoX, Gated Softmax).</p></li>
+DeltaNet-2, HGRN2, FoX, Gated Softmax, KDA) y atención de peso rápido
+(Falcon-1/2/3, Falcon-1A/2A/3A) <span class="citation"
+data-cites="zhang_falcon_2026"></span>.</p></li>
 <li><p><strong>Marco Unificado de Optimizadores</strong>: Grupos de
 hiperparámetros prefijados que permiten control detallado sobre
 embeddings, capas de normalización, bloques recurrentes, pesos de
@@ -1915,7 +2160,7 @@ acelera, permitiendo a los investigadores explorar sistemáticamente este
 creciente espacio de diseño con infraestructura reproducible y bien
 diseñada.</p>
 <div class="thebibliography">
-<p><span>111</span> urlstyle</p>
+<p><span>113</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2229,6 +2474,11 @@ On the convergence analysis of muon. URL
 <p>Rafael Soares et al. Griffin: Mixing gated linear recurrences with
 local attention for efficient sequence modeling, 2024. URL
 <code>https://arxiv.org/abs/2402.19427</code>.</p>
+<p>Rupesh Kumar Srivastava, Klaus Greff, and J<span>ü</span>rgen
+Schmidhuber. Training very deep networks. In <em>Advances in Neural
+Information Processing Systems</em>, volume 28. Curran Associates, Inc.,
+2015. URL
+<code>https://proceedings.neurips.cc/paper_files/paper/2015/hash/a58f4765a99bf77336cf034926677066-Abstract.html</code>.</p>
 <p>Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng
 Liu. : Enhanced transformer with rotary position embedding. URL
 <code>http://arxiv.org/abs/2104.09864</code>.</p>
@@ -2321,6 +2571,10 @@ Continuous self-attention models with neural <span>ODE</span> networks.
 <p>Yichi Zhang, Yizhong Wang, et al. Accurate and training-free sparse
 attention accelerating any model inference, 2025. URL
 <code>https://arxiv.org/abs/2502.18137</code>.</p>
+<p>Yifan Zhang, Steve Ta, Jasper Zhang, Jichen Feng, Shuzhen Li, Yongxin
+Zhang, Yifeng Liu, Huizhuo Yuan, Mengdi Wang, Quanquan Gu, and Andrew
+Chi-Chih Yao. Fast weight attention for continual learning, 2026. URL
+<code>https://arxiv.org/abs/2608.27763</code>.</p>
 <p>Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
 training by gradient low-rank projection. URL
@@ -2586,12 +2840,12 @@ modelo: <code>frankenstein</code> (codificador de arquitectura mixta) o
 Obligatorio cuando <code>base_model</code> no está establecido.</p></li>
 <li><p><code>model</code> (object) — Parámetros de arquitectura del
 modelo (ver §<a href="#subsec:model-config" data-reference-type="ref"
-data-reference="subsec:model-config">11.2</a>). Obligatorio cuando
+data-reference="subsec:model-config">12.2</a>). Obligatorio cuando
 <code>base_model</code> no está establecido.</p></li>
 <li><p><code>training</code> (object, <strong>obligatorio</strong>) —
 Configuración de entrenamiento (ver §<a href="#subsec:training-config"
 data-reference-type="ref"
-data-reference="subsec:training-config">11.3</a>).</p></li>
+data-reference="subsec:training-config">12.3</a>).</p></li>
 </ul>
 <p>El esquema impone una regla de exclusión mutua: o bien
 <code>base_model</code> debe estar presente, o bien tanto
@@ -2644,7 +2898,7 @@ dims.layer_pattern &amp; array of enum (obligatorio) &amp; Secuencia
 ordenada de tipos de capa. La longitud debe igualar
 <code>num_layers</code>. Más de 36 tipos de mezclador disponibles (ver
 Tabla <a href="#tab:layer-pattern" data-reference-type="ref"
-data-reference="tab:layer-pattern">11.2.1</a>).<br />
+data-reference="tab:layer-pattern">12.2.1</a>).<br />
 <br />
 norm.type &amp; enum &amp; Estrategia de normalización:
 <code>layer_norm</code>, <code>dynamic_tanh</code>, <code>derf</code>,
@@ -2940,6 +3194,11 @@ sparda_attn &amp; SparDA — atención dispersa desacoplada con proyección
 Forecast &amp; &amp;<br />
 kda_attn &amp; Kimi Delta Attention — decaimiento por canal + compuerta
 de escritura escalar &amp; &amp;<br />
+falcon1_attn / falcon2_attn / falcon3_attn &amp; Familia de regresión
+Falcon — regla delta NLMS prefix-alineada (RAW) &amp; &amp;<br />
+falcon1a_attn / falcon2a_attn / falcon3a_attn &amp; Familia de producto
+interno Falcon — escrituras aditivas desplazadas con decaimiento por
+ridge &amp; &amp;<br />
 mla_attn &amp; Atención Latente Multi-Cabeza + RoPE &amp; &amp;<br />
 gqla_attn &amp; Atención Latente por Consultas Agrupadas — dos rutas de
 decodificación &amp; &amp;<br />
@@ -3020,11 +3279,11 @@ gradient_accumulation_steps &amp; int <span class="math inline">\(\ge
 del optimizador.<br />
 optimizer &amp; object &amp; Configuración del optimizador (ver §<a
 href="#subsec:optimizer-config" data-reference-type="ref"
-data-reference="subsec:optimizer-config">11.4</a>). Obligatorio cuando
+data-reference="subsec:optimizer-config">12.4</a>). Obligatorio cuando
 <code>task=mlm</code> o <code>task=causal_lm</code>.<br />
 sbert &amp; object &amp; Configuración de entrenamiento SBERT (ver §<a
 href="#subsec:sbert-config" data-reference-type="ref"
-data-reference="subsec:sbert-config">11.5</a>). Obligatorio cuando
+data-reference="subsec:sbert-config">12.5</a>). Obligatorio cuando
 <code>task=sbert</code>.<br />
 scheduler_total_steps &amp; int <span class="math inline">\(\ge
 1\)</span> &amp; Pasos totales del optimizador para la programación de
@@ -3300,7 +3559,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-36 mezcladores de secuencia en seis familias, 23 optimizadores, 6
+42 mezcladores de secuencia en siete familias, 23 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -3467,6 +3726,40 @@ class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Decaimiento por
 canal + escritura escalar; diseño Kimi Linear &amp; <span
 class="citation" data-cites="kimi_kda_2025"></span><br />
+</p>
+<p><br />
+falcon1_attn &amp; Peso rápido &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Regla delta NLMS
+prefix-alineada (RAW); mejor perplejidad LM de la familia &amp; <span
+class="citation" data-cites="zhang_falcon_2026"></span><br />
+falcon2_attn &amp; Peso rápido &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Tamaños de paso
+NLMS por canal de valor &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
+falcon3_attn &amp; Peso rápido &amp; <span
+class="math inline">\(\mathcal{O}(L d^2 B)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> + cola <span
+class="math inline">\(\mathcal{O}(B)\)</span> &amp; Repetición de
+minilote con ventana deslizante y estadísticos exactos &amp; <span
+class="citation" data-cites="zhang_falcon_2026"></span><br />
+falcon1a_attn &amp; Peso rápido &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Atención lineal
+aditiva desplazada con decaimiento por ridge &amp; <span
+class="citation" data-cites="zhang_falcon_2026"></span><br />
+falcon2a_attn &amp; Peso rápido &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Decaimientos
+aditivos por canal &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
+falcon3a_attn &amp; Peso rápido &amp; <span
+class="math inline">\(\mathcal{O}(L d^2)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(d^2)\)</span> + cola <span
+class="math inline">\(\mathcal{O}(B)\)</span> &amp; Aditivo con ventana;
+mejor extrapolación de longitud &amp; <span class="citation"
+data-cites="zhang_falcon_2026"></span><br />
 </p>
 <p><br />
 mla_attn &amp; Latente &amp; <span class="math inline">\(\mathcal{O}(n^2
@@ -5556,7 +5849,7 @@ la restricción fundamental de ingeniería: expresividad versus costo de
 despliegue. La familia de atención latente, que comprime el caché KV en
 un latente de rango bajo, se cubre en el Apéndice <a
 href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">15</a>.</p>
+data-reference="sec:annex-latent">16</a>.</p>
 <h1 id="sec:annex-latent">Familias de Atención Latente y de Rango
 Bajo</h1>
 <p>Este anexo cubre la familia de mecanismos de atención de compresión
@@ -8069,38 +8362,20 @@ profesionales que desean ganancias inmediatas sin una reestructuración
 importante.</p></li>
 </ol>
 <h3 id="consideraciones-de-hardware">Consideraciones de Hardware</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Objetivo de Hardware</strong></th>
-<th style="text-align: left;"><strong>Arquitecturas
-Recomendadas</strong></th>
-<th style="text-align: left;"><strong>Notas</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">GPU (H100/A100)</td>
-<td style="text-align: left;">Gated Softmax, FoX, Gated DeltaNet, Gated
-DeltaNet-2</td>
-<td style="text-align: left;">Implementaciones maduras de
-softmax/lineal. GLA/DeltaNet requieren kernels personalizados.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">TPU (alta memoria)</td>
-<td style="text-align: left;">GLA, DeltaNet, Gated DeltaNet, Gated
-DeltaNet-2, HGRN2</td>
-<td style="text-align: left;">Hardware soporta matmuls eficientes; los
-métodos recurrentes lineales brillan.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Móvil/Borde</td>
-<td style="text-align: left;">RetNet, Gated Softmax ligero</td>
-<td style="text-align: left;">Inferencia con memoria constante es
-crítica.</td>
-</tr>
-</tbody>
-</table>
+<div class="tabularx">
+<p><span>0.95</span><span>Xp<span>3.5cm</span>p<span>3.5cm</span></span>
+<strong>Objetivo de Hardware</strong> &amp; <strong>Arquitecturas
+Recomendadas</strong> &amp; <strong>Notas</strong><br />
+GPU (H100/A100) &amp; Gated Softmax, FoX, Gated DeltaNet, Gated
+DeltaNet-2 &amp; Implementaciones maduras de softmax/lineal.
+GLA/DeltaNet requieren kernels personalizados.<br />
+TPU (alta memoria) &amp; GLA, DeltaNet, Gated DeltaNet, Gated
+DeltaNet-2, HGRN2 &amp; Hardware soporta matmuls eficientes; los métodos
+recurrentes lineales brillan.<br />
+Móvil/Borde &amp; RetNet, Gated Softmax ligero &amp; Inferencia con
+memoria constante es crítica.<br />
+</p>
+</div>
 <h1 id="sec:annex-norm-bitnet-mod">Normalización, Cuantización,
 Enrutamiento de Profundidad y Algoritmos de Ejecución</h1>
 <p>Este anexo recopila el detalle a nivel de implementación para las
@@ -8243,7 +8518,7 @@ completitud.</p>
 <h4 id="composición-con-rms-parcial.">Composición con RMS parcial.</h4>
 <p>FlashNorm se compone naturalmente con el truco pRMSNorm (§<a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">18</a>, subsección pRMSNorm):
+data-reference="sec:annex-norm-bitnet-mod">19</a>, subsección pRMSNorm):
 cuando <code>flashnorm_partial_ratio</code> <span
 class="math inline">\(=p&gt;0\)</span>, el RMS se estima solo de los
 primeros <span class="math inline">\(k=\lceil d\cdot p\rceil\)</span>
@@ -8379,78 +8654,43 @@ class="math inline">\(=1.0\)</span>, texto idéntico</td>
 del ruido del benchmark (peor <span
 class="math inline">\(\Delta=+0.0017\)</span> word_ppl).</p>
 <h3 id="comparación">Comparación</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Método</strong></th>
-<th style="text-align: left;"><strong>Fórmula</strong></th>
-<th style="text-align: left;"><strong>Estadísticas
-Necesarias</strong></th>
-<th style="text-align: left;"><strong>Notas</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">LayerNorm</td>
-<td style="text-align: left;"><span class="math inline">\(\gamma_i (x_i
-- \mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i\)</span></td>
-<td style="text-align: left;">media + varianza</td>
-<td style="text-align: left;">Por defecto; centrado y reescalado
-completo <span class="citation" data-cites="ba2016layer"></span>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">RMSNorm</td>
-<td style="text-align: left;"><span class="math inline">\(\gamma_i
-x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}\)</span></td>
-<td style="text-align: left;">Solo RMS</td>
-<td style="text-align: left;">Menor sobrecarga; línea base ampliamente
-usada <span class="citation" data-cites="zhang_root_2019"></span>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pRMSNorm</td>
-<td style="text-align: left;"><span class="math inline">\(\gamma_i
-x_i/\sqrt{\frac{1}{k}\sum_{j\le k} x_j^2+\epsilon}\)</span></td>
-<td style="text-align: left;">RMS parcial</td>
-<td style="text-align: left;">RMS del primer <span
-class="math inline">\(p\)</span>% de dims;
-<code>prms_partial_ratio</code> por defecto <span
+<div class="longtable">
+<p><span>p<span>2.2cm</span>p<span>3.4cm</span>p<span>2.0cm</span>p<span>4.0cm</span></span>
+<strong>Método</strong> &amp; <strong>Fórmula</strong> &amp;
+<strong>Estadísticas Necesarias</strong> &amp;
+<strong>Notas</strong><br />
+LayerNorm &amp; <span class="math inline">\(\gamma_i (x_i -
+\mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i\)</span> &amp; media +
+varianza &amp; Por defecto; centrado y reescalado completo <span
+class="citation" data-cites="ba2016layer"></span>.<br />
+RMSNorm &amp; <span class="math inline">\(\gamma_i
+x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}\)</span> &amp; Solo RMS
+&amp; Menor sobrecarga; línea base ampliamente usada <span
+class="citation" data-cites="zhang_root_2019"></span>.<br />
+pRMSNorm &amp; <span class="math inline">\(\gamma_i
+x_i/\sqrt{\frac{1}{k}\sum_{j\le k} x_j^2+\epsilon}\)</span> &amp; RMS
+parcial &amp; RMS del primer <span class="math inline">\(p\)</span>% de
+dims; <code>prms_partial_ratio</code> por defecto <span
 class="math inline">\(6.25\%\)</span> <span class="citation"
-data-cites="zhang_root_2019"></span>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Tanh Dinámico</td>
-<td style="text-align: left;"><span class="math inline">\(\tanh(\alpha
-x)\)</span></td>
-<td style="text-align: left;">ninguna</td>
-<td style="text-align: left;">Transformación acotada libre de
-normalización; reemplazo directo <span class="citation"
-data-cites="zhu_transformers_2025"></span>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Erf Dinámico</td>
-<td style="text-align: left;"><span
-class="math inline">\(\mathrm{erf}(\alpha x+s)\)</span></td>
-<td style="text-align: left;">ninguna</td>
-<td style="text-align: left;">Alternativa libre de normalización; mejora
-sobre DyT <span class="citation"
-data-cites="chen_stronger_2025"></span>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">FlashNorm</td>
-<td style="text-align: left;"><span
-class="math inline">\(x_i/\sqrt{\frac{1}{d}\sum_j
-x_j^2+\epsilon}\)</span> (sin pesos)</td>
-<td style="text-align: left;">Solo RMS</td>
-<td style="text-align: left;">Reescritura exacta de RMSNorm<span
-class="math inline">\(\to\)</span>Lineal: pliega <span
-class="math inline">\(\mathbf{g}\)</span> en <span
+data-cites="zhang_root_2019"></span>.<br />
+Tanh Dinámico &amp; <span class="math inline">\(\tanh(\alpha x)\)</span>
+&amp; ninguna &amp; Transformación acotada libre de normalización;
+reemplazo directo <span class="citation"
+data-cites="zhu_transformers_2025"></span>.<br />
+Erf Dinámico &amp; <span class="math inline">\(\mathrm{erf}(\alpha
+x+s)\)</span> &amp; ninguna &amp; Alternativa libre de normalización;
+mejora sobre DyT <span class="citation"
+data-cites="chen_stronger_2025"></span>.<br />
+FlashNorm &amp; <span class="math inline">\(x_i/\sqrt{\frac{1}{d}\sum_j
+x_j^2+\epsilon}\)</span> (sin pesos) &amp; Solo RMS &amp; Reescritura
+exacta de RMSNorm<span class="math inline">\(\to\)</span>Lineal: pliega
+<span class="math inline">\(\mathbf{g}\)</span> en <span
 class="math inline">\(\mathbf{W}\)</span> (Prop. 1), difiere el escalar
 RMS a la salida del <code>matmul</code> (Prop. 2); 12–35% de reducción
 de latencia en GPU T4 <span class="citation"
-data-cites="graef2026flashnorm"></span>.</td>
-</tr>
-</tbody>
-</table>
+data-cites="graef2026flashnorm"></span>.<br />
+</p>
+</div>
 <h2 id="ruta-de-cuantización-ternaria-bitnet">Ruta de Cuantización
 Ternaria BitNet</h2>
 <p>Cuando <code>use_bitnet=true</code>, las capas BitLinear reemplazan a
@@ -9829,7 +10069,8 @@ mediante <code>build_pos_encoder(config)</code> y se inyecta en cada
 <code>True</code> para mezcladores de atención, <code>False</code> para
 mezcladores recurrentes/de decaimiento como <code>retnet</code>,
 <code>mamba</code>, <code>ode</code>, <code>gla_attn</code>,
-<code>deltanet_attn</code>, <code>mtla_attn</code>). Cuando
+<code>deltanet_attn</code>, <code>mtla_attn</code> y los seis
+mezcladores Falcon <code>falcon{1,2,3,1a,2a,3a}_attn</code>). Cuando
 <code>use_pe</code> es <code>False</code>, el mezclador ignora
 completamente el módulo inyectado.</p>
 <p>La PE se aplica en dos fases mediante los ayudantes compartidos
@@ -10081,153 +10322,66 @@ se ha eliminado — los 12 valores ahora funcionan con cada mezclador.</p>
 <h2 id="perfil-arquitectónico-codificaciones-posicionales">Perfil
 Arquitectónico: Codificaciones Posicionales</h2>
 <p>La Tabla <a href="#tab:all-pos-enc" data-reference-type="ref"
-data-reference="tab:all-pos-enc">3</a> resume las 12 codificaciones
-posicionales soportadas.</p>
-<div id="tab:all-pos-enc">
-<table>
-<caption>Catálogo de codificaciones posicionales. “Estilo” es el
-mecanismo de inyección (rotación, sesgo de puntuación, aumentación de
-Q/K, aditivo). “Parámetros” lista las perillas principales de
-configuración.</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Nombre</strong></th>
-<th style="text-align: left;"><strong>Estilo</strong></th>
-<th style="text-align: left;"><strong>Idea Clave</strong></th>
-<th style="text-align: left;"><strong>Parámetros</strong></th>
-<th style="text-align: left;"><strong>Referencia</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Nombre</strong></td>
-<td style="text-align: left;"><strong>Estilo</strong></td>
-<td style="text-align: left;"><strong>Idea Clave</strong></td>
-<td style="text-align: left;"><strong>Parámetros</strong></td>
-<td style="text-align: left;"><strong>Referencia</strong></td>
-</tr>
-<tr class="even">
-<td colspan="5" style="text-align: right;"><em>continúa en la siguiente
-página</em></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">rope</td>
-<td style="text-align: left;">Rotación</td>
-<td style="text-align: left;">Rotación basada en frecuencia de Q/K;
-posición relativa mediante geometría de producto interno</td>
-<td style="text-align: left;"><code>rope_base</code>,
-<code>rope_scaling</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="su_rope_2024"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">hope</td>
-<td style="text-align: left;">Rotación</td>
-<td style="text-align: left;">Rotación de Lorentz hiperbólica;
-decaimiento monótono de atención con distancia</td>
-<td style="text-align: left;"><code>hope_base</code>,
-<code>hope_damping</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="dai_hope_2025"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">nope</td>
-<td style="text-align: left;">Ninguno</td>
-<td style="text-align: left;">Sin PE explícita; el modelo aprende
-posición implícitamente de la máscara causal</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;"><span class="citation"
-data-cites="kazemnejad_nope_2023"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">alibi</td>
-<td style="text-align: left;">Sesgo de puntuación</td>
-<td style="text-align: left;">Penalización lineal estática de distancia
-añadida a puntuaciones de atención; extrapolación de longitud</td>
-<td style="text-align: left;"><code>alibi_num_heads</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="press_alibi_2022"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bam</td>
-<td style="text-align: left;">Sesgo de puntuación</td>
-<td style="text-align: left;">Sesgo de posición relativa con Gaussiana
-Generalizada; forma (<span class="math inline">\(\beta\)</span>) y
-escala (<span class="math inline">\(\alpha\)</span>) aprendibles por
-cabeza; recupera ALiBi en <span class="math inline">\(\beta=1\)</span>;
-reescalado SSMax vía <code>use_ssmax</code></td>
-<td style="text-align: left;"><code>bam_theta_init</code>,
+data-reference="tab:all-pos-enc">[tab:all-pos-enc]</a> resume las 12
+codificaciones posicionales soportadas.</p>
+<div class="longtable">
+<p><span>p<span>2.4cm</span>p<span>1.7cm</span>p<span>4.2cm</span>p<span>2.0cm</span>p<span>2.0cm</span></span>
+<strong>Nombre</strong> &amp; <strong>Estilo</strong> &amp; <strong>Idea
+Clave</strong> &amp; <strong>Parámetros</strong> &amp;
+<strong>Referencia</strong><br />
+<strong>Nombre</strong> &amp; <strong>Estilo</strong> &amp; <strong>Idea
+Clave</strong> &amp; <strong>Parámetros</strong> &amp;
+<strong>Referencia</strong><br />
+<br />
+</p>
+<p>rope &amp; Rotación &amp; Rotación basada en frecuencia de Q/K;
+posición relativa mediante geometría de producto interno &amp;
+<code>rope_base</code>, <code>rope_scaling</code> &amp; <span
+class="citation" data-cites="su_rope_2024"></span><br />
+hope &amp; Rotación &amp; Rotación de Lorentz hiperbólica; decaimiento
+monótono de atención con distancia &amp; <code>hope_base</code>,
+<code>hope_damping</code> &amp; <span class="citation"
+data-cites="dai_hope_2025"></span><br />
+nope &amp; Ninguno &amp; Sin PE explícita; el modelo aprende posición
+implícitamente de la máscara causal &amp; — &amp; <span class="citation"
+data-cites="kazemnejad_nope_2023"></span><br />
+alibi &amp; Sesgo de puntuación &amp; Penalización lineal estática de
+distancia añadida a puntuaciones de atención; extrapolación de longitud
+&amp; <code>alibi_num_heads</code> &amp; <span class="citation"
+data-cites="press_alibi_2022"></span><br />
+bam &amp; Sesgo de puntuación &amp; Sesgo de posición relativa con
+Gaussiana Generalizada; forma (<span
+class="math inline">\(\beta\)</span>) y escala (<span
+class="math inline">\(\alpha\)</span>) aprendibles por cabeza; recupera
+ALiBi en <span class="math inline">\(\beta=1\)</span>; reescalado SSMax
+vía <code>use_ssmax</code> &amp; <code>bam_theta_init</code>,
 <code>bam_learn_mu</code>, <code>bam_eps</code>, <code>use_ssmax</code>,
-<code>ssmax_s_init</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="bianchessi_bam_2025"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">pape</td>
-<td style="text-align: left;">Aum. Q/K</td>
-<td style="text-align: left;">Funciones base parabólicas concatenadas a
-Q/K; centrada en visión, <span class="math inline">\(n\)</span>-D</td>
-<td style="text-align: left;"><code>pape_num_parabolas</code>,
-<code>pape_num_posiciones</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="ohrstrom_pape_2026"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pape_efficient</td>
-<td style="text-align: left;">Aum. Q/K</td>
-<td style="text-align: left;">PaPE en PyTorch puro; sin kernels Triton
-personalizados</td>
-<td style="text-align: left;">igual que pape</td>
-<td style="text-align: left;"><span class="citation"
-data-cites="ohrstrom_pape_2026"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">pape_ri</td>
-<td style="text-align: left;">Aum. Q/K</td>
-<td style="text-align: left;">PaPE invariante a rotación (PaPE-RI)</td>
-<td style="text-align: left;"><code>pape_rotation_invariant</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="ohrstrom_pape_2026"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">sinusoidal_absolute</td>
-<td style="text-align: left;">Aditivo</td>
-<td style="text-align: left;">Sinusoidal fijo añadido a embeddings
-(Transformer original)</td>
-<td style="text-align: left;"><code>sinusoidal_base</code>,
-<code>sinusoidal_max_len</code>, <code>sinusoidal_scale</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="vaswani_attention_2017"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">sinusoidal_rotary</td>
-<td style="text-align: left;">Rotación</td>
-<td style="text-align: left;">Frecuencias sinusoidales como matriz de
-rotación en Q/K</td>
-<td style="text-align: left;">igual que sinusoidal</td>
-<td style="text-align: left;"><span class="citation"
-data-cites="vaswani_attention_2017"></span></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">learned_absolute</td>
-<td style="text-align: left;">Aditivo</td>
-<td style="text-align: left;">Matriz de parámetros aprendible añadida a
-embeddings</td>
-<td style="text-align: left;"><code>learned_max_len</code>,
-<code>learned_init_std</code></td>
-<td style="text-align: left;"><span class="citation"
-data-cites="vaswani_attention_2017"></span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">none</td>
-<td style="text-align: left;">Ninguno</td>
-<td style="text-align: left;">Módulo nulo; ninguna información
-posicional inyectada</td>
-<td style="text-align: left;">—</td>
-<td style="text-align: left;">—</td>
-</tr>
-</tbody>
-</table>
+<code>ssmax_s_init</code> &amp; <span class="citation"
+data-cites="bianchessi_bam_2025"></span><br />
+pape &amp; Aum. Q/K &amp; Funciones base parabólicas concatenadas a Q/K;
+centrada en visión, <span class="math inline">\(n\)</span>-D &amp;
+<code>pape_num_parabolas</code>, <code>pape_num_posiciones</code> &amp;
+<span class="citation" data-cites="ohrstrom_pape_2026"></span><br />
+pape_efficient &amp; Aum. Q/K &amp; PaPE en PyTorch puro; sin kernels
+Triton personalizados &amp; igual que pape &amp; <span class="citation"
+data-cites="ohrstrom_pape_2026"></span><br />
+pape_ri &amp; Aum. Q/K &amp; PaPE invariante a rotación (PaPE-RI) &amp;
+<code>pape_rotation_invariant</code> &amp; <span class="citation"
+data-cites="ohrstrom_pape_2026"></span><br />
+sinusoidal_absolute &amp; Aditivo &amp; Sinusoidal fijo añadido a
+embeddings (Transformer original) &amp; <code>sinusoidal_base</code>,
+<code>sinusoidal_max_len</code>, <code>sinusoidal_scale</code> &amp;
+<span class="citation" data-cites="vaswani_attention_2017"></span><br />
+sinusoidal_rotary &amp; Rotación &amp; Frecuencias sinusoidales como
+matriz de rotación en Q/K &amp; igual que sinusoidal &amp; <span
+class="citation" data-cites="vaswani_attention_2017"></span><br />
+learned_absolute &amp; Aditivo &amp; Matriz de parámetros aprendible
+añadida a embeddings &amp; <code>learned_max_len</code>,
+<code>learned_init_std</code> &amp; <span class="citation"
+data-cites="vaswani_attention_2017"></span><br />
+none &amp; Ninguno &amp; Módulo nulo; ninguna información posicional
+inyectada &amp; — &amp; —<br />
+</p>
 </div>
 <h1 id="sec:annex-ssog">SSOG: Atención Separable Sum of Gaussians</h1>
 <p>Este anexo cubre SSOG (Separable Sum of Gaussians), un mixer de
@@ -10356,5 +10510,427 @@ kernels de direccionamiento por query añaden un término de memoria; los
 resultados en lenguaje no están probados—allí el puntaje por contenido
 probablemente es estructural.</p></li>
 </ul>
+<h1 id="sec:annex-fast-weight">Atención de Peso Rápido para Aprendizaje
+Continuo</h1>
+<p>Este anexo cubre la familia Falcon <span class="citation"
+data-cites="zhang_falcon_2026"></span>, un marco de atención de peso
+rápido que trata la transición recurrente del estado de peso rápido como
+una <strong>regla de aprendizaje continuo en línea</strong> bajo
+semántica autoregresiva de <em>lectura tras escritura</em>
+(read-after-write, RAW). La observación central del marco es de
+alineación temporal: para el objetivo de predicción de prefijo, el
+ejemplo local de memoria rápida revelado en el paso <span
+class="math inline">\(t\)</span> es el <strong>par
+prefix-alineado</strong> <span class="math inline">\((x_t, y_t) =
+(\phi(k_{t-1}),\, v_t)\)</span> — desplazado un paso respecto a la
+asociación de mismo paso <span class="math inline">\((\phi(k_t),
+v_t)\)</span> usada por DeltaNet y la atención lineal estándar. La
+asociación de mismo paso sigue siendo causal, pero optimiza un objetivo
+interno diferente. El marco deriva <strong>actualizaciones de primer
+orden normalizadas</strong> para dos objetivos (regresión de error
+cuadrático y producto interno negativo) y tres estructuras de tamaño de
+paso (escalar, por columna, ventana deslizante), dando seis variantes:
+Falcon-1/2/3 (familia de regresión) y Falcon-1A/2A/3A (familia de
+producto interno). Las seis variantes están implementadas en el código
+bajo <code>model.attention.falcon</code> con un bloque de configuración
+compartido, cada una proporcionando tanto un escaneo recurrente de
+referencia como un kernel chunk-parallel estilo SSD.</p>
+<h2
+id="preliminares-alineación-normalización-renormalización">Preliminares:
+Alineación, Normalización, Renormalización</h2>
+<h4 id="semántica-de-lectura-tras-escritura.">Semántica de lectura tras
+escritura.</h4>
+<p>Con mapas de características <span
+class="math inline">\(\phi(k_t)\)</span> (QK-RMSNorm por defecto), el
+flujo prefix-alineado fija <span class="math inline">\(x_t =
+\phi(k_{t-1})\)</span> para <span class="math inline">\(t \ge 2\)</span>
+con centinela de frontera <span class="math inline">\(x_1 = 0\)</span>;
+la lectura es <span class="math inline">\(o_t = S_t^\top
+\phi(q_t)\)</span>. La escritura en el paso <span
+class="math inline">\(t\)</span> por tanto actualiza la memoria
+<em>antes</em> de que la consulta del paso <span
+class="math inline">\(t+1\)</span> la lea, de modo que ninguna clave se
+asocia jamás con su propio token.</p>
+<h4 id="tamaños-de-paso-normalizados.">Tamaños de paso
+normalizados.</h4>
+<p>Un paso de gradiente sobre el objetivo local <span
+class="math inline">\(\ell_t(S)\)</span> con el denominador acoplado al
+objetivo da <span class="math display">\[\eta_t =
+\frac{\beta_t}{\text{estadístico}_t + \lambda_t + \varepsilon}, \qquad
+\beta_t \in (0, 2),\]</span> donde el estadístico es la energía
+cuadrática de la clave <span class="math inline">\(\|x_t\|^2\)</span>
+(Falcon-1/1A/2/2A), el estadístico espectral de ventana <span
+class="math inline">\(\mu_t^{(B)} = \lambda_{\max}(X^\top
+X)/B_t\)</span> (Falcon-3), o la energía media de ventana <span
+class="math inline">\(\bar{E}_t^{(B)}\)</span> (Falcon-3A). La
+normalización acoplada al objetivo garantiza descenso por paso y elimina
+la sensibilidad a la escala de las tasas de aprendizaje fijas. La
+ganancia de <strong>plasticidad</strong> <span
+class="math inline">\(\beta_t\)</span>, el ridge de
+<strong>olvido</strong> <span class="math inline">\(\lambda_t\)</span>,
+la <strong>alineación</strong> temporal y la ventana de repetición <span
+class="math inline">\(B\)</span> quedan así separados como cuatro
+perillas previamente entrelazadas.</p>
+<h4 id="renormalización-de-decaimiento-positivo.">Renormalización de
+decaimiento positivo.</h4>
+<p>Cuando <span class="math inline">\(\lambda_t &gt; 0\)</span>, la
+contracción por paso <span class="math inline">\(\alpha_t = \min(\eta_t
+\lambda_t,\, 1 - \varepsilon_\gamma)\)</span> debe aplicarse de forma
+estable. La implementación fija <span
+class="math inline">\(\alpha_t\)</span> estrictamente por debajo de
+<span class="math inline">\(1\)</span>, calcula prefijos logarítmicos
+chunk-locales en fp32 vía <span class="math inline">\(\log(1 -
+\alpha_t)\)</span> y sumas acumuladas, reescala los generadores al
+dominio sin decaimiento (<span class="math inline">\(\tilde{\eta}_t =
+\eta_t / \gamma_t\)</span>, <span class="math inline">\(\tilde{v}_t =
+v_t / c_{t-1}\)</span> con <span class="math inline">\(c_{t-1} =
+\prod_{r \le t-1} \gamma_r\)</span>) y reescala salidas y el estado
+emitido por el <span class="math inline">\(\delta\)</span> acumulado.
+Los centinelas de frontera son <span class="math inline">\((\alpha_1,
+\gamma_1) = (0, 1)\)</span> y <span class="math inline">\(\eta_1 =
+0\)</span>, de modo que el primer paso es una lectura pura.</p>
+<h2 id="la-familia-de-regresión-falcon-123">La Familia de Regresión
+(Falcon-1/2/3)</h2>
+<p>El objetivo de error cuadrático sobre el par desplazado es <span
+class="math display">\[\ell_t(S) = \tfrac{1}{2}\|v_t - S^\top x_t\|^2 +
+\tfrac{\lambda_t}{2}\|S\|_F^2,
+\qquad
+\nabla_S \ell_t = x_t (S^\top x_t - v_t)^\top + \lambda_t S,\]</span>
+que es <span class="math inline">\(L_t\)</span>-suave con <span
+class="math inline">\(L_t = \|x_t\|^2 + \lambda_t\)</span>.</p>
+<h3 id="falcon-1-regresión-nlms-escalar">Falcon-1: Regresión NLMS
+Escalar</h3>
+<p>La variante escalar de la regla delta — la recursión NLMS clásica del
+filtrado adaptativo, mejorada con el flujo desplazado y un ridge
+explícito: <span class="math display">\[S_t = (1 - \eta_t \lambda_t)\,
+S_{t-1} + \eta_t\, x_t \big(v_t - S_{t-1}^\top x_t\big)^\top,
+\qquad
+o_t = S_t^\top \phi(q_t).\]</span> Con <span
+class="math inline">\(\varepsilon = 0\)</span>, <span
+class="math inline">\(\lambda_t = 0\)</span> y la asignación sin
+desplazar <span class="math inline">\(x_t = \phi(k_t)\)</span> esto
+recupera DeltaNet exactamente. La eigenestructura de la transición <span
+class="math inline">\(A_t = \gamma_t I - \eta_t x_t x_t^\top\)</span>
+(con <span class="math inline">\(\gamma_t = 1 -
+\eta_t\lambda_t\)</span>) muestra que la dirección de escritura se
+contrae por <span class="math inline">\(1 - \beta_t\)</span> mientras el
+subespacio ortogonal lleva <span
+class="math inline">\(\gamma_t\)</span>: <span
+class="math inline">\(\beta_t &gt; 1\)</span> produce un cambio de signo
+estable a lo largo de la dirección de escritura, útil para seguimiento
+de estado. La forma chunk-parallel usa la representación WY <span
+class="math inline">\(\prod_s (I - \eta_s x_s x_s^\top) = I - U T
+U^\top\)</span> con una única solución triangular unitaria inferior de
+residuo simple <span class="math inline">\(L = \operatorname{tril}(G,
+-1) + I\)</span> donde <span class="math inline">\(G = X^\top X\)</span>
+(Algoritmo 8 del artículo), tras la renormalización de decaimiento
+positivo.</p>
+<h3 id="falcon-2-regresión-nlms-por-columnas">Falcon-2: Regresión NLMS
+por Columnas</h3>
+<p>La pérdida ridge se descompone a lo largo de las coordenadas de
+valor, de modo que cada canal de valor <span
+class="math inline">\(j\)</span> recibe su propio tamaño de paso
+compartiendo el normalizador NLMS: <span
+class="math display">\[\eta_{j,t} = \frac{\beta_{j,t}}{\|x_t\|^2 +
+\lambda_t + \varepsilon},
+\qquad
+S_t = S_{t-1}\big(I - \lambda_t
+\operatorname{Diag}(\boldsymbol{\eta}_t)\big) + x_t
+\big(\boldsymbol{\eta}_t \odot \mathbf{r}_t\big)^\top .\]</span> El
+kernel chunk-parallel forma el Gram de claves compartido <span
+class="math inline">\(G = X^\top X\)</span> y resuelve el lote de
+sistemas triangulares unitarios inferiores por canal <span
+class="math inline">\(L_j = I + \operatorname{tril}\big(G \odot
+(\Sigma_j \Sigma_j^\top), -1\big)\)</span> con <span
+class="math inline">\(\Sigma = \sqrt{\tilde{\boldsymbol{\eta}}}\)</span>
+(Algoritmo 1). Definida pero no evaluada por separado en el
+artículo.</p>
+<h3 id="falcon-3-regresión-de-minilote-con-ventana-deslizante">Falcon-3:
+Regresión de Minilote con Ventana Deslizante</h3>
+<p>Repetición acotada (bounded rehearsal): cada paso regresa la memoria
+rápida sobre los últimos <span class="math inline">\(B_t \le B\)</span>
+pares prefix-alineados, con <em>todos los residuos de ventana evaluados
+en el estado pre-actualización</em> <span
+class="math inline">\(S_{t-1}\)</span>: <span
+class="math display">\[\mu_t =
+\frac{\lambda_{\max}\big(X_{\mathcal{I}_t}^\top
+X_{\mathcal{I}_t}\big)}{B_t},
+\qquad
+\eta_t = \frac{\beta_t}{\mu_t + \lambda_t + \varepsilon},
+\qquad
+S_t = (1 - \eta_t \lambda_t)\, S_{t-1} + \frac{\eta_t}{B_t} \sum_{j \in
+\mathcal{I}_t} x_j \big(v_j - S_{t-1}^\top x_j\big)^\top ,\]</span> con
+<span class="math inline">\(\mathcal{I}_t = \{\max(2, t - B + 1), \dots,
+t\}\)</span>. El promediado por ventana mantiene la magnitud de la
+actualización invariante a <span class="math inline">\(B\)</span>: cada
+par se repite en exactamente <span class="math inline">\(B\)</span>
+actualizaciones consecutivas con peso <span
+class="math inline">\(1/B\)</span>, por lo que su inyección acumulada es
+independiente de <span class="math inline">\(B\)</span>. El estado por
+sí solo <em>no</em> es Markov: la continuación exacta requiere una cola
+FIFO de los últimos <span class="math inline">\(B - 1\)</span> pares, y
+los kernels chunk recogen una porción extendida con <span
+class="math inline">\(|\mathcal{J}| \le C + B - 1\)</span>. La forma
+chunk-parallel es una recurrencia afín de rango <span
+class="math inline">\(B\)</span> resuelta por sustitución hacia adelante
+por bloques sobre el espacio de índices extendido (tiempo <span
+class="math inline">\(\times\)</span> rango), con componentes de rango
+del mismo tiempo desacoplados (Algoritmo 3).</p>
+<h2 id="la-familia-de-producto-interno-falcon-1a2a3a">La Familia de
+Producto Interno (Falcon-1A/2A/3A)</h2>
+<p>El objetivo de producto interno negativo <span
+class="math display">\[\ell_t^{\mathrm{ip}}(S) = -\langle S^\top x_t,\,
+v_t \rangle + \tfrac{\lambda_t}{2}\|S\|_F^2
+\qquad \Rightarrow \qquad
+\nabla_S \ell_t^{\mathrm{ip}} = -x_t v_t^\top + \lambda_t S\]</span>
+produce escrituras puramente aditivas (hebbianas) con ganancias
+normalizadas por energía.</p>
+<h3 id="falcon-1a-y-falcon-2a">Falcon-1A y Falcon-2A</h3>
+<p><span class="math display">\[\text{Falcon-1A:}\quad S_t = \gamma_t
+S_{t-1} + \eta_t\, x_t v_t^\top,
+\quad \gamma_t = 1 - \min(\eta_t \lambda_t,\, 1 - \varepsilon_\gamma);
+\qquad
+\text{Falcon-2A:}\quad S_t =
+S_{t-1}\operatorname{Diag}(\boldsymbol{\gamma}_t) + x_t
+(\boldsymbol{\eta}_t \odot v_t)^\top .\]</span> Con <span
+class="math inline">\(\lambda_t = 0\)</span> y la asignación sin
+desplazar esto es exactamente la atención lineal estándar / acumulación
+Mamba-2; el flujo desplazado lo convierte en la variante next-latent
+desplazada un paso. El denominador de la familia A no lo exige la
+curvatura (el objetivo es lineal) — conserva la escritura normalizada
+por energía como estabilizador de magnitud. La forma chunk-parallel es
+atención lineal con máscara de decaimiento <span
+class="math inline">\(M_{t,i} = \eta_i \prod_{r=i+1}^{t}
+\gamma_r\)</span> (máscaras por canal para Falcon-2A).</p>
+<h3 id="falcon-3a-producto-interno-con-ventana-deslizante">Falcon-3A:
+Producto Interno con Ventana Deslizante</h3>
+<p>La variante aditiva con ventana — la mejor configuración de
+extrapolación de longitud de la familia: <span
+class="math display">\[\bar{N}_t^{(B)} = \frac{1}{B_t} \sum_{j \in
+\mathcal{I}_t} x_j v_j^\top,
+\qquad
+\bar{E}_t^{(B)} = \frac{1}{B_t} \sum_{j \in \mathcal{I}_t} \|x_j\|^2,
+\qquad
+\eta_t = \frac{\beta_t}{\bar{E}_t^{(B)} + \lambda_t + \varepsilon},
+\qquad
+S_t = \gamma_t S_{t-1} + \eta_t\, \bar{N}_t^{(B)} .\]</span> La máscara
+de decaimiento con banda de ventana factoriza como <span
+class="math inline">\(M = D \cdot \operatorname{Diag}(\boldsymbol{\eta})
+\cdot A\)</span>, donde <span class="math inline">\(A\)</span> es el
+operador de ventana de banda <span class="math inline">\(B\)</span> y
+<span class="math inline">\(D\)</span> el kernel de decaimiento causal,
+evaluada sobre la porción extendida (Algoritmo 4).</p>
+<h2 id="interfaz-de-configuración">Interfaz de Configuración</h2>
+<p>Las seis variantes comparten un bloque anidado,
+<code>model.attention.falcon</code>, seleccionado mediante las entradas
+de <code>layer_pattern</code> <code>falcon1_attn</code>,
+<code>falcon2_attn</code>, <code>falcon3_attn</code>,
+<code>falcon1a_attn</code>, <code>falcon2a_attn</code>,
+<code>falcon3a_attn</code>:</p>
+<div id="tab:falcon-knobs">
+<table>
+<caption>Perillas de configuración compartidas de Falcon
+(<code>model.attention.falcon</code>). Cada variante expone además un
+opt-out de codificación posicional por mezclador
+<code>falcon{1,2,3,1a,2a,3a}_attn_use_pe</code>, por defecto
+<code>False</code> como los demás mezcladores recurrentes/de
+decaimiento.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Clave</strong></th>
+<th style="text-align: left;"><strong>Por defecto</strong></th>
+<th style="text-align: left;"><strong>Descripción</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>chunk_size</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(64\)</span></td>
+<td style="text-align: left;">Tamaño de chunk de los kernels
+chunk-parallel; <code>null</code> selecciona el escaneo recurrente de
+referencia</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>qk_norm</code></td>
+<td style="text-align: left;"><code>rms_norm</code></td>
+<td style="text-align: left;">Normalización QK (<code>rms_norm</code> o
+<code>l2_norm</code>); RMSNorm calculado en fp32</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>beta_mode</code></td>
+<td style="text-align: left;"><code>ctx_eta</code></td>
+<td style="text-align: left;">Parametrización de la compuerta de
+plasticidad: <code>static</code>, <code>ctx_beta</code> (ganancia
+condicionada al contenido) o <code>ctx_eta</code> (paso normalizado
+condicionado al contenido)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>lambda_mode</code></td>
+<td style="text-align: left;"><code>ctx</code></td>
+<td style="text-align: left;">Compuerta de olvido: <code>static</code> o
+<code>ctx</code> (acoplada en escala con el estadístico de curvatura
+desacoplado)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>beta</code> /
+<code>lambda</code></td>
+<td style="text-align: left;"><span class="math inline">\(1.0\)</span> /
+<span class="math inline">\(0.0\)</span></td>
+<td style="text-align: left;">Ganancia y ridge estáticas (usadas cuando
+el modo correspondiente es <code>static</code>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>window</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(4\)</span></td>
+<td style="text-align: left;">Ventana deslizante <span
+class="math inline">\(B\)</span> (solo Falcon-3 / Falcon-3A)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>short_conv</code> /
+<code>conv_kernel</code></td>
+<td style="text-align: left;"><code>true</code> / <span
+class="math inline">\(4\)</span></td>
+<td style="text-align: left;">Convoluciones cortas causales en
+profundidad sobre las proyecciones q/k/v</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>eps</code> /
+<code>eps_gamma</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(10^{-6}\)</span> / <span
+class="math inline">\(10^{-4}\)</span></td>
+<td style="text-align: left;">Estabilizador del tamaño de paso y piso de
+fijación del decaimiento positivo</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Notas de implementación: los kernels recurrente y chunk-parallel
+están verificados numéricamente equivalentes (chunk <span
+class="math inline">\(\equiv\)</span> recurrente a <span
+class="math inline">\(\le 3.6 \times 10^{-7}\)</span> en las seis
+variantes, incluidas las rutas con decaimiento, multi-chunk y ventana);
+los gradientes fluyen a través de las islas de solución triangular en
+fp32 (los generadores de características toman solo <span
+class="math inline">\(\sqrt{\tilde{\eta}}\)</span> mientras los
+objetivos de valor toman <span
+class="math inline">\(\sqrt{\tilde{\eta}}\, e^{-u_{t-1}}\)</span>, con
+la raíz cuadrada fijada en <span class="math inline">\(10^{-12}\)</span>
+para retropropagación sin NaN en la frontera <span
+class="math inline">\(\eta = 0\)</span>); los exponentes positivos se
+fijan en <span class="math inline">\(80\)</span>.</p>
+<h2 id="resultados-publicados">Resultados Publicados</h2>
+<div id="tab:falcon-results">
+<table>
+<caption>Resultados de modelado de lenguaje reportados por <span
+class="citation" data-cites="zhang_falcon_2026"></span> a 124M de
+parámetros. En extrapolación de longitud para sumas de dígitos variables
+(33–48 dígitos), Falcon-3A.3 alcanza <strong>87.2%</strong> de precisión
+media frente a 65.8% de un Transformer con RoPE y 85.9% de Falcon-1A.3:
+la familia de producto interno lleva la aritmética, mientras que la
+familia de regresión lleva la perplejidad.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Modelo (124M, 49.2B tokens
+FineWeb-Edu)</strong></th>
+<th style="text-align: center;"><strong>WikiText ppl</strong></th>
+<th style="text-align: center;"><strong>LMB. ppl</strong></th>
+<th style="text-align: center;"><strong>FineEdu ppl</strong></th>
+<th style="text-align: center;"><strong>Prom. 0-shot</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Transformer (RoPE)</td>
+<td style="text-align: center;">33.25</td>
+<td style="text-align: center;">47.43</td>
+<td style="text-align: center;">17.38</td>
+<td style="text-align: center;">48.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mamba-2</td>
+<td style="text-align: center;">34.53</td>
+<td style="text-align: center;">48.74</td>
+<td style="text-align: center;">17.70</td>
+<td style="text-align: center;">48.80</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DeltaNet</td>
+<td style="text-align: center;">34.19</td>
+<td style="text-align: center;">52.84</td>
+<td style="text-align: center;">17.84</td>
+<td style="text-align: center;">48.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gated DeltaNet</td>
+<td style="text-align: center;">30.99</td>
+<td style="text-align: center;">46.70</td>
+<td style="text-align: center;">17.32</td>
+<td style="text-align: center;">48.78</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Falcon-1A.3</td>
+<td style="text-align: center;">34.02</td>
+<td style="text-align: center;">49.84</td>
+<td style="text-align: center;">17.40</td>
+<td style="text-align: center;">48.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Falcon-1.3</td>
+<td style="text-align: center;">33.00</td>
+<td style="text-align: center;">48.70</td>
+<td style="text-align: center;"><strong>17.10</strong></td>
+<td style="text-align: center;"><strong>49.18</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="relación-con-trabajos-previos">Relación con Trabajos
+Previos</h2>
+<ul>
+<li><p><strong>DeltaNet</strong>: la regla delta es el paso de descenso
+de gradiente del objetivo de error cuadrático con el emparejamiento de
+mismo paso; Falcon lo recupera con el cambio crítico de índice más
+normalización acoplada al objetivo y contracción <span
+class="math inline">\(\lambda_t\)</span> explícita.</p></li>
+<li><p><strong>Gated DeltaNet</strong>: añade una compuerta de arrastre
+aprendida libre; Falcon <em>deriva</em> el arrastre <span
+class="math inline">\(\gamma_t = 1 - \eta_t \lambda_t\)</span> del
+objetivo local y la parametrización de paso normalizada en lugar de
+añadir una compuerta independiente, y usa por defecto QK-RMSNorm en
+lugar de normalización <span
+class="math inline">\(\ell_2\)</span>.</p></li>
+<li><p><strong>Atención lineal / Mamba-2</strong>: el numerador aditivo
+es un paso de gradiente del objetivo de producto interno con la
+asignación sin desplazar; los kernels chunkwise reutilizan el esquema
+SSD.</p></li>
+<li><p><strong>TTT / Titans / ATLAS</strong>: actualizaciones de peso
+rápido como entrenamiento en tiempo de prueba; Falcon-3 es una
+especialización de ventana deslizante de la vista de objetivo interno
+con alineación estricta next-latent.</p></li>
+<li><p><strong>Filtrado adaptativo (LMS/NLMS/RLS)</strong>: Falcon
+importa los principios de estabilidad y normalización de NLMS a la
+atención de peso rápido bajo causalidad estricta.</p></li>
+</ul>
+<h3 id="cuándo-usar-cada-variante">Cuándo Usar Cada Variante</h3>
+<ol>
+<li><p><strong>Falcon-1</strong>: la mejor perplejidad de modelado de
+lenguaje de la familia (FineEdu 17.10, superando a Gated DeltaNet
+17.32); olvido principista ligado al objetivo local.</p></li>
+<li><p><strong>Falcon-2</strong>: plasticidad más fina que Falcon-1 al
+costo de kernels chunk por canal más pesados; sin evaluación en el
+artículo.</p></li>
+<li><p><strong>Falcon-3</strong>: horizonte de repetición controlado con
+estadísticos de ventana exactos; el kernel más complejo.</p></li>
+<li><p><strong>Falcon-1A</strong>: variante aditiva simple y estable;
+segunda mejor extrapolación de longitud (85.9%).</p></li>
+<li><p><strong>Falcon-2A</strong>: granularidad de olvido por canal; sin
+evaluación.</p></li>
+<li><p><strong>Falcon-3A</strong>: la mejor extrapolación de longitud
+del artículo (87.2% en sumas de 33–48 dígitos); carry de tareas
+aritméticas.</p></li>
+</ol>
 </body>
 </html>

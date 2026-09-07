@@ -38,7 +38,13 @@ var FTDiagram = (function () {
         sparda_attn: { c: 'sparse', l: 'SparDA Attn' },
         kda_attn: { c: 'recur', l: 'Kimi Delta Attn' },
         gma_attn: { c: 'attn', l: 'Gaussian Mixture Attn' },
-        ssog_attn: { c: 'field', l: 'SSOG Attn' }
+        ssog_attn: { c: 'field', l: 'SSOG Attn' },
+        falcon1_attn: { c: 'fastw', l: 'Falcon-1 (scalar NLMS)' },
+        falcon2_attn: { c: 'fastw', l: 'Falcon-2 (per-col NLMS)' },
+        falcon3_attn: { c: 'fastw', l: 'Falcon-3 (window NLMS)' },
+        falcon1a_attn: { c: 'fastw', l: 'Falcon-1A (additive)' },
+        falcon2a_attn: { c: 'fastw', l: 'Falcon-2A (per-col add.)' },
+        falcon3a_attn: { c: 'fastw', l: 'Falcon-3A (window add.)' }
     };
 
     var STYLES = {
@@ -49,6 +55,7 @@ var FTDiagram = (function () {
         sparse: 'fill:#d2991d,stroke:#b07c16,color:#fff',
         eval: 'fill:#f85149,stroke:#da3633,color:#fff',
         field: 'fill:#39d2c0,stroke:#1e9e8f,color:#04302b',
+        fastw: 'fill:#ff9492,stroke:#d44541,color:#1c0807',
         emb: 'fill:#39d2c0,stroke:#2ab5a5,color:#fff',
         norm: 'fill:#768390,stroke:#57606a,color:#fff',
         ffn: 'fill:#6e7681,stroke:#484f58,color:#fff',
@@ -354,6 +361,73 @@ var FTDiagram = (function () {
             { n: 'GQA(Q, c) → K,V', c: 'attn', e: 'GQA', from: ['Q = Wq·x [B,n,H]', 'c = W_down·conv(x) [r]'] },
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['GQA(Q, c) → K,V'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'GQA(Q, c) → K,V'] }
+        ],
+        // Fast-weight (Falcon family, arXiv:2608.27763): the recurrent
+        // fast-weight state Sₜ is an online continual-learning rule under
+        // read-after-write semantics: the revealed pair at step t is
+        // (xₜ, yₜ) = (φ(kₜ₋₁), vₜ) — one step shifted vs DeltaNet.
+        // Regression family (Falcon-1/2/3): NLMS delta-rule correction
+        // rₜ = yₜ − Sᵀxₜ; additive family (Falcon-1A/2A/3A): outer-product
+        // write. Gates: ηₜ (ctx_eta/ctx_beta) and ridge λₜ (ctx).
+        falcon1_attn: [
+            { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
+            { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
+            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
+            { n: 'rₜ = vₜ − Sᵀxₜ; ηₜ=β/(‖xₜ‖²+λ+ε)', c: 'fastw', e: 'NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ, λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', c: 'fastw', e: 'delta-rule', from: ['rₜ = vₜ − Sᵀxₜ; ηₜ=β/(‖xₜ‖²+λ+ε)'], id: 'Sprev', loop: 'Sprev' },
+            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+        ],
+        falcon2_attn: [
+            { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
+            { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
+            { n: 'gates ηₜ [H,d], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
+            { n: 'rₜ = vₜ − Sᵀxₜ; ηₜ,ⱼ per column', c: 'fastw', e: 'per-col NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ [H,d], λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙rₜ)ᵀ', c: 'fastw', e: 'delta-rule', from: ['rₜ = vₜ − Sᵀxₜ; ηₜ,ⱼ per column'], id: 'Sprev2', loop: 'Sprev2' },
+            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙rₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+        ],
+        falcon3_attn: [
+            { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
+            { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
+            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
+            { n: 'window statistic μₜ⁽ᴮ⁾', c: 'fastw', e: 'spectral B', from: ['xₜ = φ(kₜ₋₁) (RAW shift)'] },
+            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', c: 'fastw', e: 'minibatch', from: ['window statistic μₜ⁽ᴮ⁾', 'gates ηₜ, λ̄ₜ = Wg·x'], id: 'Sprev3', loop: 'Sprev3' },
+            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+        ],
+        falcon1a_attn: [
+            { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
+            { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
+            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
+            { n: 'ηₜ = β/(‖xₜ‖²+λ+ε)', c: 'fastw', e: 'NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ, λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·vₜᵀ', c: 'fastw', e: 'outer product', from: ['ηₜ = β/(‖xₜ‖²+λ+ε)'], id: 'SprevA', loop: 'SprevA' },
+            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·xₜ·vₜᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+        ],
+        falcon2a_attn: [
+            { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
+            { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
+            { n: 'gates ηₜ [H,d], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
+            { n: 'ηₜ,ⱼ per column', c: 'fastw', e: 'per-col NLMS', from: ['xₜ = φ(kₜ₋₁) (RAW shift)', 'gates ηₜ [H,d], λ̄ₜ = Wg·x'] },
+            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙vₜ)ᵀ', c: 'fastw', e: 'outer product', from: ['ηₜ,ⱼ per column'], id: 'Sprev2A', loop: 'Sprev2A' },
+            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + xₜ(ηₜ⊙vₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
+        ],
+        falcon3a_attn: [
+            { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
+            { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
+            { n: 'gates ηₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
+            { n: 'xₜ = φ(kₜ₋₁) (RAW shift)', c: 'fastw', e: 'shift', from: ['Q,K,V = W·x + shortconv'] },
+            { n: 'window energy Ēₜ⁽ᴮ⁾', c: 'fastw', e: 'energy B', from: ['xₜ = φ(kₜ₋₁) (RAW shift)'] },
+            { n: 'Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', c: 'fastw', e: 'window write', from: ['window energy Ēₜ⁽ᴮ⁾', 'gates ηₜ, λ̄ₜ = Wg·x'], id: 'Sprev3A', loop: 'Sprev3A' },
+            { n: 'oₜ = Sₜᵀ·qₜ (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜ⊗Sₜ₋₁ + ηₜ·N̄ₜ⁽ᴮ⁾ (B replays)', 'Q,K,V = W·x + shortconv'] },
+            { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·qₜ (read-after-write)'] }
         ],
         // Memory: dense QKV/O + memory bank read/write.
         titan_attn: [

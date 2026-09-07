@@ -118,6 +118,29 @@ var FTParamEstimator = (function () {
         return 4 * H * H + (H * nH + nH); // f_proj (biased)
       case 'kda_attn':
         return 5 * H * H + (H * nH + nH) + 2 * H; // beta_proj + norm
+      // ---- Fast-weight (Falcon family, arXiv:2608.27763) ----
+      // q,k,v,out (4H², bias-free) + 3 depth-wise causal short convs
+      // (H·kernel each, no bias, default on) + FalconGates: plasticity
+      // proj H·outDim+outDim (outDim = H for the per-column Falcon-2/2A,
+      // nH otherwise; skipped when beta_mode=static) and ridge proj
+      // H·nH+nH (skipped when lambda_mode=static). No QK-norm weights.
+      case 'falcon1_attn':
+      case 'falcon1a_attn':
+      case 'falcon2_attn':
+      case 'falcon2a_attn':
+      case 'falcon3_attn':
+      case 'falcon3a_attn': {
+        var fBeta = String(pick(m, 'attention.falcon.beta_mode', 'falcon_beta_mode', 'ctx_eta') || 'ctx_eta').toLowerCase();
+        var fLam = String(pick(m, 'attention.falcon.lambda_mode', 'falcon_lambda_mode', 'ctx') || 'ctx').toLowerCase();
+        var fConv = toBool(pick(m, 'attention.falcon.short_conv', 'falcon_short_conv', true), true);
+        var fKern = toNum(pick(m, 'attention.falcon.conv_kernel', 'falcon_conv_kernel', 4), 4);
+        var outDim = (t === 'falcon2_attn' || t === 'falcon2a_attn') ? H : nH;
+        var pF = 4 * H * H;
+        if (fConv) pF += 3 * H * fKern;
+        if (fBeta === 'ctx_beta' || fBeta === 'ctx_eta') pF += H * outDim + outDim;
+        if (fLam === 'ctx') pF += H * nH + nH;
+        return pF;
+      }
       case 'mamba':
         return H * (H + 1);          // in_proj Linear(H,H) biased
       // ---- Sparse ----
