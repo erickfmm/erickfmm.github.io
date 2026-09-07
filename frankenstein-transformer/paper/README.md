@@ -74,6 +74,8 @@ pandoc /tmp/paper-es-flat.tex -f latex -t html5 \
 - The compiled PDFs are also served at `/frankenstein-transformer/paper/en.pdf`
   and `es.pdf` (the top-level copies kept in sync with `en/paper.pdf` and
   `es/paper-es.pdf`).
-- Bibtex emits warnings for a few citations not present in the `.bib` files
-  (e.g. `sun_attnres_2026`, `dosovitskiy2021vit`); these appear as `[?]` in the
-  output and are expected.
+- Bibtex may emit `empty year` warnings for entries exported by Zotero with a
+  `date` field but no `year` field (plainnat reads only `year`). These have
+  been resolved by adding `year = {...}` to the affected entries; no `[?]`
+  placeholders should appear. If new Zotero exports reintroduce the issue, add
+  the `year` field derived from `date`.
