@@ -42,6 +42,22 @@
     required:
     - model_class
 - if:
+    properties:
+      training:
+        properties:
+          task:
+            const: text_classification
+  then:
+    properties:
+      training:
+        required:
+        - optimizer
+      model_class:
+        const: frankenstein
+    required:
+    - model_class
+    - model
+- if:
     required:
     - base_model
   then:
@@ -90,7 +106,7 @@
     - model_class
     - model
     - image
-    - dataset
+    - vision_dataset
 - if:
     properties:
       training:
@@ -113,7 +129,7 @@
     - model_class
     - model
     - image
-    - dataset
+    - vision_dataset
 - if:
     properties:
       model:
@@ -152,4 +168,4 @@
     - model_class
     - model
     - image
-    - dataset
+    - vision_dataset

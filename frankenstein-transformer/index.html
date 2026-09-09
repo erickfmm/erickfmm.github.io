@@ -2309,9 +2309,11 @@ function buildConfig() {
   config.training = training;
 
   // Carry through top-level sections not represented by the form (image,
-  // dataset) so vision/ViT presets keep these blocks in the generated YAML.
+  // vision_dataset, text_dataset) so vision/NLP presets keep these blocks in
+  // the generated YAML.
   if (configData && configData.image) config.image = configData.image;
-  if (configData && configData.dataset) config.dataset = configData.dataset;
+  if (configData && configData.vision_dataset) config.vision_dataset = configData.vision_dataset;
+  if (configData && configData.text_dataset) config.text_dataset = configData.text_dataset;
 
   configData = config;
   setFeedback(t('configReady'), 'info');
