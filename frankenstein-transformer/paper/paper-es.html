@@ -8,9 +8,6 @@
   <title>Frankenstein Transformer: Biblioteca Unificada de Codificador-Decodificador, CLI y Notas de Diseño Basadas en Investigación</title>
   <style>
     html {
-      line-height: 1.5;
-      font-family: Georgia, serif;
-      font-size: 20px;
       color: #1a1a1a;
       background-color: #fdfdfd;
     }
@@ -29,13 +26,16 @@
     @media (max-width: 600px) {
       body {
         font-size: 0.9em;
-        padding: 1em;
+        padding: 12px;
       }
       h1 {
         font-size: 1.8em;
       }
     }
     @media print {
+      html {
+        background-color: white;
+      }
       body {
         background-color: transparent;
         color: black;
@@ -59,6 +59,10 @@
       color: #1a1a1a;
     }
     img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
       max-width: 100%;
     }
     h1, h2, h3, h4, h5, h6 {
@@ -96,9 +100,10 @@
       margin-bottom: 0.5em;
     }
     code {
-      font-family: Menlo, Monaco, 'Lucida Console', Consolas, monospace;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
+      hyphens: manual;
     }
     pre {
       margin: 1em 0;
@@ -160,11 +165,20 @@
     }
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-    ul.task-list{list-style: none;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
   </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="/usr/share/javascript/mathjax/MathJax.js"
   type="text/javascript"></script>
 </head>
@@ -230,670 +244,887 @@ múltiples versiones de Python garantizan la confiabilidad.</p>
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#introducción">Introducción</a>
+<li><a href="#introducción" id="toc-introducción">Introducción</a>
 <ul>
-<li><a href="#motivación-y-planteamiento-del-problema">Motivación y
+<li><a href="#motivación-y-planteamiento-del-problema"
+id="toc-motivación-y-planteamiento-del-problema">Motivación y
 Planteamiento del Problema</a></li>
-<li><a href="#contribuciones">Contribuciones</a></li>
-<li><a href="#guía-de-lectura">Guía de Lectura</a></li>
-<li><a href="#constructor-de-configuración-basado-en-web">Constructor de
+<li><a href="#contribuciones"
+id="toc-contribuciones">Contribuciones</a></li>
+<li><a href="#guía-de-lectura" id="toc-guía-de-lectura">Guía de
+Lectura</a></li>
+<li><a href="#constructor-de-configuración-basado-en-web"
+id="toc-constructor-de-configuración-basado-en-web">Constructor de
 Configuración Basado en Web</a></li>
 </ul></li>
-<li><a href="#trabajo-relacionado">Trabajo Relacionado</a>
+<li><a href="#trabajo-relacionado" id="toc-trabajo-relacionado">Trabajo
+Relacionado</a>
 <ul>
-<li><a href="#frameworks-de-aprendizaje-profundo-base">Frameworks de
+<li><a href="#frameworks-de-aprendizaje-profundo-base"
+id="toc-frameworks-de-aprendizaje-profundo-base">Frameworks de
 Aprendizaje Profundo Base</a></li>
-<li><a href="#frameworks-de-entrenamiento-listos-para-usar">Frameworks
-de Entrenamiento Listos para Usar</a></li>
-<li><a href="#herramientas-de-bajo-código-y-eficiencia">Herramientas de
-Bajo Código y Eficiencia</a></li>
-<li><a href="#experimentación-basada-en-configuración">Experimentación
-Basada en Configuración</a></li>
+<li><a href="#frameworks-de-entrenamiento-listos-para-usar"
+id="toc-frameworks-de-entrenamiento-listos-para-usar">Frameworks de
+Entrenamiento Listos para Usar</a></li>
+<li><a href="#herramientas-de-bajo-código-y-eficiencia"
+id="toc-herramientas-de-bajo-código-y-eficiencia">Herramientas de Bajo
+Código y Eficiencia</a></li>
+<li><a href="#experimentación-basada-en-configuración"
+id="toc-experimentación-basada-en-configuración">Experimentación Basada
+en Configuración</a></li>
 </ul></li>
-<li><a href="#sec:system-design">Diseño y Arquitectura del Sistema</a>
+<li><a href="#sec:system-design" id="toc-sec:system-design">Diseño y
+Arquitectura del Sistema</a>
 <ul>
-<li><a href="#sec:config-centric-architecture">Arquitectura Centrada en
+<li><a href="#sec:config-centric-architecture"
+id="toc-sec:config-centric-architecture">Arquitectura Centrada en
 Configuración</a></li>
-<li><a href="#sec:schema-validation">Alcance del Esquema y Reglas de
+<li><a href="#sec:schema-validation"
+id="toc-sec:schema-validation">Alcance del Esquema y Reglas de
 Validación</a></li>
-<li><a href="#esquema-de-configuración">Esquema de
-Configuración</a></li>
-<li><a href="#tipos-de-tarea-de-entrenamiento">Tipos de Tarea de
+<li><a href="#esquema-de-configuración"
+id="toc-esquema-de-configuración">Esquema de Configuración</a></li>
+<li><a href="#tipos-de-tarea-de-entrenamiento"
+id="toc-tipos-de-tarea-de-entrenamiento">Tipos de Tarea de
 Entrenamiento</a></li>
-<li><a href="#configuración-del-optimizador">Configuración del
+<li><a href="#configuración-del-optimizador"
+id="toc-configuración-del-optimizador">Configuración del
 Optimizador</a></li>
-<li><a
-href="#seguridad-de-entrenamiento-y-semántica-de-ejecución">Seguridad de
-Entrenamiento y Semántica de Ejecución</a></li>
-<li><a href="#sec:normalization">Variantes de Normalización</a></li>
-<li><a href="#sec:residual-stream">Arquitecturas de Flujo
-Residual</a></li>
+<li><a href="#seguridad-de-entrenamiento-y-semántica-de-ejecución"
+id="toc-seguridad-de-entrenamiento-y-semántica-de-ejecución">Seguridad
+de Entrenamiento y Semántica de Ejecución</a></li>
+<li><a href="#sec:normalization" id="toc-sec:normalization">Variantes de
+Normalización</a></li>
+<li><a href="#sec:residual-stream"
+id="toc-sec:residual-stream">Arquitecturas de Flujo Residual</a></li>
 </ul></li>
-<li><a href="#sec:architecture-taxonomy">Taxonomía de Arquitectura e
+<li><a href="#sec:architecture-taxonomy"
+id="toc-sec:architecture-taxonomy">Taxonomía de Arquitectura e
 Implementación</a>
 <ul>
-<li><a href="#sec:attention-families">Familias de Atención y Mezcladores
-de Secuencias</a></li>
-<li><a href="#familias-densas-y-recurrentes">Familias Densas y
+<li><a href="#sec:attention-families"
+id="toc-sec:attention-families">Familias de Atención y Mezcladores de
+Secuencias</a></li>
+<li><a href="#familias-densas-y-recurrentes"
+id="toc-familias-densas-y-recurrentes">Familias Densas y
 Recurrentes</a></li>
-<li><a href="#familia-de-atención-latente-y-de-rango-bajo">Familia de
-Atención Latente y de Rango Bajo</a></li>
-<li><a href="#extensiones-de-atención-dispersa">Extensiones de Atención
+<li><a href="#familia-de-atención-latente-y-de-rango-bajo"
+id="toc-familia-de-atención-latente-y-de-rango-bajo">Familia de Atención
+Latente y de Rango Bajo</a></li>
+<li><a href="#extensiones-de-atención-dispersa"
+id="toc-extensiones-de-atención-dispersa">Extensiones de Atención
 Dispersa</a></li>
-<li><a href="#extensiones-de-atención-con-compuerta">Extensiones de
-Atención con Compuerta</a></li>
+<li><a href="#extensiones-de-atención-con-compuerta"
+id="toc-extensiones-de-atención-con-compuerta">Extensiones de Atención
+con Compuerta</a></li>
 </ul></li>
-<li><a href="#sec:optimizer-families">Familias de Optimizadores y
-Dinámicas de Entrenamiento</a></li>
-<li><a href="#sec:quantization">Cuantización y Despliegue</a>
+<li><a href="#sec:optimizer-families"
+id="toc-sec:optimizer-families">Familias de Optimizadores y Dinámicas de
+Entrenamiento</a></li>
+<li><a href="#sec:quantization" id="toc-sec:quantization">Cuantización y
+Despliegue</a>
 <ul>
-<li><a
-href="#cuantización-ternaria-y-escalado-de-activaciones">Cuantización
+<li><a href="#cuantización-ternaria-y-escalado-de-activaciones"
+id="toc-cuantización-ternaria-y-escalado-de-activaciones">Cuantización
 Ternaria y Escalado de Activaciones</a></li>
 </ul></li>
-<li><a href="#sec:sbert">Tareas Posteriores de SBERT</a></li>
-<li><a href="#sec:dashai-plugin">Integración Sin Código: El Plugin
-<code>dashai-frankenstein</code></a>
+<li><a href="#sec:sbert" id="toc-sec:sbert">Tareas Posteriores de
+SBERT</a></li>
+<li><a href="#sec:dashai-plugin" id="toc-sec:dashai-plugin">Integración
+Sin Código: El Plugin <code>dashai-frankenstein</code></a>
 <ul>
-<li><a href="#componentes-registrados">Componentes Registrados</a></li>
-<li><a href="#esquema-de-configuración-de-passthrough">Esquema de
+<li><a href="#componentes-registrados"
+id="toc-componentes-registrados">Componentes Registrados</a></li>
+<li><a href="#esquema-de-configuración-de-passthrough"
+id="toc-esquema-de-configuración-de-passthrough">Esquema de
 Configuración de Passthrough</a></li>
-<li><a href="#trabajo-en-proceso">Trabajo en Proceso</a></li>
+<li><a href="#trabajo-en-proceso" id="toc-trabajo-en-proceso">Trabajo en
+Proceso</a></li>
 </ul></li>
-<li><a href="#sec:discussion">Discusión</a>
+<li><a href="#sec:discussion" id="toc-sec:discussion">Discusión</a>
 <ul>
-<li><a href="#compromisos-de-diseño-basado-en-esquemas">Compromisos de
-Diseño Basado en Esquemas</a></li>
-<li><a href="#cobertura-arquitectónica-y-vacíos">Cobertura
-Arquitectónica y Vacíos</a></li>
-<li><a href="#fragmentación-del-panorama-de-optimizadores">Fragmentación
-del Panorama de Optimizadores</a></li>
-<li><a
-href="#consideraciones-de-despliegue-y-producción">Consideraciones de
+<li><a href="#compromisos-de-diseño-basado-en-esquemas"
+id="toc-compromisos-de-diseño-basado-en-esquemas">Compromisos de Diseño
+Basado en Esquemas</a></li>
+<li><a href="#cobertura-arquitectónica-y-vacíos"
+id="toc-cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
+Vacíos</a></li>
+<li><a href="#fragmentación-del-panorama-de-optimizadores"
+id="toc-fragmentación-del-panorama-de-optimizadores">Fragmentación del
+Panorama de Optimizadores</a></li>
+<li><a href="#consideraciones-de-despliegue-y-producción"
+id="toc-consideraciones-de-despliegue-y-producción">Consideraciones de
 Despliegue y Producción</a></li>
-<li><a href="#desafíos-de-integración-y-extensibilidad">Desafíos de
+<li><a href="#desafíos-de-integración-y-extensibilidad"
+id="toc-desafíos-de-integración-y-extensibilidad">Desafíos de
 Integración y Extensibilidad</a></li>
 </ul></li>
-<li><a href="#sec:conclusion">Conclusión</a>
+<li><a href="#sec:conclusion" id="toc-sec:conclusion">Conclusión</a>
 <ul>
-<li><a href="#limitaciones-y-direcciones-futuras">Limitaciones y
-Direcciones Futuras</a></li>
+<li><a href="#limitaciones-y-direcciones-futuras"
+id="toc-limitaciones-y-direcciones-futuras">Limitaciones y Direcciones
+Futuras</a></li>
 </ul></li>
-<li><a href="#sec:annex-tutorial">Introducción Conceptual—Transformers y
+<li><a href="#sec:annex-tutorial"
+id="toc-sec:annex-tutorial">Introducción Conceptual—Transformers y
 Atención para Principiantes</a>
 <ul>
-<li><a href="#qué-es-un-transformer">¿Qué es un Transformer?</a></li>
-<li><a href="#el-mecanismo-de-atención-una-analogía">El Mecanismo de
-Atención: Una Analogía</a></li>
-<li><a href="#ejemplo-práctico-paso-a-paso">Ejemplo Práctico Paso a
-Paso</a>
+<li><a href="#qué-es-un-transformer" id="toc-qué-es-un-transformer">¿Qué
+es un Transformer?</a></li>
+<li><a href="#el-mecanismo-de-atención-una-analogía"
+id="toc-el-mecanismo-de-atención-una-analogía">El Mecanismo de Atención:
+Una Analogía</a></li>
+<li><a href="#ejemplo-práctico-paso-a-paso"
+id="toc-ejemplo-práctico-paso-a-paso">Ejemplo Práctico Paso a Paso</a>
 <ul>
-<li><a href="#contexto-1-el-gato-come-pescado">Contexto 1: “El gato come
+<li><a href="#contexto-1-el-gato-come-pescado"
+id="toc-contexto-1-el-gato-come-pescado">Contexto 1: “El gato come
 pescado”</a></li>
-<li><a
-href="#contexto-2-el-restaurante-come-los-márgenes-de-beneficio">Contexto
+<li><a href="#contexto-2-el-restaurante-come-los-márgenes-de-beneficio"
+id="toc-contexto-2-el-restaurante-come-los-márgenes-de-beneficio">Contexto
 2: “El restaurante come los márgenes de beneficio”</a></li>
 </ul></li>
-<li><a
-href="#cómo-funciona-la-atención-matemáticamente-versión-simple">Cómo
+<li><a href="#cómo-funciona-la-atención-matemáticamente-versión-simple"
+id="toc-cómo-funciona-la-atención-matemáticamente-versión-simple">Cómo
 Funciona la Atención Matemáticamente (Versión Simple)</a>
 <ul>
-<li><a href="#paso-1-consultas-claves-y-valores">Paso 1: Consultas,
-Claves y Valores</a></li>
-<li><a href="#paso-2-compatibilidad">Paso 2: Compatibilidad</a></li>
-<li><a href="#paso-3-enfoque">Paso 3: Enfoque</a></li>
-<li><a href="#paso-4-combinar">Paso 4: Combinar</a></li>
+<li><a href="#paso-1-consultas-claves-y-valores"
+id="toc-paso-1-consultas-claves-y-valores">Paso 1: Consultas, Claves y
+Valores</a></li>
+<li><a href="#paso-2-compatibilidad" id="toc-paso-2-compatibilidad">Paso
+2: Compatibilidad</a></li>
+<li><a href="#paso-3-enfoque" id="toc-paso-3-enfoque">Paso 3:
+Enfoque</a></li>
+<li><a href="#paso-4-combinar" id="toc-paso-4-combinar">Paso 4:
+Combinar</a></li>
 </ul></li>
-<li><a
-href="#múltiples-cabezas-de-atención-múltiples-perspectivas">Múltiples
+<li><a href="#múltiples-cabezas-de-atención-múltiples-perspectivas"
+id="toc-múltiples-cabezas-de-atención-múltiples-perspectivas">Múltiples
 Cabezas de Atención: Múltiples Perspectivas</a></li>
-<li><a href="#apilar-capas">Apilar Capas</a></li>
-<li><a href="#por-qué-es-importante">¿Por Qué es Importante?</a></li>
-<li><a href="#desafíos-prácticos">Desafíos Prácticos</a>
+<li><a href="#apilar-capas" id="toc-apilar-capas">Apilar Capas</a></li>
+<li><a href="#por-qué-es-importante" id="toc-por-qué-es-importante">¿Por
+Qué es Importante?</a></li>
+<li><a href="#desafíos-prácticos" id="toc-desafíos-prácticos">Desafíos
+Prácticos</a>
 <ul>
-<li><a href="#complejidad-computacional">Complejidad
-Computacional</a></li>
-<li><a href="#requisitos-de-memoria">Requisitos de Memoria</a></li>
-<li><a href="#eficiencia-del-dispositivo">Eficiencia del
-Dispositivo</a></li>
+<li><a href="#complejidad-computacional"
+id="toc-complejidad-computacional">Complejidad Computacional</a></li>
+<li><a href="#requisitos-de-memoria"
+id="toc-requisitos-de-memoria">Requisitos de Memoria</a></li>
+<li><a href="#eficiencia-del-dispositivo"
+id="toc-eficiencia-del-dispositivo">Eficiencia del Dispositivo</a></li>
 </ul></li>
-<li><a href="#soluciones-modernas">Soluciones Modernas</a></li>
-<li><a href="#conclusiones-clave">Conclusiones Clave</a></li>
+<li><a href="#soluciones-modernas"
+id="toc-soluciones-modernas">Soluciones Modernas</a></li>
+<li><a href="#conclusiones-clave"
+id="toc-conclusiones-clave">Conclusiones Clave</a></li>
 </ul></li>
-<li><a href="#sec:annex-schema">Estructura del Esquema de
-Configuración</a>
+<li><a href="#sec:annex-schema" id="toc-sec:annex-schema">Estructura del
+Esquema de Configuración</a>
 <ul>
-<li><a href="#estructura-de-nivel-superior">Estructura de Nivel
+<li><a href="#estructura-de-nivel-superior"
+id="toc-estructura-de-nivel-superior">Estructura de Nivel
 Superior</a></li>
-<li><a href="#subsec:model-config">Configuración del Modelo</a>
+<li><a href="#subsec:model-config"
+id="toc-subsec:model-config">Configuración del Modelo</a>
 <ul>
-<li><a href="#tab:layer-pattern">Enumeración del Patrón de
-Capas</a></li>
+<li><a href="#tab:layer-pattern" id="toc-tab:layer-pattern">Enumeración
+del Patrón de Capas</a></li>
 </ul></li>
-<li><a href="#subsec:training-config">Configuración de
-Entrenamiento</a></li>
-<li><a href="#subsec:optimizer-config">Configuración del Optimizador</a>
+<li><a href="#subsec:training-config"
+id="toc-subsec:training-config">Configuración de Entrenamiento</a></li>
+<li><a href="#subsec:tokenizer-config"
+id="toc-subsec:tokenizer-config">Configuración del Tokenizador</a></li>
+<li><a href="#subsec:optimizer-config"
+id="toc-subsec:optimizer-config">Configuración del Optimizador</a>
 <ul>
-<li><a href="#sufijos-compartidos-por-grupo">Sufijos Compartidos por
+<li><a href="#sufijos-compartidos-por-grupo"
+id="toc-sufijos-compartidos-por-grupo">Sufijos Compartidos por
 Grupo</a></li>
-<li><a href="#sufijos-globales-específicos-del-optimizador">Sufijos
-Globales Específicos del Optimizador</a></li>
+<li><a href="#sufijos-globales-específicos-del-optimizador"
+id="toc-sufijos-globales-específicos-del-optimizador">Sufijos Globales
+Específicos del Optimizador</a></li>
 </ul></li>
-<li><a href="#subsec:sbert-config">Configuración SBERT</a></li>
-<li><a href="#reglas-de-validación">Reglas de Validación</a></li>
+<li><a href="#subsec:sbert-config"
+id="toc-subsec:sbert-config">Configuración SBERT</a></li>
+<li><a href="#reglas-de-validación" id="toc-reglas-de-validación">Reglas
+de Validación</a></li>
 </ul></li>
-<li><a href="#sec:annex-summary-tables">Tablas de Resumen Completas</a>
+<li><a href="#sec:annex-summary-tables"
+id="toc-sec:annex-summary-tables">Tablas de Resumen Completas</a>
 <ul>
-<li><a href="#resumen-de-mezcladores-de-secuencia">Resumen de
-Mezcladores de Secuencia</a></li>
-<li><a href="#resumen-de-optimizadores">Resumen de
-Optimizadores</a></li>
-<li><a href="#variantes-de-normalización">Variantes de
-Normalización</a></li>
-<li><a href="#conexiones-residuales">Conexiones Residuales</a></li>
-<li><a href="#funciones-de-activación">Funciones de Activación</a></li>
-<li><a href="#variantes-de-embedding">Variantes de Embedding</a></li>
+<li><a href="#resumen-de-mezcladores-de-secuencia"
+id="toc-resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
+Secuencia</a></li>
+<li><a href="#resumen-de-optimizadores"
+id="toc-resumen-de-optimizadores">Resumen de Optimizadores</a></li>
+<li><a href="#variantes-de-normalización"
+id="toc-variantes-de-normalización">Variantes de Normalización</a></li>
+<li><a href="#conexiones-residuales"
+id="toc-conexiones-residuales">Conexiones Residuales</a></li>
+<li><a href="#funciones-de-activación"
+id="toc-funciones-de-activación">Funciones de Activación</a></li>
+<li><a href="#variantes-de-embedding"
+id="toc-variantes-de-embedding">Variantes de Embedding</a></li>
 </ul></li>
-<li><a href="#sec:annex-optimizers">Familias de Optimizadores</a>
+<li><a href="#sec:annex-optimizers"
+id="toc-sec:annex-optimizers">Familias de Optimizadores</a>
 <ul>
-<li><a href="#la-evolución-de-la-optimización-en-redes-neuronales">La
+<li><a href="#la-evolución-de-la-optimización-en-redes-neuronales"
+id="toc-la-evolución-de-la-optimización-en-redes-neuronales">La
 Evolución de la Optimización en Redes Neuronales</a></li>
-<li><a href="#línea-base-estándar-y-optimizadores-adaptativos">Línea
-Base Estándar y Optimizadores Adaptativos</a></li>
-<li><a
-href="#momentum-avanzado-y-reducción-de-varianza-20242025">Momentum
+<li><a href="#línea-base-estándar-y-optimizadores-adaptativos"
+id="toc-línea-base-estándar-y-optimizadores-adaptativos">Línea Base
+Estándar y Optimizadores Adaptativos</a></li>
+<li><a href="#momentum-avanzado-y-reducción-de-varianza-20242025"
+id="toc-momentum-avanzado-y-reducción-de-varianza-20242025">Momentum
 Avanzado y Reducción de Varianza (2024–2025)</a></li>
 <li><a
-href="#optimizadores-de-lote-grande-eficientes-en-memoria-y-sin-tasa-de-aprendizaje">Optimizadores
+href="#optimizadores-de-lote-grande-eficientes-en-memoria-y-sin-tasa-de-aprendizaje"
+id="toc-optimizadores-de-lote-grande-eficientes-en-memoria-y-sin-tasa-de-aprendizaje">Optimizadores
 de Lote Grande, Eficientes en Memoria y Sin Tasa de Aprendizaje</a></li>
 <li><a
-href="#optimizadores-de-segundo-orden-geométricos-y-de-ortogonalidad">Optimizadores
+href="#optimizadores-de-segundo-orden-geométricos-y-de-ortogonalidad"
+id="toc-optimizadores-de-segundo-orden-geométricos-y-de-ortogonalidad">Optimizadores
 de Segundo Orden, Geométricos y de Ortogonalidad</a></li>
 </ul></li>
-<li><a href="#sec:annex-transformer">Transformadores Densos, Recurrentes
-y Aumentados con Memoria</a>
+<li><a href="#sec:annex-transformer"
+id="toc-sec:annex-transformer">Transformadores Densos, Recurrentes y
+Aumentados con Memoria</a>
 <ul>
-<li><a href="#atención-densa-de-referencia-estándar-y-sigmoide">Atención
-Densa de Referencia: Estándar y Sigmoide</a>
+<li><a href="#atención-densa-de-referencia-estándar-y-sigmoide"
+id="toc-atención-densa-de-referencia-estándar-y-sigmoide">Atención Densa
+de Referencia: Estándar y Sigmoide</a>
 <ul>
-<li><a href="#atención-softmax-estándar">Atención Softmax
-Estándar</a></li>
-<li><a href="#atención-sigmoide">Atención Sigmoide</a></li>
-<li><a href="#atención-por-consultas-agrupadas-gqa">Atención por
-Consultas Agrupadas (GQA)</a></li>
+<li><a href="#atención-softmax-estándar"
+id="toc-atención-softmax-estándar">Atención Softmax Estándar</a></li>
+<li><a href="#atención-sigmoide" id="toc-atención-sigmoide">Atención
+Sigmoide</a></li>
+<li><a href="#atención-por-consultas-agrupadas-gqa"
+id="toc-atención-por-consultas-agrupadas-gqa">Atención por Consultas
+Agrupadas (GQA)</a></li>
 </ul></li>
-<li><a href="#arquitecturas-recurrentes-y-retentivas">Arquitecturas
+<li><a href="#arquitecturas-recurrentes-y-retentivas"
+id="toc-arquitecturas-recurrentes-y-retentivas">Arquitecturas
 Recurrentes y Retentivas</a>
 <ul>
-<li><a href="#redes-retentivas-retnet">Redes Retentivas
-(RetNet)</a></li>
-<li><a href="#mamba-modelos-de-espacio-de-estado-selectivos">Mamba:
-Modelos de Espacio de Estado Selectivos</a></li>
+<li><a href="#redes-retentivas-retnet"
+id="toc-redes-retentivas-retnet">Redes Retentivas (RetNet)</a></li>
+<li><a href="#mamba-modelos-de-espacio-de-estado-selectivos"
+id="toc-mamba-modelos-de-espacio-de-estado-selectivos">Mamba: Modelos de
+Espacio de Estado Selectivos</a></li>
 </ul></li>
-<li><a
-href="#transformers-de-profundidad-continua-integración-edo">Transformers
+<li><a href="#transformers-de-profundidad-continua-integración-edo"
+id="toc-transformers-de-profundidad-continua-integración-edo">Transformers
 de Profundidad Continua: Integración EDO</a>
 <ul>
-<li><a href="#transformer-edo">Transformer EDO</a></li>
+<li><a href="#transformer-edo" id="toc-transformer-edo">Transformer
+EDO</a></li>
 </ul></li>
-<li><a href="#memoria-en-tiempo-de-prueba-titans">Memoria en Tiempo de
-Prueba: Titans</a></li>
-<li><a href="#despacho-de-mezclador-guiado-por-patrón">Despacho de
-Mezclador Guiado por Patrón</a></li>
+<li><a href="#memoria-en-tiempo-de-prueba-titans"
+id="toc-memoria-en-tiempo-de-prueba-titans">Memoria en Tiempo de Prueba:
+Titans</a></li>
+<li><a href="#despacho-de-mezclador-guiado-por-patrón"
+id="toc-despacho-de-mezclador-guiado-por-patrón">Despacho de Mezclador
+Guiado por Patrón</a></li>
 </ul></li>
-<li><a href="#sec:annex-latent">Familias de Atención Latente y de Rango
-Bajo</a>
+<li><a href="#sec:annex-latent" id="toc-sec:annex-latent">Familias de
+Atención Latente y de Rango Bajo</a>
 <ul>
-<li><a href="#atención-latente-multi-cabeza-mla">Atención Latente
-Multi-Cabeza (MLA)</a>
+<li><a href="#atención-latente-multi-cabeza-mla"
+id="toc-atención-latente-multi-cabeza-mla">Atención Latente Multi-Cabeza
+(MLA)</a>
 <ul>
-<li><a href="#formulación-matemática">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave">Características Clave</a></li>
+<li><a href="#formulación-matemática"
+id="toc-formulación-matemática">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico"
+id="toc-pseudocódigo-algorítmico">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave"
+id="toc-características-clave">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-latente-por-consultas-agrupadas-gqla">Atención
-Latente por Consultas Agrupadas (GQLA)</a>
+<li><a href="#atención-latente-por-consultas-agrupadas-gqla"
+id="toc-atención-latente-por-consultas-agrupadas-gqla">Atención Latente
+por Consultas Agrupadas (GQLA)</a>
 <ul>
-<li><a href="#formulación-matemática-1">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-1">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-1">Características Clave</a></li>
+<li><a href="#formulación-matemática-1"
+id="toc-formulación-matemática-1">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-1"
+id="toc-pseudocódigo-algorítmico-1">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-1"
+id="toc-características-clave-1">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-multi-cabeza-de-rango-bajo-mlra">Atención
-Multi-Cabeza de Rango Bajo (MLRA)</a>
+<li><a href="#atención-multi-cabeza-de-rango-bajo-mlra"
+id="toc-atención-multi-cabeza-de-rango-bajo-mlra">Atención Multi-Cabeza
+de Rango Bajo (MLRA)</a>
 <ul>
-<li><a href="#formulación-matemática-2">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-2">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-2">Características Clave</a></li>
+<li><a href="#formulación-matemática-2"
+id="toc-formulación-matemática-2">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-2"
+id="toc-pseudocódigo-algorítmico-2">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-2"
+id="toc-características-clave-2">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-tucker">Atención Tucker</a>
+<li><a href="#atención-tucker" id="toc-atención-tucker">Atención
+Tucker</a>
 <ul>
-<li><a href="#formulación-matemática-3">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-3">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-3">Características Clave</a></li>
+<li><a href="#formulación-matemática-3"
+id="toc-formulación-matemática-3">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-3"
+id="toc-pseudocódigo-algorítmico-3">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-3"
+id="toc-características-clave-3">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-de-cabezas-entrelazadas-iha">Atención de Cabezas
+<li><a href="#atención-de-cabezas-entrelazadas-iha"
+id="toc-atención-de-cabezas-entrelazadas-iha">Atención de Cabezas
 Entrelazadas (IHA)</a>
 <ul>
-<li><a href="#formulación-matemática-4">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-4">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-4">Características Clave</a></li>
+<li><a href="#formulación-matemática-4"
+id="toc-formulación-matemática-4">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-4"
+id="toc-pseudocódigo-algorítmico-4">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-4"
+id="toc-características-clave-4">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-latent-por-cabezas-agrupadas-gta">Atención laTenT
-por Cabezas Agrupadas (GTA)</a>
+<li><a href="#atención-latent-por-cabezas-agrupadas-gta"
+id="toc-atención-latent-por-cabezas-agrupadas-gta">Atención laTenT por
+Cabezas Agrupadas (GTA)</a>
 <ul>
-<li><a href="#formulación-matemática-5">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-5">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-5">Características Clave</a></li>
+<li><a href="#formulación-matemática-5"
+id="toc-formulación-matemática-5">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-5"
+id="toc-pseudocódigo-algorítmico-5">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-5"
+id="toc-características-clave-5">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-latente-temporal-multi-cabeza-mtla">Atención
-Latente Temporal Multi-Cabeza (MTLA)</a>
+<li><a href="#atención-latente-temporal-multi-cabeza-mtla"
+id="toc-atención-latente-temporal-multi-cabeza-mtla">Atención Latente
+Temporal Multi-Cabeza (MTLA)</a>
 <ul>
-<li><a href="#formulación-matemática-6">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-6">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-6">Características Clave</a></li>
+<li><a href="#formulación-matemática-6"
+id="toc-formulación-matemática-6">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-6"
+id="toc-pseudocódigo-algorítmico-6">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-6"
+id="toc-características-clave-6">Características Clave</a></li>
 </ul></li>
-<li><a href="#comparación-y-síntesis-arquitectónica">Comparación y
-Síntesis Arquitectónica</a></li>
-<li><a href="#atención-convolucional-comprimida-cca">Atención
-Convolucional Comprimida (CCA)</a>
+<li><a href="#comparación-y-síntesis-arquitectónica"
+id="toc-comparación-y-síntesis-arquitectónica">Comparación y Síntesis
+Arquitectónica</a></li>
+<li><a href="#atención-convolucional-comprimida-cca"
+id="toc-atención-convolucional-comprimida-cca">Atención Convolucional
+Comprimida (CCA)</a>
 <ul>
-<li><a href="#formulación-matemática-7">Formulación Matemática</a></li>
-<li><a href="#características-clave-7">Características Clave</a></li>
+<li><a href="#formulación-matemática-7"
+id="toc-formulación-matemática-7">Formulación Matemática</a></li>
+<li><a href="#características-clave-7"
+id="toc-características-clave-7">Características Clave</a></li>
 </ul></li>
 <li><a
-href="#atención-convolucional-comprimida-por-consultas-agrupadas-ccgqa">Atención
+href="#atención-convolucional-comprimida-por-consultas-agrupadas-ccgqa"
+id="toc-atención-convolucional-comprimida-por-consultas-agrupadas-ccgqa">Atención
 Convolucional Comprimida por Consultas Agrupadas (CCGQA)</a>
 <ul>
-<li><a href="#características-clave-8">Características Clave</a></li>
+<li><a href="#características-clave-8"
+id="toc-características-clave-8">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-de-mezcla-gaussiana-gma">Atención de Mezcla
-Gaussiana (GMA)</a>
+<li><a href="#atención-de-mezcla-gaussiana-gma"
+id="toc-atención-de-mezcla-gaussiana-gma">Atención de Mezcla Gaussiana
+(GMA)</a>
 <ul>
-<li><a href="#formulación-matemática-8">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-7">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-9">Características Clave</a></li>
+<li><a href="#formulación-matemática-8"
+id="toc-formulación-matemática-8">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-7"
+id="toc-pseudocódigo-algorítmico-7">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-9"
+id="toc-características-clave-9">Características Clave</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#sec:annex-sparse">Mecanismos de Atención Dispersa
-Exhaustivos</a>
+<li><a href="#sec:annex-sparse" id="toc-sec:annex-sparse">Mecanismos de
+Atención Dispersa Exhaustivos</a>
 <ul>
-<li><a href="#resumen-ejecutivo">Resumen Ejecutivo</a></li>
+<li><a href="#resumen-ejecutivo" id="toc-resumen-ejecutivo">Resumen
+Ejecutivo</a></li>
 <li><a
-href="#sparse-transformer-patrones-estrideados-y-fijos-factorizados">Sparse
+href="#sparse-transformer-patrones-estrideados-y-fijos-factorizados"
+id="toc-sparse-transformer-patrones-estrideados-y-fijos-factorizados">Sparse
 Transformer: Patrones Estrideados y Fijos Factorizados</a>
 <ul>
-<li><a href="#formulación-matemática-9">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-8">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-10">Características Clave</a></li>
+<li><a href="#formulación-matemática-9"
+id="toc-formulación-matemática-9">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-8"
+id="toc-pseudocódigo-algorítmico-8">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-10"
+id="toc-características-clave-10">Características Clave</a></li>
 </ul></li>
 <li><a
-href="#longformer-ventana-deslizante-dilatación-y-tokens-globales">Longformer:
+href="#longformer-ventana-deslizante-dilatación-y-tokens-globales"
+id="toc-longformer-ventana-deslizante-dilatación-y-tokens-globales">Longformer:
 Ventana Deslizante, Dilatación y Tokens Globales</a>
 <ul>
-<li><a href="#formulación-matemática-10">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-9">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-11">Características Clave</a></li>
+<li><a href="#formulación-matemática-10"
+id="toc-formulación-matemática-10">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-9"
+id="toc-pseudocódigo-algorítmico-9">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-11"
+id="toc-características-clave-11">Características Clave</a></li>
 </ul></li>
-<li><a href="#bigbird-grafo-disperso-aleatorio-local-y-global">BigBird:
-Grafo Disperso Aleatorio, Local y Global</a>
+<li><a href="#bigbird-grafo-disperso-aleatorio-local-y-global"
+id="toc-bigbird-grafo-disperso-aleatorio-local-y-global">BigBird: Grafo
+Disperso Aleatorio, Local y Global</a>
 <ul>
-<li><a href="#formulación-matemática-11">Formulación Matemática</a></li>
-<li><a href="#garantía-teórica">Garantía Teórica</a></li>
-<li><a href="#pseudocódigo-algorítmico-10">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-12">Características Clave</a></li>
+<li><a href="#formulación-matemática-11"
+id="toc-formulación-matemática-11">Formulación Matemática</a></li>
+<li><a href="#garantía-teórica" id="toc-garantía-teórica">Garantía
+Teórica</a></li>
+<li><a href="#pseudocódigo-algorítmico-10"
+id="toc-pseudocódigo-algorítmico-10">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-12"
+id="toc-características-clave-12">Características Clave</a></li>
 </ul></li>
-<li><a href="#atención-sparsek-selección-diferencial-top-k">Atención
-SparseK: Selección Diferencial Top-<span
-class="math inline">\(k\)</span></a>
+<li><a href="#atención-sparsek-selección-diferencial-top-k"
+id="toc-atención-sparsek-selección-diferencial-top-k">Atención SparseK:
+Selección Diferencial Top-<span class="math inline">\(k\)</span></a>
 <ul>
-<li><a href="#formulación-matemática-12">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-11">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-13">Características Clave</a></li>
+<li><a href="#formulación-matemática-12"
+id="toc-formulación-matemática-12">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-11"
+id="toc-pseudocódigo-algorítmico-11">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-13"
+id="toc-características-clave-13">Características Clave</a></li>
 </ul></li>
 <li><a
-href="#nsa-native-sparse-attention-ramas-jerárquicas-alineadas-con-el-hardware">NSA
+href="#nsa-native-sparse-attention-ramas-jerárquicas-alineadas-con-el-hardware"
+id="toc-nsa-native-sparse-attention-ramas-jerárquicas-alineadas-con-el-hardware">NSA
 (Native Sparse Attention): Ramas Jerárquicas Alineadas con el
 Hardware</a>
 <ul>
-<li><a href="#formulación-matemática-13">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-12">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-14">Características Clave</a></li>
+<li><a href="#formulación-matemática-13"
+id="toc-formulación-matemática-13">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-12"
+id="toc-pseudocódigo-algorítmico-12">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-14"
+id="toc-características-clave-14">Características Clave</a></li>
 </ul></li>
-<li><a href="#fasa-atención-dispersa-consciente-de-la-frecuencia">FASA:
+<li><a href="#fasa-atención-dispersa-consciente-de-la-frecuencia"
+id="toc-fasa-atención-dispersa-consciente-de-la-frecuencia">FASA:
 Atención Dispersa Consciente de la Frecuencia</a>
 <ul>
-<li><a href="#formulación-matemática-14">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-13">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-15">Características Clave</a></li>
+<li><a href="#formulación-matemática-14"
+id="toc-formulación-matemática-14">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-13"
+id="toc-pseudocódigo-algorítmico-13">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-15"
+id="toc-características-clave-15">Características Clave</a></li>
 </ul></li>
-<li><a
-href="#spargeattn-filtrado-de-dos-etapas-a-nivel-de-bloques">SpargeAttn:
+<li><a href="#spargeattn-filtrado-de-dos-etapas-a-nivel-de-bloques"
+id="toc-spargeattn-filtrado-de-dos-etapas-a-nivel-de-bloques">SpargeAttn:
 Filtrado de Dos Etapas a Nivel de Bloques</a>
 <ul>
-<li><a href="#formulación-matemática-15">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-14">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-16">Características Clave</a></li>
+<li><a href="#formulación-matemática-15"
+id="toc-formulación-matemática-15">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-14"
+id="toc-pseudocódigo-algorítmico-14">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-16"
+id="toc-características-clave-16">Características Clave</a></li>
 </ul></li>
 <li><a
-href="#msa-minimax-sparse-attention-atención-dispersa-por-bloques-con-rama-de-índice-ligera">MSA
+href="#msa-minimax-sparse-attention-atención-dispersa-por-bloques-con-rama-de-índice-ligera"
+id="toc-msa-minimax-sparse-attention-atención-dispersa-por-bloques-con-rama-de-índice-ligera">MSA
 (MiniMax Sparse Attention): Atención Dispersa por Bloques con Rama de
 Índice Ligera</a>
 <ul>
-<li><a href="#formulación-matemática-16">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-15">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-17">Características Clave</a></li>
+<li><a href="#formulación-matemática-16"
+id="toc-formulación-matemática-16">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-15"
+id="toc-pseudocódigo-algorítmico-15">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-17"
+id="toc-características-clave-17">Características Clave</a></li>
 </ul></li>
 <li><a
-href="#sparda-atención-dispersa-desacoplada-selección-de-bloques-anticipada-guiada-por-pronóstico">SparDA
+href="#sparda-atención-dispersa-desacoplada-selección-de-bloques-anticipada-guiada-por-pronóstico"
+id="toc-sparda-atención-dispersa-desacoplada-selección-de-bloques-anticipada-guiada-por-pronóstico">SparDA
 (Atención Dispersa Desacoplada): Selección de Bloques Anticipada Guiada
 por Pronóstico</a>
 <ul>
-<li><a href="#formulación-matemática-17">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-16">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-18">Características Clave</a></li>
+<li><a href="#formulación-matemática-17"
+id="toc-formulación-matemática-17">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-16"
+id="toc-pseudocódigo-algorítmico-16">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-18"
+id="toc-características-clave-18">Características Clave</a></li>
 </ul></li>
-<li><a href="#espacio-de-diseño-y-criterios-de-selección">Espacio de
-Diseño y Criterios de Selección</a></li>
+<li><a href="#espacio-de-diseño-y-criterios-de-selección"
+id="toc-espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
+Criterios de Selección</a></li>
 </ul></li>
-<li><a href="#sec:annex-gated">Familias de Atención con
-Compuerta—Análisis Exhaustivo de Literatura</a>
+<li><a href="#sec:annex-gated" id="toc-sec:annex-gated">Familias de
+Atención con Compuerta—Análisis Exhaustivo de Literatura</a>
 <ul>
-<li><a
-href="#resumen-ejecutivo-compuertas-para-el-control-de-memoria">Resumen
+<li><a href="#resumen-ejecutivo-compuertas-para-el-control-de-memoria"
+id="toc-resumen-ejecutivo-compuertas-para-el-control-de-memoria">Resumen
 Ejecutivo: Compuertas para el Control de Memoria</a></li>
-<li><a href="#atención-lineal-con-compuerta-gla">1. Atención Lineal con
+<li><a href="#atención-lineal-con-compuerta-gla"
+id="toc-atención-lineal-con-compuerta-gla">1. Atención Lineal con
 Compuerta (GLA)</a>
 <ul>
-<li><a href="#fundamento-matemático">Fundamento Matemático</a></li>
-<li><a href="#entrenamiento-eficiente-en-hardware">Entrenamiento
-Eficiente en Hardware</a></li>
-<li><a href="#fortalezas-y-limitaciones">Fortalezas y
-Limitaciones</a></li>
+<li><a href="#fundamento-matemático"
+id="toc-fundamento-matemático">Fundamento Matemático</a></li>
+<li><a href="#entrenamiento-eficiente-en-hardware"
+id="toc-entrenamiento-eficiente-en-hardware">Entrenamiento Eficiente en
+Hardware</a></li>
+<li><a href="#fortalezas-y-limitaciones"
+id="toc-fortalezas-y-limitaciones">Fortalezas y Limitaciones</a></li>
 </ul></li>
-<li><a href="#deltanet-atención-lineal-con-corrección-de-errores">2.
-DeltaNet: Atención Lineal con Corrección de Errores</a>
+<li><a href="#deltanet-atención-lineal-con-corrección-de-errores"
+id="toc-deltanet-atención-lineal-con-corrección-de-errores">2. DeltaNet:
+Atención Lineal con Corrección de Errores</a>
 <ul>
-<li><a href="#fundamento-matemático-1">Fundamento Matemático</a></li>
-<li><a href="#entrenamiento-paralelo-eficiente">Entrenamiento Paralelo
+<li><a href="#fundamento-matemático-1"
+id="toc-fundamento-matemático-1">Fundamento Matemático</a></li>
+<li><a href="#entrenamiento-paralelo-eficiente"
+id="toc-entrenamiento-paralelo-eficiente">Entrenamiento Paralelo
 Eficiente</a></li>
-<li><a href="#fortalezas-y-limitaciones-1">Fortalezas y
-Limitaciones</a></li>
+<li><a href="#fortalezas-y-limitaciones-1"
+id="toc-fortalezas-y-limitaciones-1">Fortalezas y Limitaciones</a></li>
 </ul></li>
 <li><a
-href="#gated-deltanet-síntesis-de-compuerta-y-corrección-de-errores">3.
+href="#gated-deltanet-síntesis-de-compuerta-y-corrección-de-errores"
+id="toc-gated-deltanet-síntesis-de-compuerta-y-corrección-de-errores">3.
 Gated DeltaNet: Síntesis de Compuerta y Corrección de Errores</a>
 <ul>
-<li><a href="#fundamento-matemático-2">Fundamento Matemático</a></li>
-<li><a href="#rendimiento-empírico-y-compensaciones">Rendimiento
-Empírico y Compensaciones</a></li>
+<li><a href="#fundamento-matemático-2"
+id="toc-fundamento-matemático-2">Fundamento Matemático</a></li>
+<li><a href="#rendimiento-empírico-y-compensaciones"
+id="toc-rendimiento-empírico-y-compensaciones">Rendimiento Empírico y
+Compensaciones</a></li>
 </ul></li>
 <li><a
-href="#hgrn2-compuerta-jerárquica-con-expansión-de-producto-externo">4.
+href="#hgrn2-compuerta-jerárquica-con-expansión-de-producto-externo"
+id="toc-hgrn2-compuerta-jerárquica-con-expansión-de-producto-externo">4.
 HGRN2: Compuerta Jerárquica con Expansión de Producto Externo</a>
 <ul>
-<li><a href="#fundamento-matemático-3">Fundamento Matemático</a></li>
-<li><a href="#escalado-y-resultados-empíricos">Escalado y Resultados
+<li><a href="#fundamento-matemático-3"
+id="toc-fundamento-matemático-3">Fundamento Matemático</a></li>
+<li><a href="#escalado-y-resultados-empíricos"
+id="toc-escalado-y-resultados-empíricos">Escalado y Resultados
 Empíricos</a></li>
 </ul></li>
 <li><a
-href="#forgetting-transformer-fox-compuerta-en-el-espacio-de-logits-softmax">5.
+href="#forgetting-transformer-fox-compuerta-en-el-espacio-de-logits-softmax"
+id="toc-forgetting-transformer-fox-compuerta-en-el-espacio-de-logits-softmax">5.
 Forgetting Transformer (FoX): Compuerta en el Espacio de Logits
 Softmax</a>
 <ul>
-<li><a href="#fundamento-matemático-4">Fundamento Matemático</a></li>
-<li><a href="#integración-con-flashattention">Integración con
+<li><a href="#fundamento-matemático-4"
+id="toc-fundamento-matemático-4">Fundamento Matemático</a></li>
+<li><a href="#integración-con-flashattention"
+id="toc-integración-con-flashattention">Integración con
 FlashAttention</a></li>
-<li><a href="#fortalezas-y-limitaciones-2">Fortalezas y
-Limitaciones</a></li>
+<li><a href="#fortalezas-y-limitaciones-2"
+id="toc-fortalezas-y-limitaciones-2">Fortalezas y Limitaciones</a></li>
 </ul></li>
-<li><a href="#atención-con-compuerta-post-sdpa-sigmoide">6. Atención con
+<li><a href="#atención-con-compuerta-post-sdpa-sigmoide"
+id="toc-atención-con-compuerta-post-sdpa-sigmoide">6. Atención con
 Compuerta (Post-SDPA Sigmoide)</a>
 <ul>
-<li><a href="#fundamento-matemático-5">Fundamento Matemático</a></li>
-<li><a href="#hallazgos-clave">Hallazgos Clave</a></li>
+<li><a href="#fundamento-matemático-5"
+id="toc-fundamento-matemático-5">Fundamento Matemático</a></li>
+<li><a href="#hallazgos-clave" id="toc-hallazgos-clave">Hallazgos
+Clave</a></li>
 </ul></li>
 <li><a
-href="#gated-deltanet-2-borrado-y-escritura-canalizados-decouplados">7.
+href="#gated-deltanet-2-borrado-y-escritura-canalizados-decouplados"
+id="toc-gated-deltanet-2-borrado-y-escritura-canalizados-decouplados">7.
 Gated DeltaNet-2: Borrado y Escritura Canalizados Decouplados</a>
 <ul>
-<li><a href="#fundamento-matemático-6">Fundamento Matemático</a></li>
-<li><a href="#rendimiento-empírico-y-compromisos">Rendimiento Empírico y
+<li><a href="#fundamento-matemático-6"
+id="toc-fundamento-matemático-6">Fundamento Matemático</a></li>
+<li><a href="#rendimiento-empírico-y-compromisos"
+id="toc-rendimiento-empírico-y-compromisos">Rendimiento Empírico y
 Compromisos</a></li>
 </ul></li>
 <li><a
-href="#kimi-delta-attention-kda-compuerta-de-decaimiento-canalizada-para-la-regla-delta">8.
+href="#kimi-delta-attention-kda-compuerta-de-decaimiento-canalizada-para-la-regla-delta"
+id="toc-kimi-delta-attention-kda-compuerta-de-decaimiento-canalizada-para-la-regla-delta">8.
 Kimi Delta Attention (KDA): Compuerta de Decaimiento Canalizada para la
 Regla Delta</a>
 <ul>
-<li><a href="#fundamento-matemático-7">Fundamento Matemático</a></li>
-<li><a href="#rendimiento-empírico-y-compromisos-1">Rendimiento Empírico
-y Compromisos</a></li>
+<li><a href="#fundamento-matemático-7"
+id="toc-fundamento-matemático-7">Fundamento Matemático</a></li>
+<li><a href="#rendimiento-empírico-y-compromisos-1"
+id="toc-rendimiento-empírico-y-compromisos-1">Rendimiento Empírico y
+Compromisos</a></li>
 </ul></li>
-<li><a href="#principio-unificado-de-compuerta">Principio Unificado de
+<li><a href="#principio-unificado-de-compuerta"
+id="toc-principio-unificado-de-compuerta">Principio Unificado de
 Compuerta</a></li>
-<li><a href="#implementación-y-orientación-práctica">Implementación y
+<li><a href="#implementación-y-orientación-práctica"
+id="toc-implementación-y-orientación-práctica">Implementación y
 Orientación Práctica</a>
 <ul>
-<li><a href="#cuándo-usar-cada-arquitectura">Cuándo Usar Cada
+<li><a href="#cuándo-usar-cada-arquitectura"
+id="toc-cuándo-usar-cada-arquitectura">Cuándo Usar Cada
 Arquitectura</a></li>
-<li><a href="#consideraciones-de-hardware">Consideraciones de
+<li><a href="#consideraciones-de-hardware"
+id="toc-consideraciones-de-hardware">Consideraciones de
 Hardware</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#sec:annex-norm-bitnet-mod">Normalización, Cuantización,
+<li><a href="#sec:annex-norm-bitnet-mod"
+id="toc-sec:annex-norm-bitnet-mod">Normalización, Cuantización,
 Enrutamiento de Profundidad y Algoritmos de Ejecución</a>
 <ul>
 <li><a
-href="#variantes-de-normalización-layernorm-rmsnorm-prmsnorm-tanh-dinámico-erf-dinámico-y-flashnorm">Variantes
+href="#variantes-de-normalización-layernorm-rmsnorm-prmsnorm-tanh-dinámico-erf-dinámico-y-flashnorm"
+id="toc-variantes-de-normalización-layernorm-rmsnorm-prmsnorm-tanh-dinámico-erf-dinámico-y-flashnorm">Variantes
 de Normalización: LayerNorm, RMSNorm, pRMSNorm, Tanh Dinámico, Erf
 Dinámico y FlashNorm</a>
 <ul>
-<li><a href="#layernorm-línea-base">LayerNorm (Línea Base)</a></li>
-<li><a href="#rmsnorm">RMSNorm</a></li>
-<li><a href="#rmsnorm-parcial-prmsnorm">RMSNorm Parcial
-(pRMSNorm)</a></li>
-<li><a href="#tanh-dinámico-dyt">Tanh Dinámico (DyT)</a></li>
-<li><a href="#erf-dinámico-derf">Erf Dinámico (Derf)</a></li>
-<li><a href="#flashnorm-rmsnorm-sin-pesos">FlashNorm (RMSNorm sin
+<li><a href="#layernorm-línea-base"
+id="toc-layernorm-línea-base">LayerNorm (Línea Base)</a></li>
+<li><a href="#rmsnorm" id="toc-rmsnorm">RMSNorm</a></li>
+<li><a href="#rmsnorm-parcial-prmsnorm"
+id="toc-rmsnorm-parcial-prmsnorm">RMSNorm Parcial (pRMSNorm)</a></li>
+<li><a href="#tanh-dinámico-dyt" id="toc-tanh-dinámico-dyt">Tanh
+Dinámico (DyT)</a></li>
+<li><a href="#erf-dinámico-derf" id="toc-erf-dinámico-derf">Erf Dinámico
+(Derf)</a></li>
+<li><a href="#flashnorm-rmsnorm-sin-pesos"
+id="toc-flashnorm-rmsnorm-sin-pesos">FlashNorm (RMSNorm sin
 pesos)</a></li>
-<li><a href="#comparación">Comparación</a></li>
+<li><a href="#comparación" id="toc-comparación">Comparación</a></li>
 </ul></li>
-<li><a href="#ruta-de-cuantización-ternaria-bitnet">Ruta de Cuantización
+<li><a href="#ruta-de-cuantización-ternaria-bitnet"
+id="toc-ruta-de-cuantización-ternaria-bitnet">Ruta de Cuantización
 Ternaria BitNet</a></li>
-<li><a href="#enrutamiento-de-tokens-mixture-of-depths-mod">Enrutamiento
-de Tokens Mixture-of-Depths (MoD)</a>
+<li><a href="#enrutamiento-de-tokens-mixture-of-depths-mod"
+id="toc-enrutamiento-de-tokens-mixture-of-depths-mod">Enrutamiento de
+Tokens Mixture-of-Depths (MoD)</a>
 <ul>
-<li><a href="#configuración">Configuración</a></li>
+<li><a href="#configuración"
+id="toc-configuración">Configuración</a></li>
 </ul></li>
-<li><a href="#memoria-condicional-engram">Memoria Condicional Engram</a>
+<li><a href="#memoria-condicional-engram"
+id="toc-memoria-condicional-engram">Memoria Condicional Engram</a>
 <ul>
-<li><a href="#configuración-1">Configuración</a></li>
+<li><a href="#configuración-1"
+id="toc-configuración-1">Configuración</a></li>
 </ul></li>
-<li><a
-href="#embeddings-factorizados-y-convolución-de-embedding">Embeddings
+<li><a href="#embeddings-factorizados-y-convolución-de-embedding"
+id="toc-embeddings-factorizados-y-convolución-de-embedding">Embeddings
 Factorizados y Convolución de Embedding</a>
 <ul>
-<li><a href="#embeddings-factorizados">Embeddings Factorizados</a></li>
-<li><a href="#convolución-de-embedding">Convolución de
-Embedding</a></li>
+<li><a href="#embeddings-factorizados"
+id="toc-embeddings-factorizados">Embeddings Factorizados</a></li>
+<li><a href="#convolución-de-embedding"
+id="toc-convolución-de-embedding">Convolución de Embedding</a></li>
 </ul></li>
-<li><a
-href="#controles-de-estabilidad-del-paso-de-entrenamiento">Controles de
+<li><a href="#controles-de-estabilidad-del-paso-de-entrenamiento"
+id="toc-controles-de-estabilidad-del-paso-de-entrenamiento">Controles de
 Estabilidad del Paso de Entrenamiento</a></li>
-<li><a href="#enrutador-de-modo-de-inferencia-sbert">Enrutador de Modo
-de Inferencia SBERT</a></li>
+<li><a href="#enrutador-de-modo-de-inferencia-sbert"
+id="toc-enrutador-de-modo-de-inferencia-sbert">Enrutador de Modo de
+Inferencia SBERT</a></li>
 </ul></li>
-<li><a href="#sec:annex-funciones-activacion">Funciones de
-Activación</a>
+<li><a href="#sec:annex-funciones-activacion"
+id="toc-sec:annex-funciones-activacion">Funciones de Activación</a>
 <ul>
-<li><a href="#familia-clásica-sigmoidtanh-12-activaciones">Familia
-Clásica / Sigmoid–Tanh (12 activaciones)</a></li>
-<li><a href="#familia-rectificada-12-activaciones">Familia Rectificada
-(12 activaciones)</a></li>
-<li><a href="#familia-exponencial-elu-12-activaciones">Familia
-Exponencial / ELU (12 activaciones)</a></li>
-<li><a href="#swish-y-activaciones-paramétricas">Swish y Activaciones
+<li><a href="#familia-clásica-sigmoidtanh-12-activaciones"
+id="toc-familia-clásica-sigmoidtanh-12-activaciones">Familia Clásica /
+Sigmoid–Tanh (12 activaciones)</a></li>
+<li><a href="#familia-rectificada-12-activaciones"
+id="toc-familia-rectificada-12-activaciones">Familia Rectificada (12
+activaciones)</a></li>
+<li><a href="#familia-exponencial-elu-12-activaciones"
+id="toc-familia-exponencial-elu-12-activaciones">Familia Exponencial /
+ELU (12 activaciones)</a></li>
+<li><a href="#swish-y-activaciones-paramétricas"
+id="toc-swish-y-activaciones-paramétricas">Swish y Activaciones
 Paramétricas</a></li>
-<li><a href="#sec:raf-es">Funciones de Activación Racionales
-(RAF)</a></li>
-<li><a href="#sec:glu-es">Variantes de FFN con Compuerta: SwiGLU, GEGLU,
-ReGLU</a></li>
-<li><a href="#esquema-de-configuración-1">Esquema de
-Configuración</a></li>
-<li><a href="#guía-de-selección">Guía de Selección</a></li>
+<li><a href="#sec:raf-es" id="toc-sec:raf-es">Funciones de Activación
+Racionales (RAF)</a></li>
+<li><a href="#sec:glu-es" id="toc-sec:glu-es">Variantes de FFN con
+Compuerta: SwiGLU, GEGLU, ReGLU</a></li>
+<li><a href="#esquema-de-configuración-1"
+id="toc-esquema-de-configuración-1">Esquema de Configuración</a></li>
+<li><a href="#guía-de-selección" id="toc-guía-de-selección">Guía de
+Selección</a></li>
 </ul></li>
-<li><a href="#sec:annex-mhc">Hyper-Connexiones Restringidas por Variedad
-(mHC)</a>
+<li><a href="#sec:annex-mhc" id="toc-sec:annex-mhc">Hyper-Connexiones
+Restringidas por Variedad (mHC)</a>
 <ul>
-<li><a href="#motivación-la-propiedad-de-mapeo-de-identidad">Motivación:
-la Propiedad de Mapeo de Identidad</a></li>
-<li><a href="#formulación">Formulación</a></li>
-<li><a href="#propiedades-de-la-restricción-de-variedad">Propiedades de
-la Restricción de Variedad</a></li>
-<li><a href="#implementación-en-frankenstein-transformer">Implementación
-en Frankenstein Transformer</a></li>
-<li><a href="#resultados-reportados">Resultados Reportados</a></li>
+<li><a href="#motivación-la-propiedad-de-mapeo-de-identidad"
+id="toc-motivación-la-propiedad-de-mapeo-de-identidad">Motivación: la
+Propiedad de Mapeo de Identidad</a></li>
+<li><a href="#formulación" id="toc-formulación">Formulación</a></li>
+<li><a href="#propiedades-de-la-restricción-de-variedad"
+id="toc-propiedades-de-la-restricción-de-variedad">Propiedades de la
+Restricción de Variedad</a></li>
+<li><a href="#implementación-en-frankenstein-transformer"
+id="toc-implementación-en-frankenstein-transformer">Implementación en
+Frankenstein Transformer</a></li>
+<li><a href="#resultados-reportados"
+id="toc-resultados-reportados">Resultados Reportados</a></li>
 </ul></li>
-<li><a href="#sec:annex-attnres">Residuales de Atención (AttnRes)</a>
+<li><a href="#sec:annex-attnres" id="toc-sec:annex-attnres">Residuales
+de Atención (AttnRes)</a>
 <ul>
 <li><a
-href="#motivación-de-una-suma-fija-a-atención-sobre-la-profundidad">Motivación:
+href="#motivación-de-una-suma-fija-a-atención-sobre-la-profundidad"
+id="toc-motivación-de-una-suma-fija-a-atención-sobre-la-profundidad">Motivación:
 De una Suma Fija a Atención sobre la Profundidad</a></li>
-<li><a href="#cuatro-estrategias">Cuatro Estrategias</a>
+<li><a href="#cuatro-estrategias" id="toc-cuatro-estrategias">Cuatro
+Estrategias</a>
 <ul>
-<li><a href="#residual-estándar-standard">Residual Estándar
+<li><a href="#residual-estándar-standard"
+id="toc-residual-estándar-standard">Residual Estándar
 (<code>"standard"</code>)</a></li>
-<li><a href="#sin-residual-none-experimental">Sin Residual
+<li><a href="#sin-residual-none-experimental"
+id="toc-sin-residual-none-experimental">Sin Residual
 (<code>"none"</code>, experimental)</a></li>
-<li><a
-href="#residuales-de-atención-completa-full_attn-paper-3.1">Residuales
+<li><a href="#residuales-de-atención-completa-full_attn-paper-3.1"
+id="toc-residuales-de-atención-completa-full_attn-paper-3.1">Residuales
 de Atención Completa (<code>"full_attn"</code>, paper § 3.1)</a></li>
-<li><a
-href="#residuales-de-atención-por-bloques-block_attn-paper-3.2">Residuales
+<li><a href="#residuales-de-atención-por-bloques-block_attn-paper-3.2"
+id="toc-residuales-de-atención-por-bloques-block_attn-paper-3.2">Residuales
 de Atención por Bloques (<code>"block_attn"</code>, paper
 § 3.2)</a></li>
 </ul></li>
-<li><a
-href="#implementación-en-frankenstein-transformer-1">Implementación en
+<li><a href="#implementación-en-frankenstein-transformer-1"
+id="toc-implementación-en-frankenstein-transformer-1">Implementación en
 Frankenstein Transformer</a></li>
-<li><a href="#integración-con-mhc-y-mixture-of-depths">Integración con
-mHC y Mixture-of-Depths</a></li>
-<li><a href="#resultados-reportados-1">Resultados Reportados</a></li>
+<li><a href="#integración-con-mhc-y-mixture-of-depths"
+id="toc-integración-con-mhc-y-mixture-of-depths">Integración con mHC y
+Mixture-of-Depths</a></li>
+<li><a href="#resultados-reportados-1"
+id="toc-resultados-reportados-1">Resultados Reportados</a></li>
 </ul></li>
-<li><a href="#sec:annex-vision">Vision Transformer: Predicción de
-Parches, Clasificación y Segmentación</a>
+<li><a href="#sec:annex-vision" id="toc-sec:annex-vision">Vision
+Transformer: Predicción de Parches, Clasificación y Segmentación</a>
 <ul>
-<li><a href="#embedding-de-parches-y-codificación-posicional">Embedding
-de Parches y Codificación Posicional</a></li>
-<li><a
-href="#predicción-de-parches-enmascarados-autosupervisado">Predicción de
-Parches Enmascarados (Autosupervisado)</a></li>
-<li><a href="#clasificación-de-imágenes">Clasificación de
-Imágenes</a></li>
-<li><a href="#segmentación-de-imágenes">Segmentación de Imágenes</a>
+<li><a href="#embedding-de-parches-y-codificación-posicional"
+id="toc-embedding-de-parches-y-codificación-posicional">Embedding de
+Parches y Codificación Posicional</a></li>
+<li><a href="#predicción-de-parches-enmascarados-autosupervisado"
+id="toc-predicción-de-parches-enmascarados-autosupervisado">Predicción
+de Parches Enmascarados (Autosupervisado)</a></li>
+<li><a href="#clasificación-de-imágenes"
+id="toc-clasificación-de-imágenes">Clasificación de Imágenes</a></li>
+<li><a href="#segmentación-de-imágenes"
+id="toc-segmentación-de-imágenes">Segmentación de Imágenes</a>
 <ul>
-<li><a href="#cabeza-por-pixel-pixel">Cabeza Por-Pixel
+<li><a href="#cabeza-por-pixel-pixel"
+id="toc-cabeza-por-pixel-pixel">Cabeza Por-Pixel
 (<code>pixel</code>)</a></li>
-<li><a href="#encoder-only-mask-transformer-eomt">Encoder-only Mask
+<li><a href="#encoder-only-mask-transformer-eomt"
+id="toc-encoder-only-mask-transformer-eomt">Encoder-only Mask
 Transformer (<code>eomt</code>)</a></li>
 </ul></li>
-<li><a
-href="#reutilización-de-la-infraestructura-existente">Reutilización de
+<li><a href="#reutilización-de-la-infraestructura-existente"
+id="toc-reutilización-de-la-infraestructura-existente">Reutilización de
 la Infraestructura Existente</a></li>
-<li><a href="#pseudocódigo-en-pytorch">Pseudocódigo en PyTorch</a></li>
+<li><a href="#pseudocódigo-en-pytorch"
+id="toc-pseudocódigo-en-pytorch">Pseudocódigo en PyTorch</a></li>
 </ul></li>
-<li><a href="#sec:annex-codificaciones-posicionales">Codificaciones
+<li><a href="#sec:annex-codificaciones-posicionales"
+id="toc-sec:annex-codificaciones-posicionales">Codificaciones
 Posicionales de Todo el Modelo</a>
 <ul>
-<li><a
-href="#arquitectura-un-módulo-compartido-exclusión-por-mezclador">Arquitectura:
+<li><a href="#arquitectura-un-módulo-compartido-exclusión-por-mezclador"
+id="toc-arquitectura-un-módulo-compartido-exclusión-por-mezclador">Arquitectura:
 Un Módulo Compartido, Exclusión Por Mezclador</a></li>
-<li><a href="#estilos-de-inyección">Estilos de Inyección</a></li>
-<li><a href="#formulaciones-matemáticas">Formulaciones Matemáticas</a>
+<li><a href="#estilos-de-inyección"
+id="toc-estilos-de-inyección">Estilos de Inyección</a></li>
+<li><a href="#formulaciones-matemáticas"
+id="toc-formulaciones-matemáticas">Formulaciones Matemáticas</a>
 <ul>
-<li><a href="#rope-codificación-posicional-rotatoria">RoPE —
-Codificación Posicional Rotatoria</a></li>
-<li><a href="#hope-codificación-posicional-rotatoria-hiperbólica">HoPE —
+<li><a href="#rope-codificación-posicional-rotatoria"
+id="toc-rope-codificación-posicional-rotatoria">RoPE — Codificación
+Posicional Rotatoria</a></li>
+<li><a href="#hope-codificación-posicional-rotatoria-hiperbólica"
+id="toc-hope-codificación-posicional-rotatoria-hiperbólica">HoPE —
 Codificación Posicional Rotatoria Hiperbólica</a></li>
-<li><a href="#nope-sin-codificación-posicional">NoPE — Sin Codificación
+<li><a href="#nope-sin-codificación-posicional"
+id="toc-nope-sin-codificación-posicional">NoPE — Sin Codificación
 Posicional</a></li>
-<li><a href="#alibi-atención-con-sesgos-lineales">ALiBi — Atención con
-Sesgos Lineales</a></li>
-<li><a href="#bam-mecanismo-de-atención-bayesiana">BAM — Mecanismo de
-Atención Bayesiana</a></li>
-<li><a href="#pape-codificación-posicional-parabólica">PaPE —
-Codificación Posicional Parabólica</a></li>
-<li><a href="#sinusoidal-absoluta">Sinusoidal Absoluta</a></li>
-<li><a href="#sinusoidal-rotatoria">Sinusoidal Rotatoria</a></li>
-<li><a href="#absoluta-aprendida">Absoluta Aprendida</a></li>
+<li><a href="#alibi-atención-con-sesgos-lineales"
+id="toc-alibi-atención-con-sesgos-lineales">ALiBi — Atención con Sesgos
+Lineales</a></li>
+<li><a href="#bam-mecanismo-de-atención-bayesiana"
+id="toc-bam-mecanismo-de-atención-bayesiana">BAM — Mecanismo de Atención
+Bayesiana</a></li>
+<li><a href="#pape-codificación-posicional-parabólica"
+id="toc-pape-codificación-posicional-parabólica">PaPE — Codificación
+Posicional Parabólica</a></li>
+<li><a href="#sinusoidal-absoluta"
+id="toc-sinusoidal-absoluta">Sinusoidal Absoluta</a></li>
+<li><a href="#sinusoidal-rotatoria"
+id="toc-sinusoidal-rotatoria">Sinusoidal Rotatoria</a></li>
+<li><a href="#absoluta-aprendida" id="toc-absoluta-aprendida">Absoluta
+Aprendida</a></li>
 </ul></li>
-<li><a href="#banderas-use_pe-por-mezclador">Banderas
-<code>use_pe</code> Por Mezclador</a></li>
-<li><a href="#unificación-del-transformer-de-visión">Unificación del
+<li><a href="#banderas-use_pe-por-mezclador"
+id="toc-banderas-use_pe-por-mezclador">Banderas <code>use_pe</code> Por
+Mezclador</a></li>
+<li><a href="#unificación-del-transformer-de-visión"
+id="toc-unificación-del-transformer-de-visión">Unificación del
 Transformer de Visión</a></li>
-<li><a href="#compatibilidad-con-legado">Compatibilidad con
-Legado</a></li>
-<li><a href="#perfil-arquitectónico-codificaciones-posicionales">Perfil
+<li><a href="#compatibilidad-con-legado"
+id="toc-compatibilidad-con-legado">Compatibilidad con Legado</a></li>
+<li><a href="#perfil-arquitectónico-codificaciones-posicionales"
+id="toc-perfil-arquitectónico-codificaciones-posicionales">Perfil
 Arquitectónico: Codificaciones Posicionales</a></li>
 </ul></li>
-<li><a href="#sec:annex-ssog">SSOG: Atención Separable Sum of
-Gaussians</a>
+<li><a href="#sec:annex-ssog" id="toc-sec:annex-ssog">SSOG: Atención
+Separable Sum of Gaussians</a>
 <ul>
-<li><a href="#formulación-matemática-18">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-17">Pseudocódigo
-Algorítmico</a></li>
-<li><a href="#características-clave-19">Características Clave</a></li>
+<li><a href="#formulación-matemática-18"
+id="toc-formulación-matemática-18">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-17"
+id="toc-pseudocódigo-algorítmico-17">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-19"
+id="toc-características-clave-19">Características Clave</a></li>
 </ul></li>
-<li><a href="#sec:annex-fast-weight">Atención de Peso Rápido para
-Aprendizaje Continuo</a>
+<li><a href="#sec:annex-fast-weight"
+id="toc-sec:annex-fast-weight">Atención de Peso Rápido para Aprendizaje
+Continuo</a>
 <ul>
-<li><a
-href="#preliminares-alineación-normalización-renormalización">Preliminares:
+<li><a href="#preliminares-alineación-normalización-renormalización"
+id="toc-preliminares-alineación-normalización-renormalización">Preliminares:
 Alineación, Normalización, Renormalización</a></li>
-<li><a href="#la-familia-de-regresión-falcon-123">La Familia de
-Regresión (Falcon-1/2/3)</a>
+<li><a href="#la-familia-de-regresión-falcon-123"
+id="toc-la-familia-de-regresión-falcon-123">La Familia de Regresión
+(Falcon-1/2/3)</a>
 <ul>
-<li><a href="#falcon-1-regresión-nlms-escalar">Falcon-1: Regresión NLMS
+<li><a href="#falcon-1-regresión-nlms-escalar"
+id="toc-falcon-1-regresión-nlms-escalar">Falcon-1: Regresión NLMS
 Escalar</a></li>
-<li><a href="#falcon-2-regresión-nlms-por-columnas">Falcon-2: Regresión
-NLMS por Columnas</a></li>
-<li><a
-href="#falcon-3-regresión-de-minilote-con-ventana-deslizante">Falcon-3:
+<li><a href="#falcon-2-regresión-nlms-por-columnas"
+id="toc-falcon-2-regresión-nlms-por-columnas">Falcon-2: Regresión NLMS
+por Columnas</a></li>
+<li><a href="#falcon-3-regresión-de-minilote-con-ventana-deslizante"
+id="toc-falcon-3-regresión-de-minilote-con-ventana-deslizante">Falcon-3:
 Regresión de Minilote con Ventana Deslizante</a></li>
 </ul></li>
-<li><a href="#la-familia-de-producto-interno-falcon-1a2a3a">La Familia
-de Producto Interno (Falcon-1A/2A/3A)</a>
+<li><a href="#la-familia-de-producto-interno-falcon-1a2a3a"
+id="toc-la-familia-de-producto-interno-falcon-1a2a3a">La Familia de
+Producto Interno (Falcon-1A/2A/3A)</a>
 <ul>
-<li><a href="#falcon-1a-y-falcon-2a">Falcon-1A y Falcon-2A</a></li>
-<li><a
-href="#falcon-3a-producto-interno-con-ventana-deslizante">Falcon-3A:
+<li><a href="#falcon-1a-y-falcon-2a"
+id="toc-falcon-1a-y-falcon-2a">Falcon-1A y Falcon-2A</a></li>
+<li><a href="#falcon-3a-producto-interno-con-ventana-deslizante"
+id="toc-falcon-3a-producto-interno-con-ventana-deslizante">Falcon-3A:
 Producto Interno con Ventana Deslizante</a></li>
 </ul></li>
-<li><a href="#interfaz-de-configuración">Interfaz de
-Configuración</a></li>
-<li><a href="#resultados-publicados">Resultados Publicados</a></li>
-<li><a href="#relación-con-trabajos-previos">Relación con Trabajos
-Previos</a>
+<li><a href="#interfaz-de-configuración"
+id="toc-interfaz-de-configuración">Interfaz de Configuración</a></li>
+<li><a href="#resultados-publicados"
+id="toc-resultados-publicados">Resultados Publicados</a></li>
+<li><a href="#relación-con-trabajos-previos"
+id="toc-relación-con-trabajos-previos">Relación con Trabajos Previos</a>
 <ul>
-<li><a href="#cuándo-usar-cada-variante">Cuándo Usar Cada
-Variante</a></li>
+<li><a href="#cuándo-usar-cada-variante"
+id="toc-cuándo-usar-cada-variante">Cuándo Usar Cada Variante</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1210,54 +1441,59 @@ está optimizada para el ajuste fino de modelos preentrenados existentes
 en lugar de experimentar con diseños novedosos de mezcladores de
 secuencia o entrenar desde cero con estrategias de optimización
 personalizadas.</p>
-<p><strong>Oumi</strong> (<code>https://github.com/oumi-ai/oumi</code>,
-2025) es una plataforma de código abierto de extremo a extremo para
-entrenar, ajustar, evaluar y desplegar modelos fundacionales.
-Proporciona una interfaz unificada a través de múltiples proveedores de
-nube y soporta tanto ajuste fino supervisado como optimización de
-preferencias (DPO, RLHF). Oumi enfatiza la preparación para producción
-con monitoreo integrado, checkpointing y herramientas de despliegue.</p>
-<p><strong>LLaMA Factory</strong>
-(<code>https://github.com/hiyouga/LLaMA-Factory</code>, 2024) ofrece un
-framework unificado para el ajuste fino eficiente de más de 100 modelos
-de lenguaje grandes. Proporciona tanto una interfaz web como una CLI,
-soportando LoRA, QLoRA, ajuste fino de parámetros completos y diversas
-técnicas de alineación. Su enfoque está en adaptar LLMs preentrenados
-existentes a tareas posteriores en lugar de experimentación
-arquitectónica.</p>
-<p><strong>Axolotl</strong>
-(<code>https://github.com/axolotl-ai-cloud/axolotl</code>, 2024) es una
-herramienta simplificada de ajuste fino que soporta LoRA, QLoRA,
-DeepSpeed y FSDP. Enfatiza flujos de trabajo basados en configuración
-mediante archivos YAML y se ha vuelto popular en la comunidad de ajuste
-fino de LLMs de código abierto. Al igual que LLaMA Factory, se enfoca en
-el ajuste fino de modelos preentrenados en lugar de entrenar
-arquitecturas novedosas desde cero.</p>
+<p><strong>Oumi</strong> (<a href="https://github.com/oumi-ai/oumi"
+class="uri"><code>https://github.com/oumi-ai/oumi</code></a>, 2025) es
+una plataforma de código abierto de extremo a extremo para entrenar,
+ajustar, evaluar y desplegar modelos fundacionales. Proporciona una
+interfaz unificada a través de múltiples proveedores de nube y soporta
+tanto ajuste fino supervisado como optimización de preferencias (DPO,
+RLHF). Oumi enfatiza la preparación para producción con monitoreo
+integrado, checkpointing y herramientas de despliegue.</p>
+<p><strong>LLaMA Factory</strong> (<a
+href="https://github.com/hiyouga/LLaMA-Factory"
+class="uri"><code>https://github.com/hiyouga/LLaMA-Factory</code></a>,
+2024) ofrece un framework unificado para el ajuste fino eficiente de más
+de 100 modelos de lenguaje grandes. Proporciona tanto una interfaz web
+como una CLI, soportando LoRA, QLoRA, ajuste fino de parámetros
+completos y diversas técnicas de alineación. Su enfoque está en adaptar
+LLMs preentrenados existentes a tareas posteriores en lugar de
+experimentación arquitectónica.</p>
+<p><strong>Axolotl</strong> (<a
+href="https://github.com/axolotl-ai-cloud/axolotl"
+class="uri"><code>https://github.com/axolotl-ai-cloud/axolotl</code></a>,
+2024) es una herramienta simplificada de ajuste fino que soporta LoRA,
+QLoRA, DeepSpeed y FSDP. Enfatiza flujos de trabajo basados en
+configuración mediante archivos YAML y se ha vuelto popular en la
+comunidad de ajuste fino de LLMs de código abierto. Al igual que LLaMA
+Factory, se enfoca en el ajuste fino de modelos preentrenados en lugar
+de entrenar arquitecturas novedosas desde cero.</p>
 <h2 id="herramientas-de-bajo-código-y-eficiencia">Herramientas de Bajo
 Código y Eficiencia</h2>
 <p>Una categoría creciente de herramientas prioriza la accesibilidad y
 la eficiencia computacional, reduciendo la barrera para el entrenamiento
 de transformers.</p>
-<p><strong>Unsloth</strong>
-(<code>https://github.com/unslothai/unsloth</code>, 2024) proporciona
-ajuste fino de bajo código con aceleración de 2–5<span
+<p><strong>Unsloth</strong> (<a
+href="https://github.com/unslothai/unsloth"
+class="uri"><code>https://github.com/unslothai/unsloth</code></a>, 2024)
+proporciona ajuste fino de bajo código con aceleración de 2–5<span
 class="math inline">\(\times\)</span> y requisitos de VRAM
 significativamente reducidos mediante kernels CUDA escritos a mano y
 operaciones Triton optimizadas. Soporta exportación GGUF para despliegue
 cuantizado y se integra con el ecosistema Hugging Face. El enfoque de
 Unsloth está en hacer el ajuste fino más rápido y eficiente en memoria,
 no en exploración arquitectónica.</p>
-<p><strong>dashAI</strong>
-(<code>https://github.com/DashAISoftware/dashAI</code>, v0.9.7.post2,
-2026) es una aplicación de escritorio open-source y local-first para
-aprendizaje automático desarrollada por un consorcio académico chileno
-(Universidad de Chile/FCFM, CENIA, IMFD y financiamiento ANID). Su
-interfaz es completamente basada en esquemas: los formularios de
-configuración se generan directamente desde esquemas Pydantic de los
-componentes sin código frontend escrito a mano, y su catálogo abarca
-unos 76 modelos multitask—clasificadores tabulares, modelos de NLP,
-traducción, LLMs de pesos abiertos y generación de texto a
-imagen—unificados tras una docena de abstracciones base tipadas. La
+<p><strong>dashAI</strong> (<a
+href="https://github.com/DashAISoftware/dashAI"
+class="uri"><code>https://github.com/DashAISoftware/dashAI</code></a>,
+v0.9.7.post2, 2026) es una aplicación de escritorio open-source y
+local-first para aprendizaje automático desarrollada por un consorcio
+académico chileno (Universidad de Chile/FCFM, CENIA, IMFD y
+financiamiento ANID). Su interfaz es completamente basada en esquemas:
+los formularios de configuración se generan directamente desde esquemas
+Pydantic de los componentes sin código frontend escrito a mano, y su
+catálogo abarca unos 76 modelos multitask—clasificadores tabulares,
+modelos de NLP, traducción, LLMs de pesos abiertos y generación de texto
+a imagen—unificados tras una docena de abstracciones base tipadas. La
 extensibilidad es central en su diseño: los plugins son paquetes PyPI
 ordinarios descubiertos mediante el grupo de entry-points
 <code>dashai.plugins</code> e instalables desde la UI, un mecanismo lo
@@ -1416,6 +1652,13 @@ familia de optimizadores: <code>sgd_momentum</code>, <code>adamw</code>,
 <code>schedulefree_adamw</code>, <code>shampoo</code>,
 <code>soap</code>, <code>anon</code>, <code>apollo</code>,
 <code>apollo_mini</code>, y <code>q_apollo</code>.</p>
+<figure id="fig:system-architecture">
+
+<figcaption>Arquitectura del sistema: la configuración fluye a través de
+la validación, se divide en modelo/entrenamiento/optimizador, ejecuta en
+tiempo real y produce artefactos de
+despliegue/SBERT/exportación.</figcaption>
+</figure>
 <h2 id="sec:schema-validation">Alcance del Esquema y Reglas de
 Validación</h2>
 <p>El esquema es estricto: los objetos de primer nivel y anidados
@@ -1638,6 +1881,25 @@ codificando sesgos inductivos espaciales o de estructura de grafo
 específicos del dominio que las otras siete familias no
 capturan.</p></li>
 </ol>
+<figure id="fig:comprehensive-taxonomy">
+
+<figcaption>Taxonomía completa de cuarenta y tres variantes de
+mezcladores de secuencia en ocho categorías funcionales. Las líneas base
+densas proporcionan enrutamiento global completo a costo cuadrático. Las
+arquitecturas recurrentes permiten inferencia en tiempo constante
+mediante compresión de estado. Las variantes dispersas reducen la
+complejidad mediante patrones estructurados o selección de tokens. Los
+mecanismos con compuerta introducen control dependiente de datos sobre
+la retención y el olvido de memoria. Los métodos latentes comprimen
+representaciones clave–valor en cuellos de botella de rango bajo o
+enrutan a través de latentes probabilísticos de mezcla Gaussiana. La
+memoria condicional proporciona lectura/escritura en tiempo de prueba
+sobre un banco de memoria externo. Los métodos de peso rápido tratan la
+transición de estado recurrente como una regla de aprendizaje continuo
+en línea. Los métodos de campo geométrico codifican sesgos inductivos
+espaciales o de estructura de grafo sobre la matriz de
+atención.</figcaption>
+</figure>
 <h2 id="familias-densas-y-recurrentes">Familias Densas y
 Recurrentes</h2>
 <p>Las líneas base densas (softmax estándar <span class="citation"
@@ -1694,6 +1956,43 @@ modo de entrenamiento. Las formulaciones matemáticas, el pseudocódigo
 algorítmico, las características por bloque y una tabla comparativa se
 recopilan en el Apéndice <a href="#sec:annex-sparse"
 data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
+<figure id="fig:sparse-map">
+
+<figcaption>Mapa conceptual de las estrategias de diseño de atención
+dispersa utilizadas en el código base. Diferentes métodos reducen el
+costo restringiendo vecindarios, construyendo grafos dispersos o
+seleccionando solo tokens/bloques de alto valor.</figcaption>
+</figure>
+<figure id="fig:dense-map">
+
+<figcaption>Tres líneas base de atención densa. La atención softmax
+estándar y la sigmoide calculan matrices <span
+class="math inline">\(QK^\top\)</span> completas. La Atención por
+Consultas Agrupadas (GQA) comparte cabezas clave–valor entre grupos de
+consultas, reduciendo el ancho de banda de memoria mientras preserva la
+expresividad completa de la atención.</figcaption>
+</figure>
+<figure id="fig:recurrent-map">
+
+<figcaption>Familia de arquitecturas recurrentes y retentivas. RetNet
+proporciona formas duales paralela y recurrente. Mamba utiliza
+parámetros selectivos de espacio de estados. Los bloques ODE modelan
+dinámicas de profundidad continua. Titans introduce adaptación de
+memoria en tiempo de prueba. Todas logran inferencia en tiempo constante
+por paso.</figcaption>
+</figure>
+<figure id="fig:latent-map">
+
+<figcaption>Concepto de atención latente y de rango bajo. Los pares
+clave–valor se comprimen mediante una proyección descendente a un
+espacio latente de rango bajo (<span class="math inline">\(r \ll
+d\)</span>), donde la atención se calcula a costo reducido, y luego se
+proyectan de vuelta. Las variantes difieren en la estructura de
+factorización (MLA, GQLA, MLRA, Tucker), entrelazado de cabezas (IHA,
+GTA), compresión temporal (MTLA), formulaciones de covarianza cruzada
+(CCA, CCGQA) y enrutamiento probabilístico de mezcla Gaussiana
+(GMA).</figcaption>
+</figure>
 <h2 id="extensiones-de-atención-con-compuerta">Extensiones de Atención
 con Compuerta</h2>
 <p>El registro de mezcladores incluye ocho bloques con compuerta:
@@ -1739,6 +2038,13 @@ decaimiento positivo, las perillas de configuración y los resultados
 publicados se recopilan en el Apéndice <a href="#sec:annex-fast-weight"
 data-reference-type="ref"
 data-reference="sec:annex-fast-weight">26</a>.</p>
+<figure id="fig:gating-template">
+
+<figcaption>Plantilla de compuerta genérica. Una compuerta puede atenuar
+la memoria existente, regular la fuerza de escritura o modular las
+salidas de atención densa, dependiendo de la familia del
+bloque.</figcaption>
+</figure>
 <h1 id="sec:optimizer-families">Familias de Optimizadores y Dinámicas de
 Entrenamiento</h1>
 <p>La optimización de arquitecturas transformer altamente parametrizadas
@@ -1758,10 +2064,24 @@ algorítmicas detalladas, pseudocódigo y una tabla comparativa de
 memoria/complejidad para todos los optimizadores se proporcionan en el
 Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
+<figure id="fig:optimizer-routing">
+
+<figcaption>Selección de optimizador en la práctica: la clase determina
+la regla de actualización, mientras que el esquema controla cómo se
+aplican los hiperparámetros entre embeddings, normas, bloques
+recurrentes, bloques de atención y otros parámetros.</figcaption>
+</figure>
 <h1 id="sec:quantization">Cuantización y Despliegue</h1>
 <p>El stack de despliegue utiliza empaquetado ternario de pesos más
 cuantización de activaciones INT8 para producir artefactos
 eficientes.</p>
+<figure id="fig:deploy-flow">
+
+<figcaption>Ruta de despliegue desde un checkpoint entrenado hasta un
+artefacto compacto. El código base trata la cuantización como una
+transformación de la etapa de despliegue en lugar de una familia de
+modelos separada.</figcaption>
+</figure>
 <h2 id="cuantización-ternaria-y-escalado-de-activaciones">Cuantización
 Ternaria y Escalado de Activaciones</h2>
 <p>La etapa de despliegue transforma un checkpoint entrenado en un
@@ -1797,6 +2117,12 @@ k-means).</p></li>
 <li><p><strong>Codificación</strong>: exportación persistente de
 embeddings para recuperación posterior.</p></li>
 </ul>
+<figure id="fig:sbert-modes">
+
+<figcaption>Reutilización del flujo de trabajo SBERT. Un único
+codificador soporta puntuación de pares en línea, recuperación sobre
+corpus, clustering y exportación persistente de embeddings.</figcaption>
+</figure>
 <p>El pseudocódigo del enrutador de modo de inferencia SBERT—despachando
 entre los modos de similitud, búsqueda, cluster y codificación sobre un
 codificador compartido—se difiere al Apéndice <a
@@ -1814,21 +2140,24 @@ mejor servida por un entorno gráfico sin código. Para alcanzar a esa
 audiencia, Frankenstein Transformer distribuye un paquete adaptador
 complementario, <code>dashai-frankenstein</code>, que registra las
 clases de modelo de Frankenstein como componentes de
-<strong>dashAI</strong>
-(<code>https://github.com/DashAISoftware/dashAI</code>), una aplicación
-de escritorio open-source y local-first para aprendizaje automático
-desarrollada por un consorcio académico chileno (Universidad de
-Chile/FCFM, CENIA, IMFD y financiamiento ANID). Como ambos sistemas son
-basados en esquemas en esencia—dashAI genera sus formularios de
+<strong>dashAI</strong> (<a
+href="https://github.com/DashAISoftware/dashAI"
+class="uri"><code>https://github.com/DashAISoftware/dashAI</code></a>),
+una aplicación de escritorio open-source y local-first para aprendizaje
+automático desarrollada por un consorcio académico chileno (Universidad
+de Chile/FCFM, CENIA, IMFD y financiamiento ANID). Como ambos sistemas
+son basados en esquemas en esencia—dashAI genera sus formularios de
 configuración directamente desde esquemas Pydantic, mientras que
 Frankenstein valida su YAML contra un JSON Schema estricto—la
 integración no requirió cambios en el backend de dashAI: el plugin se
 descubre mediante el grupo de entry-points estándar
 <code>dashai.plugins</code> al inicio, exactamente como documenta la
-guía de plugins de dashAI
-(<code>https://docs.dash-ai.com/learn/guides/plugins/</code>), donde los
-plugins son paquetes PyPI ordinarios cuyas capacidades generativas de
-primera parte se distribuyen ellos mismos como plugins.</p>
+guía de plugins de dashAI (<a
+href="https://docs.dash-ai.com/learn/guides/plugins/"
+class="uri"><code>https://docs.dash-ai.com/learn/guides/plugins/</code></a>),
+donde los plugins son paquetes PyPI ordinarios cuyas capacidades
+generativas de primera parte se distribuyen ellos mismos como
+plugins.</p>
 <h2 id="componentes-registrados">Componentes Registrados</h2>
 <p>Un único grupo de entry-points <code>dashai.plugins</code> registra
 cinco componentes en el registro de componentes de dashAI, cubriendo
@@ -1919,7 +2248,16 @@ inyección de datasets la manejan adaptadores que mapean el
 Frankenstein, inyectan <code>vocab_size</code> desde el tokenizador
 resuelto para que la matriz de embeddings coincida con el vocabulario, y
 transmiten las métricas por época de vuelta al almacén de métricas de
-dashAI para que el progreso del entrenamiento sea visible en la UI.</p>
+dashAI para que el progreso del entrenamiento sea visible en la UI. Dos
+casillas booleanas controlan la fuente de datos:
+<code>use_dashai_dataset</code> (entrenar con el dataset del run vs. el
+bloque <code>text_dataset</code> del JSON) y
+<code>use_dashai_dataset_for_tokenizer</code> (cuando el config
+establece <code>tokenizer.source=train_from_dataset</code>, si el
+tokenizador se entrena desde el dataset del run o desde el corpus
+configurado en el JSON); en este último modo el tokenizador se entrena
+<em>primero</em> y el tamaño de vocabulario resultante se inyecta en
+<code>model.dims.vocab_size</code> antes de construir el modelo.</p>
 <h2 id="trabajo-en-proceso">Trabajo en Proceso</h2>
 <p>El plugin es un trabajo en proceso. Sus fases están implementadas—el
 MVP de clasificación de texto MLM (Fase 1), el decoder generativo y el
@@ -1942,10 +2280,11 @@ mezclador, familia de optimizador) a una versión futura; y la capacidad
 de dashAI para renderizar columnas de salida de máscaras de segmentación
 no está confirmada y puede requerir una adición local al frontend. Estos
 ítems están registrados en la auditoría de integración del repositorio
-(<code>https://github.com/erickfmm/frankenstein-transformer</code>), y
-el diseño deja intencionalmente el núcleo del backend de dashAI intacto,
-de modo que futuros releases de dashAI no puedan romper el adaptador
-mediante acoplamiento.</p>
+(<a href="https://github.com/erickfmm/frankenstein-transformer"
+class="uri"><code>https://github.com/erickfmm/frankenstein-transformer</code></a>),
+y el diseño deja intencionalmente el núcleo del backend de dashAI
+intacto, de modo que futuros releases de dashAI no puedan romper el
+adaptador mediante acoplamiento.</p>
 <p>La integración completa la historia de accesibilidad del toolkit: el
 mismo contrato de configuración validado que impulsa el CLI, el
 generador Streamlit y el pipeline de exportación ahora también impulsa
@@ -2197,7 +2536,7 @@ units. <em>arXiv preprint arXiv:1704.07483</em>, 2017.</p>
 activation functions. <em>arXiv preprint arXiv:1905.10144</em>,
 2019.</p>
 <p>Ali Behrouz, Peilin Zhong, and Vahab Mirrokni. Titans: Learning to
-memorize at test time, 2025. URL
+memorize at test time. URL
 <code>https://arxiv.org/abs/2501.00663</code>. Version Number: 1.</p>
 <p>Iz Beltagy, Matthew E. Peters, and Arman Cohan. Longformer: The
 long-document transformer, 2020. URL
@@ -2205,11 +2544,10 @@ long-document transformer, 2020. URL
 <p>Arthur S. Bianchessi, Yasmin C. Aguirre, Rodrigo C. Barros, and
 Lucas S. Kupssinsk<span>ü</span>. Bayesian attention mechanism: A
 probabilistic framework for positional encoding and context length
-extrapolation, 2025. URL
-<code>http://arxiv.org/abs/2505.22842</code>.</p>
+extrapolation. URL <code>http://arxiv.org/abs/2505.22842</code>.</p>
 <p>Thibaut Boissin, Thomas Massena, Franck Mamalet, and Mathieu
 Serrurier. Turbo-muon: Accelerating orthogonality-based optimization
-with pre-conditioning, 2025. URL
+with pre-conditioning. URL
 <code>https://arxiv.org/abs/2512.04632</code>. Version Number: 1.</p>
 <p>James Bradbury, Roy Frostig, Peter Hawkins, Matthew J. Johnson, Chris
 Leary, Dougal Maclaurin, George Necula, Adam Paszke, Jake VanderPlas,
@@ -2218,14 +2556,15 @@ Skye Wanderman-Milne, and Qiao Zhang. : composable transformations of
 <code>http://github.com/jax-ml/jax</code>.</p>
 <p>Riccardo Bravin, Massimo Pavan, Hazem Hesham Yousef Shalby, Fabrizio
 Pittorino, and Manuel Roveri. : Attention under 2 <span>MB</span>
-memory, 2026. URL <code>http://arxiv.org/abs/2502.10001</code>.</p>
+memory. URL <code>http://arxiv.org/abs/2502.10001</code>.</p>
 <p>Mingzhi Chen, Taiming Lu, Jiachen Zhu, Mingjie Sun, and Zhuang Liu.
-Stronger normalization-free transformers, 2025. URL
+Stronger normalization-free transformers, <span>a</span>. URL
 <code>http://arxiv.org/abs/2512.10938</code>.</p>
 <p>Xiangning Chen, Chen Liang, Da Huang, Esteban Real, Kaiyuan Wang, Yao
 Liu, Hieu Pham, Xuanyi Dong, Thang Luong, Cho-Jui Hsieh, Yifeng Lu, and
-Quoc V. Le. Symbolic discovery of optimization algorithms, 2023. URL
-<code>https://arxiv.org/abs/2302.06675</code>. Version Number: 4.</p>
+Quoc V. Le. Symbolic discovery of optimization algorithms,
+<span>b</span>. URL <code>https://arxiv.org/abs/2302.06675</code>.
+Version Number: 4.</p>
 <p>Xin Cheng, Wangding Zeng, Damai Dai, Qinyu Chen, Bingxuan Wang,
 Zhenda Xie, Kezhao Huang, Xingkai Yu, Zhewen Hao, Yukun Li, Han Zhang,
 Huishuai Zhang, Dongyan Zhao, and Wenfeng Liang. Conditional memory via
@@ -2240,22 +2579,20 @@ linear units (<span>ELUs</span>). <em>arXiv preprint
 arXiv:1511.07289</em>, 2016.</p>
 <p>Chang Dai, Hongyu Shan, Mingyang Song, and Di Liang. : Hyperbolic
 rotary positional encoding for stable long-range dependency modeling in
-large language models, 2025. URL
+large language models. URL
 <code>http://arxiv.org/abs/2509.05218</code>.</p>
 <p>Aaron Defazio, Xingyu Alice Yang, Harsh Mehta, Konstantin Mishchenko,
-Ahmed Khaled, and Ashok Cutkosky. The road less scheduled, 2024. URL
+Ahmed Khaled, and Ashok Cutkosky. The road less scheduled. URL
 <code>https://arxiv.org/abs/2405.15682</code>. Version Number: 4.</p>
 <p>Keqi Deng and Philip C. Woodland. Multi-head temporal latent
 attention, 2025. URL <code>https://arxiv.org/abs/2505.13544</code>.</p>
 <p>Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. :
 Pre-training of deep bidirectional transformers for language
-understanding, 2019. URL
-<code>http://arxiv.org/abs/1810.04805</code>.</p>
+understanding. URL <code>http://arxiv.org/abs/1810.04805</code>.</p>
 <p>Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk
 Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani,
 Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, and
-Neil Houlsby. , 2021. URL
-<code>http://arxiv.org/abs/2010.11929</code>.</p>
+Neil Houlsby. . URL <code>http://arxiv.org/abs/2010.11929</code>.</p>
 <p>Shiv Ram Dubey, Satish Kumar Singh, and Bidyut Baran Chaudhuri.
 Activation functions in deep learning: A comprehensive survey and
 benchmark. <em>Neurocomputing</em>, 453: 1–24, 2021. doi:
@@ -2293,33 +2630,34 @@ and Yoshua Bengio. Maxout networks. In <em>Proceedings of the 30th
 International Conference on Machine Learning (ICML)</em>, pages
 1319–1327, 2013.</p>
 <p>Nils Graef, Filip Makraduli, Andrew Wasielewski, and Matthew Clapp. :
-Fast normalization for transformers, 2026. URL
+Fast normalization for transformers. URL
 <code>http://arxiv.org/abs/2407.09577</code>.</p>
 <p>Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with
-selective state spaces, 2023. URL
+selective state spaces. URL
 <code>https://arxiv.org/abs/2312.00752</code>. Version Number: 2.</p>
 <p>Albert Gu, AI21 Labs, et al. Jamba: A hybrid transformer-mamba
 language model, 2024. URL
 <code>https://arxiv.org/abs/2403.19887</code>.</p>
 <p>Vineet Gupta, Tomer Koren, and Yoram Singer. Shampoo: Preconditioned
-stochastic tensor optimization, 2018. URL
+stochastic tensor optimization. URL
 <code>https://arxiv.org/abs/1802.09568</code>. Version Number: 2.</p>
 <p>Ali Hatamizadeh, Yejin Choi, and Jan Kautz. Gated deltanet-2:
 Decoupling erase and write in linear attention, 2026. URL
 <code>https://arxiv.org/abs/2605.22791</code>.</p>
+<p>Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr
+Doll<span>á</span>r, and Ross Girshick. , <span>a</span>. URL
+<code>http://arxiv.org/abs/2111.06377</code>.</p>
+<p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual
+learning for image recognition. In <em>2016 <span>IEEE</span> Conference
+on Computer Vision and Pattern Recognition (<span>CVPR</span>)</em>,
+pages 770–778. <span>IEEE</span>, <span>b</span>. doi:
+10.1109/CVPR.2016.90. URL
+<code>http://arxiv.org/abs/1512.03385</code>.</p>
 <p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Delving deep
 into rectifiers: Surpassing human-level performance on
 <span>ImageNet</span> classification. In <em>Proceedings of the IEEE
 International Conference on Computer Vision (ICCV)</em>, pages
 1026–1034, 2015.</p>
-<p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual
-learning for image recognition. In <em>2016 <span>IEEE</span> Conference
-on Computer Vision and Pattern Recognition (<span>CVPR</span>)</em>,
-pages 770–778. <span>IEEE</span>, 2016. doi: 10.1109/CVPR.2016.90. URL
-<code>http://arxiv.org/abs/1512.03385</code>.</p>
-<p>Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr
-Doll<span>á</span>r, and Ross Girshick. , 2022. URL
-<code>http://arxiv.org/abs/2111.06377</code>.</p>
 <p>Dan Hendrycks and Kevin Gimpel. Gaussian error linear units
 (<span>GELU</span>). In <em>arXiv preprint arXiv:1606.08415</em>,
 2016.</p>
@@ -2337,12 +2675,12 @@ Linear-time sequence mixing via probabilistic latent routing, 2026. URL
 <code>https://arxiv.org/abs/2606.18283</code>.</p>
 <p>Amirhossein Kazemnejad, Inkit Padhi, Karthikeyan Natesan Ramamurthy,
 Payel Das, and Siva Reddy. The impact of positional encoding on length
-generalization in transformers, 2023. URL
+generalization in transformers. URL
 <code>http://arxiv.org/abs/2305.19466</code>.</p>
 <p>Daan Kerssies, Quentin Sartenaer, Fabio Ferraro, Gabriel Y. da Silva,
 Harkanwarpreet Maan, Matthieu Galon, Arsha Nagrani, Nathan Beeler,
 Bartlomiej Twardowski, Joost van de Weijer, Robert Dangovski, and Luca
-Berton. , 2025. URL <code>http://arxiv.org/abs/2503.19108</code>.</p>
+Berton. . URL <code>http://arxiv.org/abs/2503.19108</code>.</p>
 <p>Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong
 Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan.
 Supervised contrastive learning, 2020. URL
@@ -2379,24 +2717,24 @@ doi: 10.48550/arXiv.2101.09957.</p>
 Zettlemoyer. Base layers: Simplifying training of large, sparse models,
 2021. URL <code>https://arxiv.org/abs/2103.16716</code>.</p>
 <p>Kaizhao Liang, Lizhang Chen, Bo Liu, and Qiang Liu. Cautious
-optimizers: Improving training with one line of code, 2024. URL
+optimizers: Improving training with one line of code. URL
 <code>https://arxiv.org/abs/2411.16085</code>. Version Number: 4.</p>
 <p>Zhixuan Lin, Ke Wang, et al. Forgetting transformer: Softmax
 attention with a forget gate, 2025. URL
 <code>https://arxiv.org/abs/2503.02130</code>.</p>
 <p>Hong Liu, Zhiyuan Li, David Hall, Percy Liang, and Tengyu Ma. Sophia:
 A scalable stochastic second-order optimizer for language model
-pre-training, 2023. URL <code>https://arxiv.org/abs/2305.14342</code>.
-Version Number: 4.</p>
+pre-training, <span>a</span>. URL
+<code>https://arxiv.org/abs/2305.14342</code>. Version Number: 4.</p>
 <p>Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu,
 Jianfeng Gao, and Jiawei Han. On the variance of the adaptive learning
-rate and beyond, 2019. URL
+rate and beyond, <span>b</span>. URL
 <code>https://arxiv.org/abs/1908.03265</code>. Version Number: 4.</p>
 <p>Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
 Multi-head low-rank attention, 2026. URL
 <code>https://arxiv.org/abs/2603.02188</code>.</p>
 <p>Ilya Loshchilov and Frank Hutter. Decoupled weight decay
-regularization, 2017. URL <code>https://arxiv.org/abs/1711.05101</code>.
+regularization. URL <code>https://arxiv.org/abs/1711.05101</code>.
 Version Number: 3.</p>
 <p>Tianyu Lou, Zheyu Chen, Tao Yu, et al. Efficient sparse attention for
 long-range transformers, 2024. URL
@@ -2412,7 +2750,7 @@ Latent multi-head attention for small language models, 2025. URL
 large language model decoding, 2026. URL
 <code>https://arxiv.org/abs/2605.15250</code>.</p>
 <p>Konstantin Mishchenko and Aaron Defazio. Prodigy: An expeditiously
-adaptive parameter-free learner, 2023. URL
+adaptive parameter-free learner. URL
 <code>https://arxiv.org/abs/2306.06101</code>. Version Number: 4.</p>
 <p>Diganta Misra. Mish: A self regularized non-monotonic activation
 function. <em>arXiv preprint arXiv:1908.08681</em>, 2019.</p>
@@ -2426,9 +2764,9 @@ restricted <span>Boltzmann</span> machines. In <em>Proceedings of the
 Cabral Muchacho, Yifei Dong, Filippos Moumtzidellis, Ronja
 G<span>ü</span>ldenring, Florian T. Pokorny, and Lazaros Nalpantidis.
 Parabolic position encoding: Vision-centric, principled, extrapolatable,
-general, 2026. URL <code>http://arxiv.org/abs/2602.01418</code>.</p>
+general. URL <code>http://arxiv.org/abs/2602.01418</code>.</p>
 <p>Matteo Pagliardini, Pierre Ablin, and David Grangier. The
-<span>AdEMAMix</span> optimizer: Better, faster, older, 2024. URL
+<span>AdEMAMix</span> optimizer: Better, faster, older. URL
 <code>https://arxiv.org/abs/2409.03137</code>. Version Number: 2.</p>
 <p>Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury,
 Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca
@@ -2453,8 +2791,8 @@ implementation: <code>https://github.com/4rtemi5/ssog</code>.</p>
 iteration methods. <em>USSR Computational Mathematics and Mathematical
 Physics</em>, 4 (5): 1–17, 1964. doi: 10.1016/0041-5553(64)90137-5.</p>
 <p>Ofir Press, Noah A. Smith, and Mike Lewis. Train short, test long:
-Attention with linear biases enables input length extrapolation, 2022.
-URL <code>http://arxiv.org/abs/2108.12409</code>.</p>
+Attention with linear biases enables input length extrapolation. URL
+<code>http://arxiv.org/abs/2108.12409</code>.</p>
 <p>Zhen Qin, Xu Han, et al. Hgrn2: Gated linear rnns with state
 expansion, 2024. URL <code>https://arxiv.org/abs/2404.07904</code>.</p>
 <p>Yuxiang Qiu, Qwen Team, et al. Gated attention for large language
@@ -2465,24 +2803,24 @@ activation functions. In <em>arXiv preprint arXiv:1710.05941</em>,
 <p>Jason Ramapuram, Federico Danieli, Eeshan Dhekane, Floris Weers, Dan
 Busbridge, Pierre Ablin, Tatiana Likhomanenko, Jagrit Digani, Zijin Gu,
 Amitis Shidani, and Russ Webb. Theory, analysis, and best practices for
-sigmoid self-attention, 2024. URL
+sigmoid self-attention. URL
 <code>https://arxiv.org/abs/2409.04431</code>. Version Number: 2.</p>
 <p>Nils Reimers and Iryna Gurevych. Sentence-<span>BERT</span>: Sentence
-embeddings using siamese <span>BERT</span>-networks, 2019. URL
+embeddings using siamese <span>BERT</span>-networks. URL
 <code>http://arxiv.org/abs/1908.10084</code>.</p>
 <p>Susmita Roy, Souvik Manna, Subhash Bagui, et al. : Non-parametric
 linearly scaled hyperbolic tangent activation function for neural
 networks. <em>arXiv preprint arXiv:1811.05870</em>, 2019.</p>
 <p>Hema Hariharan Samson. Lightweight transformer architectures for edge
-devices in real-time applications, 2026. URL
+devices in real-time applications. URL
 <code>http://arxiv.org/abs/2601.03290</code>.</p>
 <p>Noam Shazeer. variants improve transformer. <em>arXiv preprint
 arXiv:2002.05202</em>, 2020.</p>
 <p>Noam Shazeer and Mitchell Stern. Adafactor: Adaptive learning rates
-with sublinear memory cost, 2018. URL
+with sublinear memory cost. URL
 <code>https://arxiv.org/abs/1804.04235</code>. Version Number: 1.</p>
 <p>Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
-On the convergence analysis of muon, 2025. URL
+On the convergence analysis of muon. URL
 <code>https://arxiv.org/abs/2505.23737</code>. Version Number: 1.</p>
 <p>Rafael Soares et al. Griffin: Mixing gated linear recurrences with
 local attention for efficient sequence modeling, 2024. URL
@@ -2493,21 +2831,21 @@ Information Processing Systems</em>, volume 28. Curran Associates, Inc.,
 2015. URL
 <code>https://proceedings.neurips.cc/paper_files/paper/2015/hash/a58f4765a99bf77336cf034926677066-Abstract.html</code>.</p>
 <p>Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng
-Liu. : Enhanced transformer with rotary position embedding, 2024. URL
+Liu. : Enhanced transformer with rotary position embedding. URL
 <code>http://arxiv.org/abs/2104.09864</code>.</p>
 <p>Luoyang Sun, Cheng Deng, Jiwen Jiang, Xinjian Wu, Haifeng Zhang, Lei
 Chen, Lionel Ni, and Jun Wang. Gta: Grouped-head latent attention, 2025.
 URL <code>https://arxiv.org/abs/2506.17286</code>.</p>
 <p>Yutao Sun, Li Dong, Shaohan Huang, Shuming Ma, Yuqing Xia, Jilong
 Xue, Jianyong Wang, and Furu Wei. Retentive network: A successor to
-transformer for large language models, 2023. URL
+transformer for large language models, <span>a</span>. URL
 <code>https://arxiv.org/abs/2307.08621</code>. Version Number: 4.</p>
-<p>Yutao Sun et al. Attention residuals. URL
+<p>Yutao Sun et al. Attention residuals, <span>b</span>. URL
 <code>http://arxiv.org/abs/2603.15031</code>.</p>
 <p>Shohei Taniguchi, Keno Harada, Gouki Minegishi, Yuta Oshima,
 Seong Cheol Jeong, Go Nagahara, Tomoshi Iiyama, Masahiro Suzuki, Yusuke
 Iwasawa, and Yutaka Matsuo. : Modified adam can converge with any <span
-class="math inline">\(\beta_2\)</span> with the optimal rate, 2024. URL
+class="math inline">\(\beta_2\)</span> with the optimal rate. URL
 <code>https://arxiv.org/abs/2411.02853</code>. Version Number: 3.</p>
 <p>Ludovic Trottier, Philippe Gigu<span>è</span>re, and Brahim
 Chaib-draa. Parametric exponential linear unit for deep convolutional
@@ -2516,15 +2854,15 @@ Conference on Machine Learning and Applications (ICMLA)</em>, pages
 207–214, 2017. doi: 10.1109/ICMLA.2017.0-133.</p>
 <p>Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion
 Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. Attention is
-all you need, 2017. URL <code>https://arxiv.org/abs/1706.03762</code>.
-Version Number: 7.</p>
+all you need. URL <code>https://arxiv.org/abs/1706.03762</code>. Version
+Number: 7.</p>
 <p>Nikhil Vyas, Depen Morwani, Rosie Zhao, Mujin Kwun, Itai Shapira,
 David Brandfonbrener, Lucas Janson, and Sham Kakade. : Improving and
-stabilizing shampoo using adam, 2024. URL
+stabilizing shampoo using adam. URL
 <code>https://arxiv.org/abs/2409.11321</code>. Version Number: 2.</p>
 <p>Hongyu Wang, Shuming Ma, Li Dong, Shaohan Huang, Huaijie Wang,
 Lingxiao Ma, Fan Yang, Ruiping Wang, Yi Wu, and Furu Wei. : Scaling
-1-bit transformers for large language models, 2023. URL
+1-bit transformers for large language models. URL
 <code>http://arxiv.org/abs/2310.11453</code>.</p>
 <p>Zhe Wang, Ming Liu, et al. Fasa: Frequency-aware sparse attention,
 2026. URL <code>https://arxiv.org/abs/2602.03152</code>.</p>
@@ -2538,8 +2876,8 @@ Transformers: State-of-the-art natural language processing. In
 Language Processing: System Demonstrations (EMNLP)</em>, pages 38–45,
 2020.</p>
 <p>Xingyu Xie, Pan Zhou, Huan Li, Zhouchen Lin, and Shuicheng Yan. Adan:
-Adaptive nesterov momentum algorithm for faster optimizing deep models,
-2022. URL <code>https://arxiv.org/abs/2208.06677</code>. Version Number:
+Adaptive nesterov momentum algorithm for faster optimizing deep models.
+URL <code>https://arxiv.org/abs/2208.06677</code>. Version Number:
 5.</p>
 <p>Zhenda Xie, Yixuan Wei, Huanqi Cao, Chenggang Zhao, Chengqi Deng,
 Jiashi Li, Damai Dai, Huazuo Gao, Jiang Chang, Kuai Yu, Liang Zhao,
@@ -2559,14 +2897,14 @@ mamba2 with delta rule, 2024<span>b</span>. URL
 <p>Yang You, Jing Li, Sashank Reddi, Jonathan Hseu, Sanjiv Kumar,
 Srinadh Bhojanapalli, Xiaodan Song, James Demmel, and Cho-Jui Hsieh.
 Large batch optimization for deep learning: Training <span>BERT</span>
-in 76 minutes, 2020. URL <code>https://arxiv.org/abs/1904.00962</code>.
+in 76 minutes. URL <code>https://arxiv.org/abs/1904.00962</code>.
 Version Number: 3.</p>
 <p>Han Yuan, DeepSeek-AI, et al. Native sparse attention:
 Hardware-aligned and natively trainable sparse attention, 2025. URL
 <code>https://arxiv.org/abs/2502.11089</code>.</p>
 <p>Huizhuo Yuan, Yifeng Liu, Shuang Wu, Xun Zhou, and Quanquan Gu. :
-Unleashing the power of variance reduction for training large models,
-2024. URL <code>https://arxiv.org/abs/2411.10438</code>. Version Number:
+Unleashing the power of variance reduction for training large models.
+URL <code>https://arxiv.org/abs/2411.10438</code>. Version Number:
 4.</p>
 <p>Manzil Zaheer, Guru Guruganesh, Kumar Avinava Dubey, Joshua Ainslie,
 Chris Alberti, Santiago Ontanon, Pike Pham, Anirudh Ravula, Qifan Wang,
@@ -2574,13 +2912,12 @@ Li Yang, and Amr Ahmed. Big bird: Transformers for longer sequences. In
 <em>Advances in Neural Information Processing Systems</em>, 2020. doi:
 10.48550/ARXIV.2007.14062. URL
 <code>https://arxiv.org/abs/2007.14062</code>.</p>
-<p>Biao Zhang and Rico Sennrich. , 2019. URL
+<p>Biao Zhang and Rico Sennrich. . URL
 <code>http://arxiv.org/abs/1910.07467</code>.</p>
 <p>Jing Zhang, Peng Zhang, Baiwen Kong, Junqiu Wei, and Xin Jiang.
 Continuous self-attention models with neural <span>ODE</span> networks.
-<em>Proceedings of the <span>AAAI</span> Conference on Artificial
-Intelligence</em>, 35 (16): 14393–14401, 2021. ISSN 2374-3468,
-2159-5399. doi: 10.1609/aaai.v35i16.17692. URL
+(16): 14393–14401. ISSN 2374-3468, 2159-5399. doi:
+10.1609/aaai.v35i16.17692. URL
 <code>https://ojs.aaai.org/index.php/AAAI/article/view/17692</code>.</p>
 <p>Yichi Zhang, Yizhong Wang, et al. Accurate and training-free sparse
 attention accelerating any model inference, 2025. URL
@@ -2591,14 +2928,14 @@ Chi-Chih Yao. Fast weight attention for continual learning, 2026. URL
 <code>https://arxiv.org/abs/2608.27763</code>.</p>
 <p>Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
-training by gradient low-rank projection, 2024. URL
+training by gradient low-rank projection. URL
 <code>https://arxiv.org/abs/2403.03507</code>. Version Number: 2.</p>
 <p>Hanqing Zhu, Zhenyu Zhang, Wenyan Cong, Xi Liu, Sem Park, Vikas
 Chandra, Bo Long, David Z. Pan, Zhangyang Wang, and Jinwon Lee. Apollo:
-Sgd-like memory, adamw-level performance, 2025<span>a</span>. URL
+Sgd-like memory, adamw-level performance, 2025. URL
 <code>https://arxiv.org/abs/2412.05270</code>.</p>
 <p>Jiachen Zhu, Xinlei Chen, Kaiming He, Yann <span>LeCun</span>, and
-Zhuang Liu. Transformers without normalization, 2025<span>b</span>. URL
+Zhuang Liu. Transformers without normalization. URL
 <code>http://arxiv.org/abs/2503.10622</code>.</p>
 <p>Lianghui Zhu, Yuxin Fang, Bencheng Liao, Shijie Wang, Tianheng Cheng,
 Zilong Huang, Chen Chen, Lai Wei, Yutao Zeng, Ya Wang, Yi Lin, Yu Li,
@@ -2844,10 +3181,16 @@ HuggingFace o ruta local para preentrenamiento continuo o ajuste fino
 SBERT. Cuando se establece, <code>model_class</code> y
 <code>model</code> no son obligatorios (la arquitectura se infiere del
 checkpoint).</p></li>
-<li><p><code>tokenizer</code> (object) — Configuración del tokenizador
-con campos <code>name_or_path</code> (string), <code>use_fast</code>
-(bool) y <code>trust_remote_code</code> (bool). Obligatorio cuando se
-usa <code>base_model</code> con la tarea <code>mlm</code>.</p></li>
+<li><p><code>tokenizer</code> (object) — Configuración del tokenizador,
+disponible tanto para la ruta <code>base_model</code> como para modelos
+personalizados desde cero. Dos modos se seleccionan mediante
+<code>source</code>: <code>hf_repo</code> (por defecto) carga un
+tokenizador preentrenado desde <code>name_or_path</code>;
+<code>train_from_dataset</code> entrena un tokenizador nuevo desde el
+texto del dataset (ver §<a href="#subsec:tokenizer-config"
+data-reference-type="ref"
+data-reference="subsec:tokenizer-config">12.4</a>). Obligatorio cuando
+se usa <code>base_model</code> con la tarea <code>mlm</code>.</p></li>
 <li><p><code>model_class</code> (enum) — Variante de arquitectura del
 modelo: <code>frankenstein</code> (codificador de arquitectura mixta) o
 <code>frankensteindecoder</code> (decodificador causal autorregresivo).
@@ -3293,11 +3636,11 @@ gradient_accumulation_steps &amp; int <span class="math inline">\(\ge
 del optimizador.<br />
 optimizer &amp; object &amp; Configuración del optimizador (ver §<a
 href="#subsec:optimizer-config" data-reference-type="ref"
-data-reference="subsec:optimizer-config">12.4</a>). Obligatorio cuando
+data-reference="subsec:optimizer-config">12.5</a>). Obligatorio cuando
 <code>task=mlm</code> o <code>task=causal_lm</code>.<br />
 sbert &amp; object &amp; Configuración de entrenamiento SBERT (ver §<a
 href="#subsec:sbert-config" data-reference-type="ref"
-data-reference="subsec:sbert-config">12.5</a>). Obligatorio cuando
+data-reference="subsec:sbert-config">12.6</a>). Obligatorio cuando
 <code>task=sbert</code>.<br />
 scheduler_total_steps &amp; int <span class="math inline">\(\ge
 1\)</span> &amp; Pasos totales del optimizador para la programación de
@@ -3370,6 +3713,71 @@ galore_max_dim &amp; int <span class="math inline">\(\ge 1\)</span>
 &amp; Dimensión máxima del tensor para proyección GaLore.<br />
 hf_output_dir &amp; string &amp; Directorio para guardar el modelo final
 mediante <code>save_pretrained()</code>.<br />
+</p>
+</div>
+<h2 id="subsec:tokenizer-config">Configuración del Tokenizador</h2>
+<p>El objeto <code>tokenizer</code> de nivel superior está disponible
+para ambas rutas de entrenamiento: la ruta <code>base_model</code>
+(preentrenamiento continuo / ajuste fino, donde el tokenizador debe
+coincidir con el checkpoint preentrenado) y la ruta personalizada desde
+cero (donde resuelve el vocabulario antes de asignar la matriz de
+embeddings). El campo <code>source</code> selecciona entre dos
+modos:</p>
+<ul>
+<li><p><code>hf_repo</code> (por defecto) — carga un tokenizador
+preentrenado desde <code>name_or_path</code> (id de repo de HuggingFace
+o ruta local) mediante <code>AutoTokenizer.from_pretrained()</code>.
+Banderas complementarias: <code>use_fast</code> (tokenizador rápido
+Rust, por defecto <code>true</code>) y <code>trust_remote_code</code>
+(por defecto <code>false</code>).</p></li>
+<li><p><code>train_from_dataset</code> — entrena un tokenizador
+<em>nuevo</em> desde el texto del corpus con la biblioteca
+<code>tokenizers</code> de HuggingFace. El corpus es el bloque
+<code>text_dataset</code> de nivel superior (id de HF hub, opcionalmente
+en streaming, o un directorio local parquet/json); cuando el config es
+dirigido por un host de embedding como dashAI, el dataset del run del
+host puede suministrarlo. El tamaño de vocabulario resultante se inyecta
+en <code>model.dims.vocab_size</code> antes de construir el modelo, de
+modo que la matriz de embeddings siempre coincide con el tokenizador. En
+este modo <code>name_or_path</code> debe omitirse.</p></li>
+</ul>
+<p>La Tabla <a href="#tab:tokenizer-training" data-reference-type="ref"
+data-reference="tab:tokenizer-training">[tab:tokenizer-training]</a>
+enumera los campos del sub-objeto <code>tokenizer.training</code>.</p>
+<div class="longtable">
+<p>&gt;l&gt;</p>
+<p>p<span>3.5cm</span>&gt;</p>
+<p>p<span>8.5cm</span></p>
+<p><strong>Campo</strong> &amp; <strong>Tipo</strong> &amp;
+<strong>Descripción</strong><br />
+<strong>Campo</strong> &amp; <strong>Tipo</strong> &amp;
+<strong>Descripción</strong><br />
+</p>
+<p>algorithm &amp; enum (bpe, wordpiece, wordlevel, unigram) &amp;
+Algoritmo de entrenamiento del tokenizador. <code>bpe</code> (Byte Pair
+Encoding, estilo GPT-2, por defecto); <code>wordpiece</code> (BERT
+original); <code>wordlevel</code> (tabla de palabras);
+<code>unigram</code> (modelo de lenguaje de sub-palabras, con poda
+automática).<br />
+vocab_size &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Tamaño de vocabulario objetivo. Obligatorio para
+<code>bpe</code>/<code>wordpiece</code>/<code>wordlevel</code>; opcional
+para <code>unigram</code>.<br />
+min_frequency &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Frecuencia mínima de token a conservar (por defecto 2).<br />
+special_tokens &amp; array de string &amp; Tokens especiales registrados
+en el tokenizador (por defecto
+<code>[PAD]/[UNK]/[CLS]/[SEP]/[MASK]</code>).<br />
+save_dir &amp; string &amp; Directorio persistido vía
+<code>save_pretrained()</code>.<br />
+lowercase &amp; bool &amp; Convertir todo el texto a minúsculas antes de
+entrenar (por defecto <code>false</code>).<br />
+strip_accents &amp; bool &amp; Quitar diacríticos antes de entrenar (por
+defecto <code>false</code>).<br />
+pre_tokenizer &amp; enum (whitespace, bytelevel, bert) &amp; Estrategia
+de pre-tokenización (por defecto <code>whitespace</code>).<br />
+max_token_length &amp; int <span class="math inline">\(\ge 0\)</span>
+&amp; Límite de caracteres por token; 0 desactiva el límite.<br />
 </p>
 </div>
 <h2 id="subsec:optimizer-config">Configuración del Optimizador</h2>
@@ -3540,7 +3948,15 @@ vocabulario del tokenizador. Una discrepancia causa corrupción de IDs de
 token y fallo de entrenamiento irrecuperable.</p></li>
 <li><p>Cuando <code>base_model</code> está configurado,
 <code>training.task</code> es obligatorio. Si <code>task=mlm</code>,
-<code>tokenizer.name_or_path</code> también es obligatorio.</p></li>
+<code>tokenizer.name_or_path</code> también es obligatorio — salvo
+cuando <code>tokenizer.source=train_from_dataset</code>, en cuyo caso el
+tokenizador se entrena desde el corpus y no se necesita nombre.</p></li>
+<li><p><code>tokenizer.source=train_from_dataset</code> requiere el
+sub-objeto <code>tokenizer.training</code> (con <code>vocab_size</code>
+para <code>bpe</code>/<code>wordpiece</code>/<code>wordlevel</code>) y
+es mutuamente excluyente con <code>tokenizer.name_or_path</code>. El
+vocabulario entrenado sobrescribe <code>model.dims.vocab_size</code>
+antes de construir el modelo.</p></li>
 <li><p><code>task: mlm</code> requiere <code>training.optimizer</code>;
 <code>task: sbert</code> requiere <code>training.sbert</code>;
 <code>task: causal_lm</code> requiere <code>training.optimizer</code> y
@@ -4389,19 +4805,20 @@ class="math inline">\(t\)</span>, el algoritmo mantiene un promedio
 móvil exponencial <span class="math inline">\(m_t\)</span> de los
 gradientes pasados: <span class="math display">\[\begin{aligned}
 m_t &amp;= \beta m_{t-1} + g_t \\
-\theta_{t+1} &amp;= \theta_t - \eta m_t\end{aligned}\]</span> donde
-<span class="math inline">\(g_t = \nabla f(\theta_t)\)</span>, <span
-class="math inline">\(\beta \in [0.8, 0.99]\)</span> controla la
-decadencia del momentum y <span class="math inline">\(\eta\)</span> es
-la tasa de aprendizaje fija. El término de momentum actúa como
-velocidad: acelera el movimiento en direcciones consistentes mientras
-amortigua oscilaciones en direcciones variables. Sus fortalezas son la
-baja sobrecarga de memoria (un único búfer de momentum por parámetro) y
-una fuerte generalización cuando se ajusta cuidadosamente. Su principal
-debilidad en cargas de trabajo de transformadores es la escasa robustez
-frente a la heterogeneidad de curvatura (diferentes espectros del
-Hessiano entre grupos de parámetros) y una fuerte dependencia de las
-programaciones de tasa de aprendizaje.</p>
+\theta_{t+1} &amp;= \theta_t - \eta m_t
+\end{aligned}\]</span> donde <span class="math inline">\(g_t = \nabla
+f(\theta_t)\)</span>, <span class="math inline">\(\beta \in [0.8,
+0.99]\)</span> controla la decadencia del momentum y <span
+class="math inline">\(\eta\)</span> es la tasa de aprendizaje fija. El
+término de momentum actúa como velocidad: acelera el movimiento en
+direcciones consistentes mientras amortigua oscilaciones en direcciones
+variables. Sus fortalezas son la baja sobrecarga de memoria (un único
+búfer de momentum por parámetro) y una fuerte generalización cuando se
+ajusta cuidadosamente. Su principal debilidad en cargas de trabajo de
+transformadores es la escasa robustez frente a la heterogeneidad de
+curvatura (diferentes espectros del Hessiano entre grupos de parámetros)
+y una fuerte dependencia de las programaciones de tasa de
+aprendizaje.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
@@ -4428,10 +4845,10 @@ v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \\
 \hat{m}_t &amp;= \frac{m_t}{1-\beta_1^t}, \quad \hat{v}_t =
 \frac{v_t}{1-\beta_2^t} \quad \text{(corrección de sesgo)} \\
 \theta_{t+1} &amp;= \theta_t - \eta
-\left(\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}\right)\end{aligned}\]</span>
-AdamW introduce una modificación crucial: la decadencia de peso se
-aplica directamente a los parámetros (desacoplada de los gradientes):
-<span class="math inline">\(\theta_t \gets
+\left(\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}\right)
+\end{aligned}\]</span> AdamW introduce una modificación crucial: la
+decadencia de peso se aplica directamente a los parámetros (desacoplada
+de los gradientes): <span class="math inline">\(\theta_t \gets
 \theta_t(1-\eta\lambda)\)</span> en lugar de añadir <span
 class="math inline">\(\lambda\theta_t\)</span> al gradiente. Este
 desacoplamiento evita que el escalado adaptativo interfiera con la
@@ -4526,12 +4943,12 @@ m_t &amp;= (1-\beta_1)m_{t-1} + \beta_1 g_t \quad\text{(primer momento)}
 v_t &amp;= (1-\beta_2)v_{t-1} + \beta_2(g_t - g_{t-1})
 \quad\text{(velocidad/diferencia de gradientes)} \\
 n_t &amp;= (1-\beta_3)n_{t-1} + \beta_3[g_t +
-(1-\beta_1)(g_t-g_{t-1})]^2 \quad\text{(segundo momento
-Nesterov)}\end{aligned}\]</span> El término de <strong>Estimación de
-Momentum Nesterov</strong> (NME) <span class="math inline">\(\bar{g}_t =
-g_t + (1-\beta_1)(g_t-g_{t-1})\)</span> estima el gradiente en una
-posición futura sin evaluarlo. La actualización combina el momentum con
-la velocidad: <span class="math display">\[\bar{m}_t = m_t +
+(1-\beta_1)(g_t-g_{t-1})]^2 \quad\text{(segundo momento Nesterov)}
+\end{aligned}\]</span> El término de <strong>Estimación de Momentum
+Nesterov</strong> (NME) <span class="math inline">\(\bar{g}_t = g_t +
+(1-\beta_1)(g_t-g_{t-1})\)</span> estima el gradiente en una posición
+futura sin evaluarlo. La actualización combina el momentum con la
+velocidad: <span class="math display">\[\bar{m}_t = m_t +
 (1-\beta_1)v_t, \quad \theta_{t+1} = \theta_t -
 \eta\frac{\bar{m}_t}{\sqrt{n_t}+\epsilon}\]</span> Adan logra una
 convergencia rápida en diversas arquitecturas (CNN, GAN,
@@ -4572,10 +4989,10 @@ v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 m_t &amp;= \beta_1 m_{t-1} +
 (1-\beta_1)\frac{g_t}{\sqrt{v_{t-1}}+\epsilon} \quad\text{(usa
 $v_{t-1}$, no $v_t$)} \\
-\theta_{t+1} &amp;= \theta_t - \eta m_t\end{aligned}\]</span> Este
-simple reordenamiento logra la tasa de convergencia óptima <span
-class="math inline">\(O(1/\sqrt{T})\)</span> con
-<strong>cualquier</strong> elección de <span
+\theta_{t+1} &amp;= \theta_t - \eta m_t
+\end{aligned}\]</span> Este simple reordenamiento logra la tasa de
+convergencia óptima <span class="math inline">\(O(1/\sqrt{T})\)</span>
+con <strong>cualquier</strong> elección de <span
 class="math inline">\(\beta_2 \in (0,1)\)</span>, sin suposiciones de
 ruido acotado. La consecuencia práctica es que ADOPT es un reemplazo
 directo de Adam con garantías teóricas más sólidas y un rendimiento
@@ -4616,14 +5033,14 @@ $\beta_3 \approx 0.9999$)} \\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 m_t &amp;= m_{1,t} + \alpha_t m_{2,t} \quad\text{(mezcla con peso
 programado $\alpha_t$)} \\
-\theta_{t+1} &amp;= \theta_t -
-\eta\frac{m_t}{\sqrt{v_t}+\epsilon}\end{aligned}\]</span> El peso de la
-mezcla <span class="math inline">\(\alpha_t\)</span> típicamente aumenta
-durante el entrenamiento, permitiendo que el EMA rápido proporcione
-adaptación inmediata mientras que el EMA lento acumula correlaciones de
-gradiente a largo plazo. Empíricamente, un modelo de 1.3B parámetros en
-101B tokens alcanza una pérdida similar a AdamW en 197B tokens (ganancia
-del 95% en eficiencia de datos), lo que sugiere que el EMA lento reduce
+\theta_{t+1} &amp;= \theta_t - \eta\frac{m_t}{\sqrt{v_t}+\epsilon}
+\end{aligned}\]</span> El peso de la mezcla <span
+class="math inline">\(\alpha_t\)</span> típicamente aumenta durante el
+entrenamiento, permitiendo que el EMA rápido proporcione adaptación
+inmediata mientras que el EMA lento acumula correlaciones de gradiente a
+largo plazo. Empíricamente, un modelo de 1.3B parámetros en 101B tokens
+alcanza una pérdida similar a AdamW en 197B tokens (ganancia del 95% en
+eficiencia de datos), lo que sugiere que el EMA lento reduce
 significativamente el olvido del modelo.</p>
 <div class="algorithm">
 <div class="algorithmic">
@@ -4661,12 +5078,12 @@ c_t &amp;= g_t + \gamma(c_{t-1} - g_{t-1}) \quad\text{(estimación
 recursiva tipo SVRG)} \\
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1)c_t \\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)c_t^2 \\
-\theta_{t+1} &amp;= \theta_t -
-\eta\frac{m_t}{\sqrt{v_t}+\epsilon}\end{aligned}\]</span> donde <span
-class="math inline">\(\gamma \in [0.01, 0.1]\)</span> controla cuánta
-información de gradiente histórico se retiene. El gradiente con varianza
-reducida <span class="math inline">\(c_t\)</span> actúa como un filtro
-de ruido implícito, amplificando las direcciones de señal consistentes y
+\theta_{t+1} &amp;= \theta_t - \eta\frac{m_t}{\sqrt{v_t}+\epsilon}
+\end{aligned}\]</span> donde <span class="math inline">\(\gamma \in
+[0.01, 0.1]\)</span> controla cuánta información de gradiente histórico
+se retiene. El gradiente con varianza reducida <span
+class="math inline">\(c_t\)</span> actúa como un filtro de ruido
+implícito, amplificando las direcciones de señal consistentes y
 amortiguando el ruido contradictorio. MARS-AdamW supera consistentemente
 a AdamW por márgenes significativos en el preentrenamiento de GPT-2, lo
 que sugiere que la reducción de varianza mejora sustancialmente la
@@ -4707,19 +5124,20 @@ g_t[i] &gt; 0 \quad\text{(acuerdo)} \\ 0 &amp; \text{en caso contrario}
 \end{cases} \\
 u_t &amp;= \left(\frac{m_t}{\sqrt{v_t}+\epsilon}\right) \odot
 \text{mask} \quad\text{(enmascaramiento elemento a elemento)} \\
-\theta_{t+1} &amp;= \theta_t - \eta u_t\end{aligned}\]</span> La
-intuición: el momentum <span class="math inline">\(m_t\)</span> estima
-la dirección del gradiente a partir del historial; el gradiente actual
-<span class="math inline">\(g_t\)</span> es la señal instantánea. Cuando
-ambos coinciden, el optimizador está seguro y debe actualizar
-agresivamente. Cuando discrepan, el optimizador está en conflicto—la
-tendencia histórica apunta hacia una región que pudo haber sido buena
-antes, pero la evidencia actual la contradice. Al enmascarar las
-dimensiones en conflicto, Cauteloso se vuelve más conservador y evita
-pasos corruptos. Empíricamente, este simple enmascaramiento logra hasta
-<strong>1.47<span class="math inline">\(\times\)</span> de
-aceleración</strong> en el preentrenamiento de Llama y MAE mientras
-preserva las garantías de convergencia.</p>
+\theta_{t+1} &amp;= \theta_t - \eta u_t
+\end{aligned}\]</span> La intuición: el momentum <span
+class="math inline">\(m_t\)</span> estima la dirección del gradiente a
+partir del historial; el gradiente actual <span
+class="math inline">\(g_t\)</span> es la señal instantánea. Cuando ambos
+coinciden, el optimizador está seguro y debe actualizar agresivamente.
+Cuando discrepan, el optimizador está en conflicto—la tendencia
+histórica apunta hacia una región que pudo haber sido buena antes, pero
+la evidencia actual la contradice. Al enmascarar las dimensiones en
+conflicto, Cauteloso se vuelve más conservador y evita pasos corruptos.
+Empíricamente, este simple enmascaramiento logra hasta <strong>1.47<span
+class="math inline">\(\times\)</span> de aceleración</strong> en el
+preentrenamiento de Llama y MAE mientras preserva las garantías de
+convergencia.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
@@ -4763,8 +5181,9 @@ u_{\text{adam}}^L &amp;= \frac{m_t^L}{\sqrt{v_t^L}+\epsilon} +
 \phi^L &amp;= \frac{\|\theta_{t-1}^L\|_2}{\|u_{\text{adam}}^L\|_2}
 \quad\text{(razón de confianza: normalización por capas)} \\
 \theta_t^L &amp;= \theta_{t-1}^L - \eta \cdot \phi^L \cdot
-u_{\text{adam}}^L\end{aligned}\]</span> La <strong>razón de
-confianza</strong> <span class="math inline">\(\phi^L = \|\theta^L\|_2 /
+u_{\text{adam}}^L
+\end{aligned}\]</span> La <strong>razón de confianza</strong> <span
+class="math inline">\(\phi^L = \|\theta^L\|_2 /
 \|u_{\text{adam}}^L\|_2\)</span> normaliza el paso de actualización
 efectivo en relación con la magnitud de los pesos. En lotes muy grandes,
 el ruido estocástico del gradiente puede superar a la señal,
@@ -4812,19 +5231,20 @@ con el tiempo)} \\
 x_t &amp;= (1-c_t)x_{t-1} + c_t z_t \quad\text{(promediado de
 iteraciones)} \\
 y_t &amp;= (1-\beta)z_t + \beta x_t \quad\text{(interpolación para el
-punto de evaluación)}\end{aligned}\]</span> El coeficiente de promediado
-<span class="math inline">\(c_t = 1/(t+1)\)</span> implementa una
-programación de tasa de aprendizaje implícita sin especificar
-explícitamente el número total de pasos <span
-class="math inline">\(T\)</span>. Este marco unifica la programación y
-el promediado de iteraciones: el algoritmo explora mediante <span
-class="math inline">\(z_t\)</span> mientras acumula dirección estable
-mediante <span class="math inline">\(x_t\)</span>. El punto de
-evaluación <span class="math inline">\(y_t\)</span> (usado para el
-cómputo del gradiente) interpola entre exploración y estabilidad.
-Schedule-Free logra convergencia de última generación en optimización
-convexa, aprendizaje profundo a gran escala y aprendizaje por refuerzo,
-eliminando un hiperparámetro importante.</p>
+punto de evaluación)}
+\end{aligned}\]</span> El coeficiente de promediado <span
+class="math inline">\(c_t = 1/(t+1)\)</span> implementa una programación
+de tasa de aprendizaje implícita sin especificar explícitamente el
+número total de pasos <span class="math inline">\(T\)</span>. Este marco
+unifica la programación y el promediado de iteraciones: el algoritmo
+explora mediante <span class="math inline">\(z_t\)</span> mientras
+acumula dirección estable mediante <span
+class="math inline">\(x_t\)</span>. El punto de evaluación <span
+class="math inline">\(y_t\)</span> (usado para el cómputo del gradiente)
+interpola entre exploración y estabilidad. Schedule-Free logra
+convergencia de última generación en optimización convexa, aprendizaje
+profundo a gran escala y aprendizaje por refuerzo, eliminando un
+hiperparámetro importante.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
@@ -4865,10 +5285,11 @@ C_t &amp;= \beta_2 C_{t-1} + (1-\beta_2) \mathbf{1}_m^\top (G_t^2)
 U_t &amp;= \frac{G_t}{\sqrt{\hat{V}_t}+\epsilon} \quad\text{(paso
 adaptativo normalizado)} \\
 \hat{U}_t &amp;= \frac{U_t}{\max(1, \text{RMS}(U_t))}
-\quad\text{(recorte de estabilidad)}\end{aligned}\]</span> En lugar de
-almacenar <span class="math inline">\(m \times n\)</span> valores de
-segundo momento, Adafactor almacena solo <span class="math inline">\(m +
-n\)</span> acumuladores, reduciendo la memoria de <span
+\quad\text{(recorte de estabilidad)}
+\end{aligned}\]</span> En lugar de almacenar <span
+class="math inline">\(m \times n\)</span> valores de segundo momento,
+Adafactor almacena solo <span class="math inline">\(m + n\)</span>
+acumuladores, reduciendo la memoria de <span
 class="math inline">\(O(n_{\text{params}})\)</span> a <span
 class="math inline">\(O(\sqrt{n_{\text{params}}})\)</span>. Esto es más
 atractivo cuando la VRAM está dominada por el estado del optimizador en
@@ -4913,8 +5334,9 @@ bajo rango)} \\
 \Delta_{\text{low}} &amp;= \text{Adam}(G_{\text{low}})
 \quad\text{(optimizar en el espacio comprimido)} \\
 \Delta &amp;= P \Delta_{\text{low}} \quad\text{(reconstruir en el
-espacio original)}\end{aligned}\]</span> Al proyectar en un subespacio
-de rango <span class="math inline">\(r\)</span> (típicamente <span
+espacio original)}
+\end{aligned}\]</span> Al proyectar en un subespacio de rango <span
+class="math inline">\(r\)</span> (típicamente <span
 class="math inline">\(r \ll \min(m,n)\)</span>), el estado del
 optimizador se reduce de <span class="math inline">\(O(mn)\)</span> a
 <span class="math inline">\(O(r(m+n))\)</span> para parámetros 2D. Este
@@ -4959,13 +5381,12 @@ class="math display">\[\begin{aligned}
 R_t &amp;= P_t G_t \quad\text{o}\quad R_t = G_t P_t^\top \\
 M_t^R &amp;= \beta_1 M_{t-1}^R + (1-\beta_1)R_t \\
 V_t^R &amp;= \beta_2 V_{t-1}^R + (1-\beta_2)R_t^2 \\
-\widetilde{R}_t &amp;=
-\frac{M_t^R}{\sqrt{V_t^R}+\epsilon}\end{aligned}\]</span> El estado
-proyectado <em>no</em> se expande de vuelta a una actualización densa de
-bajo rango como en los métodos basados en SVD. En su lugar, APOLLO
-estima un tensor de escalado estructurado <span
-class="math inline">\(S_t\)</span> en el espacio original. En la
-variante estándar de APOLLO, ese escalado es <strong>por
+\widetilde{R}_t &amp;= \frac{M_t^R}{\sqrt{V_t^R}+\epsilon}
+\end{aligned}\]</span> El estado proyectado <em>no</em> se expande de
+vuelta a una actualización densa de bajo rango como en los métodos
+basados en SVD. En su lugar, APOLLO estima un tensor de escalado
+estructurado <span class="math inline">\(S_t\)</span> en el espacio
+original. En la variante estándar de APOLLO, ese escalado es <strong>por
 canales</strong>: cada fila o canal recibe su propia razón de norma. En
 APOLLO-Mini, el escalado se reduce a un único escalar <strong>por
 tensor</strong>, correspondiente al caso extremo de rango 1 descrito en
@@ -5067,7 +5488,8 @@ segundo orden)}\\
 \bar{v}_k^\gamma\right)} &amp; \text{si } k &gt; 0
 \end{cases}\\
 \theta_{t+1} &amp;= \theta_t - \frac{\eta}{1-\beta_1^t} \cdot m_t \odot
-\text{fixed\_lr}_{\lfloor\log_2 t\rfloor}\end{aligned}\]</span></p>
+\text{fixed\_lr}_{\lfloor\log_2 t\rfloor}
+\end{aligned}\]</span></p>
 <p>A diferencia de los optimizadores adaptativos estándar, IDU actualiza
 el precondicionador solo en potencias de dos (<span
 class="math inline">\(t = 2^k\)</span>), acumulando estadísticas de
@@ -5135,20 +5557,19 @@ s_t &amp;= s_{t-1} + \langle u_t, \theta_t - \theta_0 \rangle
 \quad\text{(distancia signada acumulativa)} \\
 d_t &amp;= \max(d_{t-1}, d_0 + d_{\text{coef}} \cdot s_t)
 \quad\text{(estimación de distancia con cota inferior)} \\
-\theta_{t+1} &amp;= \theta_t - \eta \cdot d_t \cdot
-u_t\end{aligned}\]</span> donde <span class="math inline">\(d_0\)</span>
-es una cota inicial y <span
-class="math inline">\(d_{\text{coef}}\)</span> controla qué tan
-agresivamente se adapta la estimación. La estimación de distancia <span
-class="math inline">\(d_t\)</span> captura la magnitud combinada de
-gradientes pasados ponderada por el desplazamiento real de los
-parámetros, implementando una tasa de aprendizaje efectiva implícita.
-Este escalado consciente de la distancia logra convergencia robusta en
-distintas escalas de problemas y tamaños de lote sin requerir una
-programación de la tasa de aprendizaje. Prodigy reduce la sensibilidad a
-hiperparámetros estimando los tamaños de paso a partir de la geometría
-de optimización en lugar del conocimiento previo específico del
-problema.</p>
+\theta_{t+1} &amp;= \theta_t - \eta \cdot d_t \cdot u_t
+\end{aligned}\]</span> donde <span class="math inline">\(d_0\)</span> es
+una cota inicial y <span class="math inline">\(d_{\text{coef}}\)</span>
+controla qué tan agresivamente se adapta la estimación. La estimación de
+distancia <span class="math inline">\(d_t\)</span> captura la magnitud
+combinada de gradientes pasados ponderada por el desplazamiento real de
+los parámetros, implementando una tasa de aprendizaje efectiva
+implícita. Este escalado consciente de la distancia logra convergencia
+robusta en distintas escalas de problemas y tamaños de lote sin requerir
+una programación de la tasa de aprendizaje. Prodigy reduce la
+sensibilidad a hiperparámetros estimando los tamaños de paso a partir de
+la geometría de optimización en lugar del conocimiento previo específico
+del problema.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
@@ -5210,20 +5631,21 @@ L_t^{-1/4} &amp;= Q_L (\Lambda_L)^{-1/4} Q_L^\top \quad\text{(mediante
 eigendescomposición)} \\
 R_t^{-1/4} &amp;= Q_R (\Lambda_R)^{-1/4} Q_R^\top \\
 \Delta W_t &amp;= L_t^{-1/4} G_t R_t^{-1/4} \quad\text{(gradiente
-precondicionado)}\end{aligned}\]</span> Shampoo aproxima el
-precondicionador de matriz completa de Adagrad <span
-class="math inline">\(H^{-1/2}\)</span> (donde <span
-class="math inline">\(H\)</span> es el Hessiano) utilizando estructura
-factorizada de Kronecker. En lugar de almacenar un precondicionador de
-<span class="math inline">\((mn) \times (mn)\)</span>, Shampoo mantiene
-dos matrices más pequeñas (<span class="math inline">\(m \times
-m\)</span> y <span class="math inline">\(n \times n\)</span>),
-capturando correlaciones entre parámetros dentro y entre grupos. El
-método ha demostrado ser efectivo a escala (sistemas de producción de
-Google) y es adecuado para arquitecturas transformer con estructura de
-alto rango. Las eigendescomposiciones se realizan periódicamente (e.g.,
-cada <span class="math inline">\(K=10\)</span> pasos) para amortizar el
-costo. Contrapartida: mayor cómputo por paso y eigendescomposición <span
+precondicionado)}
+\end{aligned}\]</span> Shampoo aproxima el precondicionador de matriz
+completa de Adagrad <span class="math inline">\(H^{-1/2}\)</span> (donde
+<span class="math inline">\(H\)</span> es el Hessiano) utilizando
+estructura factorizada de Kronecker. En lugar de almacenar un
+precondicionador de <span class="math inline">\((mn) \times
+(mn)\)</span>, Shampoo mantiene dos matrices más pequeñas (<span
+class="math inline">\(m \times m\)</span> y <span
+class="math inline">\(n \times n\)</span>), capturando correlaciones
+entre parámetros dentro y entre grupos. El método ha demostrado ser
+efectivo a escala (sistemas de producción de Google) y es adecuado para
+arquitecturas transformer con estructura de alto rango. Las
+eigendescomposiciones se realizan periódicamente (e.g., cada <span
+class="math inline">\(K=10\)</span> pasos) para amortizar el costo.
+Contrapartida: mayor cómputo por paso y eigendescomposición <span
 class="math inline">\(O(m^3 + n^3)\)</span> periódica frente a mejor
 condicionamiento y convergencia acelerada.</p>
 <h4 id="soap-shampoo-with-adam-in-eigenbasis.">SOAP (Shampoo with Adam
@@ -5246,15 +5668,14 @@ v_t^{\text{rot}} &amp;= \beta_2 v_{t-1}^{\text{rot}} +
 \\
 U_t^{\text{rot}} &amp;=
 \frac{m_t^{\text{rot}}}{\sqrt{v_t^{\text{rot}}}+\epsilon}, \quad U_t =
-Q_L U_t^{\text{rot}} Q_R^\top \quad\text{(rotar de
-vuelta)}\end{aligned}\]</span> La idea clave: todo el seguimiento de
-momento ocurre en la base de eigenvectores bien condicionada,
-simplificando la estabilidad numérica y el análisis teórico. SOAP
-combina los beneficios de Shampoo (estructura de curvatura explícita) y
-Adam (mecánica de momento probada), siendo más limpio y a menudo más
-estable que Shampoo completo. Las eigendescomposiciones se recalculan
-cada <span class="math inline">\(K\)</span> pasos, amortizando el
-costo.</p>
+Q_L U_t^{\text{rot}} Q_R^\top \quad\text{(rotar de vuelta)}
+\end{aligned}\]</span> La idea clave: todo el seguimiento de momento
+ocurre en la base de eigenvectores bien condicionada, simplificando la
+estabilidad numérica y el análisis teórico. SOAP combina los beneficios
+de Shampoo (estructura de curvatura explícita) y Adam (mecánica de
+momento probada), siendo más limpio y a menudo más estable que Shampoo
+completo. Las eigendescomposiciones se recalculan cada <span
+class="math inline">\(K\)</span> pasos, amortizando el costo.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
@@ -5290,19 +5711,20 @@ momento)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \left(\text{sign}(c_t) +
 \lambda\theta_t\right) \quad\text{(actualización con operador signo)} \\
 m_{t+1} &amp;= \beta_2 m_t + (1-\beta_2) g_t \quad\text{(acumulación de
-momento)}\end{aligned}\]</span> Todas las operaciones de escalado
-elemento a elemento se reemplazan con <code>sign()</code>, que produce
-<span class="math inline">\(\{-1, 0, +1\}\)</span>. Esto reduce
-drásticamente la memoria en comparación con métodos tipo Adam: Lion
-almacena solo el buffer de momento, sin varianza de segundo momento. La
-contrapartida: las actualizaciones basadas en signo sacrifican la
-adaptación de tasa de aprendizaje elemento a elemento que hace efectivo
-a Adam. Lion se posiciona no como un optimizador universalmente superior
-sino como una alternativa especializada de baja memoria y alto
-rendimiento para escenarios donde la memoria de activaciones domina y se
-puede sacrificar algo de sofisticación del optimizador. Funciona bien en
-regímenes de lotes grandes y cuando el rendimiento del hardware es la
-restricción principal.</p>
+momento)}
+\end{aligned}\]</span> Todas las operaciones de escalado elemento a
+elemento se reemplazan con <code>sign()</code>, que produce <span
+class="math inline">\(\{-1, 0, +1\}\)</span>. Esto reduce drásticamente
+la memoria en comparación con métodos tipo Adam: Lion almacena solo el
+buffer de momento, sin varianza de segundo momento. La contrapartida:
+las actualizaciones basadas en signo sacrifican la adaptación de tasa de
+aprendizaje elemento a elemento que hace efectivo a Adam. Lion se
+posiciona no como un optimizador universalmente superior sino como una
+alternativa especializada de baja memoria y alto rendimiento para
+escenarios donde la memoria de activaciones domina y se puede sacrificar
+algo de sofisticación del optimizador. Funciona bien en regímenes de
+lotes grandes y cuando el rendimiento del hardware es la restricción
+principal.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
@@ -5333,8 +5755,8 @@ h_t &amp;= \beta_2 h_{t-(k-1)} + (1-\beta_2) \hat{h}_t
 \text{clip}(x, C) &amp;= \min(\max(x, -C), C) \quad\text{(recorte
 elemento a elemento)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \cdot
-\text{clip}\left(\frac{m_t}{\max(\gamma h_t, \epsilon)},
-1\right)\end{aligned}\]</span> donde <span
+\text{clip}\left(\frac{m_t}{\max(\gamma h_t, \epsilon)}, 1\right)
+\end{aligned}\]</span> donde <span
 class="math inline">\(\hat{h}_t\)</span> es una estimación diagonal
 (e.g., estimador de traza de Hutchinson) y <span
 class="math inline">\(\gamma\)</span> es un factor de escala. El
@@ -5387,19 +5809,19 @@ c$ de Newton-Schulz)} \\
 X_{k+1} &amp;= a X_k + B_k X_k \quad\text{(iteración $k=0,1,\ldots,4$)}
 \\
 W_{t+1} &amp;= W_t - \eta X_K \quad\text{(actualización con dirección
-ortogonalizada)}\end{aligned}\]</span> Muon realiza 5 iteraciones de
-Newton-Schulz para producir una dirección aproximadamente ortogonal,
-asegurando que las actualizaciones respeten restricciones geométricas.
-Turbo-Muon añade un paso de <strong>precondicionamiento
-casi-ortogonal</strong> (AOL) antes de las iteraciones, reduciendo el
-número de pasos de ortogonalización requeridos a 4. La justificación:
-las actualizaciones ortogonales preservan las normas durante el
-entrenamiento, evitando la deriva de norma observada en métodos basados
-en momento. Estos optimizadores muestran potencial en entrenamiento a
-gran escala pero requieren kernels CUDA personalizados para eficiencia.
-Contrapartida: alto cómputo por paso (multiplicaciones de matrices e
-iteraciones polinomiales) frente a una geometría de actualización
-fundamentalmente mejor condicionada.</p>
+ortogonalizada)}
+\end{aligned}\]</span> Muon realiza 5 iteraciones de Newton-Schulz para
+producir una dirección aproximadamente ortogonal, asegurando que las
+actualizaciones respeten restricciones geométricas. Turbo-Muon añade un
+paso de <strong>precondicionamiento casi-ortogonal</strong> (AOL) antes
+de las iteraciones, reduciendo el número de pasos de ortogonalización
+requeridos a 4. La justificación: las actualizaciones ortogonales
+preservan las normas durante el entrenamiento, evitando la deriva de
+norma observada en métodos basados en momento. Estos optimizadores
+muestran potencial en entrenamiento a gran escala pero requieren kernels
+CUDA personalizados para eficiencia. Contrapartida: alto cómputo por
+paso (multiplicaciones de matrices e iteraciones polinomiales) frente a
+una geometría de actualización fundamentalmente mejor condicionada.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Parámetros iniciales <span class="math inline">\(\theta\)</span>
@@ -8932,7 +9354,8 @@ survey)}
     &amp; \quad \text{\citep{lederer2021activations}} \\[4pt]
   \text{Identity}(x) &amp;= x
     &amp; \text{Rango: } (-\infty,\infty),\;\text{lineal, }C^\infty
-    &amp; \quad \text{(interna)}\end{aligned}\]</span></p>
+    &amp; \quad \text{(interna)}
+\end{aligned}\]</span></p>
 <p><span class="math display">\[\begin{aligned}
   \text{Softplus}(x) &amp;= \log(1+e^{x})
     &amp; \text{Rango: } [0,\infty),\;\text{suave, }C^\infty
@@ -8959,7 +9382,8 @@ probabilística}
   \text{SiLU}(x) &amp;= x\,\sigma(x) = \frac{x}{1+e^{-x}}
     &amp; \text{Rango: } (\approx{-0.278},\infty),\;\text{no monótona,
 suave}
-    &amp; \quad \text{\citep{elfwing2018silu}}\end{aligned}\]</span></p>
+    &amp; \quad \text{\citep{elfwing2018silu}}
+\end{aligned}\]</span></p>
 <p><strong>SiLU</strong> (Sigmoid Linear Unit) es la activación por
 defecto (<code>ffn_activation=silu</code>). Cuando <span
 class="math inline">\(\beta=1\)</span>, el Swish paramétrico se reduce a
@@ -8998,8 +9422,8 @@ rampa de signo}
   \text{NLReLU}(x) &amp;= \beta\,\log\!\big(1+\max(0,x)\big)
     &amp; \text{Rango: } [0,\infty),\;\beta=1.0,\;\text{compresión
 logarítmica}
-    &amp; \quad
-\text{\citep{dubey2021activations}}\end{aligned}\]</span></p>
+    &amp; \quad \text{\citep{dubey2021activations}}
+\end{aligned}\]</span></p>
 <p><span class="math display">\[\begin{aligned}
   \text{BReLU}(x) &amp;= \min\!\big(\max(0,x),\,t\big),\quad t=1.0
     &amp; \text{Rango: } [0,t],\;\text{rectificador acotado}
@@ -9020,7 +9444,8 @@ logarítmica}
   \text{LiSHT}(x) &amp;= x\,\tanh(x)
     &amp; \text{Rango: } [0,\infty)\;\text{(magnitud), no monótona,
 suave}
-    &amp; \quad \text{\citep{roy2019lisht}}\end{aligned}\]</span></p>
+    &amp; \quad \text{\citep{roy2019lisht}}
+\end{aligned}\]</span></p>
 <p><strong>PReLU</strong> <span class="citation"
 data-cites="he2015prelu"></span> convierte la pendiente negativa en un
 parámetro aprendible por canal, permitiendo a la red aprender la fuga
@@ -9060,8 +9485,8 @@ x\ge 0 \\
   \text{MPELU}(x) &amp;=
 \text{ReLU}(x)+\beta\cdot\text{ELU}_{\alpha}(x)\cdot\mathbb{1}_{x&lt;0}
     &amp; \alpha,\beta\text{ aprendibles por canal}
-    &amp; \quad
-\text{\citep{dubey2021activations}}\end{aligned}\]</span></p>
+    &amp; \quad \text{\citep{dubey2021activations}}
+\end{aligned}\]</span></p>
 <p><span class="math display">\[\begin{aligned}
   \text{FELU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ \alpha(e^{x}-1)
 &amp; x&lt;0 \end{cases}
@@ -9087,8 +9512,8 @@ x\ge 0 \\
 \alpha&lt;0
     \end{cases}
     &amp; \alpha\text{ aprendible; interp.\ exp/lineal/log}
-    &amp; \quad
-\text{\citep{godfrey2015softexp}}\end{aligned}\]</span></p>
+    &amp; \quad \text{\citep{godfrey2015softexp}}
+\end{aligned}\]</span></p>
 <p><span class="math display">\[\begin{aligned}
   \text{ELiSH}(x) &amp;= \begin{cases} x\,\sigma(x) &amp; x\ge 0 \\
     (e^{x}-1)\,\sigma(x) &amp; x&lt;0 \end{cases}
@@ -9098,8 +9523,8 @@ x\ge 0 \\
 &amp; x\ge 0 \\
     (e^{x}-1)\cdot\text{hard\_sigmoid}(x) &amp; x&lt;0 \end{cases}
     &amp; \text{Variante con sigmoide rígida de ELiSH}
-    &amp; \quad
-\text{\citep{basirat2019elish}}\end{aligned}\]</span></p>
+    &amp; \quad \text{\citep{basirat2019elish}}
+\end{aligned}\]</span></p>
 <p>donde <span
 class="math inline">\(\text{hard\_sigmoid}(x)=\text{ReLU6}(x+3)/6\)</span>.</p>
 <p><strong>ELU</strong> <span class="citation"
