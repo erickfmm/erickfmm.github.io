@@ -828,11 +828,8 @@ pre {
       <label for="cmd-select">Select Command</label>
       <select id="cmd-select" onchange="updateCmdPreview()">
         <option value="train">Train — Run main training</option>
-        <option value="deploy">Deploy — Convert to deployment artifacts</option>
-        <option value="quantize">Quantize — Export quantized format</option>
-        <option value="infer">Infer — Run deployed model inference</option>
-        <option value="sbert-train">SBERT Train — Train SBERT model</option>
-        <option value="sbert-infer">SBERT Infer — Run SBERT inference</option>
+        <option value="deploy">Deploy — Convert to deployment artifacts / export formats</option>
+        <option value="infer">Infer — Run deployed model or SBERT inference</option>
       </select>
       <p id="cmd-info" class="info"></p>
     </div>
@@ -870,32 +867,33 @@ pre {
       <div id="opt-deploy" class="cmd-opt-group" style="display:none">
         <div><label for="opt-deploy-checkpoint">--checkpoint</label><input type="text" id="opt-deploy-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
         <div><label for="opt-deploy-output">--output</label><input type="text" id="opt-deploy-output" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
-        <div><label for="opt-deploy-format">--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--format quantized">quantized</option><option value="--format standard">standard</option></select></div>
+        <div><label for="opt-deploy-format">--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default: quantized)</option><option value="--format quantized">quantized</option><option value="--format standard">standard</option><option value="--format transformers">transformers</option><option value="--format gguf">gguf</option></select></div>
+        <div><label for="opt-deploy-yaml">--yaml</label><input type="text" id="opt-deploy-yaml" oninput="updateCmdPreview()" placeholder="config.yaml (required for transformers/gguf)"></div>
         <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-validate" onchange="updateCmdPreview()"><label for="opt-deploy-validate">--validate</label></div>
-      </div>
-      <div id="opt-quantize" class="cmd-opt-group" style="display:none">
-        <div><label for="opt-quant-checkpoint">--checkpoint</label><input type="text" id="opt-quant-checkpoint" oninput="updateCmdPreview()" placeholder="path/to/checkpoint.pt"></div>
-        <div><label for="opt-quant-output">--output</label><input type="text" id="opt-quant-output" oninput="updateCmdPreview()" placeholder="deployed_model_quantized"></div>
-        <div class="checkbox-wrap"><input type="checkbox" id="opt-quant-validate" onchange="updateCmdPreview()"><label for="opt-quant-validate">--validate</label></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-check" onchange="updateCmdPreview()"><label for="opt-deploy-check">--check (gguf compatibility check only)</label></div>
       </div>
       <div id="opt-infer" class="cmd-opt-group" style="display:none">
-        <div><label for="opt-infer-text">--text</label><input type="text" id="opt-infer-text" oninput="updateCmdPreview()" placeholder="Input text"></div>
         <div><label for="opt-infer-model">--model</label><input type="text" id="opt-infer-model" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
-        <div class="row"><div><label for="opt-infer-input">--input</label><input type="text" id="opt-infer-input" oninput="updateCmdPreview()" placeholder="texts.txt"></div>
-        <div><label for="opt-infer-output">--output</label><input type="text" id="opt-infer-output" oninput="updateCmdPreview()" placeholder="preds.pt"></div></div>
-        <div><label for="opt-infer-batch">--batch-size</label><input type="number" id="opt-infer-batch" oninput="updateCmdPreview()" value="" placeholder="8"></div>
-        <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark" onchange="updateCmdPreview()"><label for="opt-infer-benchmark">--benchmark</label></div>
-      </div>
-      <div id="opt-sbert-train" class="cmd-opt-group" style="display:none">
-        <div><label for="opt-sbert-train-out">--output_dir</label><input type="text" id="opt-sbert-train-out" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
-        <div><label for="opt-sbert-train-bs">--batch_size</label><input type="number" id="opt-sbert-train-bs" oninput="updateCmdPreview()" value="16"></div>
-        <div><label for="opt-sbert-train-epochs">--epochs</label><input type="number" id="opt-sbert-train-epochs" oninput="updateCmdPreview()" value="4"></div>
-        <div><label for="opt-sbert-pooling">--pooling_mode</label><select id="opt-sbert-pooling" onchange="updateCmdPreview()"><option value="">(default)</option><option value="--pooling_mode mean">mean</option><option value="--pooling_mode max">max</option><option value="--pooling_mode cls">cls</option></select></div>
-      </div>
-      <div id="opt-sbert-infer" class="cmd-opt-group" style="display:none">
-        <div><label for="opt-sbert-infer-path">--model_path</label><input type="text" id="opt-sbert-infer-path" oninput="updateCmdPreview()" placeholder="./output/sbert_model"></div>
-        <div><label for="opt-sbert-infer-mode">--mode</label><select id="opt-sbert-infer-mode" onchange="updateCmdPreview();updateSbertInferExtra()"><option value="--mode similarity" selected>similarity</option><option value="--mode search">search</option><option value="--mode cluster">cluster</option><option value="--mode encode">encode</option></select></div>
-        <div id="opt-sbert-infer-extra"></div>
+        <div><label for="opt-infer-task">--task</label><select id="opt-infer-task" onchange="updateCmdPreview();updateInferTaskExtra()"><option value="">(default: mlm)</option><option value="--task mlm">mlm</option><option value="--task sbert">sbert</option></select></div>
+        <div id="opt-infer-mlm-extra">
+          <div><label for="opt-infer-text">--text</label><input type="text" id="opt-infer-text" oninput="updateCmdPreview()" placeholder="Input text"></div>
+          <div class="row"><div><label for="opt-infer-input">--input</label><input type="text" id="opt-infer-input" oninput="updateCmdPreview()" placeholder="texts.txt"></div>
+          <div><label for="opt-infer-output">--output</label><input type="text" id="opt-infer-output" oninput="updateCmdPreview()" placeholder="preds.pt"></div></div>
+          <div><label for="opt-infer-batch">--batch-size</label><input type="number" id="opt-infer-batch" oninput="updateCmdPreview()" value="" placeholder="8"></div>
+          <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark" onchange="updateCmdPreview()"><label for="opt-infer-benchmark">--benchmark</label></div>
+        </div>
+        <div id="opt-infer-sbert-extra" style="display:none">
+          <div><label for="opt-infer-mode">--mode</label><select id="opt-infer-mode" onchange="updateCmdPreview()"><option value="--mode similarity" selected>similarity</option><option value="--mode search">search</option><option value="--mode cluster">cluster</option><option value="--mode encode">encode</option></select></div>
+          <div class="row"><div><label for="opt-infer-sentence1">--sentence1</label><input type="text" id="opt-infer-sentence1" oninput="updateCmdPreview()" placeholder="First sentence"></div>
+          <div><label for="opt-infer-sentence2">--sentence2</label><input type="text" id="opt-infer-sentence2" oninput="updateCmdPreview()" placeholder="Second sentence"></div></div>
+          <div class="row"><div><label for="opt-infer-query">--query</label><input type="text" id="opt-infer-query" oninput="updateCmdPreview()" placeholder="Search query"></div>
+          <div><label for="opt-infer-corpus">--corpus-file</label><input type="text" id="opt-infer-corpus" oninput="updateCmdPreview()" placeholder="corpus.txt"></div></div>
+          <div class="row"><div><label for="opt-infer-sentences-file">--sentences-file</label><input type="text" id="opt-infer-sentences-file" oninput="updateCmdPreview()" placeholder="sentences.txt"></div>
+          <div><label for="opt-infer-output-file">--output-file</label><input type="text" id="opt-infer-output-file" oninput="updateCmdPreview()" placeholder="embeddings.npz"></div></div>
+          <div class="row"><div><label for="opt-infer-top-k">--top-k</label><input type="number" id="opt-infer-top-k" oninput="updateCmdPreview()" value="5"></div>
+          <div><label for="opt-infer-n-clusters">--n-clusters</label><input type="number" id="opt-infer-n-clusters" oninput="updateCmdPreview()" value="5"></div></div>
+          <div><label for="opt-infer-sbert-batch">--batch-size</label><input type="number" id="opt-infer-sbert-batch" oninput="updateCmdPreview()" value="32"></div>
+        </div>
       </div>
     </details>
     <p id="full-cmd-display" class="info" style="margin-top:8px;"></p>
@@ -2454,7 +2452,7 @@ function updateCmdPreview() {
 
   // Show/hide command-specific optional groups
   document.querySelectorAll('.cmd-opt-group').forEach(g => g.style.display = 'none');
-  const optGroup = document.getElementById('opt-' + selectedCmd.replace('sbert-', 'sbert-'));
+  const optGroup = document.getElementById('opt-' + selectedCmd);
   if (optGroup) optGroup.style.display = 'block';
 
   // Build optional flags
@@ -2475,69 +2473,57 @@ function updateCmdPreview() {
     if (out) addFlag(extraFlags, '--output', out.value);
     const fmt = document.getElementById('opt-deploy-format');
     if (fmt && fmt.value) extraFlags.push(fmt.value);
+    const yml = document.getElementById('opt-deploy-yaml');
+    if (yml) addFlag(extraFlags, '--yaml', yml.value);
     const val = document.getElementById('opt-deploy-validate');
     if (val && val.checked) extraFlags.push('--validate');
-  }
-  if (selectedCmd === 'quantize') {
-    const cp = document.getElementById('opt-quant-checkpoint');
-    if (cp) addFlag(extraFlags, '--checkpoint', cp.value);
-    const out = document.getElementById('opt-quant-output');
-    if (out) addFlag(extraFlags, '--output', out.value);
-    const val = document.getElementById('opt-quant-validate');
-    if (val && val.checked) extraFlags.push('--validate');
+    const chk = document.getElementById('opt-deploy-check');
+    if (chk && chk.checked) extraFlags.push('--check');
   }
   if (selectedCmd === 'infer') {
-    const txt = document.getElementById('opt-infer-text');
-    if (txt) addFlag(extraFlags, '--text', txt.value);
     const mdl = document.getElementById('opt-infer-model');
     if (mdl) addFlag(extraFlags, '--model', mdl.value);
-    const inp = document.getElementById('opt-infer-input');
-    if (inp) addFlag(extraFlags, '--input', inp.value);
-    const oup = document.getElementById('opt-infer-output');
-    if (oup) addFlag(extraFlags, '--output', oup.value);
-    const bs = document.getElementById('opt-infer-batch');
-    if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
-    const bm = document.getElementById('opt-infer-benchmark');
-    if (bm && bm.checked) extraFlags.push('--benchmark');
-  }
-  if (selectedCmd === 'sbert-train') {
-    const out = document.getElementById('opt-sbert-train-out');
-    if (out) addFlag(extraFlags, '--output_dir', out.value);
-    const bs = document.getElementById('opt-sbert-train-bs');
-    if (bs && bs.value) addFlag(extraFlags, '--batch_size', bs.value, { quote: false });
-    const ep = document.getElementById('opt-sbert-train-epochs');
-    if (ep && ep.value) addFlag(extraFlags, '--epochs', ep.value, { quote: false });
-    const pm = document.getElementById('opt-sbert-pooling');
-    if (pm && pm.value) extraFlags.push(pm.value);
-  }
-  if (selectedCmd === 'sbert-infer') {
-    const mp = document.getElementById('opt-sbert-infer-path');
-    if (mp) addFlag(extraFlags, '--model_path', mp.value);
-    const mode = document.getElementById('opt-sbert-infer-mode');
-    if (mode && mode.value) extraFlags.push(mode.value);
-    // sbert-infer extra sub-fields
-    const extraDiv = document.getElementById('opt-sbert-infer-extra');
-    if (extraDiv) {
-      const inputs = extraDiv.querySelectorAll('input, select');
-      inputs.forEach(el => {
-        if (el.type === 'checkbox' && el.checked) {
-          const label = el.dataset.flag;
-          if (label) extraFlags.push(label);
-          return;
-        }
-        if (el.value && el.value.trim()) {
-          const label = el.dataset.flag;
-          if (label) addFlag(extraFlags, label, el.value, { quote: el.type !== 'number' });
-        }
-      });
+    const task = document.getElementById('opt-infer-task');
+    const sbert = task && task.value === '--task sbert';
+    if (sbert) {
+      extraFlags.push('--task sbert');
+      const mode = document.getElementById('opt-infer-mode');
+      if (mode && mode.value) extraFlags.push(mode.value);
+      const s1 = document.getElementById('opt-infer-sentence1');
+      if (s1) addFlag(extraFlags, '--sentence1', s1.value);
+      const s2 = document.getElementById('opt-infer-sentence2');
+      if (s2) addFlag(extraFlags, '--sentence2', s2.value);
+      const q = document.getElementById('opt-infer-query');
+      if (q) addFlag(extraFlags, '--query', q.value);
+      const corpus = document.getElementById('opt-infer-corpus');
+      if (corpus) addFlag(extraFlags, '--corpus-file', corpus.value);
+      const topK = document.getElementById('opt-infer-top-k');
+      if (topK && topK.value) addFlag(extraFlags, '--top-k', topK.value, { quote: false });
+      const sfile = document.getElementById('opt-infer-sentences-file');
+      if (sfile) addFlag(extraFlags, '--sentences-file', sfile.value);
+      const nClusters = document.getElementById('opt-infer-n-clusters');
+      if (nClusters && nClusters.value) addFlag(extraFlags, '--n-clusters', nClusters.value, { quote: false });
+      const ofile = document.getElementById('opt-infer-output-file');
+      if (ofile) addFlag(extraFlags, '--output-file', ofile.value);
+      const bs = document.getElementById('opt-infer-sbert-batch');
+      if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
+    } else {
+      const txt = document.getElementById('opt-infer-text');
+      if (txt) addFlag(extraFlags, '--text', txt.value);
+      const inp = document.getElementById('opt-infer-input');
+      if (inp) addFlag(extraFlags, '--input', inp.value);
+      const oup = document.getElementById('opt-infer-output');
+      if (oup) addFlag(extraFlags, '--output', oup.value);
+      const bs = document.getElementById('opt-infer-batch');
+      if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
+      const bm = document.getElementById('opt-infer-benchmark');
+      if (bm && bm.checked) extraFlags.push('--benchmark');
     }
   }
 
   let cmd = 'frankenstein-transformer ' + selectedCmd;
-  if (['train', 'deploy', 'quantize'].includes(selectedCmd)) {
-    if (selectedCmd !== 'train' || !extraFlags.some(f => f.startsWith('--config-name') || f === '--list-configs')) {
-      cmd += ' --config ' + shellQuote(outputPath);
-    }
+  if (selectedCmd === 'train' && !extraFlags.some(f => f === '--list-configs')) {
+    cmd += ' --config ' + shellQuote(outputPath);
   }
   if (extraFlags.length > 0) cmd += ' ' + extraFlags.join(' ');
   document.getElementById('cmd-preview').textContent = cmd;
@@ -2545,27 +2531,13 @@ function updateCmdPreview() {
     `nohup ${cmd} > ./nohup_web.out 2>&1 &`;
 }
 
-function updateSbertInferExtra() {
-  const modeEl = document.getElementById('opt-sbert-infer-mode');
-  const mode = modeEl ? modeEl.value : '';
-  const container = document.getElementById('opt-sbert-infer-extra');
-  if (!container) return;
-  let html = '';
-  if (mode === '--mode similarity') {
-    html = `<div><label>--sentence1</label><input type="text" data-flag="--sentence1" oninput="updateCmdPreview()"></div>
-            <div><label>--sentence2</label><input type="text" data-flag="--sentence2" oninput="updateCmdPreview()"></div>`;
-  } else if (mode === '--mode search') {
-    html = `<div><label>--query</label><input type="text" data-flag="--query" oninput="updateCmdPreview()"></div>
-            <div><label>--corpus_file</label><input type="text" data-flag="--corpus_file" oninput="updateCmdPreview()" placeholder="corpus.txt"></div>
-            <div><label>--top_k</label><input type="number" data-flag="--top_k" oninput="updateCmdPreview()" value="5"></div>`;
-  } else if (mode === '--mode cluster') {
-    html = `<div><label>--sentences_file</label><input type="text" data-flag="--sentences_file" oninput="updateCmdPreview()" placeholder="sentences.txt"></div>
-            <div><label>--n_clusters</label><input type="number" data-flag="--n_clusters" oninput="updateCmdPreview()" value="5"></div>`;
-  } else if (mode === '--mode encode') {
-    html = `<div><label>--input_file</label><input type="text" data-flag="--input_file" oninput="updateCmdPreview()" placeholder="sentences.txt"></div>
-            <div><label>--output_file</label><input type="text" data-flag="--output_file" oninput="updateCmdPreview()" placeholder="embeddings.npz"></div>`;
-  }
-  container.innerHTML = html;
+function updateInferTaskExtra() {
+  const taskEl = document.getElementById('opt-infer-task');
+  const sbert = taskEl && taskEl.value === '--task sbert';
+  const mlmExtra = document.getElementById('opt-infer-mlm-extra');
+  const sbertExtra = document.getElementById('opt-infer-sbert-extra');
+  if (mlmExtra) mlmExtra.style.display = sbert ? 'none' : 'block';
+  if (sbertExtra) sbertExtra.style.display = sbert ? 'block' : 'none';
   updateCmdPreview();
 }
 
