@@ -267,6 +267,23 @@ input[type="checkbox"] { width: auto; margin-right: 6px; accent-color: var(--acc
 .status-banner:empty {
   display: none;
 }
+/* Compatibility warnings — non-blocking counterpart of .error-summary. */
+.warning-summary {
+  border: 1px solid rgba(210, 153, 29, 0.6);
+  background: rgba(210, 153, 29, 0.12);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.warning-summary:empty { display: none; }
+.warning-summary ul { margin: 6px 0 0 18px; padding: 0; }
+.field-warn {
+  color: var(--warning);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.is-warn { border-color: var(--warning) !important; }
 .status-banner[data-tone="success"] {
   border-color: rgba(63, 185, 80, 0.55);
   background: rgba(63, 185, 80, 0.12);
@@ -805,6 +822,7 @@ pre {
   <div class="tab-content active" id="tab-builder" role="tabpanel" aria-labelledby="tab-button-builder">
     <div id="builder-status" class="info" aria-live="polite"></div>
     <div id="validation-summary" class="error-summary" role="alert" aria-live="assertive"></div>
+    <div id="warnings-summary" class="warning-summary" role="status" aria-live="polite"></div>
     <div id="param-estimate" class="param-estimate-banner" aria-live="polite" hidden></div>
     <div id="model-section"></div>
     <div id="training-section"></div>
@@ -999,6 +1017,34 @@ const UI = {
   sbertRequiredForSbert: { en:'sbert is required when task is sbert.', es:'sbert es obligatorio cuando task es sbert.' },
   nameOrPathRequiredForMlm: { en:'tokenizer.name_or_path is required for MLM with a base model.', es:'tokenizer.name_or_path es obligatorio para MLM con un modelo base.' },
   taskRequiredWithBaseModel: { en:'task is required when using a base model.', es:'task es obligatorio al usar un modelo base.' },
+  warningsSummaryTitle: { en:'⚠️ Compatibility warnings:', es:'⚠️ Avisos de compatibilidad:' },
+  visionImageConfig: { en:'Vision Image Configuration', es:'Configuración de Imagen de Visión' },
+  visionDatasetConfig: { en:'Vision Dataset Configuration', es:'Configuración de Dataset de Visión' },
+  textDatasetConfig: { en:'Text Dataset Configuration', es:'Configuración de Dataset de Texto' },
+  noTaskOptions: { en:'No task-specific options (forward-compatibility block).', es:'Sin opciones específicas de tarea (bloque de compatibilidad hacia adelante).' },
+  causalLmRequiresDecoder: { en:'task causal_lm requires model_class frankensteindecoder.', es:'task causal_lm requiere model_class frankensteindecoder.' },
+  textClassificationRequiresFrankenstein: { en:'task text_classification requires model_class frankenstein.', es:'task text_classification requiere model_class frankenstein.' },
+  visionTaskRequiresVit: { en:'vision tasks require model_class frankenstein_vit.', es:'las tareas de visión requieren model_class frankenstein_vit.' },
+  imageRequiredForVisionTask: { en:'image block is required for vision tasks (image_size + patch_size).', es:'el bloque image es obligatorio para tareas de visión (image_size + patch_size).' },
+  numClassesRequiredForClassification: { en:'image.num_classes is required for task classification.', es:'image.num_classes es obligatorio para task classification.' },
+  visionDatasetRequiredForVisionTask: { en:'vision_dataset block is required for vision tasks.', es:'el bloque vision_dataset es obligatorio para tareas de visión.' },
+  hiddenSizeDivisibility: { en:'model.dims.hidden_size must be divisible by model.dims.num_heads.', es:'model.dims.hidden_size debe ser divisible por model.dims.num_heads.' },
+  kvHeadsDivisibility: { en:'model.dims.num_kv_heads must divide model.dims.num_heads exactly.', es:'model.dims.num_kv_heads debe dividir exactamente a model.dims.num_heads.' },
+  patchDivisibility: { en:'image.image_size height/width must be divisible by image.patch_size.', es:'image.image_size (alto/ancho) debe ser divisible por image.patch_size.' },
+  bitnetRoutersRequireBitnet: { en:'bitnet_routers=true requires use_bitnet=true.', es:'bitnet_routers=true requiere use_bitnet=true.' },
+  ssogRequiresEncoder: { en:'layer_pattern with ssog_attn requires model.dims.mode=encoder.', es:'layer_pattern con ssog_attn requiere model.dims.mode=encoder.' },
+  tokenizerSourceConflict: { en:'tokenizer.name_or_path must be omitted when source=train_from_dataset.', es:'tokenizer.name_or_path debe omitirse cuando source=train_from_dataset.' },
+  tokenizerSourceNotIncluded: { en:'include the tokenizer.source key (checkbox) for train_from_dataset to take effect.', es:'incluye la clave tokenizer.source (checkbox) para que train_from_dataset tenga efecto.' },
+  tokenizerTrainingRequired: { en:'tokenizer.training is required when source=train_from_dataset.', es:'tokenizer.training es obligatorio cuando source=train_from_dataset.' },
+  tokenizerVocabRequired: { en:'tokenizer.training.vocab_size is required for bpe/wordpiece/wordlevel.', es:'tokenizer.training.vocab_size es obligatorio para bpe/wordpiece/wordlevel.' },
+  warnDecoderForcesMode: { en:'frankensteindecoder forces model.dims.mode=decoder at runtime.', es:'frankensteindecoder fuerza model.dims.mode=decoder en runtime.' },
+  warnVitForcesMode: { en:'frankenstein_vit forces model.dims.mode=encoder at runtime.', es:'frankenstein_vit fuerza model.dims.mode=encoder en runtime.' },
+  warnBaseModelIgnoresModel: { en:'the base_model path ignores the model/model_class blocks.', es:'la ruta base_model ignora los bloques model/model_class.' },
+  warnBitnetConvNeedsConv: { en:'use_bitnet_conv=true has no effect unless model.embedding.conv.enabled=true.', es:'use_bitnet_conv=true no tiene efecto salvo model.embedding.conv.enabled=true.' },
+  warnMoeDisabled: { en:'use_moe=false ignores num_experts/top_k_experts.', es:'use_moe=false ignora num_experts/top_k_experts.' },
+  warnTopKExceedsExperts: { en:'top_k_experts must be <= num_experts.', es:'top_k_experts debe ser <= num_experts.' },
+  warnBlockIgnored: { en:'this block is ignored for the selected task.', es:'este bloque se ignora para la tarea seleccionada.' },
+  warnTokenizerIgnored: { en:'the tokenizer block only applies to mlm/causal_lm/text_classification.', es:'el bloque tokenizer solo aplica a mlm/causal_lm/text_classification.' },
 };
 
 const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
@@ -1008,6 +1054,7 @@ async function init() {
   loadSchema();
   populateRepoExamples();
   initMermaid();
+  initBuilderLiveRefresh();
 }
 
 async function loadSchema() {
@@ -1196,8 +1243,36 @@ function setFieldError(element, message) {
 
 function clearValidationState() {
   document.querySelectorAll('.is-invalid').forEach(el => clearFieldError(el));
+  document.querySelectorAll('.is-warn').forEach(el => clearFieldWarn(el));
   const summary = document.getElementById('validation-summary');
   if (summary) summary.innerHTML = '';
+  const warnings = document.getElementById('warnings-summary');
+  if (warnings) warnings.innerHTML = '';
+}
+
+// Inline warning badge — non-blocking counterpart of setFieldError.
+function setFieldWarn(element, message) {
+  if (!element || !element.id) return;
+  clearFieldWarn(element);
+  element.classList.add('is-warn');
+  const warn = document.createElement('div');
+  warn.id = `${element.id}__warn`;
+  warn.className = 'field-warn';
+  warn.textContent = '⚠ ' + message;
+  const desc = element.getAttribute('aria-describedby');
+  element.setAttribute('aria-describedby', [desc, warn.id].filter(Boolean).join(' '));
+  element.insertAdjacentElement('afterend', warn);
+}
+
+function clearFieldWarn(element) {
+  if (!element) return;
+  element.classList.remove('is-warn');
+  const describedBy = element.getAttribute('aria-describedby') || '';
+  const tokens = describedBy.split(/\s+/).filter(Boolean).filter(token => !token.endsWith('__warn'));
+  if (tokens.length) element.setAttribute('aria-describedby', tokens.join(' '));
+  else element.removeAttribute('aria-describedby');
+  const existing = document.getElementById(`${element.id}__warn`);
+  if (existing) existing.remove();
 }
 
 function shellQuote(value) {
@@ -1316,7 +1391,7 @@ function validateBuilder() {
     const sbertProps = (SCHEMA.properties.training.properties.sbert.properties) || {};
     const anyIncluded = Object.keys(sbertProps).some(prop => isFieldIncluded('training.sbert.' + prop));
     if (!anyIncluded) {
-      const sbertSection = document.getElementById('sbert-section');
+      const sbertSection = document.getElementById('training-sbert-section');
       addError(sbertSection ? sbertSection.querySelector('input, select, textarea') : null, t('sbertRequiredForSbert'));
     }
   }
@@ -1343,6 +1418,126 @@ function validateBuilder() {
     }
   }
 
+  // Rule: task ↔ model_class matrix (schema/_conditional_rules.yaml, enforced
+  // at runtime by src/training/config_loader.py).
+  const modelClassValue = isCustomMode ? getSelectedModelClass() : '';
+  if (isCustomMode && currentTask) {
+    if (currentTask === 'causal_lm' && modelClassValue !== 'frankensteindecoder') {
+      addError(document.getElementById(createId('model_class')), t('causalLmRequiresDecoder'));
+    }
+    if (currentTask === 'text_classification' && modelClassValue !== 'frankenstein') {
+      addError(document.getElementById(createId('model_class')), t('textClassificationRequiresFrankenstein'));
+    }
+    if (VISION_TASKS.includes(currentTask) && modelClassValue !== 'frankenstein_vit') {
+      addError(document.getElementById(createId('model_class')), t('visionTaskRequiresVit'));
+    }
+  }
+
+  // Rule: vision tasks require image (image_size + patch_size, + num_classes
+  // for classification) and vision_dataset blocks; patch_size must divide
+  // image_size (runtime: frankenstein_vit.py).
+  if (isCustomMode && VISION_TASKS.includes(currentTask) && modelClassValue === 'frankenstein_vit') {
+    const imgHEl = document.getElementById(createId('image.image_size.height'));
+    const imgWEl = document.getElementById(createId('image.image_size.width'));
+    const patchEl = document.getElementById(createId('image.patch_size'));
+    const imgOk = isFieldIncluded('image.image_size.height') && isFieldIncluded('image.image_size.width') &&
+      imgHEl && parseFloat(imgHEl.value) > 0 && imgWEl && parseFloat(imgWEl.value) > 0;
+    const patchOk = patchEl && isFieldIncluded('image.patch_size') && parseFloat(patchEl.value) > 0;
+    if (!imgOk || !patchOk) {
+      addError(patchEl || imgHEl, t('imageRequiredForVisionTask'));
+    }
+    if (currentTask === 'classification') {
+      const ncEl = document.getElementById(createId('image.num_classes'));
+      if (!ncEl || !isFieldIncluded('image.num_classes') || !(parseFloat(ncEl.value) > 0)) {
+        addError(ncEl, t('numClassesRequiredForClassification'));
+      }
+    }
+    const vdHasProps = SCHEMA.properties.vision_dataset &&
+      Object.keys(SCHEMA.properties.vision_dataset.properties || {})
+        .some(prop => isFieldIncluded('vision_dataset.' + prop));
+    if (!vdHasProps) {
+      addError(document.getElementById(createId('vision_dataset.dataset_name')), t('visionDatasetRequiredForVisionTask'));
+    }
+    if (imgOk && patchOk) {
+      const h = parseFloat(imgHEl.value), w = parseFloat(imgWEl.value), p = parseFloat(patchEl.value);
+      if ((h % p !== 0) || (w % p !== 0)) addError(patchEl, t('patchDivisibility'));
+    }
+  }
+
+  // Rule: dims divisibility + BitNet flags (runtime FrankensteinModelConfig
+  // __post_init__ / config_loader._validate_bitnet_flags).
+  if (isCustomMode) {
+    const hsEl = document.getElementById(createId('model.dims.hidden_size'));
+    const nhEl = document.getElementById(createId('model.dims.num_heads'));
+    if (hsEl && nhEl && hsEl.value !== '' && nhEl.value !== '') {
+      const hs = parseFloat(hsEl.value), nh = parseFloat(nhEl.value);
+      if (nh > 0 && hs % nh !== 0) addError(hsEl, t('hiddenSizeDivisibility'));
+    }
+    const kvEl = document.getElementById(createId('model.dims.num_kv_heads'));
+    if (kvEl && nhEl && kvEl.value !== '' && nhEl.value !== '') {
+      const nh = parseFloat(nhEl.value), kv = parseFloat(kvEl.value);
+      if (kv > 0 && nh % kv !== 0) addError(kvEl, t('kvHeadsDivisibility'));
+    }
+    const brEl = document.getElementById(createId('model.bitnet_routers'));
+    const ubEl = document.getElementById(createId('model.use_bitnet'));
+    if (brEl && ubEl && brEl.checked && !ubEl.checked) {
+      addError(brEl, t('bitnetRoutersRequireBitnet'));
+    }
+    // ssog_attn requires encoder mode (_conditional_rules.yaml).
+    const lpId = createId('model.dims.layer_pattern');
+    let pattern = null;
+    const lpHidden = document.getElementById(lpId);
+    if (lpHidden) {
+      try { pattern = JSON.parse(lpHidden.value); } catch (error) { pattern = null; }
+    } else {
+      pattern = [];
+      document.querySelectorAll(`.array-cb[data-field="${lpId}"]`).forEach(cb => {
+        if (cb.checked) pattern.push(cb.value);
+      });
+    }
+    const dimsModeEl = document.getElementById(createId('model.dims.mode'));
+    if (Array.isArray(pattern) && pattern.includes('ssog_attn') &&
+        dimsModeEl && dimsModeEl.value && dimsModeEl.value !== 'encoder') {
+      addError(dimsModeEl, t('ssogRequiresEncoder'));
+    }
+  }
+
+  // Rule: tokenizer source ↔ name_or_path mutual exclusion, and the
+  // train_from_dataset sub-object requirements (schema/_conditional_rules.yaml).
+  {
+    const srcEl = document.getElementById(createId('tokenizer.source'));
+    const nameEl = document.getElementById(createId('tokenizer.name_or_path'));
+    // The effective source follows the include toggle: an excluded key falls
+    // back to the runtime default (hf_repo).
+    const source = (srcEl && isFieldIncluded('tokenizer.source')) ? srcEl.value : 'hf_repo';
+    if (srcEl && srcEl.value === 'train_from_dataset' && !isFieldIncluded('tokenizer.source')) {
+      addError(srcEl, t('tokenizerSourceNotIncluded'));
+    }
+    if (source === 'train_from_dataset') {
+      if (nameEl && nameEl.value && nameEl.value.trim()) {
+        addError(nameEl, t('tokenizerSourceConflict'));
+      }
+      const trProps = (SCHEMA.properties.tokenizer.properties.training.properties) || {};
+      const anyTrIncluded = Object.keys(trProps).some(prop => isFieldIncluded('tokenizer.training.' + prop));
+      if (!anyTrIncluded) {
+        addError(document.getElementById(createId('tokenizer.training.algorithm')), t('tokenizerTrainingRequired'));
+      } else {
+        // Algorithm excluded -> runtime default is bpe, which needs vocab_size.
+        const algEl = document.getElementById(createId('tokenizer.training.algorithm'));
+        const alg = (algEl && isFieldIncluded('tokenizer.training.algorithm')) ? algEl.value : 'bpe';
+        if (alg !== 'unigram') {
+          const vocabEl = document.getElementById(createId('tokenizer.training.vocab_size'));
+          if (!vocabEl || !isFieldIncluded('tokenizer.training.vocab_size') || !(parseFloat(vocabEl.value) > 0)) {
+            addError(vocabEl, t('tokenizerVocabRequired'));
+          }
+        }
+      }
+    }
+  }
+
+  // Non-blocking compatibility warnings (amber box + inline badges).
+  checkConflicts();
+
   const summary = document.getElementById('validation-summary');
   if (summary) {
     if (errors.length) {
@@ -1353,6 +1548,81 @@ function validateBuilder() {
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+// ====== COMPATIBILITY WARNINGS ======
+// Non-blocking warnings for option combinations that clash, are silently
+// ignored, or get forced at runtime. Rendered in the amber warnings-summary
+// box plus an inline badge on each involved field. Errors (validateBuilder)
+// block the output; warnings only inform.
+function checkConflicts() {
+  const warnings = [];
+  const addWarn = (element, message) => {
+    if (element) setFieldWarn(element, message);
+    warnings.push({ id: element && element.id ? element.id : '', message });
+  };
+  const isCustom = !isBaseModeSelected();
+  const task = getSelectedTask();
+  const anyIncludedAt = (prefix) => Array.from(document.querySelectorAll(
+    `input[data-include^="${prefix}."], input[data-include="${prefix}"]`))
+    .some(cb => cb.checked && !cb.disabled);
+
+  if (isCustom) {
+    const mc = getSelectedModelClass();
+    // Runtime mode forcing (frankenstein_model.py presets).
+    const dimsModeEl = document.getElementById(createId('model.dims.mode'));
+    if (mc === 'frankensteindecoder' && dimsModeEl && dimsModeEl.value === 'encoder') {
+      addWarn(dimsModeEl, t('warnDecoderForcesMode'));
+    }
+    if (mc === 'frankenstein_vit' && dimsModeEl && dimsModeEl.value === 'decoder') {
+      addWarn(dimsModeEl, t('warnVitForcesMode'));
+    }
+    // MoE no-ops / contradictions.
+    const moeEl = document.getElementById(createId('model.use_moe'));
+    const neEl = document.getElementById(createId('model.num_experts'));
+    const tkEl = document.getElementById(createId('model.top_k_experts'));
+    if (moeEl && !moeEl.checked &&
+        ((neEl && parseFloat(neEl.value) > 1) || (tkEl && parseFloat(tkEl.value) > 1))) {
+      addWarn(moeEl, t('warnMoeDisabled'));
+    }
+    if (neEl && tkEl && neEl.value !== '' && tkEl.value !== '' &&
+        parseFloat(tkEl.value) > parseFloat(neEl.value)) {
+      addWarn(tkEl, t('warnTopKExceedsExperts'));
+    }
+    // use_bitnet_conv is a no-op without the embedding conv.
+    const bcvEl = document.getElementById(createId('model.use_bitnet_conv'));
+    const convEl = document.getElementById(createId('model.embedding.conv.enabled'));
+    if (bcvEl && bcvEl.checked && convEl && !convEl.checked) {
+      addWarn(bcvEl, t('warnBitnetConvNeedsConv'));
+    }
+  } else {
+    // base_model path ignores the model/model_class blocks entirely
+    // (src/training/config_loader.py).
+    if (anyIncludedAt('model') || anyIncludedAt('model_class')) {
+      addWarn(document.getElementById(createId('base_model')), t('warnBaseModelIgnoresModel'));
+    }
+  }
+
+  // Cross-task blocks: text_dataset ignored outside text tasks, vision blocks
+  // ignored outside the ViT/vision scope, tokenizer ignored for tasks that
+  // never read it (sbert / vision tasks).
+  if (!TEXT_TASKS.includes(task) && anyIncludedAt('text_dataset')) {
+    addWarn(document.getElementById(createId('text_dataset.dataset_name')), t('warnBlockIgnored'));
+  }
+  if (!isVisionTaskSelected() && getSelectedModelClass() !== 'frankenstein_vit' &&
+      (anyIncludedAt('image') || anyIncludedAt('vision_dataset'))) {
+    addWarn(document.getElementById(createId('image.image_size.height')), t('warnBlockIgnored'));
+  }
+  if (!TEXT_TASKS.includes(task) && anyIncludedAt('tokenizer')) {
+    addWarn(document.getElementById(createId('tokenizer.source')), t('warnTokenizerIgnored'));
+  }
+
+  const summary = document.getElementById('warnings-summary');
+  if (summary) {
+    summary.innerHTML = warnings.length
+      ? `<strong>${t('warningsSummaryTitle')}</strong><ul>${warnings.map(w => `<li><a href="#${w.id}">${escHtml(w.message)}</a></li>`).join('')}</ul>`
+      : '';
+  }
 }
 
 // ====== SCHEMA HELPERS ======
@@ -1483,24 +1753,28 @@ function renderField(name, fieldSchema, prefix) {
   let html = `<div class="section">`;
 
   if (type === 'boolean') {
-    const def = examples[0] !== undefined ? examples[0] : false;
+    const def = fieldSchema.default !== undefined ? fieldSchema.default
+      : (examples[0] !== undefined ? examples[0] : false);
     html += `<div class="checkbox-wrap">
       <input type="checkbox" id="${fieldId}" ${def ? 'checked' : ''}>
       <label for="${fieldId}" style="margin:0">${title}</label>
     </div>`;
   } else if (type === 'integer') {
-    const def = examples.length > 0 ? examples[0] : 0;
+    const def = fieldSchema.default !== undefined ? fieldSchema.default
+      : (examples.length > 0 ? examples[0] : 0);
     const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
     const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
     html += `<input type="number" id="${fieldId}" value="${def}" step="1" ${min} ${max} ${requiredAttr}>`;
   } else if (type === 'number') {
-    const def = examples.length > 0 ? examples[0] : 0;
+    const def = fieldSchema.default !== undefined ? fieldSchema.default
+      : (examples.length > 0 ? examples[0] : 0);
     const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
     const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
     html += `<input type="number" id="${fieldId}" value="${def}" step="any" ${min} ${max} ${requiredAttr}>`;
   } else if (type === 'string') {
     const enm = fieldSchema.enum;
-    const def = examples.length > 0 ? examples[0] : '';
+    const def = fieldSchema.default !== undefined ? fieldSchema.default
+      : (examples.length > 0 ? examples[0] : '');
     if (enm) {
       html += `<select id="${fieldId}" ${requiredAttr}>`;
       enm.forEach(v => {
@@ -1545,12 +1819,13 @@ function renderField(name, fieldSchema, prefix) {
   return html;
 }
 
-function renderObject(name, objSchema, prefix, level) {
+function renderObject(name, objSchema, prefix, level, skip) {
   const props = objSchema.properties || {};
   const required = objSchema.required || [];
   const pp = prefix ? prefix + '.' + name : name;
   let html = '';
   for (const [propName, propSchema] of Object.entries(props)) {
+    if (skip && skip.includes(propName)) continue;
     const propTitle = getTitle(propSchema, propName);
     const propDesc = getDesc(propSchema);
     const isReq = required.includes(propName);
@@ -1604,11 +1879,12 @@ function readFieldValue(name, fieldSchema, prefix) {
   return el.value;
 }
 
-function readObjectValue(name, objSchema, prefix) {
+function readObjectValue(name, objSchema, prefix, skip) {
   const props = objSchema.properties || {};
   const pp = prefix ? prefix + '.' + name : name;
   const result = {};
   for (const [propName, propSchema] of Object.entries(props)) {
+    if (skip && skip.includes(propName)) continue;
     const dotted = pp + '.' + propName;
     // Skip props whose include/exclude checkbox is unchecked (optional & excluded).
     if (!isFieldIncluded(dotted)) continue;
@@ -1651,7 +1927,7 @@ function buildAll() {
   html += `<div class="section">`;
   html += createLabel(createId('model_class'), modelClassTitle, true);
   if (modelClassDesc) html += `<div class="desc">${modelClassDesc}</div>`;
-  html += `<select id="${createId('model_class')}" required aria-required="true">`;
+  html += `<select id="${createId('model_class')}" onchange="onModelClassChange()" required aria-required="true">`;
   modelClassEnm.forEach(v => html += `<option value="${v}">${v}</option>`);
   html += `</select></div>`;
 
@@ -1669,11 +1945,47 @@ function buildAll() {
   html += `<div class="desc">${getDesc(baseModelSchema)}</div>`;
   html += `<input type="text" id="${createId('base_model')}" value="answerdotai/ModernBERT-base" required aria-required="true">`;
   html += `</div>`;
+  html += `</div>`;
 
+  // Tokenizer — available to BOTH the base_model path (continual pretraining /
+  // fine-tuning) and the custom from-scratch path (schema/_tokenizer.yaml).
+  // Required (name_or_path) only for base_model + mlm; optional otherwise
+  // (e.g. source=train_from_dataset injects the trained vocab_size into
+  // model.dims.vocab_size). Visibility is constant; validation enforces the
+  // conditional requirement.
   const tokenizerSchema = props.tokenizer;
-  html += createFieldGroup(getTitle(tokenizerSchema, 'Tokenizer'), false, getDesc(tokenizerSchema),
+  html += `<div id="tokenizer-section">`;
+  html += createFieldGroup(t('tokenizerConfig'), false, getDesc(tokenizerSchema),
     renderObject('tokenizer', tokenizerSchema, '', 0));
   html += `</div>`;
+
+  // Vision image block (schema/_image.yaml) — required by the schema's
+  // conditional rules for model_class frankenstein_vit and the vision tasks.
+  // Visibility driven by refreshConditionalSections().
+  const imageSchema = props.image;
+  if (imageSchema) {
+    html += `<div id="image-section" class="conditional-field">`;
+    html += createFieldGroup(t('visionImageConfig'), false, getDesc(imageSchema),
+      renderObject('image', imageSchema, '', 0));
+    html += `</div>`;
+  }
+
+  // Vision / text dataset blocks (schema/_vision_dataset.yaml,
+  // _text_dataset.yaml) — required by the vision tasks / used by text tasks.
+  const visionDatasetSchema = props.vision_dataset;
+  if (visionDatasetSchema) {
+    html += `<div id="vision-dataset-section" class="conditional-field">`;
+    html += createFieldGroup(t('visionDatasetConfig'), false, getDesc(visionDatasetSchema),
+      renderObject('vision_dataset', visionDatasetSchema, '', 0));
+    html += `</div>`;
+  }
+  const textDatasetSchema = props.text_dataset;
+  if (textDatasetSchema) {
+    html += `<div id="text-dataset-section" class="conditional-field">`;
+    html += createFieldGroup(t('textDatasetConfig'), false, getDesc(textDatasetSchema),
+      renderObject('text_dataset', textDatasetSchema, '', 0));
+    html += `</div>`;
+  }
 
   modelSection.innerHTML = html;
   initListBuilders();
@@ -1689,7 +2001,8 @@ function buildTrainingSection() {
 
   let html = `<h2>${t('trainingConfig')}</h2>`;
 
-  // Task (required)
+  // Task (required) — custom select so onTaskChange() drives the conditional
+  // sections (mlm_probability, sbert, vision task blocks, dataset blocks).
   const taskSchema = trainingProps.task;
   html += createFieldWrapper('training.task', true,
     createLabel(createId('training.task'), getTitle(taskSchema, 'Task'), true) +
@@ -1698,90 +2011,17 @@ function buildTrainingSection() {
     (taskSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('') +
     `</select>`);
 
-  // General training params (num_epochs, batch_size, max_length optional per
-  // schema — only training.task is required; mlm_probability is mlm-only)
-  const mlmProbField = `<div id="mlm-probability-field" class="conditional-field">` +
-    createFieldWrapper('training.mlm_probability', false,
-      createLabel(createId('training.mlm_probability'), getTitle(trainingProps.mlm_probability, 'MLM Prob'), false) +
-      `<div class="desc">${getDesc(trainingProps.mlm_probability)}</div>` +
-      `<input type="number" id="${createId('training.mlm_probability')}" value="0.15" min="0" max="1" step="any">`) +
-    `</div>`;
+  // All remaining schema training fields, rendered straight from
+  // schema/_training.yaml (include/exclude toggles + schema defaults). The
+  // optimizer keeps its custom group×suffix widget and the task sub-objects
+  // (sbert / patch_prediction / classification / segmentation) get their own
+  // conditional wrappers below.
+  const taskSubKeys = ['sbert', 'patch_prediction', 'classification', 'segmentation'];
+  const skip = ['task', 'optimizer'].concat(taskSubKeys);
+  html += createFieldGroup(t('trainingParams'), false, '',
+    renderObject('training', trainingSchema, '', 0, skip));
 
-  html += createFieldGroup(t('generalTraining'), false, '', `
-    <div class="row">
-      ${createFieldWrapper('training.num_epochs', false,
-        createLabel(createId('training.num_epochs'), getTitle(trainingProps.num_epochs, 'Epochs'), false) +
-        `<div class="desc">${getDesc(trainingProps.num_epochs)}</div>` +
-        `<input type="number" id="${createId('training.num_epochs')}" value="5" min="1" step="1">`)}
-      ${createFieldWrapper('training.batch_size', false,
-        createLabel(createId('training.batch_size'), getTitle(trainingProps.batch_size, 'Batch Size'), false) +
-        `<div class="desc">${getDesc(trainingProps.batch_size)}</div>` +
-        `<input type="number" id="${createId('training.batch_size')}" value="4" min="1" step="1">`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.max_length', false,
-        createLabel(createId('training.max_length'), getTitle(trainingProps.max_length, 'Max Length'), false) +
-        `<div class="desc">${getDesc(trainingProps.max_length)}</div>` +
-        `<input type="number" id="${createId('training.max_length')}" value="512" min="1" step="1">`)}
-      ${mlmProbField}
-    </div>
-  `);
-
-  // Dataset params
-  html += createFieldGroup(t('datasetParams'), false, '', `
-    <div class="row">
-      ${createFieldWrapper('training.max_samples', false,
-        createLabel(createId('training.max_samples'), getTitle(trainingProps.max_samples, 'Max Samples'), false) +
-        `<div class="desc">${getDesc(trainingProps.max_samples)}</div>` +
-        `<input type="number" id="${createId('training.max_samples')}" value="20000000" min="1" step="1">`)}
-      ${createFieldWrapper('training.dataset_batch_size', false,
-        createLabel(createId('training.dataset_batch_size'), getTitle(trainingProps.dataset_batch_size, 'Dataset Batch'), false) +
-        `<div class="desc">${getDesc(trainingProps.dataset_batch_size)}</div>` +
-        `<input type="number" id="${createId('training.dataset_batch_size')}" value="25000" min="1" step="1">`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.dataloader_workers', false,
-        createLabel(createId('training.dataloader_workers'), getTitle(trainingProps.dataloader_workers, 'Dataloader Workers'), false) +
-        `<div class="desc">${getDesc(trainingProps.dataloader_workers)}</div>` +
-        `<input type="number" id="${createId('training.dataloader_workers')}" value="2" min="0" step="1">`)}
-      ${createFieldWrapper('training.num_workers', false,
-        createLabel(createId('training.num_workers'), getTitle(trainingProps.num_workers, 'Streaming Workers'), false) +
-        `<div class="desc">${getDesc(trainingProps.num_workers)}</div>` +
-        `<input type="number" id="${createId('training.num_workers')}" value="8" min="0" step="1">`)}
-    </div>
-    ${createFieldWrapper('training.cache_dir', false,
-      createLabel(createId('training.cache_dir'), getTitle(trainingProps.cache_dir, 'Cache Dir'), false) +
-      `<div class="desc">${getDesc(trainingProps.cache_dir)}</div>` +
-      `<input type="text" id="${createId('training.cache_dir')}" value="./temp_data/v2_dataset_cache">`)}
-    ${createFieldWrapper('training.local_parquet_dir', false,
-      createLabel(createId('training.local_parquet_dir'), getTitle(trainingProps.local_parquet_dir, 'Local Parquet Dir'), false) +
-      `<div class="desc">${getDesc(trainingProps.local_parquet_dir)}</div>` +
-      `<input type="text" id="${createId('training.local_parquet_dir')}" value="/path/to/parquet">`)}
-    <div class="row">
-      ${createFieldWrapper('training.prefer_local_cache', false,
-        `<div class="checkbox-wrap">
-          <input type="checkbox" id="${createId('training.prefer_local_cache')}" checked>
-          <label for="${createId('training.prefer_local_cache')}">${getTitle(trainingProps.prefer_local_cache, 'Prefer Local Cache')}</label>
-        </div>`)}
-      ${createFieldWrapper('training.stream_local_parquet', false,
-        `<div class="checkbox-wrap">
-          <input type="checkbox" id="${createId('training.stream_local_parquet')}" checked>
-          <label for="${createId('training.stream_local_parquet')}">${getTitle(trainingProps.stream_local_parquet, 'Stream Local Parquet')}</label>
-        </div>`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.join_temp_data_context_window', false,
-        createLabel(createId('training.join_temp_data_context_window'), getTitle(trainingProps.join_temp_data_context_window, 'Join Context Window'), false) +
-        `<div class="desc">${getDesc(trainingProps.join_temp_data_context_window)}</div>` +
-        `<input type="number" id="${createId('training.join_temp_data_context_window')}" value="0" min="0" step="1">`)}
-      ${createFieldWrapper('training.join_temp_data_min_remainder_tokens', false,
-        createLabel(createId('training.join_temp_data_min_remainder_tokens'), getTitle(trainingProps.join_temp_data_min_remainder_tokens, 'Min Remainder Tokens'), false) +
-        `<div class="desc">${getDesc(trainingProps.join_temp_data_min_remainder_tokens)}</div>` +
-        `<input type="number" id="${createId('training.join_temp_data_min_remainder_tokens')}" value="128" min="0" step="1">`)}
-    </div>
-  `);
-
-  // Optimizer (optimizer_class required)
+  // Optimizer (optimizer_class required + per-group/specific params widget)
   const optSchema = trainingProps.optimizer;
   const optClassSchema = optSchema.properties.optimizer_class;
   html += createFieldGroup(t('optimizer'), false, '', `
@@ -1794,210 +2034,21 @@ function buildTrainingSection() {
     <div id="optimizer-param-section" class="optimizer-params"></div>
   `);
 
-  // Scheduler
-  const schedTypeSchema = trainingProps.scheduler_type;
-  html += createFieldGroup(t('scheduler'), false, '', `
-    <div class="row">
-      ${createFieldWrapper('training.scheduler_total_steps', false,
-        createLabel(createId('training.scheduler_total_steps'), getTitle(trainingProps.scheduler_total_steps, 'Total Steps'), false) +
-        `<div class="desc">${getDesc(trainingProps.scheduler_total_steps)}</div>` +
-        `<input type="number" id="${createId('training.scheduler_total_steps')}" value="10000" min="1" step="1">`)}
-      ${createFieldWrapper('training.scheduler_warmup_ratio', false,
-        createLabel(createId('training.scheduler_warmup_ratio'), getTitle(trainingProps.scheduler_warmup_ratio, 'Warmup Ratio'), false) +
-        `<div class="desc">${getDesc(trainingProps.scheduler_warmup_ratio)}</div>` +
-        `<input type="number" id="${createId('training.scheduler_warmup_ratio')}" value="0.1" min="0" max="1" step="any">`)}
-    </div>
-    ${createFieldWrapper('training.scheduler_type', false,
-      createLabel(createId('training.scheduler_type'), getTitle(schedTypeSchema, 'Scheduler Type'), false) +
-      `<div class="desc">${getDesc(schedTypeSchema)}</div>` +
-      `<select id="${createId('training.scheduler_type')}">` +
-      (schedTypeSchema.enum || []).map(v => `<option value="${v}">${v}</option>`).join('') +
-      `</select>`)}
-  `);
-
-  // Gradient settings
-  html += createFieldGroup(t('gradientSettings'), false, '', `
-    <div class="row">
-      ${createFieldWrapper('training.gradient_accumulation_steps', false,
-        createLabel(createId('training.gradient_accumulation_steps'), getTitle(trainingProps.gradient_accumulation_steps, 'Grad Accum'), false) +
-        `<div class="desc">${getDesc(trainingProps.gradient_accumulation_steps)}</div>` +
-        `<input type="number" id="${createId('training.gradient_accumulation_steps')}" value="4" min="1" step="1">`)}
-      ${createFieldWrapper('training.grad_clip_max_norm', false,
-        createLabel(createId('training.grad_clip_max_norm'), getTitle(trainingProps.grad_clip_max_norm, 'Grad Clip'), false) +
-        `<div class="desc">${getDesc(trainingProps.grad_clip_max_norm)}</div>` +
-        `<input type="number" id="${createId('training.grad_clip_max_norm')}" value="5.0" min="0" step="any">`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.inf_post_clip_threshold', false,
-        createLabel(createId('training.inf_post_clip_threshold'), getTitle(trainingProps.inf_post_clip_threshold, 'Inf Post-Clip Threshold'), false) +
-        `<div class="desc">${getDesc(trainingProps.inf_post_clip_threshold)}</div>` +
-        `<input type="number" id="${createId('training.inf_post_clip_threshold')}" value="100.0" min="0" step="any">`)}
-      ${createFieldWrapper('training.max_nan_retries', false,
-        createLabel(createId('training.max_nan_retries'), getTitle(trainingProps.max_nan_retries, 'Max NaN Retries'), false) +
-        `<div class="desc">${getDesc(trainingProps.max_nan_retries)}</div>` +
-        `<input type="number" id="${createId('training.max_nan_retries')}" value="3" min="0" step="1">`)}
-    </div>
-    ${createFieldWrapper('training.nan_check_interval', false,
-      createLabel(createId('training.nan_check_interval'), getTitle(trainingProps.nan_check_interval, 'NaN Check Interval'), false) +
-      `<div class="desc">${getDesc(trainingProps.nan_check_interval)}</div>` +
-      `<input type="number" id="${createId('training.nan_check_interval')}" value="10" min="1" step="1">`)}
-  `);
-
-  // Checkpoint settings
-  html += createFieldGroup(t('checkpointSettings'), false, '', `
-    <div class="row">
-      ${createFieldWrapper('training.checkpoint_every_n_steps', false,
-        createLabel(createId('training.checkpoint_every_n_steps'), getTitle(trainingProps.checkpoint_every_n_steps, 'Ckpt Every'), false) +
-        `<div class="desc">${getDesc(trainingProps.checkpoint_every_n_steps)}</div>` +
-        `<input type="number" id="${createId('training.checkpoint_every_n_steps')}" value="500" min="1" step="1">`)}
-      ${createFieldWrapper('training.max_rolling_checkpoints', false,
-        createLabel(createId('training.max_rolling_checkpoints'), getTitle(trainingProps.max_rolling_checkpoints, 'Max Rolling'), false) +
-        `<div class="desc">${getDesc(trainingProps.max_rolling_checkpoints)}</div>` +
-        `<input type="number" id="${createId('training.max_rolling_checkpoints')}" value="3" min="1" step="1">`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.num_best_checkpoints', false,
-        createLabel(createId('training.num_best_checkpoints'), getTitle(trainingProps.num_best_checkpoints, 'Best Ckpts'), false) +
-        `<div class="desc">${getDesc(trainingProps.num_best_checkpoints)}</div>` +
-        `<input type="number" id="${createId('training.num_best_checkpoints')}" value="2" min="1" step="1">`)}
-      ${createFieldWrapper('training.resume_from_checkpoint', false,
-        createLabel(createId('training.resume_from_checkpoint'), getTitle(trainingProps.resume_from_checkpoint, 'Resume From'), false) +
-        `<div class="desc">${getDesc(trainingProps.resume_from_checkpoint)}</div>` +
-        `<input type="text" id="${createId('training.resume_from_checkpoint')}" value="auto">`)}
-    </div>
-  `);
-
-  // Logging
-  html += createFieldGroup(t('loggingSettings'), false, '', `
-    ${createFieldWrapper('training.csv_log_path', false,
-      createLabel(createId('training.csv_log_path'), getTitle(trainingProps.csv_log_path, 'CSV Log'), false) +
-      `<div class="desc">${getDesc(trainingProps.csv_log_path)}</div>` +
-      `<input type="text" id="${createId('training.csv_log_path')}" value="training_metrics.csv">`)}
-    <div class="row">
-      ${createFieldWrapper('training.csv_rotate_on_schema_change', false,
-        `<div class="checkbox-wrap">
-          <input type="checkbox" id="${createId('training.csv_rotate_on_schema_change')}" checked>
-          <label for="${createId('training.csv_rotate_on_schema_change')}">${getTitle(trainingProps.csv_rotate_on_schema_change, 'CSV Rotate on Schema Change')}</label>
-        </div>`)}
-      ${createFieldWrapper('training.enable_block_grad_norms', false,
-        `<div class="checkbox-wrap">
-          <input type="checkbox" id="${createId('training.enable_block_grad_norms')}" checked>
-          <label for="${createId('training.enable_block_grad_norms')}">${getTitle(trainingProps.enable_block_grad_norms, 'Per-Block Grad Norms')}</label>
-        </div>`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.log_gradient_stats', false,
-        `<div class="checkbox-wrap">
-          <input type="checkbox" id="${createId('training.log_gradient_stats')}" checked>
-          <label for="${createId('training.log_gradient_stats')}">${getTitle(trainingProps.log_gradient_stats, 'Log Grad Stats')}</label>
-        </div>`)}
-      ${createFieldWrapper('training.gradient_log_interval', false,
-        createLabel(createId('training.gradient_log_interval'), getTitle(trainingProps.gradient_log_interval, 'Grad Log Interval'), false) +
-        `<input type="number" id="${createId('training.gradient_log_interval')}" value="10" min="1" step="1">`)}
-    </div>
-    ${createFieldWrapper('training.telemetry_log_interval', false,
-      createLabel(createId('training.telemetry_log_interval'), getTitle(trainingProps.telemetry_log_interval, 'Telemetry Log Interval'), false) +
-      `<div class="desc">${getDesc(trainingProps.telemetry_log_interval)}</div>` +
-      `<input type="number" id="${createId('training.telemetry_log_interval')}" value="1" min="1" step="1">`)}
-  `);
-
-  // GPU Settings
-  html += createFieldGroup(t('gpuSettings'), false, '', `<div id="gpu-settings-group" class="conditional-field">
-    <div class="row">
-      ${createFieldWrapper('training.gpu_metrics_backend', false,
-        createLabel(createId('training.gpu_metrics_backend'), getTitle(trainingProps.gpu_metrics_backend, 'GPU Metrics Backend'), false) +
-        `<div class="desc">${getDesc(trainingProps.gpu_metrics_backend)}</div>` +
-        `<select id="${createId('training.gpu_metrics_backend')}">` +
-        (trainingProps.gpu_metrics_backend.enum || []).map(v => `<option value="${v}" ${v==='nvml'?'selected':''}>${v}</option>`).join('') +
-        `</select>`)}
-      ${createFieldWrapper('training.nvml_device_index', false,
-        createLabel(createId('training.nvml_device_index'), getTitle(trainingProps.nvml_device_index, 'NVML Device Index'), false) +
-        `<div class="desc">${getDesc(trainingProps.nvml_device_index)}</div>` +
-        `<input type="number" id="${createId('training.nvml_device_index')}" value="0" min="0" step="1">`)}
-    </div>
-    ${createFieldWrapper('training.gpu_temp_guard_enabled', false,
-      `<div class="checkbox-wrap">
-        <input type="checkbox" id="${createId('training.gpu_temp_guard_enabled')}" checked>
-        <label for="${createId('training.gpu_temp_guard_enabled')}">${getTitle(trainingProps.gpu_temp_guard_enabled, 'GPU Temp Guard')}</label>
-      </div>`)}
-    <div class="row">
-      ${createFieldWrapper('training.gpu_temp_pause_threshold_c', false,
-        createLabel(createId('training.gpu_temp_pause_threshold_c'), getTitle(trainingProps.gpu_temp_pause_threshold_c, 'Pause Temp'), false) +
-        `<input type="number" id="${createId('training.gpu_temp_pause_threshold_c')}" value="90.0" min="0" step="any">`)}
-      ${createFieldWrapper('training.gpu_temp_resume_threshold_c', false,
-        createLabel(createId('training.gpu_temp_resume_threshold_c'), getTitle(trainingProps.gpu_temp_resume_threshold_c, 'Resume Temp'), false) +
-        `<input type="number" id="${createId('training.gpu_temp_resume_threshold_c')}" value="80.0" min="0" step="any">`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.gpu_temp_critical_threshold_c', false,
-        createLabel(createId('training.gpu_temp_critical_threshold_c'), getTitle(trainingProps.gpu_temp_critical_threshold_c, 'Critical Temp'), false) +
-        `<div class="desc">${getDesc(trainingProps.gpu_temp_critical_threshold_c)}</div>` +
-        `<input type="number" id="${createId('training.gpu_temp_critical_threshold_c')}" value="95.0" min="0" step="any">`)}
-      ${createFieldWrapper('training.switch_on_thermal', false,
-        `<div class="checkbox-wrap">
-          <input type="checkbox" id="${createId('training.switch_on_thermal')}">
-          <label for="${createId('training.switch_on_thermal')}">${getTitle(trainingProps.switch_on_thermal, 'Switch on Thermal')}</label>
-        </div>`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.gpu_temp_poll_interval_seconds', false,
-        createLabel(createId('training.gpu_temp_poll_interval_seconds'), getTitle(trainingProps.gpu_temp_poll_interval_seconds, 'Poll Interval (s)'), false) +
-        `<input type="number" id="${createId('training.gpu_temp_poll_interval_seconds')}" value="30.0" min="0" step="any">`)}
-      ${createFieldWrapper('training.gpu_temp_checkpoint_grace_seconds', false,
-        createLabel(createId('training.gpu_temp_checkpoint_grace_seconds'), getTitle(trainingProps.gpu_temp_checkpoint_grace_seconds, 'Checkpoint Grace (s)'), false) +
-        `<input type="number" id="${createId('training.gpu_temp_checkpoint_grace_seconds')}" value="30.0" min="0" step="any">`)}
-    </div>
-  </div>`);
-
-  // AMP
-  html += createFieldWrapper('training.use_amp', false,
-    `<div class="checkbox-wrap">
-      <input type="checkbox" id="${createId('training.use_amp')}">
-      <label for="${createId('training.use_amp')}">${getTitle(trainingProps.use_amp, 'Use AMP')}</label>
-    </div>`);
-
-  // GaLore (low-rank gradient projection)
-  html += createFieldGroup(t('galoreSettings'), false, '', `
-    ${createFieldWrapper('training.use_galore', false,
-      `<div class="checkbox-wrap">
-        <input type="checkbox" id="${createId('training.use_galore')}">
-        <label for="${createId('training.use_galore')}">${getTitle(trainingProps.use_galore, 'Enable GaLore')}</label>
-      </div>`)}
-    <div class="row">
-      ${createFieldWrapper('training.galore_rank', false,
-        createLabel(createId('training.galore_rank'), getTitle(trainingProps.galore_rank, 'GaLore Rank'), false) +
-        `<div class="desc">${getDesc(trainingProps.galore_rank)}</div>` +
-        `<input type="number" id="${createId('training.galore_rank')}" value="64" min="1" step="1">`)}
-      ${createFieldWrapper('training.galore_update_interval', false,
-        createLabel(createId('training.galore_update_interval'), getTitle(trainingProps.galore_update_interval, 'GaLore Update Interval'), false) +
-        `<div class="desc">${getDesc(trainingProps.galore_update_interval)}</div>` +
-        `<input type="number" id="${createId('training.galore_update_interval')}" value="1" min="1" step="1">`)}
-    </div>
-    <div class="row">
-      ${createFieldWrapper('training.galore_scale', false,
-        createLabel(createId('training.galore_scale'), getTitle(trainingProps.galore_scale, 'GaLore Scale'), false) +
-        `<div class="desc">${getDesc(trainingProps.galore_scale)}</div>` +
-        `<input type="number" id="${createId('training.galore_scale')}" value="1.0" min="0" step="any">`)}
-      ${createFieldWrapper('training.galore_max_dim', false,
-        createLabel(createId('training.galore_max_dim'), getTitle(trainingProps.galore_max_dim, 'GaLore Max Dim'), false) +
-        `<div class="desc">${getDesc(trainingProps.galore_max_dim)}</div>` +
-        `<input type="number" id="${createId('training.galore_max_dim')}" value="4096" min="1" step="1">`)}
-    </div>
-  `);
-
-  // HuggingFace output dir (base_model only)
-  html += createFieldWrapper('training.hf_output_dir', false,
-    createLabel(createId('training.hf_output_dir'), getTitle(trainingProps.hf_output_dir, 'HF Output Dir'), false) +
-    `<div class="desc">${getDesc(trainingProps.hf_output_dir)}</div>` +
-    `<input type="text" id="${createId('training.hf_output_dir')}" value="checkpoints/hf_final">`);
-
-  // SBERT (task-specific; conditionally required when task==sbert)
-  if (trainingProps.sbert) {
-    html += `<div id="sbert-section" class="conditional-field">` +
-      createFieldGroup(t('sbertConfig'), false, getDesc(trainingProps.sbert),
-        renderObject('sbert', trainingProps.sbert, 'training', 0)) +
+  // Task-specific sub-objects — shown only when the matching task is selected
+  // (refreshConditionalSections). patch_prediction currently has no knobs; it
+  // renders as a forward-compatibility info note.
+  const subTitles = { sbert: 'sbertConfig' };
+  taskSubKeys.forEach(key => {
+    const sub = trainingProps[key];
+    if (!sub) return;
+    const title = subTitles[key] ? t(subTitles[key]) : getTitle(sub, key);
+    const inner = (sub.properties && Object.keys(sub.properties).length)
+      ? renderObject(key, sub, 'training', 0)
+      : `<div class="info">${t('noTaskOptions')}</div>`;
+    html += `<div id="training-${key}-section" class="conditional-field">` +
+      createFieldGroup(title, false, getDesc(sub), inner) +
       `</div>`;
-  }
+  });
 
   trainingSection.innerHTML = html;
   onOptimizerChange();
@@ -2066,24 +2117,19 @@ function onOptimizerChange() {
 function onTaskChange() {
   const taskEl = document.getElementById(createId('training.task'));
   if (!taskEl) return;
-  const isMlm = taskEl.value === 'mlm';
-  const isSbert = taskEl.value === 'sbert';
 
-  const mlmField = document.getElementById('mlm-probability-field');
-  if (mlmField) mlmField.hidden = !isMlm;
-  const mlmInput = document.getElementById(createId('training.mlm_probability'));
-  if (mlmInput) {
-    if (isMlm) mlmInput.removeAttribute('disabled');
-    else { mlmInput.setAttribute('disabled', 'disabled'); clearFieldError(mlmInput); }
+  // When switching to sbert, ensure at least one sbert property is included so
+  // the conditional rule (task==sbert -> training.sbert) has its target.
+  if (taskEl.value === 'sbert') {
+    const sbertProps = (SCHEMA.properties.training.properties.sbert.properties) || {};
+    const anyIncluded = Object.keys(sbertProps).some(prop => isFieldIncluded('training.sbert.' + prop));
+    if (!anyIncluded) {
+      const first = Object.keys(sbertProps)[0];
+      if (first) setFieldIncluded('training.sbert.' + first, true);
+    }
   }
 
-  const sbertSection = document.getElementById('sbert-section');
-  if (sbertSection) sbertSection.hidden = !isSbert;
-
-  // When switching to sbert, ensure the SBERT group is included so the
-  // conditional rule (task==sbert -> training.sbert) has its target.
-  if (isSbert) setFieldIncluded('training.sbert', true);
-
+  refreshConditionalSections();
   validateBuilder();
   updateYamlOutput();
   updateCmdPreview();
@@ -2185,80 +2231,31 @@ function buildConfig() {
   const modeEl = document.querySelector('input[name="model_mode"]:checked');
   const mode = modeEl ? modeEl.value : 'custom';
 
+  // Tokenizer — available to both paths; emitted only when at least one
+  // property is included (avoids empty `tokenizer: {}` blocks).
+  const tokenizer = readObjectValue('tokenizer', SCHEMA.properties.tokenizer, '');
+  if (Object.keys(tokenizer).length > 0) config.tokenizer = tokenizer;
+
   if (mode === 'base') {
     config.base_model = readFieldValue('base_model', SCHEMA.properties.base_model, '');
-    const tokenizerSchema = SCHEMA.properties.tokenizer;
-    config.tokenizer = readObjectValue('tokenizer', tokenizerSchema, '');
   } else {
     config.model_class = readFieldValue('model_class', SCHEMA.properties.model_class, '');
     config.model = readObjectValue('model', SCHEMA.properties.model, '');
   }
 
-  // Training — only emit keys whose include checkbox is checked (required keys
-  // are always included). Mirrors the per-field include/exclude toggle.
-  const training = {};
-  const task = readFieldValue('task', trainingProps.task, 'training');
-  training.task = task;
-
-  const optTraining = (key) => {
-    if (!isFieldIncluded('training.' + key)) return;
-    training[key] = readFieldValue(key, trainingProps[key], 'training');
-  };
-  optTraining('num_epochs');
-  optTraining('batch_size');
-  optTraining('max_length');
-  optTraining('dataloader_workers');
-  optTraining('num_workers');
-  optTraining('cache_dir');
-  optTraining('local_parquet_dir');
-  optTraining('prefer_local_cache');
-  optTraining('stream_local_parquet');
-  optTraining('join_temp_data_context_window');
-  optTraining('join_temp_data_min_remainder_tokens');
-  optTraining('max_samples');
-  optTraining('dataset_batch_size');
-  optTraining('use_amp');
-  optTraining('gradient_accumulation_steps');
-  optTraining('grad_clip_max_norm');
-  optTraining('inf_post_clip_threshold');
-  optTraining('max_nan_retries');
-  optTraining('nan_check_interval');
-  optTraining('checkpoint_every_n_steps');
-  optTraining('max_rolling_checkpoints');
-  optTraining('num_best_checkpoints');
-  optTraining('resume_from_checkpoint');
-  optTraining('scheduler_total_steps');
-  optTraining('scheduler_warmup_ratio');
-  optTraining('scheduler_type');
-  optTraining('csv_log_path');
-  optTraining('csv_rotate_on_schema_change');
-  optTraining('enable_block_grad_norms');
-  optTraining('log_gradient_stats');
-  optTraining('gradient_log_interval');
-  optTraining('telemetry_log_interval');
-  optTraining('gpu_metrics_backend');
-  optTraining('nvml_device_index');
-  optTraining('gpu_temp_guard_enabled');
-  optTraining('gpu_temp_pause_threshold_c');
-  optTraining('gpu_temp_resume_threshold_c');
-  optTraining('gpu_temp_critical_threshold_c');
-  optTraining('switch_on_thermal');
-  optTraining('gpu_temp_poll_interval_seconds');
-  optTraining('gpu_temp_checkpoint_grace_seconds');
-  optTraining('use_galore');
-  optTraining('galore_rank');
-  optTraining('galore_update_interval');
-  optTraining('galore_scale');
-  optTraining('galore_max_dim');
-  optTraining('hf_output_dir');
-  // mlm_probability only applies to the mlm task.
-  if (task === 'mlm') optTraining('mlm_probability');
-
-  // SBERT subsection (task-specific). Included only when its toggle is on.
-  if (trainingProps.sbert && isFieldIncluded('training.sbert')) {
-    const sbert = readObjectValue('sbert', trainingProps.sbert, 'training');
-    if (Object.keys(sbert).length > 0) training.sbert = sbert;
-  }
+  // Training — generic, schema-driven read honoring the include/exclude
+  // toggles (mirrors the rendered form). The optimizer keeps its custom
+  // widget below. Task-specific keys are gated to their matching task
+  // (mirrors schema/_conditional_rules.yaml).
+  const training = readObjectValue('training', SCHEMA.properties.training, '', ['optimizer']);
+  const task = training.task;
+  if (task !== 'mlm') delete training.mlm_probability;
+  if (task !== 'sbert') delete training.sbert;
+  if (task !== 'patch_prediction') delete training.patch_prediction;
+  if (task !== 'classification') delete training.classification;
+  if (task !== 'segmentation') delete training.segmentation;
+  // HuggingFace export dir only applies to the base_model path.
+  if (mode !== 'base') delete training.hf_output_dir;
 
   // Optimizer
   const optClass = readFieldValue('optimizer_class', trainingProps.optimizer.properties.optimizer_class, 'training.optimizer');
@@ -2306,12 +2303,19 @@ function buildConfig() {
   training.optimizer = { optimizer_class: optClass, parameters: optParams };
   config.training = training;
 
-  // Carry through top-level sections not represented by the form (image,
-  // vision_dataset, text_dataset) so vision/NLP presets keep these blocks in
-  // the generated YAML.
-  if (configData && configData.image) config.image = configData.image;
-  if (configData && configData.vision_dataset) config.vision_dataset = configData.vision_dataset;
-  if (configData && configData.text_dataset) config.text_dataset = configData.text_dataset;
+  // Top-level image / dataset blocks — read from the form, only when their
+  // section applies to the selected task/class (hidden sections are never
+  // emitted) and at least one property is included.
+  [['image', 'image-section'],
+   ['vision_dataset', 'vision-dataset-section'],
+   ['text_dataset', 'text-dataset-section']].forEach(([name, sectionId]) => {
+    const blockSchema = SCHEMA.properties[name];
+    if (!blockSchema) return;
+    const section = document.getElementById(sectionId);
+    if (!section || section.hidden) return;
+    const block = readObjectValue(name, blockSchema, '');
+    if (Object.keys(block).length > 0) config[name] = block;
+  });
 
   configData = config;
   setFeedback(t('configReady'), 'info');
@@ -2618,10 +2622,107 @@ function extractPaperBodyHtml(rawHtml, pdfUrl) {
   return '<div class="paper-content">' + banner + bodyInner + '</div>';
 }
 
+// ====== CONDITIONAL SECTIONS ======
+// Drives which form sections are visible for the selected model mode, model
+// class and training task (mirrors schema/_conditional_rules.yaml).
+const VISION_TASKS = ['patch_prediction', 'classification', 'segmentation'];
+const TEXT_TASKS = ['mlm', 'causal_lm', 'text_classification'];
+
+function getSelectedTask() {
+  const el = document.getElementById(createId('training.task'));
+  return el ? el.value : '';
+}
+function isVisionTaskSelected() { return VISION_TASKS.includes(getSelectedTask()); }
+function isTextTaskSelected() { return TEXT_TASKS.includes(getSelectedTask()); }
+function getSelectedModelClass() {
+  const el = document.getElementById(createId('model_class'));
+  return el ? el.value : '';
+}
+function isBaseModeSelected() {
+  const el = document.querySelector('input[name="model_mode"]:checked');
+  return el ? el.value === 'base' : false;
+}
+
+function toggleConditional(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.hidden = !show;
+}
+
+function refreshConditionalSections() {
+  const task = getSelectedTask();
+  const showVision = getSelectedModelClass() === 'frankenstein_vit' || VISION_TASKS.includes(task);
+  toggleConditional('image-section', showVision);
+  toggleConditional('vision-dataset-section', showVision);
+  toggleConditional('text-dataset-section', TEXT_TASKS.includes(task));
+  toggleConditional('tokenizer-section', true); // available to both model paths
+  toggleConditional('training-sbert-section', task === 'sbert');
+  toggleConditional('training-patch_prediction-section', task === 'patch_prediction');
+  toggleConditional('training-classification-section', task === 'classification');
+  toggleConditional('training-segmentation-section', task === 'segmentation');
+  // mlm_probability only applies to the mlm task.
+  const mlmSec = document.querySelector('.section[data-field="training.mlm_probability"]');
+  if (mlmSec) mlmSec.hidden = task !== 'mlm';
+  // hf_output_dir only applies to the base_model path (HF export).
+  const hfSec = document.querySelector('.section[data-field="training.hf_output_dir"]');
+  if (hfSec) hfSec.hidden = !isBaseModeSelected();
+
+  // base_model + mlm mandates tokenizer.name_or_path in the output
+  // (_conditional_rules.yaml) — keep it included so the generated YAML always
+  // carries the key; validation enforces it is non-empty.
+  if (isBaseModeSelected() && task === 'mlm') setFieldIncluded('tokenizer.name_or_path', true);
+
+  // Auto-include the keys the conditional rules mandate in the vision context:
+  // image.image_size + patch_size (always for frankenstein_vit), num_classes
+  // (classification) and a vision_dataset block (vision tasks). Without this
+  // the generated YAML could never satisfy schema/_conditional_rules.yaml.
+  if (showVision && getSelectedModelClass() === 'frankenstein_vit') {
+    ['image.image_size.height', 'image.image_size.width', 'image.patch_size'].forEach(key => setFieldIncluded(key, true));
+    if (VISION_TASKS.includes(task)) setFieldIncluded('vision_dataset.dataset_name', true);
+  }
+  if (task === 'classification') setFieldIncluded('image.num_classes', true);
+}
+
+function onModelClassChange() {
+  refreshConditionalSections();
+  validateBuilder();
+  updateYamlOutput();
+  updateCmdPreview();
+  updateParamEstimate();
+}
+
+// Live refresh for schema-rendered fields (they carry no per-field handlers):
+// any input/change inside the builder re-evaluates conditional sections,
+// validation, warnings and the live previews. Debounced to keep typing smooth.
+let _builderRefreshTimer = null;
+function scheduleBuilderRefresh() {
+  if (_builderRefreshTimer) clearTimeout(_builderRefreshTimer);
+  _builderRefreshTimer = setTimeout(() => {
+    _builderRefreshTimer = null;
+    refreshConditionalSections();
+    validateBuilder();
+    updateYamlOutput();
+    updateCmdPreview();
+    updateParamEstimate();
+  }, 120);
+}
+
+function initBuilderLiveRefresh() {
+  ['model-section', 'training-section'].forEach(id => {
+    const container = document.getElementById(id);
+    if (!container) return;
+    container.addEventListener('input', scheduleBuilderRefresh);
+    container.addEventListener('change', scheduleBuilderRefresh);
+  });
+}
+
 function onModelModeChange() {
   const mode = document.querySelector('input[name="model_mode"]:checked').value;
   document.getElementById('custom-model-div').style.display = mode === 'custom' ? 'block' : 'none';
   document.getElementById('base-model-div').style.display = mode === 'base' ? 'block' : 'none';
+  refreshConditionalSections();
+  validateBuilder();
+  updateYamlOutput();
+  updateCmdPreview();
   updateParamEstimate();
 }
 
@@ -2791,23 +2892,7 @@ function applyPreset(name) {
   // and dotted keys produce the same ids renderObject emits.
   if (preset.model) {
     for (const [key, val] of Object.entries(preset.model)) {
-      const id = createId('model.' + key);
-      const el = document.getElementById(id);
-      if (!el) continue;
-      if (Array.isArray(val)) {
-        if (isListBuilder(id)) {
-          const hidden = document.getElementById(id);
-          hidden.value = JSON.stringify(val);
-          listBuilderRender(id);
-        } else {
-          const cbs = document.querySelectorAll(`.array-cb[data-field="${id}"]`);
-          cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
-        }
-      } else if (typeof val === 'boolean') {
-        el.checked = val;
-      } else {
-        assignControlValue(el, val);
-      }
+      applyFieldValue('model.' + key, val);
     }
   }
 
@@ -2818,10 +2903,7 @@ function applyPreset(name) {
         const optEl = document.getElementById(createId('training.optimizer.optimizer_class'));
         if (optEl) { optEl.value = val; onOptimizerChange(); }
       } else {
-        const id = createId('training.' + key);
-        const el = document.getElementById(id);
-        if (!el) continue;
-        assignControlValue(el, val);
+        applyFieldValue('training.' + key, val);
       }
     }
   }
@@ -2969,31 +3051,17 @@ function applyYamlConfig(config) {
   if (config.model) {
     const flat = normalizeModelFlat(config.model);
     for (const [key, val] of Object.entries(flat)) {
-      const id = createId('model.' + key);
-      const el = document.getElementById(id);
-      if (!el) continue;
-      if (Array.isArray(val)) {
-        if (isListBuilder(id)) {
-          const hidden = document.getElementById(id);
-          hidden.value = JSON.stringify(val);
-          listBuilderRender(id);
-        } else {
-          const cbs = document.querySelectorAll(`.array-cb[data-field="${id}"]`);
-          cbs.forEach(cb => { cb.checked = val.includes(cb.value); });
-        }
-      } else if (typeof val === 'boolean') { el.checked = val; }
-      else { assignControlValue(el, val); }
+      applyFieldValue('model.' + key, val);
     }
   }
 
-  // Apply training fields
+  // Apply training fields — flattened so nested task sub-objects (sbert,
+  // patch_prediction, classification, segmentation) populate their rendered
+  // controls too.
   if (config.training) {
-    for (const [key, val] of Object.entries(config.training)) {
-      if (key === 'optimizer') continue;
-      const id = createId('training.' + key);
-      const el = document.getElementById(id);
-      if (!el) continue;
-      assignControlValue(el, val);
+    for (const [key, val] of Object.entries(flattenKeys(config.training))) {
+      if (key === 'optimizer' || key.startsWith('optimizer.')) continue;
+      applyFieldValue('training.' + key, val);
     }
     if (config.training.optimizer) {
       const opt = config.training.optimizer;
@@ -3009,13 +3077,29 @@ function applyYamlConfig(config) {
             if (!el) continue;
             assignControlValue(el, v);
           }
+          // assignControlValue sets .value directly (no input events), so the
+          // debounced live-refresh never fires — refresh the previews here or
+          // the YAML tab shows stale optimizer params after loading a preset.
+          updateYamlOutput();
+          updateCmdPreview();
         }, 50);
       }
     }
   }
 
+  // Tokenizer / image / dataset blocks — flattened into the same dotted id
+  // space the renderer emits (tokenizer.name_or_path, image.image_size.height,
+  // vision_dataset.rescale..., text_dataset...).
+  ['tokenizer', 'image', 'vision_dataset', 'text_dataset'].forEach(block => {
+    if (config[block] && typeof config[block] === 'object' && !Array.isArray(config[block])) {
+      for (const [key, val] of Object.entries(flattenKeys(config[block]))) {
+        applyFieldValue(block + '.' + key, val);
+      }
+    }
+  });
+
   // Reflect loaded keys on the include/exclude toggles, then re-evaluate task
-  // conditionals (mlm_probability / sbert visibility).
+  // conditionals (mlm_probability / sbert / vision blocks visibility).
   syncIncludesFromConfig(config);
   if (config.training && config.training.task) onTaskChange();
 
@@ -3043,6 +3127,50 @@ function unflattenDottedKeys(obj) {
     cur[parts[parts.length - 1]] = val;
   }
   return out;
+}
+
+// Flatten nested objects into dotted keys matching the rendered form ids
+// ({ dims: { layer_pattern: [...] } } -> { 'dims.layer_pattern': [...] }).
+// Used by applyPreset/applyYamlConfig to populate nested blocks (training
+// sub-objects, tokenizer, image, datasets) through the same id-building path.
+function flattenKeys(obj) {
+  const out = {};
+  if (!obj || typeof obj !== 'object') return out;
+  const walk = (prefix, o) => {
+    for (const [k, v] of Object.entries(o)) {
+      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+        walk(prefix ? prefix + '.' + k : k, v);
+      } else {
+        out[prefix ? prefix + '.' + k : k] = v;
+      }
+    }
+  };
+  walk('', obj);
+  return out;
+}
+
+// Assign a (possibly nested) value onto the rendered form control for a
+// dotted config path. Handles list-builders, checkbox arrays, booleans and
+// scalars. Returns false when no control exists for the path.
+function applyFieldValue(dotted, val) {
+  const id = createId(dotted);
+  const el = document.getElementById(id);
+  if (!el) return false;
+  if (Array.isArray(val)) {
+    if (isListBuilder(id)) {
+      el.value = JSON.stringify(val);
+      listBuilderRender(id);
+    } else {
+      document.querySelectorAll(`.array-cb[data-field="${id}"]`).forEach(cb => {
+        cb.checked = val.includes(cb.value);
+      });
+    }
+  } else if (typeof val === 'boolean') {
+    el.checked = val;
+  } else {
+    assignControlValue(el, val);
+  }
+  return true;
 }
 
 // Flatten a model object into dotted keys matching the rendered form ids,
