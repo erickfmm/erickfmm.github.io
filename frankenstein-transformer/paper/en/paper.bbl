@@ -1,4 +1,4 @@
-\begin{thebibliography}{113}
+\begin{thebibliography}{114}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -755,6 +755,12 @@ Manzil Zaheer, Guru Guruganesh, Kumar~Avinava Dubey, Joshua Ainslie, Chris
 \newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
 \newblock \doi{10.48550/ARXIV.2007.14062}.
 \newblock URL \url{https://arxiv.org/abs/2007.14062}.
+
+\bibitem[Zeitoun et~al.(2026)Zeitoun, Torroba-Hennigen, and
+  Kim]{zeitoun_hyperloop_2026}
+Abbas Zeitoun, Lucas Torroba-Hennigen, and Yoon Kim.
+\newblock Hyperloop transformers, 2026.
+\newblock URL \url{https://arxiv.org/abs/2604.21254}.
 
 \bibitem[Zhang and Sennrich(2019)]{zhang_root_2019}
 Biao Zhang and Rico Sennrich.
