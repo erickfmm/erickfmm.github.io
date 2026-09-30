@@ -2749,7 +2749,8 @@ const PRESETS = {
       mixture_of_depths_router_aux_loss_weight: 0.0,
       use_bitnet_conv: false, bitnet_routers: false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
-      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
+      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
+      'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
     },
     training: { task:'mlm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
       dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
@@ -2775,7 +2776,8 @@ const PRESETS = {
       mixture_of_depths_router_aux_loss_weight: 0.0,
       use_bitnet_conv: false, bitnet_routers: false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
-      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
+      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
+      'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
     },
     training: { task:'mlm', batch_size:2, max_length:256, mlm_probability:0.15, max_samples:6000000,
       dataset_batch_size:15000, gradient_accumulation_steps:12, grad_clip_max_norm:5.0, scheduler_total_steps:12000,
@@ -2801,7 +2803,8 @@ const PRESETS = {
       mixture_of_depths_router_aux_loss_weight: 0.0,
       use_bitnet_conv: false, bitnet_routers: false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
-      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
+      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
+      'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
     },
     training: { task:'mlm', batch_size:2, max_length:256, mlm_probability:0.15, max_samples:6000000,
       dataset_batch_size:15000, gradient_accumulation_steps:12, grad_clip_max_norm:5.0, scheduler_total_steps:12000,
@@ -2827,7 +2830,8 @@ const PRESETS = {
       mixture_of_depths_router_aux_loss_weight: 0.0,
       use_bitnet_conv: false, bitnet_routers: false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
-      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
+      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
+      'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
     },
     training: { task:'mlm', batch_size:4, max_length:512, mlm_probability:0.15, max_samples:20000000,
       dataset_batch_size:25000, gradient_accumulation_steps:4, grad_clip_max_norm:5.0, scheduler_total_steps:10000,
@@ -2853,7 +2857,8 @@ const PRESETS = {
       mixture_of_depths_router_aux_loss_weight: 0.0,
       use_bitnet_conv: false, bitnet_routers: false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
-      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true
+      'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
+      'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
     },
     training: { task:'mlm', batch_size:2, max_length:2048, mlm_probability:0.15, max_samples:10000000,
       dataset_batch_size:15000, gradient_accumulation_steps:8, grad_clip_max_norm:5.0, scheduler_total_steps:20000,
@@ -2960,7 +2965,7 @@ const EXAMPLE_FILES_SUB = [
   'es_mlm_maria_roberta_adafactor.yaml','es_mlm_mbert_apollo_mini.yaml','es_mlm_mbert_schedulefree_adamw.yaml','es_mlm_mdeberta_shampoo.yaml',
   'es_mlm_modernbert_galore_adamw.yaml','es_mlm_modernbert_q_apollo.yaml','es_mlm_xlmr_radam.yaml','es_sbert_bertin_cls.yaml',
   'es_sbert_beto_mean.yaml','es_sbert_maria_max.yaml','es_sbert_modernbert_mean.yaml','es_sbert_xlmr_mean.yaml',
-  'full_attn_res_adamw.yaml','mhc_full_attn_res_adamw.yaml','norm_flashnorm.yaml','pe_alibi_ssmax.yaml',
+  'full_attn_res_adamw.yaml','hyperloop_mhc_adamw.yaml','mhc_full_attn_res_adamw.yaml','norm_flashnorm.yaml','pe_alibi_ssmax.yaml',
   'pe_alibi.yaml','pe_bam_ssmax.yaml','pe_bam.yaml','pe_hope.yaml',
   'pe_learned_absolute.yaml','pe_mixed_use_pe.yaml','pe_nope.yaml','pe_pape_efficient.yaml',
   'pe_pape_ri.yaml','pe_pape.yaml','pe_rope.yaml','pe_sinusoidal_absolute.yaml',

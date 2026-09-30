@@ -293,6 +293,16 @@ var FTParamEstimator = (function () {
     return inDim * outDim + outDim + 3; // proj + bias + α_pre,α_post,α_res
   }
 
+  function hyperloopLoopParams(H, n, rp) {
+    // Hyperloop (arXiv:2604.21254): per-loop {W_l, b_l, α_pre, α_post, [α_res], e_l}.
+    // outDim: diagonal → 3n, sinkhorn → n²+2n, identity → 2n (no α_res head).
+    var outDim = rp === 'sinkhorn' ? n * n + 2 * n
+               : rp === 'identity' ? 2 * n
+               : 3 * n;
+    var alphas = rp === 'identity' ? 2 : 3;
+    return n * H * outDim + outDim + alphas + H; // proj + bias + αs + e_l
+  }
+
   function estimate(config) {
     if (!config || config.base_model) {
       return { total: -1, breakdown: {}, note: 'Base model — parameter count unknown.' };
@@ -319,6 +329,10 @@ var FTParamEstimator = (function () {
     var mod = toBool(m.use_mixture_of_depths, false);
     var mhcEnabled = toBool(pick(m, 'mhc.enabled', 'use_mhc', false), false);
     var mhcN = toNum(pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4), 4);
+    var hyperloop = toBool(pick(m, 'mhc.hyperloop', 'mhc_hyperloop', false), false);
+    var hlBegin = toNum(pick(m, 'mhc.hyperloop_begin_layers', 'mhc_hyperloop_begin_layers', 0), 0);
+    var hlEnd = toNum(pick(m, 'mhc.hyperloop_end_layers', 'mhc_hyperloop_end_layers', 0), 0);
+    var hlRp = String(pick(m, 'mhc.hyperloop_res_parameterization', 'mhc_hyperloop_res_parameterization', 'diagonal') || 'diagonal').toLowerCase();
     var resType = String(pick(m, 'residuals.type', 'residual_type', 'standard') || 'standard').toLowerCase();
     var nBlocks = toNum(pick(m, 'residuals.block_attn.num_blocks', 'block_attn_num_blocks', 8), 8);
 
@@ -355,12 +369,16 @@ var FTParamEstimator = (function () {
       pAttn += mixerParams(expanded[li], m, H, nH, nKv);
       pFfn += moe ? nE * ffnPer : ffnPer;
       pNorm += normPer * 2;              // norm1 + norm2 (flash: 0 each)
-      if (mhcEnabled) pMhc += 2 * mhcBlockParams(H, mhcN); // attn + ffn blocks
+      if (mhcEnabled && !hyperloop) pMhc += 2 * mhcBlockParams(H, mhcN); // attn + ffn blocks
       if (moe) pRouter += H * nE;        // router (bias=False)
       if (mod) pRouter += H;             // depth_router (bias=False)
     }
     pNorm += normPer;                    // final_norm
-    if (mhcEnabled) pMhc += (mhcN * H) * H + mhcN * H + H * (mhcN * H) + H; // encoder in/out projections
+    if (mhcEnabled && !hyperloop) {
+      pMhc += (mhcN * H) * H + mhcN * H + H * (mhcN * H) + H; // encoder in/out projections
+    } else if (mhcEnabled && hyperloop) {
+      pMhc += loops * hyperloopLoopParams(H, mhcN, hlRp);     // per-loop {W,b,α,e_l}
+    }
 
     // ---- Positional encoding ----
     var pPos = peParams(m, H, nH);
@@ -408,7 +426,8 @@ var FTParamEstimator = (function () {
     var notes = [];
     if (moe) notes.push('MoE: ' + nE + ' experts');
     if (loops > 1) notes.push(loops + ' loops (weights reused)');
-    if (mhcEnabled) notes.push('mHC n=' + mhcN);
+    if (mhcEnabled && hyperloop) notes.push('Hyperloop ' + (hlBegin || hlEnd ? hlBegin + 'L→' + (nL - hlBegin - hlEnd) + 'L(x' + loops + ')→' + hlEnd + 'L' : 'x' + loops) + ', n=' + mhcN + ', H^res=' + hlRp);
+    else if (mhcEnabled) notes.push('mHC n=' + mhcN);
     if (resType !== 'standard') notes.push('residual: ' + resType);
 
     return {

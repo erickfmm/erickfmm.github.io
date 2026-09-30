@@ -941,6 +941,14 @@ id="toc-implementation-in-frankenstein-transformer">Implementation in
 Frankenstein Transformer</a></li>
 <li><a href="#reported-results" id="toc-reported-results">Reported
 Results</a></li>
+<li><a href="#sec:annex-hyperloop"
+id="toc-sec:annex-hyperloop">Hyperloop: Loop-Level Hyper-Connections on
+Looped Transformers</a>
+<ul>
+<li><a href="#reported-results-arxiv2604.21254"
+id="toc-reported-results-arxiv2604.21254">Reported results
+(arXiv:2604.21254)</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#sec:annex-attnres" id="toc-sec:annex-attnres">Attention
 Residuals (AttnRes)</a>
@@ -4333,6 +4341,14 @@ Sinkhorn–Knopp (<span class="math inline">\(t_{\max} = 20\)</span>),
 <span class="math inline">\(\alpha\)</span>-init <span
 class="math inline">\(0.01\)</span> &amp; <span class="citation"
 data-cites="xie_mhc_2025"></span><br />
+Hyperloop (this codebase) &amp; <span class="math inline">\(y^{(l+1)}_t
+= H^{\text{res}}_l y^{(l)}_t + H^{\text{post}}_l \otimes
+(F(H^{\text{pre}}_l y^{(l)}_t) + e_l)\)</span> &amp; Loop-level HC on a
+middle-cycle looped middle block; per-loop <span
+class="math inline">\(\{W_l, b_l, \alpha_l, e_l\}\)</span>; copy/avg
+expansion; <span class="math inline">\(H^{\text{res}}\)</span> diagonal
+(default), Sinkhorn or identity &amp; <span class="citation"
+data-cites="zeitoun_hyperloop_2026"></span><br />
 </p>
 </div>
 <h2 id="activation-functions">Activation Functions</h2>
@@ -9587,6 +9603,134 @@ mixed-precision coefficient computation, selective recomputation, and
 DualPipe communication overlap, mHC adds only <span
 class="math inline">\(6.7\%\)</span> additional training time at <span
 class="math inline">\(n = 4\)</span> on the 27B model.</p></li>
+</ul>
+<h2 id="sec:annex-hyperloop">Hyperloop: Loop-Level Hyper-Connections on
+Looped Transformers</h2>
+<p>The <em>Hyperloop Transformer</em> <span class="citation"
+data-cites="zeitoun_hyperloop_2026"></span> combines looped Transformers
+— which reuse layer weights across depth — with <em>loop-level</em>
+hyper-connections, targeting parameter efficiency rather than raw depth.
+The layer stack is partitioned <em>middle-cycle</em> into a begin block
+(run once), a looped middle block, and an end block (run once); the
+looped middle block is wrapped in hyper-connections applied only after
+each loop iteration. With <span class="math inline">\(Y^{(l)}_t \in
+\mathbb{R}^{n \times C}\)</span> the matrix-valued stream at loop <span
+class="math inline">\(l\)</span>, <span class="math inline">\(z^{(l)}_t
+=
+\mathrm{RMSNorm}(\mathrm{flatten}(Y^{(l)}_t))\)</span>, and per-loop
+parameters <span class="math inline">\(\{W^{\tau}_l, b^{\tau}_l,
+\alpha^{\tau}_l\}\)</span> for <span class="math inline">\(\tau \in
+\{\text{pre}, \text{post}, \text{res}\}\)</span> plus a loop position
+embedding <span class="math inline">\(e_l \in \mathbb{R}^C\)</span>, the
+recurrence is <span class="math display">\[y^{(l+1)}_t =
+H^{\text{res}}_l\, y^{(l)}_t + H^{\text{post}}_l \otimes
+\bigl( F(H^{\text{pre}}_l\, y^{(l)}_t) + e_l \bigr),\]</span> with the
+data-dependent coefficients <span class="math display">\[\begin{aligned}
+H^{\text{pre}}_l &amp;= \sigma\bigl(\alpha^{\text{pre}}_l
+(W^{\text{pre}}_l z^{(l)}_t) + b^{\text{pre}}_l\bigr), &amp;
+H^{\text{post}}_l &amp;= 2\sigma\bigl(\alpha^{\text{post}}_l
+(W^{\text{post}}_l z^{(l)}_t) + b^{\text{post}}_l\bigr),\\
+H^{\text{res}}_l &amp;= \mathrm{diag}\bigl(\sigma(\alpha^{\text{res}}_l
+(W^{\text{res}}_l z^{(l)}_t) + b^{\text{res}}_l)\bigr) &amp;
+W^{\text{res}}_l &amp;\in \mathbb{R}^{n \times nC}
+\end{aligned}\]</span> (the diagonal <span
+class="math inline">\(H^{\text{res}}\)</span> substitutes mHC’s <span
+class="math inline">\(\mathrm{sinkhorn}(\cdot)\)</span> over a dense
+<span class="math inline">\(n^2 \times nC\)</span> projection with a
+sigmoid over a diagonal gate — the paper’s Table 6 ablation finds this
+both cheaper <em>and</em> more accurate: 14.40 perplexity versus 14.59
+Sinkhorn and 14.61 identity).</p>
+<p>Four properties distinguish the Hyperloop wiring from per-sublayer
+mHC (§<a href="#sec:annex-mhc" data-reference-type="ref"
+data-reference="sec:annex-mhc">21</a>): (1) hyper-connections fire once
+per <em>loop</em>, not after every sub-layer — also the most performant
+placement in the paper’s Table 5 ablation; (2) the stream is created by
+<em>copying</em> the begin-block output <span
+class="math inline">\(n\)</span> times and collapsed by
+<em>averaging</em> the streams before the end block, replacing mHC’s
+learned in/out projections; (3) the parameters are <em>per loop</em>,
+relaxing the strict weight sharing of ordinary looped Transformers — the
+paper’s representation-similarity analysis (Table 8) shows looped-layer
+representations deviate more across loops, which it identifies as the
+source of the quality gains; and (4) <span
+class="math inline">\(H^{\text{res}}\)</span> defaults to the
+diagonal-sigmoid parameterization.</p>
+<p>The Frankenstein integration is controlled by the
+<code>mhc.hyperloop</code> boolean (flat <code>mhc_hyperloop</code>;
+requires <code>mhc.enabled</code> and <code>dims.num_loops</code> <span
+class="math inline">\(\ge 2\)</span>), with three additional keys:</p>
+<ul>
+<li><p><code>hyperloop_begin_layers</code> /
+<code>hyperloop_end_layers</code> (int <span class="math inline">\(\ge
+0\)</span>, default <span class="math inline">\(0\)</span>): sizes of
+the begin/end blocks, which run exactly once. The paper allocates <span
+class="math inline">\(\sim\)</span>25% of parameters to each and 50% to
+the middle block (unrolled depth <span class="math inline">\(=\)</span>
+begin <span class="math inline">\(+\)</span> middle <span
+class="math inline">\(\times\)</span> loops <span
+class="math inline">\(+\)</span> end; e.g. <span
+class="math inline">\(2L \to 4L(\times3) \to 2L\)</span> at 16 layers).
+<span class="math inline">\(0/0\)</span> loops the whole stack.</p></li>
+<li><p><code>hyperloop_res_parameterization</code> (enum, default
+<code>diagonal</code>): <code>diagonal</code>, <code>sinkhorn</code>
+(full mHC-style doubly stochastic mixing, reusing
+<code>SinkhornKnoppFunction</code>) or <code>identity</code>.</p></li>
+</ul>
+<p>Implementation: <code>src/model/hyperloop.py</code> hosts
+<code>HyperloopConnections</code> with per-loop <code>projs</code> /
+<code>biases</code> / <code>alphas_</code> / <code>loop_pos_embs</code>
+(<span class="math inline">\(e_l\)</span>, zero-initialized so that at
+initialisation the update reduces to the plain looped-Transformer
+recurrence). <code>FrankensteinEncoder</code> (and
+<code>FrankensteinViT</code>) build it <em>instead of</em> the
+<code>mhc_in_proj</code>/<code>mhc_out_proj</code> pair; the forward
+pass runs begin <span class="math inline">\(\to\)</span> copy <span
+class="math inline">\(\to\)</span> per-loop read/middle/update <span
+class="math inline">\(\to\)</span> average <span
+class="math inline">\(\to\)</span> end. <code>HybridLayer</code>
+disables its per-layer <code>mhc_attn</code>/<code>mhc_ffn</code>
+modules under Hyperloop, so middle-block layers run the standard <span
+class="math inline">\(C\)</span>-dimensional path — which restores
+<strong>Mixture-of-Depths compatibility</strong> (per-layer mHC forbids
+MoD). Hyperloop is incompatible with the AttnRes residuals
+(<code>residuals.type</code> <code>full_attn</code> /
+<code>block_attn</code>), which assume a per-logical-layer n-stream
+residual. The per-loop parameter budget is <span
+class="math inline">\(3n^2C + 3n + 3 + C\)</span> (diagonal): for the
+paper’s 136M model (<span class="math inline">\(C = 1024\)</span>, <span
+class="math inline">\(n = 4\)</span>, 3 loops) only <span
+class="math inline">\(\approx\)</span>150K parameters beyond the plain
+looped Transformer.</p>
+<p>Example configuration:
+<code>configs/examples/hyperloop_mhc_adamw.yaml</code>.</p>
+<h3 class="unnumbered" id="reported-results-arxiv2604.21254">Reported
+results (arXiv:2604.21254)</h3>
+<p>Trained on FineWeb-Edu with <span class="math inline">\(n =
+4\)</span> streams and 3 loops (25%/50%/25% parameter split), against
+depth-matched Transformer and mHC baselines:</p>
+<ul>
+<li><p><strong>Parameter efficiency</strong>: at 240M/1B/2B
+depth-matched scale, Hyperloop uses <span
+class="math inline">\(\approx\)</span>50% fewer parameters
+(136M/580M/991M) yet matches or beats the baselines in perplexity (14.40
+vs 14.65 at 240M scale; 9.65 vs 10.19 at 1B; 8.49 vs 8.60 at
+2B).</p></li>
+<li><p><strong>Quantization</strong>: INT4 (GPTQ) perplexity degrades
+less than the vanilla looped model (14.68 vs 15.18 at 240M scale), so
+the parameter savings survive post-training compression.</p></li>
+<li><p><strong>Overhead</strong>: loop-level placement plus the diagonal
+<span class="math inline">\(H^{\text{res}}\)</span> keep the training
+throughput within <span class="math inline">\(\approx\)</span>5% of the
+plain looped Transformer in unoptimized PyTorch (per-layer mHC loses
+<span class="math inline">\(\approx\)</span>33% without fused
+kernels).</p></li>
+<li><p><strong>Ablations</strong>: every-loop placement beats
+every-layer (Table 5); diagonal <span
+class="math inline">\(H^{\text{res}}\)</span> beats Sinkhorn and
+identity (Table 6); stream count <span class="math inline">\(n\)</span>
+shows diminishing returns beyond 4 (Table 4); LoRA-per-loop (relaxed
+recursive Transformers) helps far less per parameter than the
+hyper-connection relaxation (Table 7).</p></li>
 </ul>
 <h1 id="sec:annex-attnres">Attention Residuals (AttnRes)</h1>
 <p>This annex documents the integration of <em>Attention Residuals</em>
