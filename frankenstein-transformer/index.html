@@ -1031,7 +1031,7 @@ const UI = {
   hiddenSizeDivisibility: { en:'model.dims.hidden_size must be divisible by model.dims.num_heads.', es:'model.dims.hidden_size debe ser divisible por model.dims.num_heads.' },
   kvHeadsDivisibility: { en:'model.dims.num_kv_heads must divide model.dims.num_heads exactly.', es:'model.dims.num_kv_heads debe dividir exactamente a model.dims.num_heads.' },
   patchDivisibility: { en:'image.image_size height/width must be divisible by image.patch_size.', es:'image.image_size (alto/ancho) debe ser divisible por image.patch_size.' },
-  bitnetRoutersRequireBitnet: { en:'bitnet_routers=true requires use_bitnet=true.', es:'bitnet_routers=true requiere use_bitnet=true.' },
+  bitnetRoutersRequireBitnet: { en:'bitnet.routers=true requires bitnet.enabled=true.', es:'bitnet.routers=true requiere bitnet.enabled=true.' },
   ssogRequiresEncoder: { en:'layer_pattern with ssog_attn requires model.dims.mode=encoder.', es:'layer_pattern con ssog_attn requiere model.dims.mode=encoder.' },
   tokenizerSourceConflict: { en:'tokenizer.name_or_path must be omitted when source=train_from_dataset.', es:'tokenizer.name_or_path debe omitirse cuando source=train_from_dataset.' },
   tokenizerSourceNotIncluded: { en:'include the tokenizer.source key (checkbox) for train_from_dataset to take effect.', es:'incluye la clave tokenizer.source (checkbox) para que train_from_dataset tenga efecto.' },
@@ -1040,9 +1040,9 @@ const UI = {
   warnDecoderForcesMode: { en:'frankensteindecoder forces model.dims.mode=decoder at runtime.', es:'frankensteindecoder fuerza model.dims.mode=decoder en runtime.' },
   warnVitForcesMode: { en:'frankenstein_vit forces model.dims.mode=encoder at runtime.', es:'frankenstein_vit fuerza model.dims.mode=encoder en runtime.' },
   warnBaseModelIgnoresModel: { en:'the base_model path ignores the model/model_class blocks.', es:'la ruta base_model ignora los bloques model/model_class.' },
-  warnBitnetConvNeedsConv: { en:'use_bitnet_conv=true has no effect unless model.embedding.conv.enabled=true.', es:'use_bitnet_conv=true no tiene efecto salvo model.embedding.conv.enabled=true.' },
-  warnMoeDisabled: { en:'use_moe=false ignores num_experts/top_k_experts.', es:'use_moe=false ignora num_experts/top_k_experts.' },
-  warnTopKExceedsExperts: { en:'top_k_experts must be <= num_experts.', es:'top_k_experts debe ser <= num_experts.' },
+  warnBitnetConvNeedsConv: { en:'bitnet.conv=true has no effect unless model.embedding.conv.enabled=true.', es:'bitnet.conv=true no tiene efecto salvo model.embedding.conv.enabled=true.' },
+  warnMoeDisabled: { en:'moe.enabled=false ignores moe.num_experts/moe.top_k.', es:'moe.enabled=false ignora moe.num_experts/moe.top_k.' },
+  warnTopKExceedsExperts: { en:'moe.top_k must be <= moe.num_experts.', es:'moe.top_k debe ser <= moe.num_experts.' },
   warnBlockIgnored: { en:'this block is ignored for the selected task.', es:'este bloque se ignora para la tarea seleccionada.' },
   warnTokenizerIgnored: { en:'the tokenizer block only applies to mlm/causal_lm/text_classification.', es:'el bloque tokenizer solo aplica a mlm/causal_lm/text_classification.' },
 };
@@ -1478,8 +1478,8 @@ function validateBuilder() {
       const nh = parseFloat(nhEl.value), kv = parseFloat(kvEl.value);
       if (kv > 0 && nh % kv !== 0) addError(kvEl, t('kvHeadsDivisibility'));
     }
-    const brEl = document.getElementById(createId('model.bitnet_routers'));
-    const ubEl = document.getElementById(createId('model.use_bitnet'));
+    const brEl = document.getElementById(createId('model.bitnet.routers'));
+    const ubEl = document.getElementById(createId('model.bitnet.enabled'));
     if (brEl && ubEl && brEl.checked && !ubEl.checked) {
       addError(brEl, t('bitnetRoutersRequireBitnet'));
     }
@@ -1578,9 +1578,9 @@ function checkConflicts() {
       addWarn(dimsModeEl, t('warnVitForcesMode'));
     }
     // MoE no-ops / contradictions.
-    const moeEl = document.getElementById(createId('model.use_moe'));
-    const neEl = document.getElementById(createId('model.num_experts'));
-    const tkEl = document.getElementById(createId('model.top_k_experts'));
+    const moeEl = document.getElementById(createId('model.moe.enabled'));
+    const neEl = document.getElementById(createId('model.moe.num_experts'));
+    const tkEl = document.getElementById(createId('model.moe.top_k'));
     if (moeEl && !moeEl.checked &&
         ((neEl && parseFloat(neEl.value) > 1) || (tkEl && parseFloat(tkEl.value) > 1))) {
       addWarn(moeEl, t('warnMoeDisabled'));
@@ -1589,8 +1589,8 @@ function checkConflicts() {
         parseFloat(tkEl.value) > parseFloat(neEl.value)) {
       addWarn(tkEl, t('warnTopKExceedsExperts'));
     }
-    // use_bitnet_conv is a no-op without the embedding conv.
-    const bcvEl = document.getElementById(createId('model.use_bitnet_conv'));
+    // bitnet.conv is a no-op without the embedding conv.
+    const bcvEl = document.getElementById(createId('model.bitnet.conv'));
     const convEl = document.getElementById(createId('model.embedding.conv.enabled'));
     if (bcvEl && bcvEl.checked && convEl && !convEl.checked) {
       addWarn(bcvEl, t('warnBitnetConvNeedsConv'));
@@ -2727,9 +2727,10 @@ function onModelModeChange() {
 }
 
 // ====== PRESETS ======
-// Model keys use the new hierarchical schema shape (schema/_model/_*.yaml):
-//   model.dims.*, model.norm.*, model.embedding.*, model.attention.titan.*
-//   + flat keys (use_moe, num_experts, top_k_experts, ffn_*, ode_*, use_bitnet, ...)
+// Model keys use the fully hierarchical schema shape (schema/_model/_*.yaml):
+//   model.dims.*, model.norm.*, model.embedding.*, model.attention.*,
+//   model.moe.*, model.bitnet.*, model.mixture_of_depths.*, model.ssmax.*,
+//   model.ffn.*, model.classification_head.*, model.mhc.*, model.residuals.*.
 // We use dotted keys at the model level so applyPreset() — which builds ids
 // like createId('model.' + key) — produces the same ids renderObject emits
 // when walking the nested schema (e.g. 'model.dims.vocab_size').
@@ -2738,16 +2739,16 @@ const PRESETS = {
     model_mode: 'custom', model_class: 'frankenstein',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
-      'dims.num_heads': 12, 'dims.retention_heads': 12, 'dims.dropout': 0.1, 'dims.layer_pattern': ['standard_attn'],
+      'dims.num_heads': 12, 'attention.retnet.heads': 12, 'dims.dropout': 0.1, 'dims.layer_pattern': ['standard_attn'],
       'norm.type': 'layer_norm',
       'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
       'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
-      num_experts: 4, top_k_experts: 2, ode_solver: 'rk4', ode_steps: 2,
-      use_bitnet: false, use_moe: false, ffn_hidden_size: 3072, ffn_activation: 'gelu',
-      ffn_activation_config: {},
-      use_mixture_of_depths: false, mixture_of_depths_capacity_ratio: 0.5,
-      mixture_of_depths_router_aux_loss_weight: 0.0,
-      use_bitnet_conv: false, bitnet_routers: false,
+      'moe.num_experts': 4, 'moe.top_k': 2, 'attention.ode.solver': 'rk4', 'attention.ode.steps': 2,
+      'bitnet.enabled': false, 'moe.enabled': false, 'ffn.hidden_size': 3072, 'ffn.activation': 'gelu',
+      'ffn.activation_config': {},
+      'mixture_of_depths.enabled': false, 'mixture_of_depths.capacity_ratio': 0.5,
+      'mixture_of_depths.router_aux_loss_weight': 0.0,
+      'bitnet.conv': false, 'bitnet.routers': false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
       'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
@@ -2763,18 +2764,18 @@ const PRESETS = {
     model_mode: 'custom', model_class: 'frankenstein',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
-      'dims.num_heads': 12, 'dims.retention_heads': 12, 'dims.dropout': 0.1,
+      'dims.num_heads': 12, 'attention.retnet.heads': 12, 'dims.dropout': 0.1,
       'dims.layer_pattern': ['retnet','titan_attn','retnet','mamba','titan_attn','ode'],
       'norm.type': 'layer_norm',
       'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
       'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
-      'attention.titan.positional_encoding': 'hope',
-      num_experts: 4, top_k_experts: 2, ode_solver: 'rk4', ode_steps: 2,
-      use_bitnet: false, use_moe: true, ffn_hidden_size: 3072, ffn_activation: 'silu',
-      ffn_activation_config: {},
-      use_mixture_of_depths: false, mixture_of_depths_capacity_ratio: 0.5,
-      mixture_of_depths_router_aux_loss_weight: 0.0,
-      use_bitnet_conv: false, bitnet_routers: false,
+      'positional_encoding': 'hope',
+      'moe.num_experts': 4, 'moe.top_k': 2, 'attention.ode.solver': 'rk4', 'attention.ode.steps': 2,
+      'bitnet.enabled': false, 'moe.enabled': true, 'ffn.hidden_size': 3072, 'ffn.activation': 'silu',
+      'ffn.activation_config': {},
+      'mixture_of_depths.enabled': false, 'mixture_of_depths.capacity_ratio': 0.5,
+      'mixture_of_depths.router_aux_loss_weight': 0.0,
+      'bitnet.conv': false, 'bitnet.routers': false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
       'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
@@ -2790,18 +2791,18 @@ const PRESETS = {
     model_mode: 'custom', model_class: 'frankenstein',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
-      'dims.num_heads': 12, 'dims.retention_heads': 12, 'dims.dropout': 0.1,
+      'dims.num_heads': 12, 'attention.retnet.heads': 12, 'dims.dropout': 0.1,
       'dims.layer_pattern': ['retnet','titan_attn','mamba','ode'],
       'norm.type': 'layer_norm',
       'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
       'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
-      'attention.titan.positional_encoding': 'hope',
-      num_experts: 4, top_k_experts: 2, ode_solver: 'rk4', ode_steps: 2,
-      use_bitnet: false, use_moe: false, ffn_hidden_size: 3072, ffn_activation: 'silu',
-      ffn_activation_config: {},
-      use_mixture_of_depths: false, mixture_of_depths_capacity_ratio: 0.5,
-      mixture_of_depths_router_aux_loss_weight: 0.0,
-      use_bitnet_conv: false, bitnet_routers: false,
+      'positional_encoding': 'hope',
+      'moe.num_experts': 4, 'moe.top_k': 2, 'attention.ode.solver': 'rk4', 'attention.ode.steps': 2,
+      'bitnet.enabled': false, 'moe.enabled': false, 'ffn.hidden_size': 3072, 'ffn.activation': 'silu',
+      'ffn.activation_config': {},
+      'mixture_of_depths.enabled': false, 'mixture_of_depths.capacity_ratio': 0.5,
+      'mixture_of_depths.router_aux_loss_weight': 0.0,
+      'bitnet.conv': false, 'bitnet.routers': false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
       'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
@@ -2817,18 +2818,18 @@ const PRESETS = {
     model_mode: 'custom', model_class: 'frankensteindecoder',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 768, 'dims.num_layers': 12, 'dims.num_loops': 1,
-      'dims.num_heads': 12, 'dims.retention_heads': 1, 'dims.dropout': 0.1,
+      'dims.num_heads': 12, 'attention.retnet.heads': 1, 'dims.dropout': 0.1,
       'dims.layer_pattern': ['standard_attn'], 'dims.mode': 'decoder',
       'norm.type': 'layer_norm',
       'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
       'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
-      'attention.titan.positional_encoding': 'rope',
-      num_experts: 1, top_k_experts: 1, ode_solver: 'rk4', ode_steps: 2,
-      use_bitnet: false, use_moe: false, ffn_hidden_size: 3072, ffn_activation: 'gelu',
-      ffn_activation_config: {},
-      use_mixture_of_depths: false, mixture_of_depths_capacity_ratio: 0.5,
-      mixture_of_depths_router_aux_loss_weight: 0.0,
-      use_bitnet_conv: false, bitnet_routers: false,
+      'positional_encoding': 'rope',
+      'moe.num_experts': 1, 'moe.top_k': 1, 'attention.ode.solver': 'rk4', 'attention.ode.steps': 2,
+      'bitnet.enabled': false, 'moe.enabled': false, 'ffn.hidden_size': 3072, 'ffn.activation': 'gelu',
+      'ffn.activation_config': {},
+      'mixture_of_depths.enabled': false, 'mixture_of_depths.capacity_ratio': 0.5,
+      'mixture_of_depths.router_aux_loss_weight': 0.0,
+      'bitnet.conv': false, 'bitnet.routers': false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
       'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
@@ -2844,18 +2845,18 @@ const PRESETS = {
     model_mode: 'custom', model_class: 'frankensteindecoder',
     model: {
       'dims.vocab_size': 50000, 'dims.hidden_size': 4096, 'dims.num_layers': 32, 'dims.num_loops': 1,
-      'dims.num_heads': 32, 'dims.retention_heads': 1, 'dims.dropout': 0.0,
+      'dims.num_heads': 32, 'attention.retnet.heads': 1, 'dims.dropout': 0.0,
       'dims.layer_pattern': ['standard_attn'], 'dims.mode': 'decoder',
       'norm.type': 'rms_norm',
       'embedding.factorized.enabled': false, 'embedding.factorized.dim': 128,
       'embedding.conv.enabled': false, 'embedding.conv.kernel': 3,
-      'attention.titan.positional_encoding': 'rope',
-      num_experts: 1, top_k_experts: 1, ode_solver: 'rk4', ode_steps: 2,
-      use_bitnet: false, use_moe: false, ffn_hidden_size: 11008, ffn_activation: 'silu',
-      ffn_activation_config: {},
-      use_mixture_of_depths: false, mixture_of_depths_capacity_ratio: 0.5,
-      mixture_of_depths_router_aux_loss_weight: 0.0,
-      use_bitnet_conv: false, bitnet_routers: false,
+      'positional_encoding': 'rope',
+      'moe.num_experts': 1, 'moe.top_k': 1, 'attention.ode.solver': 'rk4', 'attention.ode.steps': 2,
+      'bitnet.enabled': false, 'moe.enabled': false, 'ffn.hidden_size': 11008, 'ffn.activation': 'silu',
+      'ffn.activation_config': {},
+      'mixture_of_depths.enabled': false, 'mixture_of_depths.capacity_ratio': 0.5,
+      'mixture_of_depths.router_aux_loss_weight': 0.0,
+      'bitnet.conv': false, 'bitnet.routers': false,
       'mhc.enabled': false, 'mhc.expansion_rate': 4, 'mhc.sinkhorn_iters': 20,
       'mhc.gating_init': 0.01, 'mhc.checkpoint': false, 'mhc.full_prec_under_bitnet': true,
       'mhc.hyperloop': false, 'mhc.hyperloop_begin_layers': 0, 'mhc.hyperloop_end_layers': 0, 'mhc.hyperloop_res_parameterization': 'diagonal'
@@ -3051,7 +3052,7 @@ function applyYamlConfig(config) {
   // Apply model fields. Existing YAMLs on disk still use the legacy flat
   // model shape (vocab_size, norm_type, use_factorized_embedding, ...); the
   // schema was restructured into nested sub-objects (dims.*, norm.*,
-  // embedding.*, attention.titan.*). Normalize before applying so both
+  // embedding.*, moe.*, bitnet.*, ffn.*, attention.*). Normalize before applying so both
   // shapes populate the same rendered form controls.
   if (config.model) {
     const flat = normalizeModelFlat(config.model);
@@ -3180,7 +3181,8 @@ function applyFieldValue(dotted, val) {
 
 // Flatten a model object into dotted keys matching the rendered form ids,
 // bridging the legacy flat schema (vocab_size, norm_type, use_hope, ...) and
-// the current hierarchical schema (dims.*, norm.*, embedding.*, attention.titan.*).
+// the current fully hierarchical schema (dims.*, norm.*, embedding.*, moe.*,
+// bitnet.*, ffn.*, attention.*, ...).
 // Returns an object like { 'dims.vocab_size': 50000, 'norm.type': 'layer_norm', ... }
 // so applyPreset/applyYamlConfig can reuse the same id-building path.
 function normalizeModelFlat(model) {
@@ -3208,28 +3210,54 @@ function normalizeModelFlat(model) {
     num_loops: 'dims.num_loops',
     num_heads: 'dims.num_heads',
     num_kv_heads: 'dims.num_kv_heads',
-    retention_heads: 'dims.retention_heads',
+    retention_heads: 'attention.retnet.heads',
     dropout: 'dims.dropout',
     layer_pattern: 'dims.layer_pattern',
     mode: 'dims.mode',
     norm_type: 'norm.type',
     prms_partial_ratio: 'norm.partial_ratio',
+    flashnorm_partial_ratio: 'norm.flashnorm_partial_ratio',
     use_factorized_embedding: 'embedding.factorized.enabled',
     factorized_embedding_dim: 'embedding.factorized.dim',
     use_embedding_conv: 'embedding.conv.enabled',
     embedding_conv_kernel: 'embedding.conv.kernel',
+    use_moe: 'moe.enabled',
+    num_experts: 'moe.num_experts',
+    top_k_experts: 'moe.top_k',
+    use_bitnet: 'bitnet.enabled',
+    bitnet_routers: 'bitnet.routers',
+    use_bitnet_conv: 'bitnet.conv',
+    use_mixture_of_depths: 'mixture_of_depths.enabled',
+    mixture_of_depths_capacity_ratio: 'mixture_of_depths.capacity_ratio',
+    mixture_of_depths_router_aux_loss_weight: 'mixture_of_depths.router_aux_loss_weight',
+    use_ssmax: 'ssmax.enabled',
+    ssmax_s_init: 'ssmax.s_init',
+    ffn_hidden_size: 'ffn.hidden_size',
+    ffn_activation: 'ffn.activation',
+    ffn_activation_config: 'ffn.activation_config',
+    ode_solver: 'attention.ode.solver',
+    ode_steps: 'attention.ode.steps',
+    classification_head: 'classification_head.enabled',
+    num_labels: 'classification_head.num_labels',
+    encoder_pooling_mode: 'classification_head.pooling_mode',
     positional_encoding: 'positional_encoding',
-    use_hope: 'attention.titan.use_hope',
-    hope_base: 'attention.titan.hope.base',
-    hope_damping: 'attention.titan.hope.damping',
-    rope_base: 'attention.titan.rope.base',
-    rope_scaling: 'attention.titan.rope.scaling'
+    hope_base: 'positional_encoding_parameters.hope.base',
+    hope_damping: 'positional_encoding_parameters.hope.damping',
+    rope_base: 'positional_encoding_parameters.rope.base',
+    rope_scaling: 'positional_encoding_parameters.rope.scaling'
   };
   for (const [legacy, modern] of Object.entries(alias)) {
     if (Object.prototype.hasOwnProperty.call(out, legacy) && !Object.prototype.hasOwnProperty.call(out, modern)) {
       out[modern] = out[legacy];
       delete out[legacy];
     }
+  }
+  // Legacy `use_hope` boolean -> the model-level PE enum.
+  if (Object.prototype.hasOwnProperty.call(out, 'use_hope')) {
+    if (!Object.prototype.hasOwnProperty.call(out, 'positional_encoding')) {
+      out.positional_encoding = out.use_hope ? 'hope' : 'rope';
+    }
+    delete out.use_hope;
   }
   return out;
 }

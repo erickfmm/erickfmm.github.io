@@ -254,7 +254,7 @@ var FTParamEstimator = (function () {
   }
 
   function peParams(m, H, nH) {
-    var pe = String(pick(m, 'positional_encoding', 'positional_encoding', 'hope') || 'hope').toLowerCase();
+    var pe = String(pick(m, 'positional_encoding', 'positional_encoding', 'rope') || 'rope').toLowerCase();
     var pep = getDeep(m, 'positional_encoding_parameters') || {};
     switch (pe) {
       case 'rope':
@@ -322,11 +322,11 @@ var FTParamEstimator = (function () {
     if (typeof pat === 'string') pat = [pat];
 
     var normType = pick(m, 'norm.type', 'norm_type', 'dynamic_tanh');
-    var fH = toNum(m.ffn_hidden_size, H * 2);
-    var fA = m.ffn_activation || 'silu';
-    var moe = toBool(m.use_moe, true);
-    var nE = toNum(m.num_experts, 8);
-    var mod = toBool(m.use_mixture_of_depths, false);
+    var fH = toNum(pick(m, 'ffn.hidden_size', 'ffn_hidden_size', H * 2), H * 2);
+    var fA = String(pick(m, 'ffn.activation', 'ffn_activation', 'silu') || 'silu');
+    var moe = toBool(pick(m, 'moe.enabled', 'use_moe', true), true);
+    var nE = toNum(pick(m, 'moe.num_experts', 'num_experts', 8), 8);
+    var mod = toBool(pick(m, 'mixture_of_depths.enabled', 'use_mixture_of_depths', false), false);
     var mhcEnabled = toBool(pick(m, 'mhc.enabled', 'use_mhc', false), false);
     var mhcN = toNum(pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4), 4);
     var hyperloop = toBool(pick(m, 'mhc.hyperloop', 'mhc_hyperloop', false), false);
@@ -390,7 +390,7 @@ var FTParamEstimator = (function () {
       if (toBool(img.cls_token, true) && String(img.pooling_mode || 'cls') === 'cls') pPos += H; // cls token
       pPos += H; // mask token (always allocated)
     }
-    var ssmax = toBool(pick(m, 'use_ssmax', 'use_ssmax', false), false);
+    var ssmax = toBool(pick(m, 'ssmax.enabled', 'use_ssmax', false), false);
     if (ssmax) pPos += nH;               // per-head Scalable Softmax scale
 
     // ---- Residual module (AttnRes) ----
@@ -416,8 +416,9 @@ var FTParamEstimator = (function () {
       }
     } else {
       head = H * V + V;                  // LM/MLM head (bias=True, untied)
-      var clsH = toBool(m.classification_head, false);
-      if (clsH) head += H * toNum(m.num_labels, 10) + toNum(m.num_labels, 10);
+      var clsH = toBool(pick(m, 'classification_head.enabled', 'classification_head', false), false);
+      var nLabels = toNum(pick(m, 'classification_head.num_labels', 'num_labels', 10), 10);
+      if (clsH) head += H * nLabels + nLabels;
     }
     // decoder == encoder backbone; loops reuse weights (params counted once)
 
