@@ -7,9 +7,6 @@
   <meta name="author" content="Erick F. Merino M. Este trabajo no está afiliado erickfmm@gmail.com" />
   <title>Frankenstein Transformer: Biblioteca Unificada de Codificador-Decodificador, CLI y Notas de Diseño Basadas en Investigación</title>
   <style>
-    /* Default styles provided by pandoc.
-    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -181,8 +178,7 @@
       vertical-align: middle;
     }
   </style>
-  <script defer=""
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  <script src="/usr/share/javascript/mathjax/MathJax.js"
   type="text/javascript"></script>
 </head>
 <body>
@@ -193,54 +189,36 @@ Basadas en Investigación</h1>
 <p class="author">Erick F. Merino M.<br />
 Este trabajo no está afiliado<br />
 <code>erickfmm@gmail.com</code></p>
-<p class="date">Febrero 2026</p>
+<p class="date">Octubre 2026</p>
 <div class="abstract">
 <div class="abstract-title">Abstract</div>
-<p>Las arquitecturas de transformers se han convertido en el paradigma
-dominante para el modelado de secuencias en el procesamiento del
-lenguaje natural, la visión por computadora y la biología computacional.
-Los últimos años han sido testigos de una rápida diversificación de los
-mecanismos de atención y las estrategias de optimización, con
-innovaciones que abarcan variantes densas de softmax, alternativas
-recurrentes y retentivas, patrones de atención dispersa, mecanismos
-lineales con compuerta, proyecciones en espacio latente y bloques con
-aumento de memoria. Paralelamente, el panorama de optimizadores se ha
-expandido más allá del AdamW clásico para incluir métodos de reducción
-de varianza, variantes eficientes en memoria, enfoques sin programación
-de tasa de aprendizaje, precondicionadores de segundo orden y
-aproximaciones de bajo rango. A pesar de esta riqueza de avances
-arquitectónicos y algorítmicos, el ecosistema de investigación permanece
-fragmentado: comparar mezcladores de secuencia y optimizadores bajo
-condiciones de entrenamiento consistentes requiere un esfuerzo de
-ingeniería sustancial, lo que dificulta la reproducibilidad y ralentiza
-el progreso científico. En este trabajo proponemos Frankenstein
-Transformer, un conjunto de herramientas CLI basado en configuración
+<p>Las arquitecturas transformer dominan el modelado de secuencias en
+procesamiento del lenguaje natural, visión por computadora y biología
+computacional. El trabajo reciente ha diversificado la atención más allá
+del softmax denso—bloques recurrentes y retentivos, patrones dispersos,
+mecanismos con compuerta, proyecciones latentes, capas con memoria y
+reglas de peso rápido—mientras que los optimizadores se han ampliado más
+allá de AdamW con métodos de reducción de varianza, eficientes en
+memoria, sin programación, de segundo orden y de bajo rango. Comparar
+estas ideas bajo condiciones consistentes sigue siendo costoso, pues
+cada variante debe implementarse, integrarse y mantenerse, lo que
+dificulta la reproducibilidad. Proponemos Frankenstein Transformer, un
+conjunto de herramientas CLI basado en configuración
 (<code>frankenstein-transformer</code>) que unifica la definición, el
-entrenamiento y el despliegue de modelos transformer mediante un esquema
-YAML estricto. El conjunto de herramientas soporta cuarenta y tres
-variantes de mezcladores de secuencia en ocho familias (densa,
-recurrente, dispersa, con compuerta, latente, con aumento de memoria, de
-peso rápido y de campo geométrico) y veintitrés familias de
-optimizadores con control de hiperparámetros por grupo de parámetros
-mediante prefijos. El conjunto de herramientas además soporta una clase
-de modelo Vision Transformer (<code>frankenstein_vit</code>) para tareas
-de comprensión de imágenes incluyendo predicción autosupervisada de
-parches enmascarados, clasificación y segmentación, reutilizando la
-misma infraestructura de mezcladores de atención y optimizadores.
-Proporciona subcomandos para entrenamiento (<code>train</code>,
-incluyendo objetivos estilo SBERT para incrustaciones de oraciones),
-despliegue y exportación (<code>deploy</code> con formatos cuantizado,
-estándar, HuggingFace Transformers y GGUF BitNet), inferencia
-(<code>infer</code>) y un constructor de configuración basado en web
-(<code>web-server</code>). El sistema impone la reproducibilidad
-mediante un contrato de esquema estricto con restricciones
-<code>additionalProperties: false</code>, ofrece una interfaz web basada
-en Streamlit para la construcción de configuraciones guiada por esquema
-e incluye tuberías de despliegue de extremo a extremo con cuantización
-ternaria de pesos y flujos de trabajo de incrustación de oraciones
-inspirados en SBERT. Las pruebas automatizadas integrales con suites de
-pruebas unitarias, validación de presets YAML y ejecución de CI en
-múltiples versiones de Python garantizan la confiabilidad.</p>
+entrenamiento, el despliegue y la inferencia de modelos tras un único
+esquema YAML estricto. El conjunto de herramientas cubre cuarenta y tres
+mezcladores de secuencia en ocho familias y veintitrés familias de
+optimizadores con control por grupo de parámetros, y soporta clases de
+modelo encoder, decoder y Vision Transformer para masked language
+modeling, modelado causal de lenguaje, embeddings de oraciones y tareas
+de imagen. El aporte de este software es un contrato de experimentación
+validado: las configuraciones inválidas fallan antes de entrenar, cada
+arquitectura y optimizador comparte una interfaz operativa, y el mismo
+documento gestiona entrenamiento, despliegue cuantizado, exportación y
+un constructor web generado desde el esquema. Describimos la taxonomía,
+el enrutamiento de optimizadores, las rutas de despliegue y la
+integración, y remitimos el detalle matemático y de implementación a los
+apéndices.</p>
 </div>
 </header>
 <nav id="TOC" role="doc-toc">
@@ -250,13 +228,10 @@ múltiples versiones de Python garantizan la confiabilidad.</p>
 <li><a href="#motivación-y-planteamiento-del-problema"
 id="toc-motivación-y-planteamiento-del-problema">Motivación y
 Planteamiento del Problema</a></li>
-<li><a href="#contribuciones"
-id="toc-contribuciones">Contribuciones</a></li>
+<li><a href="#propuesta-y-contribuciones"
+id="toc-propuesta-y-contribuciones">Propuesta y Contribuciones</a></li>
 <li><a href="#guía-de-lectura" id="toc-guía-de-lectura">Guía de
 Lectura</a></li>
-<li><a href="#constructor-de-configuración-basado-en-web"
-id="toc-constructor-de-configuración-basado-en-web">Constructor de
-Configuración Basado en Web</a></li>
 </ul></li>
 <li><a href="#trabajo-relacionado" id="toc-trabajo-relacionado">Trabajo
 Relacionado</a>
@@ -274,61 +249,52 @@ Código y Eficiencia</a></li>
 id="toc-experimentación-basada-en-configuración">Experimentación Basada
 en Configuración</a></li>
 </ul></li>
-<li><a href="#sec:system-design" id="toc-sec:system-design">Diseño y
-Arquitectura del Sistema</a>
+<li><a href="#sec:system-design" id="toc-sec:system-design">Diseño del
+Sistema y Arquitectura</a>
 <ul>
 <li><a href="#sec:config-centric-architecture"
-id="toc-sec:config-centric-architecture">Arquitectura Centrada en
+id="toc-sec:config-centric-architecture">Arquitectura Centrada en la
 Configuración</a></li>
 <li><a href="#sec:schema-validation"
 id="toc-sec:schema-validation">Alcance del Esquema y Reglas de
 Validación</a></li>
 <li><a href="#esquema-de-configuración"
 id="toc-esquema-de-configuración">Esquema de Configuración</a></li>
-<li><a href="#tipos-de-tarea-de-entrenamiento"
-id="toc-tipos-de-tarea-de-entrenamiento">Tipos de Tarea de
-Entrenamiento</a></li>
-<li><a href="#configuración-del-optimizador"
-id="toc-configuración-del-optimizador">Configuración del
-Optimizador</a></li>
-<li><a href="#seguridad-de-entrenamiento-y-semántica-de-ejecución"
-id="toc-seguridad-de-entrenamiento-y-semántica-de-ejecución">Seguridad
-de Entrenamiento y Semántica de Ejecución</a></li>
+<li><a href="#tareas-de-entrenamiento"
+id="toc-tareas-de-entrenamiento">Tareas de Entrenamiento</a></li>
+<li><a href="#seguridad-de-entrenamiento-y-semántica-de-runtime"
+id="toc-seguridad-de-entrenamiento-y-semántica-de-runtime">Seguridad de
+Entrenamiento y Semántica de Runtime</a></li>
 <li><a href="#sec:normalization" id="toc-sec:normalization">Variantes de
 Normalización</a></li>
 <li><a href="#sec:residual-stream"
 id="toc-sec:residual-stream">Arquitecturas de Flujo Residual</a></li>
 </ul></li>
 <li><a href="#sec:architecture-taxonomy"
-id="toc-sec:architecture-taxonomy">Taxonomía de Arquitectura e
+id="toc-sec:architecture-taxonomy">Taxonomía de Arquitecturas e
 Implementación</a>
 <ul>
 <li><a href="#sec:attention-families"
 id="toc-sec:attention-families">Familias de Atención y Mezcladores de
-Secuencias</a></li>
-<li><a href="#familias-densas-y-recurrentes"
-id="toc-familias-densas-y-recurrentes">Familias Densas y
-Recurrentes</a></li>
-<li><a href="#familia-de-atención-latente-y-de-rango-bajo"
-id="toc-familia-de-atención-latente-y-de-rango-bajo">Familia de Atención
-Latente y de Rango Bajo</a></li>
+Secuencia</a></li>
+<li><a href="#familias-densa-y-recurrente"
+id="toc-familias-densa-y-recurrente">Familias Densa y
+Recurrente</a></li>
+<li><a href="#familia-de-atención-latente-y-de-bajo-rango"
+id="toc-familia-de-atención-latente-y-de-bajo-rango">Familia de Atención
+Latente y de Bajo Rango</a></li>
 <li><a href="#extensiones-de-atención-dispersa"
 id="toc-extensiones-de-atención-dispersa">Extensiones de Atención
 Dispersa</a></li>
-<li><a href="#extensiones-de-atención-con-compuerta"
-id="toc-extensiones-de-atención-con-compuerta">Extensiones de Atención
-con Compuerta</a></li>
+<li><a href="#atención-con-compuerta-y-de-peso-rápido"
+id="toc-atención-con-compuerta-y-de-peso-rápido">Atención con Compuerta
+y de Peso Rápido</a></li>
 </ul></li>
 <li><a href="#sec:optimizer-families"
 id="toc-sec:optimizer-families">Familias de Optimizadores y Dinámicas de
 Entrenamiento</a></li>
 <li><a href="#sec:quantization" id="toc-sec:quantization">Cuantización y
-Despliegue</a>
-<ul>
-<li><a href="#cuantización-ternaria-y-escalado-de-activaciones"
-id="toc-cuantización-ternaria-y-escalado-de-activaciones">Cuantización
-Ternaria y Escalado de Activaciones</a></li>
-</ul></li>
+Despliegue</a></li>
 <li><a href="#sec:sbert" id="toc-sec:sbert">Tareas Posteriores de
 SBERT</a></li>
 <li><a href="#sec:dashai-plugin" id="toc-sec:dashai-plugin">Integración
@@ -339,8 +305,7 @@ id="toc-componentes-registrados">Componentes Registrados</a></li>
 <li><a href="#esquema-de-configuración-de-passthrough"
 id="toc-esquema-de-configuración-de-passthrough">Esquema de
 Configuración de Passthrough</a></li>
-<li><a href="#trabajo-en-proceso" id="toc-trabajo-en-proceso">Trabajo en
-Proceso</a></li>
+<li><a href="#estado" id="toc-estado">Estado</a></li>
 </ul></li>
 <li><a href="#sec:discussion" id="toc-sec:discussion">Discusión</a>
 <ul>
@@ -1141,246 +1106,116 @@ id="toc-cuándo-usar-cada-variante">Cuándo Usar Cada Variante</a></li>
 <h1 id="introducción">Introducción</h1>
 <h2 id="motivación-y-planteamiento-del-problema">Motivación y
 Planteamiento del Problema</h2>
-<p>Las arquitecturas de transformers han transformado fundamentalmente
-el panorama del modelado de secuencias en el procesamiento del lenguaje
-natural <span class="citation"
-data-cites="vaswani_attention_2017"></span>, la visión por computadora y
-la biología computacional. El éxito de modelos como BERT <span
-class="citation" data-cites="devlin_bert_2019"></span>, GPT y sus
-variantes ha establecido al transformer como el estándar de facto para
-el aprendizaje de representaciones en el aprendizaje profundo. Sin
-embargo, la rápida proliferación de innovaciones arquitectónicas
-presenta desafíos prácticos significativos para investigadores y
-profesionales.</p>
-<p>Los últimos años han sido testigos de una explosión de mecanismos
-alternativos de atención y mezcla de secuencias, cada uno abordando
-limitaciones específicas de la atención softmax estándar: complejidad
-computacional cuadrática <span class="citation"
-data-cites="child_sparse_transformer_2019"></span>, requisitos de
-inferencia eficiente en memoria <span class="citation"
-data-cites="sun_retentive_2023 gu_mamba_2023"></span>, gestión selectiva
-de estados basada en contenido <span class="citation"
-data-cites="behrouz_titans_2025"></span> y optimizaciones conscientes
-del hardware <span class="citation"
-data-cites="ramapuram_theory_2024"></span>. Simultáneamente, la
-literatura sobre optimización se ha diversificado más allá del AdamW
-clásico, introduciendo técnicas de reducción de varianza <span
+<p>Las arquitecturas transformer son el paradigma dominante para el
+modelado de secuencias en procesamiento del lenguaje natural <span
+class="citation" data-cites="vaswani_attention_2017"></span>, visión por
+computadora y biología computacional, con modelos como BERT <span
+class="citation" data-cites="devlin_bert_2019"></span> y GPT
+estableciendo el estándar para el aprendizaje de representaciones. Desde
+entonces, el campo se ha diversificado rápidamente: bloques recurrentes
+y retentivos, atención dispersa, mecanismos con compuerta, proyecciones
+latentes, capas con memoria, reglas de peso rápido y formulaciones de
+profundidad continua abordan cada uno una limitación distinta de la
+atención densa, mientras que el panorama de optimizadores se ha ampliado
+más allá de AdamW con métodos de reducción de varianza, eficientes en
+memoria, sin programación, de segundo orden y de bajo rango <span
 class="citation"
-data-cites="xie_adan_2022 pagliardini_ademamix_2024 yuan_mars_2024"></span>,
-variantes eficientes en memoria <span class="citation"
-data-cites="shazeer_adafactor_2018 zhao_galore_2024"></span>, enfoques
-sin programación de tasa de aprendizaje <span class="citation"
-data-cites="defazio_road_2024"></span> y métodos de precondicionamiento
-de segundo orden <span class="citation"
-data-cites="gupta_shampoo_2018 vyas_soap_2024"></span>.</p>
-<p>La consecuencia práctica es un ecosistema de investigación
-fragmentado donde la comparación experimental entre arquitecturas y
-optimizadores requiere un esfuerzo de ingeniería significativo. Los
-investigadores deben implementar y depurar múltiples variantes desde
-cero, garantizar tuberías de entrenamiento consistentes y gestionar
-espacios de hiperparámetros complejos. Esta fragmentación dificulta la
-reproducibilidad, ralentiza el progreso científico y aumenta la barrera
-de entrada para nuevos investigadores.</p>
-<p>Este trabajo aborda estos desafíos mediante un conjunto de
-herramientas de experimentación unificado y basado en configuración,
-disponible en <a
+data-cites="child_sparse_transformer_2019 sun_retentive_2023 gu_mamba_2023 behrouz_titans_2025 ramapuram_theory_2024 xie_adan_2022 pagliardini_ademamix_2024 yuan_mars_2024 shazeer_adafactor_2018 zhao_galore_2024 defazio_road_2024 gupta_shampoo_2018 vyas_soap_2024"></span>.</p>
+<p>La consecuencia práctica es un ecosistema fragmentado. Comparar
+mezcladores de secuencia u optimizadores bajo condiciones de
+entrenamiento idénticas exige reimplementar cada variante, integrarla en
+un pipeline de entrenamiento y mantener el resultado ante cambios del
+framework. Este esfuerzo dificulta la reproducibilidad, ralentiza el
+progreso científico y eleva la barrera de entrada para nuevos
+investigadores.</p>
+<h2 id="propuesta-y-contribuciones">Propuesta y Contribuciones</h2>
+<p>Proponemos <strong>Frankenstein Transformer</strong> (<a
 href="https://github.com/erickfmm/frankenstein-transformer"
-class="uri">https://github.com/erickfmm/frankenstein-transformer</a>,
-que proporciona:</p>
+class="uri">https://github.com/erickfmm/frankenstein-transformer</a>),
+un conjunto de herramientas basado en configuración que trata las
+decisiones de arquitectura, optimizador y entrenamiento como un único
+documento validado. El proyecto ofrece:</p>
 <ol>
-<li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
-configuración estricto y validado que garantiza la reproducibilidad
-mientras admite cuarenta y tres variantes de mezcladores de secuencia en
-ocho familias y veintitrés familias de optimizadores.</p></li>
-<li><p><strong>Entrenamiento Agnóstico a la Arquitectura</strong>:
-Infraestructura de entrenamiento común que soporta líneas base de
-atención densa (estándar, sigmoide), alternativas recurrentes (RetNet,
-Mamba, bloques tipo EDO), enrutamiento adaptativo de profundidad
-(Mixture-of-Depths) <span class="citation"
-data-cites="zhu2026mixtureofdepthsattention"></span>, bloques de memoria
-condicional (Engram) <span class="citation"
-data-cites="cheng2026conditionalmemoryscalablelookup"></span>,
-conexiones residuales restringidas por variedad (mHC) <span
-class="citation" data-cites="xie_mhc_2025"></span>, patrones de atención
-dispersa (Sparse Transformer, Longformer, BigBird, SparseK, NSA,
-SpargeAttn, FASA) y mecanismos con compuerta (GLA, DeltaNet, Gated
-DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax).</p></li>
-<li><p><strong>Marco de Enrutamiento de Optimizadores</strong>: Grupos
-de hiperparámetros con prefijos que permiten un control detallado sobre
-incrustaciones, capas de normalización, bloques recurrentes, bloques de
-atención y otros subconjuntos de parámetros a través de diversos
-optimizadores, incluyendo la familia APOLLO (Apollo, Apollo-Mini,
-Q-Apollo) <span class="citation"
+<li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
+estricto que soporta cuarenta y tres mezcladores de secuencia en ocho
+familias y veintitrés familias de optimizadores, validado antes de
+iniciar el entrenamiento.</p></li>
+<li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
+único pipeline para líneas base densas, bloques recurrentes y
+retentivos, patrones dispersos, mecanismos con compuerta, compresión
+latente, memoria condicional, atención de peso rápido y atención de
+campo geométrico, con modos encoder y decoder <span class="citation"
+data-cites="zhu2026mixtureofdepthsattention cheng2026conditionalmemoryscalablelookup xie_mhc_2025 zhang_falcon_2026 pisoni_ssog_2026"></span>.</p></li>
+<li><p><strong>Enrutamiento de optimizadores</strong>: grupos de
+hiperparámetros con prefijo que controlan de forma independiente
+embeddings, capas de normalización, bloques de atención y el resto de
+parámetros para cada familia de optimizadores <span class="citation"
 data-cites="zhu2025apollosgdlikememoryadamwlevel"></span>.</p></li>
-<li><p><strong>Flujos de Trabajo de Extremo a Extremo</strong>:
-Despliegue integrado mediante cuantización (empaquetado ternario de
-pesos, activaciones INT8) y capacidades de incrustación de oraciones
-inspiradas en SBERT <span class="citation"
+<li><p><strong>Flujos de trabajo de extremo a extremo</strong>:
+entrenamiento (incluidos objetivos de embeddings de oraciones),
+despliegue y exportación (formatos cuantizado, estándar, HuggingFace
+Transformers y BitNet GGUF), inferencia y un constructor web generado
+desde el esquema, inspirado en flujos de trabajo estilo SBERT <span
+class="citation"
 data-cites="reimers_sentence-bert_2019"></span>.</p></li>
-<li><p><strong>Configuración Interactiva</strong>: Interfaz basada en
-web que proporciona renderizado de formularios impulsado por esquemas,
-validación en tiempo real y generación de comandos CLI.</p></li>
-<li><p><strong>Herramientas de Confiabilidad</strong>: Pruebas
-automatizadas integrales con suites de pruebas unitarias, validación de
-presets YAML y automatización de CI en versiones de Python
-compatibles.</p></li>
+<li><p><strong>Soporte de visión</strong>: una clase de modelo Vision
+Transformer que cubre predicción de parches enmascarados, clasificación
+y segmentación bajo la misma infraestructura de mezcladores y
+optimizadores.</p></li>
+<li><p><strong>Herramientas de validación</strong>: pruebas unitarias,
+validación de presets YAML e integración continua en las versiones de
+Python soportadas.</p></li>
 </ol>
-<p>La superficie de comandos del proyecto es:</p>
-<div class="center">
-<p><code>frankenstein-transformer</code></p>
-</div>
-<p>con subcomandos para flujos de trabajo de codificador y
-decodificador: <code>train</code> (incluyendo objetivos estilo SBERT
-para incrustaciones de oraciones vía <code>training.task: sbert</code>),
-<code>deploy</code> (artefactos cuantizado/estándar más formatos de
-exportación HuggingFace Transformers y GGUF BitNet), <code>infer</code>
-y <code>web-server</code>.</p>
-<p>El comando <code>web-server</code> lanza un constructor de
-configuración basado en Streamlit que proporciona:</p>
-<ul>
-<li><p>Campos de formulario impulsados por esquemas con títulos de
-parámetros y descripciones detalladas</p></li>
-<li><p>Información sobre herramientas en tiempo real y texto de ayuda
-para cada opción de configuración</p></li>
-<li><p>Vista previa YAML en vivo y funcionalidad de descarga</p></li>
-<li><p>Comandos CLI generados para entrenamiento, despliegue, inferencia
-y flujos de trabajo SBERT</p></li>
-</ul>
-<p>Esta interfaz interactiva sirve como alternativa a la edición manual
-de YAML, mejorando la usabilidad para usuarios que exploran las opciones
-de configuración disponibles y comprenden su impacto en el
-comportamiento del modelo y la dinámica de entrenamiento.</p>
-<h2 id="contribuciones">Contribuciones</h2>
-<p>Este trabajo realiza las siguientes contribuciones principales:</p>
-<ol>
-<li><p><strong>Esquema de Configuración Unificado</strong>: Un contrato
-de esquema basado en YAML con validación estricta que soporta cuarenta y
-tres variantes de mezcladores de secuencia en ocho familias (densa,
-recurrente, dispersa, con compuerta, latente, con aumento de memoria, de
-peso rápido y de campo geométrico), junto con controles de profundidad
-adaptativa y memoria condicional, mientras garantiza la reproducibilidad
-mediante restricciones
-<code>additionalProperties: false</code>.</p></li>
-<li><p><strong>Soporte Integral de Arquitecturas</strong>:
-Implementación de variantes modernas de transformers incluyendo atención
-softmax estándar <span class="citation"
-data-cites="vaswani_attention_2017"></span>, atención sigmoide <span
-class="citation" data-cites="ramapuram_theory_2024"></span>, RetNet
-<span class="citation" data-cites="sun_retentive_2023"></span>, Mamba
-<span class="citation" data-cites="gu_mamba_2023"></span>, transformers
-continuos tipo EDO <span class="citation"
-data-cites="zhang_continuous_2021"></span>, atención con aumento de
-memoria Titans <span class="citation"
-data-cites="behrouz_titans_2025"></span>, capas de memoria condicional
-Engram <span class="citation"
-data-cites="cheng2026conditionalmemoryscalablelookup"></span>,
-enrutamiento de tokens Mixture-of-Depths <span class="citation"
-data-cites="zhu2026mixtureofdepthsattention"></span>, mecanismos de
-atención dispersa <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026"></span>
-y arquitecturas de atención con compuerta <span class="citation"
-data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025"></span>.
-El sistema soporta tanto entrenamiento en modo codificador con atención
-bidireccional para modelado de lenguaje enmascarado (MLM) como
-entrenamiento en modo decodificador con enmascaramiento causal para
-predicción autorregresiva del siguiente token.</p></li>
-<li><p><strong>Marco de Enrutamiento de Optimizadores</strong>: Sistema
-de hiperparámetros con prefijos que permite control por grupo de
-parámetros a través de veintitrés optimizadores, incluyendo Anon con
-adaptabilidad ajustable <span class="citation"
-data-cites="anon2026anon"></span>, métodos de reducción de varianza
-(MARS, Adan, AdEMAMix, Cautious AdamW), variantes eficientes en memoria
-(Adafactor, GaLore, Lion), enfoques sin programación de tasa de
-aprendizaje (Schedule-Free AdamW), métodos conscientes de curvatura
-(Sophia), precondicionadores de segundo orden (Shampoo, SOAP),
-optimizadores orientados a ortogonalidad (Muon, Turbo-Muon), escalado de
-lotes grandes (LAMB) y la familia APOLLO (Apollo, Apollo-Mini, Q-Apollo)
-<span class="citation"
-data-cites="zhu2025apollosgdlikememoryadamwlevel"></span>.</p></li>
-<li><p><strong>Cuantización y Despliegue</strong>: Tubería de despliegue
-integrada que soporta empaquetado ternario de pesos y cuantización de
-activaciones INT8 con estimaciones de tamaño siguiendo la aproximación
-de almacenamiento de <span class="math inline">\(1.58\)</span>
-bits.</p></li>
-<li><p><strong>Flujos de Trabajo de Incrustación de Oraciones</strong>:
-Tuberías de entrenamiento e inferencia inspiradas en SBERT que soportan
-puntuación de similitud, recuperación, agrupamiento y exportación
-persistente de incrustaciones.</p></li>
-<li><p><strong>Interfaz de Configuración Interactiva</strong>: Servidor
-web basado en Streamlit que proporciona generación de formularios
-impulsada por esquemas, validación en tiempo real, documentación en
-línea y generación de comandos CLI.</p></li>
-<li><p><strong>Tubería de Validación Automatizada</strong>: Integración
-continua y pruebas unitarias ampliadas que verifican las rutas de
-entrenamiento del modelo, la integración optimizador/esquema y la
-compatibilidad de ejemplos YAML.</p></li>
-</ol>
+<p>La superficie de comandos es <code>frankenstein-transformer</code>,
+con cuatro subcomandos: <code>train</code>, <code>deploy</code>,
+<code>infer</code> y <code>web-server</code>. El último lanza un
+constructor de configuración en Streamlit que renderiza los metadatos
+del esquema como formularios, valida la entrada en vivo, previsualiza el
+YAML resultante y genera el comando CLI equivalente, sirviendo tanto de
+ayuda a la configuración como de documentación del espacio de diseño
+disponible.</p>
 <h2 id="guía-de-lectura">Guía de Lectura</h2>
-<p>Este documento está organizado como una referencia técnica que aborda
-cuatro preocupaciones operativas:</p>
+<p>Este documento se organiza como una referencia técnica:</p>
 <ol>
-<li><p><strong>Requisitos Previos</strong>: El Apéndice <a
+<li><p><strong>Requisitos previos</strong>: el Apéndice <a
 href="#sec:annex-tutorial" data-reference-type="ref"
-data-reference="sec:annex-tutorial">11</a> proporciona una introducción
-accesible a los transformers y mecanismos de atención para lectores
-nuevos en el campo.</p></li>
-<li><p><strong>Contrato de Configuración</strong>: La Sección <a
+data-reference="sec:annex-tutorial">11</a> introduce transformers y
+atención para lectores nuevos en el área.</p></li>
+<li><p><strong>Contrato de configuración</strong>: la Sección <a
 href="#sec:config-centric-architecture" data-reference-type="ref"
 data-reference="sec:config-centric-architecture">3.1</a> describe el
-esquema YAML que garantiza experimentos válidos y la Sección <a
-href="#sec:schema-validation" data-reference-type="ref"
-data-reference="sec:schema-validation">3.2</a> explica las reglas de
-validación.</p></li>
-<li><p><strong>Selección de Arquitectura</strong>: La Sección <a
+esquema y la Sección <a href="#sec:schema-validation"
+data-reference-type="ref" data-reference="sec:schema-validation">3.2</a>
+sus reglas de validación.</p></li>
+<li><p><strong>Selección de arquitectura</strong>: la Sección <a
 href="#sec:attention-families" data-reference-type="ref"
-data-reference="sec:attention-families">4.1</a> proporciona una
-comparación exhaustiva de las familias de mezcladores de secuencia; los
-Apéndices <a href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">15</a>, <a
-href="#sec:annex-latent" data-reference-type="ref"
+data-reference="sec:attention-families">4.1</a> compara las familias de
+mezcladores de secuencia; los Apéndices <a href="#sec:annex-transformer"
+data-reference-type="ref" data-reference="sec:annex-transformer">15</a>,
+<a href="#sec:annex-latent" data-reference-type="ref"
 data-reference="sec:annex-latent">16</a>, <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">17</a> y <a
+data-reference-type="ref" data-reference="sec:annex-sparse">17</a> y <a
 href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">18</a> sintetizan la literatura de
-respaldo; el Apéndice <a href="#sec:annex-norm-bitnet-mod"
+data-reference="sec:annex-gated">18</a> recopilan la literatura de
+soporte, con los detalles de normalización, BitNet y memoria condicional
+en el Apéndice <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a> detalla las variantes
-de normalización, la cuantización BitNet, el enrutamiento
-Mixture-of-Depths y la memoria condicional Engram; el Apéndice <a
-href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">21</a> detalla las conexiones residuales
-restringidas por variedad (mHC).</p></li>
-<li><p><strong>Dinámica de Optimización</strong>: La Sección <a
+data-reference="sec:annex-norm-bitnet-mod">19</a> y los residuales con
+restricción de variedad en el Apéndice <a href="#sec:annex-mhc"
+data-reference-type="ref"
+data-reference="sec:annex-mhc">21</a>.</p></li>
+<li><p><strong>Optimización</strong>: la Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
-data-reference="sec:optimizer-families">5</a> detalla el enrutamiento de
-optimizadores y la dinámica de entrenamiento; el Apéndice <a
-href="#sec:annex-optimizers" data-reference-type="ref"
-data-reference="sec:annex-optimizers">14</a> proporciona un análisis
-exhaustivo de las familias de optimizadores.</p></li>
-<li><p><strong>Despliegue e Inferencia</strong>: Las Secciones <a
+data-reference="sec:optimizer-families">5</a> resume el enrutamiento de
+optimizadores; el Apéndice <a href="#sec:annex-optimizers"
+data-reference-type="ref" data-reference="sec:annex-optimizers">14</a>
+ofrece el análisis completo de las familias.</p></li>
+<li><p><strong>Despliegue e inferencia</strong>: las Secciones <a
 href="#sec:quantization" data-reference-type="ref"
 data-reference="sec:quantization">6</a> y <a href="#sec:sbert"
-data-reference-type="ref" data-reference="sec:sbert">7</a> describen el
-despliegue cuantizado y los flujos de trabajo de incrustación de
-oraciones.</p></li>
+data-reference-type="ref" data-reference="sec:sbert">7</a> cubren el
+despliegue cuantizado y los embeddings de oraciones.</p></li>
 </ol>
-<h2 id="constructor-de-configuración-basado-en-web">Constructor de
-Configuración Basado en Web</h2>
-<p>Además de la edición directa de YAML, este proyecto proporciona una
-interfaz web basada en Streamlit (accesible mediante el comando
-<code>web-server</code>) que mejora la accesibilidad y descubribilidad
-de la configuración. La interfaz genera dinámicamente formularios
-guiados por el esquema con documentación de parámetros en línea, vista
-previa YAML en tiempo real y generación automática de comandos CLI para
-entrenamiento, despliegue, inferencia y flujos de trabajo SBERT. Los
-metadatos del esquema (títulos y descripciones) se renderizan
-sistemáticamente en todas las secciones de configuración, incluyendo
-arquitectura del modelo, ejecución de entrenamiento, hiperparámetros del
-optimizador, despliegue y parámetros específicos de SBERT. Este enfoque
-reduce la necesidad de memorizar la estructura YAML, previene errores
-tipográficos mediante la validación del esquema y sirve tanto como
-herramienta de configuración como recurso de aprendizaje para usuarios
-que exploran arquitecturas novedosas.</p>
 <h1 id="trabajo-relacionado">Trabajo Relacionado</h1>
 <p>Este trabajo se sitúa en la intersección de frameworks de aprendizaje
 profundo, herramientas de entrenamiento y experimentación basada en
@@ -1533,11 +1368,11 @@ proporcionando un sistema de configuración basado en esquemas diseñado
 específicamente para la experimentación arquitectónica. Sus
 diferenciadores clave incluyen:</p>
 <ul>
-<li><p><strong>Más de 36 mezcladores de secuencia</strong> que abarcan
-atención densa, bloques recurrentes/retentivos, patrones de atención
-dispersa, mecanismos con compuerta, enrutamiento adaptativo por
-profundidad y capas de memoria condicional, todos seleccionables
-mediante un único campo YAML.</p></li>
+<li><p><strong>43 mezcladores de secuencia</strong> que abarcan atención
+densa, bloques recurrentes/retentivos, patrones de atención dispersa,
+mecanismos con compuerta, enrutamiento adaptativo por profundidad y
+capas de memoria condicional, todos seleccionables mediante un único
+campo YAML.</p></li>
 <li><p><strong>23 familias de optimizadores</strong> con un sistema de
 enrutamiento de hiperparámetros con prefijos que permite control por
 grupo de parámetros a través de embeddings, capas de normalización,
@@ -1565,546 +1400,332 @@ Frankenstein Transformer permite la comparación sistemática de familias
 de mezcladores de secuencia y estrategias de optimización bajo
 condiciones de entrenamiento idénticas—una capacidad no proporcionada
 por ninguna herramienta existente en el ecosistema.</p>
-<h1 id="sec:system-design">Diseño y Arquitectura del Sistema</h1>
-<h2 id="sec:config-centric-architecture">Arquitectura Centrada en
+<h1 id="sec:system-design">Diseño del Sistema y Arquitectura</h1>
+<h2 id="sec:config-centric-architecture">Arquitectura Centrada en la
 Configuración</h2>
-<p>La decisión de diseño principal en este repositorio es que la
-experimentación es <em>esquema primero</em>. En lugar de exponer una
-gran cantidad de indicadores laxamente verificados, el proyecto obliga a
-la topología del modelo, la familia de optimizadores, los límites de
-entrenamiento y las opciones de telemetría a través de un único
-documento de configuración validado. Esto reduce la ambigüedad al
-reproducir resultados y permite comparar muchas arquitecturas bajo una
-interfaz operativa consistente.</p>
-<p>El contrato autoritativo es <code>configs/schema.yaml</code>. Este
-impone tres objetos de primer nivel:</p>
+<p>La experimentación en este proyecto es <em>primero el esquema</em>.
+En lugar de exponer banderas con validación laxa, la topología del
+modelo, la familia del optimizador, los límites de entrenamiento y la
+telemetría pasan por un único documento de configuración validado, lo
+que reduce la ambigüedad al reproducir resultados y permite que muchas
+arquitecturas compartan una misma interfaz operativa.</p>
+<p>El contrato autoritativo es <code>src/schema.yaml</code>, un esquema
+JSON modular cuyos módulos bajo <code>src/schema/</code> cubren los
+bloques de modelo, clase de modelo, tokenizer, optimizador, SBERT,
+entrenamiento y datasets. Los objetos de primer nivel son
+<code>base_model</code>, <code>tokenizer</code>,
+<code>model_class</code>, <code>model</code>, <code>training</code>,
+<code>image</code>, <code>vision_dataset</code> y
+<code>text_dataset</code>.</p>
+<h4 id="clase-de-modelo.">Clase de modelo.</h4>
+<p>El campo <code>model_class</code> selecciona entre tres
+variantes:</p>
 <ul>
-<li><p><code>model_class</code></p></li>
-<li><p><code>model</code></p></li>
-<li><p><code>training</code></p></li>
+<li><p><strong><code>frankenstein</code></strong>: encoder de
+arquitectura mixta con toda la gama de mezcladores de secuencia, MoE y
+normalización avanzada, entrenado con masked language modeling.</p></li>
+<li><p><strong><code>frankensteindecoder</code></strong>: decoder causal
+autorregresivo para generación de siguiente token; el runtime fuerza el
+enmascaramiento de decoder.</p></li>
+<li><p><strong><code>frankenstein_vit</code></strong>: Vision
+Transformer sobre parches de imagen para predicción de parches
+enmascarados, clasificación y segmentación; el runtime fuerza el
+enmascaramiento de encoder y la configuración requiere los bloques
+<code>image</code> y <code>vision_dataset</code>.</p></li>
 </ul>
-<h4 id="selección-de-clase-de-modelo.">Selección de Clase de
-Modelo.</h4>
-<p>El campo <code>model_class</code> determina la variante
-arquitectónica instanciada por el pipeline de entrenamiento. Se soportan
-dos opciones:</p>
-<ul>
-<li><p><strong>frankenstein</strong>: Modelos encoder de arquitectura
-mixta que soportan diversos mecanismos de atención (estándar, sigmoide,
-retentiva, espacio de estados, dispersa y mezcladores con compuerta) con
-MoE (Mezcla de Expertos) y características avanzadas. Optimizado para
-entrenamiento bidireccional tipo encoder con objetivos de modelado de
-lenguaje enmascarado (MLM).</p></li>
-<li><p><strong>frankensteindecoder</strong>: Decoder causal
-autorregresivo para generación de siguiente token estilo LLM. Permite el
-enmascaramiento de atención causal para tareas de generación secuencial
-de texto. Cuando se selecciona esta clase, en tiempo de ejecución se
-fuerza <code>mode=’decoder’</code>.</p></li>
-</ul>
-<h4 id="selección-de-modo-de-entrenamiento.">Selección de Modo de
-Entrenamiento.</h4>
-<p>El campo <code>model.mode</code> controla el comportamiento de
-enmascaramiento de atención en todo el modelo:</p>
-<ul>
-<li><p><strong>encoder</strong>: Utiliza atención bidireccional donde
-todos los tokens atienden a todos los demás tokens en la secuencia.
-Adecuado para tareas de preentrenamiento de modelado de lenguaje
-enmascarado (MLM) donde el modelo aprende a predecir tokens enmascarados
-aleatoriamente basándose en el contexto completo.</p></li>
-<li><p><strong>decoder</strong>: Utiliza enmascaramiento causal donde
-cada token solo puede atender a tokens anteriores en la secuencia.
-Requerido para tareas autorregresivas (AR) de predicción del siguiente
-token, como modelado de lenguaje y generación de texto. Cuando
-<code>model_class=’frankensteindecoder’</code>, el sistema fuerza
-automáticamente <code>mode=’decoder’</code> en tiempo de
-ejecución.</p></li>
-</ul>
-<p>Este soporte de arquitectura dual permite al sistema manejar tanto
-preentrenamiento tipo encoder (MLM en contextos bidireccionales) como
-generación tipo decoder (predicción causal autorregresiva) a través de
-una interfaz de configuración unificada.</p>
-<p><strong>Selección de Patrones de Mezcladores de Secuencia</strong>:
-El campo <code>layer_pattern</code> acepta una lista ordenada de
-identificadores de mezcladores que abarcan ocho familias: líneas base
-densas (<code>standard_attn</code>, <code>sigmoid_attn</code>,
-<code>gqa</code>), recurrentes/retentivas (<code>retnet</code>,
-<code>retnet_attn</code>, <code>mamba</code>, <code>ode</code>,
-<code>titan_attn</code>), atención dispersa
-(<code>sparse_transformer_attn</code>, <code>longformer_attn</code>,
-<code>bigbird_attn</code>, <code>sparsek_attn</code>,
-<code>nsa_attn</code>, <code>sparge_attn</code>, <code>fasa_attn</code>,
-<code>msa_attn</code>, <code>sparda_attn</code>), mecanismos con
-compuerta (<code>gla_attn</code>, <code>deltanet_attn</code>,
-<code>gated_deltanet_attn</code>, <code>gated_deltanet2_attn</code>,
-<code>hgrn2_attn</code>, <code>fox_attn</code>,
-<code>gated_softmax_attn</code>, <code>kda_attn</code>), compresión
-latente (<code>mla_attn</code>, <code>gqla_attn</code>,
-<code>mlra_attn</code>, <code>tucker_attn</code>, <code>iha_attn</code>,
-<code>gta_attn</code>, <code>mtla_attn</code>, <code>cca_attn</code>,
-<code>ccgqa_attn</code>, <code>gma_attn</code>) memoria condicional
-(<code>engram_attn</code>) atención de peso rápido
-(<code>falcon1_attn</code>, <code>falcon2_attn</code>,
-<code>falcon3_attn</code>, <code>falcon1a_attn</code>,
-<code>falcon2a_attn</code>, <code>falcon3a_attn</code>) y campo
-geométrico (<code>ssog_attn</code>). La taxonomía completa con
-referencias se proporciona en la Sección <a
-href="#sec:architecture-taxonomy" data-reference-type="ref"
-data-reference="sec:architecture-taxonomy">4</a> y el Apéndice <a
+<h4 id="modo-de-entrenamiento.">Modo de entrenamiento.</h4>
+<p><code>model.dims.mode</code> controla el enmascaramiento:
+<code>encoder</code> usa atención bidireccional para masked language
+modeling y <code>decoder</code> usa enmascaramiento causal para
+predicción autorregresiva.</p>
+<h4 id="selección-de-mezcladores.">Selección de mezcladores.</h4>
+<p><code>model.dims.layer_pattern</code> es una lista ordenada de
+identificadores de mezclador tomados de las ocho familias descritas en
+la Sección <a href="#sec:architecture-taxonomy"
+data-reference-type="ref"
+data-reference="sec:architecture-taxonomy">4</a>; el esquema fija los
+identificadores aceptados y la enumeración completa aparece en la
+Figura <a href="#fig:comprehensive-taxonomy" data-reference-type="ref"
+data-reference="fig:comprehensive-taxonomy">2</a> y el Apéndice <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">13</a>.</p>
-<p>El <code>training.optimizer.optimizer_class</code> soporta una amplia
-familia de optimizadores: <code>sgd_momentum</code>, <code>adamw</code>,
-<code>adafactor</code>, <code>galore_adamw</code>, <code>prodigy</code>,
-<code>lion</code>, <code>sophia</code>, <code>muon</code>,
-<code>turbo_muon</code>, <code>radam</code>, <code>adan</code>,
-<code>adopt</code>, <code>ademamix</code>, <code>mars_adamw</code>,
-<code>cautious_adamw</code>, <code>lamb</code>,
-<code>schedulefree_adamw</code>, <code>shampoo</code>,
-<code>soap</code>, <code>anon</code>, <code>apollo</code>,
-<code>apollo_mini</code>, y <code>q_apollo</code>.</p>
-<figure id="fig:system-architecture" data-latex-placement="t">
+<h4 id="selección-de-optimizador.">Selección de optimizador.</h4>
+<p><code>training.optimizer.optimizer_class</code> selecciona una de
+veintitrés familias de optimizadores, resumidas en la Sección <a
+href="#sec:optimizer-families" data-reference-type="ref"
+data-reference="sec:optimizer-families">5</a> y detalladas en el
+Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
+data-reference="sec:annex-optimizers">14</a>.</p>
+<figure id="fig:system-architecture">
 
-<figcaption>Arquitectura del sistema: la configuración fluye a través de
-la validación, se divide en modelo/entrenamiento/optimizador, ejecuta en
-tiempo real y produce artefactos de
-despliegue/SBERT/exportación.</figcaption>
+<figcaption>Arquitectura del sistema: la configuración pasa por la
+validación, se particiona en componentes de modelo, entrenamiento y
+optimizador, se ejecuta en runtime y produce artefactos de despliegue y
+SBERT.</figcaption>
 </figure>
 <h2 id="sec:schema-validation">Alcance del Esquema y Reglas de
 Validación</h2>
-<p>El esquema es estricto: los objetos de primer nivel y anidados
-establecen <code>additionalProperties: false</code>. Esto garantiza que
-las claves desconocidas fallen rápidamente en lugar de ser ignoradas
-silenciosamente. El objeto <code>training.optimizer.parameters</code>
-está adicionalmente restringido por reglas de prefijo específicas del
-optimizador mediante verificaciones de patrón
-<code>allOf</code>+<code>if/then</code>.</p>
-<p>Los valores de normalización actualmente aceptados por el esquema
-son: <span class="math display">\[\texttt{norm\_type} \in
-\{\texttt{layer\_norm}, \texttt{dynamic\_tanh}, \texttt{derf},
-\texttt{rms\_norm}, \texttt{prms\_norm}\}\]</span></p>
+<p>Los objetos de primer nivel y anidados fijan
+<code>additionalProperties: false</code>, de modo que las claves
+desconocidas fallan de inmediato en lugar de ignorarse silenciosamente.
+Los parámetros del optimizador se restringen además mediante reglas de
+prefijo por familia. La validación entre componentes rechaza
+combinaciones incompatibles antes del entrenamiento: el tamaño oculto
+debe ser divisible por el número de cabezas, el número de cabezas
+clave–valor debe dividir el número de cabezas, el tamaño del vocabulario
+debe coincidir con el tokenizer, un modelo base requiere una tarea y
+(para MLM) un tokenizer, cada tarea requiere su bloque de optimizador
+correspondiente, las banderas de routers de BitNet requieren BitNet
+habilitado, y las clases decoder y de visión fuerzan sus respectivos
+modos de enmascaramiento.</p>
 <h2 id="esquema-de-configuración">Esquema de Configuración</h2>
-<p>El esquema completo de configuración del modelo y entrenamiento,
-incluyendo todos los campos, tipos, rangos y reglas de validación, se
+<p>El esquema completo—campos, tipos, rangos y reglas de validación—se
 documenta en el Apéndice <a href="#sec:annex-schema"
-data-reference-type="ref" data-reference="sec:annex-schema">12</a>. El
-esquema impone <code>additionalProperties: false</code> en todos los
-niveles, garantizando que las claves desconocidas fallen
-rápidamente.</p>
-<p>La profundidad en bucle inducida por el esquema es: <span
-class="math display">\[L_{\text{logical}} = \texttt{num\_layers} \times
-\texttt{num\_loops}\]</span> que es la definición a nivel de
-configuración de los bloques en bucle.</p>
-<h2 id="tipos-de-tarea-de-entrenamiento">Tipos de Tarea de
-Entrenamiento</h2>
-<p>El campo <code>training.task</code> determina el objetivo de
-entrenamiento, trabajando en conjunto con <code>model.mode</code> para
-definir cómo aprende el modelo:</p>
-<h4 id="modelado-de-lenguaje-enmascarado-mlm.">Modelado de Lenguaje
-Enmascarado (MLM).</h4>
-<ul>
-<li><p><strong>Modo</strong>: Requiere <code>mode=’encoder’</code> para
-atención bidireccional.</p></li>
-<li><p><strong>Objetivo</strong>: Enmascarar aleatoriamente tokens en la
-secuencia de entrada (típicamente 15%) y entrenar al modelo para
-predecir los tokens enmascarados basándose en el contexto bidireccional
-completo.</p></li>
-<li><p><strong>Caso de Uso</strong>: Preentrenamiento de encoders para
-aprendizaje de representaciones, siguiendo la metodología BERT <span
-class="citation" data-cites="devlin_bert_2019"></span>. El modelo
-aprende representaciones bidireccionales que capturan contexto tanto de
-izquierda como de derecha.</p></li>
-<li><p><strong>Configuración</strong>: Utiliza el parámetro
-<code>mlm_probability</code> para controlar la fracción de
-enmascaramiento.</p></li>
-</ul>
-<h4 id="modelado-de-lenguaje-causal-causal_lm.">Modelado de Lenguaje
-Causal (<code>causal_lm</code>).</h4>
-<ul>
-<li><p><strong>Modo</strong>: Requiere <code>mode=’decoder’</code> para
-enmascaramiento causal.</p></li>
-<li><p><strong>Objetivo</strong>: Predicción autorregresiva del
-siguiente token — cada posición <span class="math inline">\(i\)</span>
-predice el token <span class="math inline">\(i+1\)</span> dados solo los
-tokens precedentes. La cross-entropy se calcula sobre todas las
-posiciones desplazadas sin enmascarar (no hay enmascaramiento), a
-diferencia del MLM que supervisa solo posiciones enmascaradas
-aleatoriamente.</p></li>
-<li><p><strong>Caso de Uso</strong>: Generación de lenguaje y tareas
-estilo LLM siguiendo la metodología GPT. El modelo aprende dependencias
-secuenciales con atención causal donde cada token solo puede atender a
-tokens precedentes.</p></li>
-<li><p><strong>Clase de Modelo</strong>: Establecer
-<code>task=’causal_lm’</code> y
-<code>model_class=’frankensteindecoder’</code>; el esquema y el runtime
-requieren la clase decoder para esta tarea (el enmascaramiento causal
-solo lo proporciona el decoder).</p></li>
-<li><p><strong>Configuración</strong>: Reutiliza
-<code>training.optimizer</code>; el dataset de streaming almacena las
-secuencias sin enmascarar (<code>labels == input_ids</code>) para que el
-trainer pueda calcular la pérdida de siguiente token
-desplazada.</p></li>
-</ul>
-<p>Este soporte de tareas permite la experimentación unificada tanto en
-preentrenamiento tipo encoder (MLM para comprensión bidireccional),
-generación tipo decoder (<code>causal_lm</code> para predicción
-autorregresiva del siguiente token) como en embedding de oraciones
-(SBERT), dentro del mismo código base.</p>
-<h2 id="configuración-del-optimizador">Configuración del
-Optimizador</h2>
-<p>El objeto <code>training.optimizer</code> selecciona entre 23
-familias de optimizadores mediante <code>optimizer_class</code> y
-proporciona control de hiperparámetros por grupo de parámetros a través
-de una convención de nombres con prefijos. El contrato completo de
-prefijos del optimizador y las familias soportadas se documentan en el
-Apéndice <a href="#sec:annex-schema" data-reference-type="ref"
-data-reference="sec:annex-schema">12</a>.</p>
-<h2 id="seguridad-de-entrenamiento-y-semántica-de-ejecución">Seguridad
-de Entrenamiento y Semántica de Ejecución</h2>
-<p>Las características de seguridad a nivel de esquema incluyen
-acumulación, recorte, verificación de explosión post-recorte y
-reintentos por NaN: <span
-class="math display">\[g_{\text{acc}}=\frac{1}{K}\sum_{i=1}^{K}
-g_i,\quad K=\texttt{gradient\_accumulation\_steps}\]</span> <span
-class="math display">\[g_{\text{clip}} = g_{\text{acc}}\cdot
-\min\left(1,\frac{\tau}{\|g_{\text{acc}}\|_2+\epsilon}\right),\quad
-\tau=\texttt{grad\_clip\_max\_norm}\]</span> luego los guardas de
-desbordamiento usan <code>inf_post_clip_threshold</code> y lógica de
-reintentos limitada por <code>max_nan_retries</code>.</p>
-<p>El pseudocódigo completo del paso de entrenamiento guiado por
-esquema—incluyendo acumulación de gradientes, recorte de norma global,
-guardas de explosión post-recorte, reintentos acotados de NaN/Inf,
-despacho del scheduler y rotación de checkpoints rodantes/mejores—se
-difiere al Apéndice <a href="#sec:annex-norm-bitnet-mod"
-data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
-<h2 id="sec:normalization">Variantes de Normalización</h2>
-<p>La normalización controla la escala de activación a través de la
-profundidad y es también una cuestión de compatibilidad con el esquema,
-ya que los valores aceptados de <code>norm_type</code> son
-<code>layer_norm</code>, <code>dynamic_tanh</code>, <code>derf</code>,
-<code>rms_norm</code> y <code>prms_norm</code> (RMSNorm parcial). Las
-formulaciones matemáticas de LayerNorm, RMSNorm, pRMSNorm, Tanh Dinámico
-(DyT) <span class="citation" data-cites="zhu_transformers_2025"></span>
-y Erf Dinámico (Derf) <span class="citation"
-data-cites="chen_stronger_2025"></span>, junto con una tabla
-comparativa, se detallan en el Apéndice <a
+data-reference-type="ref" data-reference="sec:annex-schema">12</a>. Los
+bloques en bucle se configuran con <code>num_layers</code> y
+<code>num_loops</code>, lo que da <code>num_layers</code><span
+class="math inline">\(\times\)</span><code>num_loops</code> capas
+lógicas con un conteo de parámetros fijo.</p>
+<h2 id="tareas-de-entrenamiento">Tareas de Entrenamiento</h2>
+<p><code>training.task</code> selecciona el objetivo: <code>mlm</code>
+(masked language modeling), <code>causal_lm</code> (predicción
+autorregresiva de siguiente token, solo clase decoder),
+<code>sbert</code> (embeddings de oraciones),
+<code>text_classification</code> (solo clase encoder) y las tareas de
+visión <code>patch_prediction</code>, <code>classification</code> y
+<code>segmentation</code> (solo Vision Transformer). Las tareas de NLP
+consumen <code>text_dataset</code>; las de visión consumen
+<code>vision_dataset</code>. Los flujos de embeddings de oraciones se
+describen en la Sección <a href="#sec:sbert" data-reference-type="ref"
+data-reference="sec:sbert">7</a>.</p>
+<h2 id="seguridad-de-entrenamiento-y-semántica-de-runtime">Seguridad de
+Entrenamiento y Semántica de Runtime</h2>
+<p>El paso de entrenamiento acumula gradientes sobre micro-lotes,
+recorta la norma global, verifica desbordamientos posteriores al
+recorte, reintenta un número acotado de veces ante valores no finitos,
+despacha el scheduler configurado y rota checkpoints rodantes y del
+mejor modelo. El pseudocódigo completo se remite al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+<h2 id="sec:normalization">Variantes de Normalización</h2>
+<p>La normalización es a la vez una decisión de modelado y una cuestión
+de compatibilidad del esquema. Los valores aceptados de
+<code>norm.type</code> son <code>layer_norm</code>,
+<code>dynamic_tanh</code>, <code>derf</code>, <code>rms_norm</code>,
+<code>prms_norm</code> (RMSNorm parcial) y <code>flash_norm</code>
+(RMSNorm sin pesos). Sus formulaciones y comparación se detallan en el
+Apéndice <a href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:residual-stream">Arquitecturas de Flujo Residual</h2>
-<p>La conexión residual no es solo una elección de modelado, sino
-también una decisión de macro-diseño. El sistema expone cuatro
-estrategias de conexión residual mediante el sub-objeto
-<code>model.residuals</code> (clave plana <code>residual_type</code>,
-por defecto <code>standard</code>):</p>
+<p>Las conexiones residuales se exponen como una decisión de
+macro-diseño mediante el bloque <code>model.residuals</code>:</p>
 <ul>
-<li><p><strong>Residual estándar</strong>
-(<code>residual_type="standard"</code>): el residual de identidad
-clásico <span class="citation" data-cites="he_deep_2016"></span>, <span
-class="math inline">\(x_{l+1} = x_l + F(x_l, W_l)\)</span>. Sin estado,
-sin parámetros extra.</p></li>
-<li><p><strong>Sin residual</strong> (<code>residual_type="none"</code>,
-experimental): <span class="math inline">\(x_{l+1} = F(x_l,
-W_l)\)</span>, eliminando la conexión skip por completo. Útil solo como
-sonda de ablación.</p></li>
-<li><p><strong>Residuales de Atención</strong>
-(<code>residual_type="full_attn"</code> o <code>"block_attn"</code>)
-<span class="citation" data-cites="sun_attnres_2026"></span>: reemplazan
-la suma residual de coeficiente unitario fijo por atención softmax
-aprendida sobre la profundidad. Cada capa atiende sobre todas las
-salidas de capas anteriores (Full AttnRes) o sobre un pequeño conjunto
-de representaciones acumuladas por bloque (Block AttnRes). Añade <span
-class="math inline">\(L \cdot C\)</span> parámetros (un vector de query
-aprendido <span class="math inline">\(\mathbf{w}_l\)</span> por capa).
-Los queries inicializados a cero hacen que la atención inicial sea un
-promedio equiponderado, igualando el residual estándar en el paso
-cero.</p></li>
-<li><p><strong>Hyper-Connexiones Restringidas por Variedad</strong>
-(<code>residual_type</code> combinado con <code>mhc.enabled=true</code>,
-documentado por separado en el Apéndice <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">21</a>): el
-residual de n streams <span class="citation"
-data-cites="xie_mhc_2025"></span> cuya matriz de mezcla de flujo se
-restringe al politopo de Birkhoff mediante Sinkhorn–Knopp.</p></li>
+<li><p><strong>Estándar</strong>: el residual de identidad clásico <span
+class="citation" data-cites="he_deep_2016"></span>.</p></li>
+<li><p><strong>Ninguno</strong>: sin conexión de salto, conservado solo
+como sonda de ablación.</p></li>
+<li><p><strong>Attention Residuals</strong> (<code>full_attn</code> o
+<code>block_attn</code>): atención aprendida sobre la profundidad que
+reemplaza la suma residual fija, ya sea sobre todas las capas anteriores
+o sobre resúmenes por bloques <span class="citation"
+data-cites="sun_attnres_2026"></span>.</p></li>
+<li><p><strong>Hiper-conexiones con restricción de variedad</strong>
+(<code>mhc.enabled</code>): un residual de <span
+class="math inline">\(n\)</span> flujos cuya matriz de mezcla se
+restringe al politopo de Birkhoff <span class="citation"
+data-cites="xie_mhc_2025"></span>.</p></li>
 </ul>
-<p>AttnRes se integra ortogonalmente con mHC y con Mixture-of-Depths: el
-campo <code>model.residuals.mhc_stream_mode</code> selecciona si la
-atención sobre la profundidad corre por stream
-(<code>independent</code>) o conjuntamente sobre la proyección aplanada
-<span class="math inline">\(nC\)</span> (<code>joint</code>) cuando mHC
-está activo. La formulación completa, las cuatro estrategias, el
-cableado de implementación y los resultados reportados se detallan en el
-Apéndice <a href="#sec:annex-attnres" data-reference-type="ref"
-data-reference="sec:annex-attnres">22</a>. mHC por sí solo se detalla en
-el Apéndice <a href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">21</a>.</p>
-<h1 id="sec:architecture-taxonomy">Taxonomía de Arquitectura e
+<p>Attention Residuals se compone con mHC y Mixture-of-Depths; las
+formulaciones, el cableado y los resultados reportados se recopilan en
+los Apéndices <a href="#sec:annex-attnres" data-reference-type="ref"
+data-reference="sec:annex-attnres">22</a> y <a href="#sec:annex-mhc"
+data-reference-type="ref" data-reference="sec:annex-mhc">21</a>.</p>
+<h1 id="sec:architecture-taxonomy">Taxonomía de Arquitecturas e
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
-Secuencias</h2>
-<p>Este sistema implementa cuarenta y tres variantes de mezcladores de
-secuencia organizadas en ocho categorías funcionales que reflejan las
-tendencias de investigación en el diseño de modelado de secuencias. La
-organización taxonómica refleja la comprensión evolutiva de cómo
-equilibrar expresividad, eficiencia computacional y restricciones de
-memoria.</p>
+Secuencia</h2>
+<p>El sistema implementa cuarenta y tres mezcladores de secuencia
+organizados en ocho categorías funcionales que reflejan cómo cada método
+equilibra expresividad, costo computacional y memoria.</p>
 <ol>
-<li><p><strong>Líneas Base de Atención Densas</strong> (3): La atención
-softmax estándar, la atención sigmoide y la Atención por Consultas
-Agrupadas (GQA) proporcionan contextualización global completa a costo
-computacional cuadrático, sirviendo como líneas base de referencia para
-comparación con alternativas más eficientes.</p></li>
-<li><p><strong>Arquitecturas Recurrentes y Retentivas</strong> (5):
-RetNet, Mamba, bloques estilo ODE, Titans y Engram mantienen
-representaciones de estado que permiten un costo de inferencia <span
-class="math inline">\(\mathcal{O}(1)\)</span> mientras preservan la
-expresividad mediante dinámicas recurrentes, parámetros selectivos o
-adaptación de memoria en tiempo de prueba.</p></li>
-<li><p><strong>Patrones de Atención Dispersa</strong> (9): Sparse
-Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA, MSA y
-SparDA reducen la complejidad cuadrática mediante dispersión
-estructurada, selección de tokens o estrategias de poda sin
-entrenamiento.</p></li>
-<li><p><strong>Mecanismos de Memoria con Compuerta</strong> (8): GLA,
-DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax y
-KDA introducen control dependiente de datos sobre la retención de
-memoria, el olvido y la fuerza de actualización.</p></li>
-<li><p><strong>Compresión Latente y de Rango Bajo</strong> (10): MLA,
-GQLA, MLRA, Tucker, IHA, GTA, MTLA, CCA, CCGQA y GMA comprimen las
-representaciones clave–valor en cuellos de botella latentes de rango
-bajo (o, para GMA, enrutan a través de una memoria latente de mezcla
-Gaussiana aprendida), intercambiando un pequeño error de reconstrucción
-por ahorros sustanciales de memoria y cómputo.</p></li>
-<li><p><strong>Memoria Condicional</strong> (1): Engram proporciona
-memoria en tiempo de prueba mediante operaciones de lectura/escritura
-aprendidas sobre un banco de memoria externo.</p></li>
-<li><p><strong>Atención de Peso Rápido</strong> (6): Falcon-1, Falcon-2,
-Falcon-3, Falcon-1A, Falcon-2A y Falcon-3A <span class="citation"
-data-cites="zhang_falcon_2026"></span> tratan la transición recurrente
-del estado de peso rápido como una regla de aprendizaje continuo en
-línea bajo semántica de lectura tras escritura, con tamaños de paso
-normalizados, olvido por ridge explícito y repetición opcional con
-ventana deslizante acotada.</p></li>
-<li><p><strong>Campo Geométrico</strong> (1): SSOG <span
-class="citation" data-cites="pisoni_ssog_2026"></span> aplica un campo
-geométrico/de dispersión estructurada sobre la matriz de atención,
-codificando sesgos inductivos espaciales o de estructura de grafo
-específicos del dominio que las otras siete familias no
-capturan.</p></li>
+<li><p><strong>Líneas base densas</strong> (3): atención softmax
+estándar, atención sigmoide y Grouped-Query Attention (GQA) ofrecen
+enrutamiento global completo a costo cuadrático.</p></li>
+<li><p><strong>Recurrentes y retentivas</strong> (5): RetNet, Mamba,
+bloques tipo ODE y Titans mantienen estado para inferencia en tiempo
+constante mediante recurrencia, espacios de estados selectivos,
+profundidad continua o memoria en tiempo de prueba.</p></li>
+<li><p><strong>Patrones dispersos</strong> (9): Sparse Transformer,
+Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA, MSA y SparDA
+reducen el costo cuadrático mediante dispersión estructurada, selección
+de tokens o poda sin entrenamiento.</p></li>
+<li><p><strong>Mecanismos con compuerta</strong> (8): GLA, DeltaNet,
+Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax y KDA
+introducen control dependiente de los datos sobre retención, olvido y
+fuerza de actualización.</p></li>
+<li><p><strong>Compresión latente</strong> (10): MLA, GQLA, MLRA,
+Tucker, IHA, GTA, MTLA, CCA, CCGQA y GMA comprimen el estado clave–valor
+en cuellos de botella de bajo rango o enrutan mediante una memoria
+latente de mezcla gaussiana.</p></li>
+<li><p><strong>Memoria condicional</strong> (1): Engram proporciona
+memoria de lectura/escritura en tiempo de prueba mediante búsquedas
+aprendidas.</p></li>
+<li><p><strong>Atención de peso rápido</strong> (6): Falcon-1/2/3 y
+Falcon-1A/2A/3A tratan la transición de estado recurrente como una regla
+de aprendizaje continuo en línea <span class="citation"
+data-cites="zhang_falcon_2026"></span>.</p></li>
+<li><p><strong>Campo geométrico</strong> (1): SSOG aplica un prior
+geométrico estructurado sobre la matriz de atención <span
+class="citation" data-cites="pisoni_ssog_2026"></span>.</p></li>
 </ol>
-<figure id="fig:comprehensive-taxonomy" data-latex-placement="t">
+<figure id="fig:comprehensive-taxonomy">
 
-<figcaption>Taxonomía completa de cuarenta y tres variantes de
-mezcladores de secuencia en ocho categorías funcionales. Las líneas base
-densas proporcionan enrutamiento global completo a costo cuadrático. Las
-arquitecturas recurrentes permiten inferencia en tiempo constante
-mediante compresión de estado. Las variantes dispersas reducen la
-complejidad mediante patrones estructurados o selección de tokens. Los
-mecanismos con compuerta introducen control dependiente de datos sobre
-la retención y el olvido de memoria. Los métodos latentes comprimen
-representaciones clave–valor en cuellos de botella de rango bajo o
-enrutan a través de latentes probabilísticos de mezcla Gaussiana. La
-memoria condicional proporciona lectura/escritura en tiempo de prueba
-sobre un banco de memoria externo. Los métodos de peso rápido tratan la
-transición de estado recurrente como una regla de aprendizaje continuo
-en línea. Los métodos de campo geométrico codifican sesgos inductivos
-espaciales o de estructura de grafo sobre la matriz de
-atención.</figcaption>
+<figcaption>Taxonomía de los cuarenta y tres mezcladores de secuencia en
+ocho categorías funcionales. Las líneas base densas ofrecen enrutamiento
+global completo a costo cuadrático; los métodos recurrentes comprimen el
+estado para inferencia en tiempo constante; las variantes dispersas
+restringen el patrón de atención; los mecanismos con compuerta modulan
+retención y olvido; los métodos latentes comprimen las representaciones
+clave–valor; la memoria condicional añade búsquedas de lectura/escritura
+en tiempo de prueba; los métodos de peso rápido formulan la transición
+de estado como una regla de aprendizaje en línea; los métodos
+geométricos codifican priors estructurados.</figcaption>
 </figure>
-<h2 id="familias-densas-y-recurrentes">Familias Densas y
-Recurrentes</h2>
-<p>Las líneas base densas (softmax estándar <span class="citation"
-data-cites="vaswani_attention_2017"></span> y sigmoide <span
-class="citation" data-cites="ramapuram_theory_2024"></span>) y la
-familia recurrente/retentiva (RetNet <span class="citation"
+<h2 id="familias-densa-y-recurrente">Familias Densa y Recurrente</h2>
+<p>Las líneas base densas—softmax estándar <span class="citation"
+data-cites="vaswani_attention_2017"></span> y atención sigmoide <span
+class="citation" data-cites="ramapuram_theory_2024"></span>—y la familia
+recurrente—RetNet <span class="citation"
 data-cites="sun_retentive_2023"></span>, Mamba <span class="citation"
-data-cites="gu_mamba_2023"></span>, bloques continuos estilo ODE <span
-class="citation" data-cites="zhang_continuous_2021"></span> y memoria en
-tiempo de prueba Titans <span class="citation"
-data-cites="behrouz_titans_2025"></span>) proporcionan la compensación
-fundamental entre expresividad y eficiencia. Las formulaciones
-matemáticas, las formas paralela y recurrente, el pseudocódigo
-algorítmico y una tabla comparativa arquitectónica se recopilan en el
-Apéndice <a href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">15</a>. El algoritmo de despacho
-de mezclador guiado por patrón (incluyendo la política de cumplimiento
-sin entrenamiento para <code>fasa_attn</code> y
-<code>sparge_attn</code>) se detalla igualmente allí.</p>
-<h2 id="familia-de-atención-latente-y-de-rango-bajo">Familia de Atención
-Latente y de Rango Bajo</h2>
-<p>Una familia complementaria comprime el estado clave–valor por token
-en un latente de rango bajo: Atención Latente Multi-Cabeza (MLA),
-Atención Latente por Consultas Agrupadas (GQLA), Atención Multi-Cabeza
-de Rango Bajo (MLRA), Atención Tucker, Atención de Cabezas Entrelazadas
-(IHA), Atención laTenT por Cabezas Agrupadas (GTA) y Atención Latente
-Temporal Multi-Cabeza (MTLA). Estos métodos unifican diseños de consulta
-agrupada, latente, factorizado y latente temporal bajo un cuello de
-botella de rango bajo común. La Atención de Mezcla Gaussiana (GMA) toma
-una ruta diferente: reemplaza la interacción pareada <span
-class="math inline">\(QK^\top\)</span> con enrutamiento probabilístico a
-través de <span class="math inline">\(K\)</span> componentes de mezcla
-Gaussiana aprendidos por cabeza, escribiendo valores en una memoria
-latente de <span class="math inline">\(K\)</span> slots y leyendo de
-vuelta mediante responsabilidades posteriores, dando un almacenamiento
-de activaciones <span class="math inline">\(\mathcal{O}(NK)\)</span>
-para <span class="math inline">\(K\)</span> fijo. Las formulaciones
-completas, el pseudocódigo y una tabla comparativa se recopilan en el
-Apéndice <a href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">16</a>.</p>
-<h2 id="extensiones-de-atención-dispersa">Extensiones de Atención
-Dispersa</h2>
-<p>El registro de mezcladores incluye nueve bloques dispersos:
-<code>sparse_transformer_attn</code>, <code>longformer_attn</code>,
-<code>bigbird_attn</code>, <code>sparsek_attn</code>,
-<code>nsa_attn</code>, <code>sparge_attn</code>, <code>fasa_attn</code>,
-<code>msa_attn</code> y <code>sparda_attn</code> <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026"></span>.
-La implementación impone una política de ejecución explícita para
-métodos dispersos sin entrenamiento: <code>fasa_attn</code> y
-<code>sparge_attn</code> son solo para evaluación/inferencia y generan
-errores en tiempo de ejecución si se usan mientras el modelo está en
-modo de entrenamiento. Las formulaciones matemáticas, el pseudocódigo
-algorítmico, las características por bloque y una tabla comparativa se
-recopilan en el Apéndice <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
-<figure id="fig:sparse-map" data-latex-placement="t">
+data-cites="gu_mamba_2023"></span>, bloques tipo ODE <span
+class="citation" data-cites="zhang_continuous_2021"></span> y Titans
+<span class="citation" data-cites="behrouz_titans_2025"></span>—definen
+el compromiso entre expresividad y eficiencia. Las formulaciones, las
+formas paralela y recurrente, el pseudocódigo y una tabla comparativa se
+recopilan en el Apéndice <a href="#sec:annex-transformer"
+data-reference-type="ref"
+data-reference="sec:annex-transformer">15</a>.</p>
+<figure id="fig:dense-map">
 
-<figcaption>Mapa conceptual de las estrategias de diseño de atención
-dispersa utilizadas en el código base. Diferentes métodos reducen el
-costo restringiendo vecindarios, construyendo grafos dispersos o
-seleccionando solo tokens/bloques de alto valor.</figcaption>
+<figcaption>Líneas base de atención densa. La atención estándar y la
+sigmoide calculan interacciones por pares completas; Grouped-Query
+Attention comparte cabezas clave–valor entre grupos de consultas,
+reduciendo el tráfico de memoria sin perder la expresividad de la
+atención completa.</figcaption>
 </figure>
-<figure id="fig:dense-map" data-latex-placement="t">
+<figure id="fig:recurrent-map">
 
-<figcaption>Tres líneas base de atención densa. La atención softmax
-estándar y la sigmoide calculan matrices <span
-class="math inline">\(QK^\top\)</span> completas. La Atención por
-Consultas Agrupadas (GQA) comparte cabezas clave–valor entre grupos de
-consultas, reduciendo el ancho de banda de memoria mientras preserva la
-expresividad completa de la atención.</figcaption>
-</figure>
-<figure id="fig:recurrent-map" data-latex-placement="t">
-
-<figcaption>Familia de arquitecturas recurrentes y retentivas. RetNet
-proporciona formas duales paralela y recurrente. Mamba utiliza
-parámetros selectivos de espacio de estados. Los bloques ODE modelan
-dinámicas de profundidad continua. Titans introduce adaptación de
-memoria en tiempo de prueba. Todas logran inferencia en tiempo constante
+<figcaption>Familia recurrente y retentiva. RetNet ofrece formas
+paralela y recurrente, Mamba usa parámetros selectivos de espacio de
+estados, los bloques ODE modelan profundidad continua y Titans añaden
+memoria en tiempo de prueba; todos logran inferencia en tiempo constante
 por paso.</figcaption>
 </figure>
-<figure id="fig:latent-map" data-latex-placement="t">
+<h2 id="familia-de-atención-latente-y-de-bajo-rango">Familia de Atención
+Latente y de Bajo Rango</h2>
+<p>Esta familia comprime el estado clave–valor por token en un latente
+de bajo rango: MLA, GQLA, MLRA, Tucker, IHA, GTA y MTLA unifican diseños
+agrupados, latentes, factorizados y temporales. CCA y CCGQA formulan la
+atención en un latente comprimido con agrupamiento desacoplado, mientras
+que GMA reemplaza la interacción por pares con enrutamiento
+probabilístico mediante componentes de mezcla gaussiana aprendidos. Las
+formulaciones, el pseudocódigo y una tabla comparativa se recopilan en
+el Apéndice <a href="#sec:annex-latent" data-reference-type="ref"
+data-reference="sec:annex-latent">16</a>.</p>
+<figure id="fig:latent-map">
 
-<figcaption>Concepto de atención latente y de rango bajo. Los pares
-clave–valor se comprimen mediante una proyección descendente a un
-espacio latente de rango bajo (<span class="math inline">\(r \ll
-d\)</span>), donde la atención se calcula a costo reducido, y luego se
-proyectan de vuelta. Las variantes difieren en la estructura de
-factorización (MLA, GQLA, MLRA, Tucker), entrelazado de cabezas (IHA,
-GTA), compresión temporal (MTLA), formulaciones de covarianza cruzada
-(CCA, CCGQA) y enrutamiento probabilístico de mezcla Gaussiana
-(GMA).</figcaption>
+<figcaption>Atención latente y de bajo rango. Los pares clave–valor se
+proyectan a un espacio latente de bajo rango, donde la atención se
+calcula a menor costo, y se proyectan de vuelta. Las variantes difieren
+en factorización, intercalado de cabezas, compresión temporal,
+formulación de covarianza cruzada y enrutamiento
+probabilístico.</figcaption>
 </figure>
-<h2 id="extensiones-de-atención-con-compuerta">Extensiones de Atención
-con Compuerta</h2>
-<p>El registro de mezcladores incluye ocho bloques con compuerta:
-<code>gla_attn</code>, <code>deltanet_attn</code>,
-<code>gated_deltanet_attn</code>, <code>gated_deltanet2_attn</code>,
-<code>hgrn2_attn</code>, <code>fox_attn</code>,
-<code>gated_softmax_attn</code> y <code>kda_attn</code> <span
-class="citation"
-data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025"></span>.
-La idea unificadora es que las compuertas controlan <em>qué información
-sobrevive</em>: algunas compuertas actúan sobre actualizaciones de
-estado recurrente (GLA, variantes de DeltaNet, HGRN2), mientras que
-otras modifican la ruta de atención completa (FoX y Gated Softmax). KDA
-extiende Gated DeltaNet con un mecanismo de compuerta (decaimiento) más
-fino y por canal sobre la actualización de estado de la regla delta
-<span class="math inline">\(S_t = (I - \beta_t k_t k_t^\top)D_t S_{t-1}
-+ \beta_t k_t v_t^\top\)</span>, donde <span class="math inline">\(D_t =
-\mathrm{Diag}(d_t)\)</span> aplica un decaimiento por canal. Esto hace
-que las compuertas sean especialmente útiles cuando el modelo debe
-equilibrar recuerdo, actualidad y memoria limitada. Las formulaciones
-matemáticas, el pseudocódigo algorítmico, una plantilla de compuerta
-genérica y una tabla comparativa se recopilan en el Apéndice <a
-href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">18</a>.</p>
-<p>Una sexta familia replantea la propia actualización recurrente de
-peso rápido como una regla de aprendizaje continuo en línea: el registro
-de mezcladores incluye seis bloques de peso rápido —
-<code>falcon1_attn</code>, <code>falcon2_attn</code>,
-<code>falcon3_attn</code>, <code>falcon1a_attn</code>,
-<code>falcon2a_attn</code> y <code>falcon3a_attn</code> <span
-class="citation" data-cites="zhang_falcon_2026"></span>. Falcon unifica
-las escrituras aditivas estilo DeltaNet y de atención lineal bajo
-semántica de lectura tras escritura (RAW), con tamaños de paso
-normalizados <span class="math inline">\(\eta_t =
-\beta_t/(\text{estadístico}_t + \lambda_t + \varepsilon)\)</span>, un
-arrastre derivado del objetivo <span class="math inline">\(\gamma_t = 1
-- \eta_t\lambda_t\)</span> y repetición acotada con ventana deslizante
-en las variantes Falcon-3. Cada variante proporciona un escaneo
-recurrente de referencia y un kernel chunk-parallel estilo SSD,
-compartiendo un único bloque de configuración. Las formulaciones
-matemáticas, el pseudocódigo algorítmico, la renormalización de
-decaimiento positivo, las perillas de configuración y los resultados
-publicados se recopilan en el Apéndice <a href="#sec:annex-fast-weight"
-data-reference-type="ref"
-data-reference="sec:annex-fast-weight">26</a>.</p>
-<figure id="fig:gating-template" data-latex-placement="t">
+<h2 id="extensiones-de-atención-dispersa">Extensiones de Atención
+Dispersa</h2>
+<p>El registro incluye nueve bloques dispersos <span class="citation"
+data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026"></span>.
+Dos métodos sin entrenamiento, <code>fasa_attn</code> y
+<code>sparge_attn</code>, son solo de evaluación y lanzan un error si se
+usan durante el entrenamiento. Las formulaciones, el pseudocódigo, las
+características por bloque y una tabla comparativa se recopilan en el
+Apéndice <a href="#sec:annex-sparse" data-reference-type="ref"
+data-reference="sec:annex-sparse">17</a>.</p>
+<figure id="fig:sparse-map">
 
-<figcaption>Plantilla de compuerta genérica. Una compuerta puede atenuar
+<figcaption>Decisiones de diseño en atención dispersa. Los métodos
+reducen el costo restringiendo vecindarios, construyendo grafos
+dispersos o seleccionando solo tokens o bloques de alto
+valor.</figcaption>
+</figure>
+<h2 id="atención-con-compuerta-y-de-peso-rápido">Atención con Compuerta
+y de Peso Rápido</h2>
+<p>La familia con compuerta contiene ocho bloques <span class="citation"
+data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025"></span>.
+La compuerta controla qué información sobrevive, ya sea en las
+actualizaciones de estado recurrente (GLA, variantes de DeltaNet, HGRN2,
+KDA) o en la ruta de atención completa (FoX, Gated Softmax). Las
+formulaciones, el pseudocódigo y una tabla comparativa se recopilan en
+el Apéndice <a href="#sec:annex-gated" data-reference-type="ref"
+data-reference="sec:annex-gated">18</a>.</p>
+<p>La atención de peso rápido reformula la actualización recurrente como
+una regla de aprendizaje continuo en línea; las seis variantes Falcon
+<span class="citation" data-cites="zhang_falcon_2026"></span> unifican
+la regresión estilo DeltaNet y las escrituras de atención lineal bajo
+semántica de lectura-tras-escritura con tamaños de paso normalizados y
+olvido explícito. Cada variante incluye un escaneo recurrente de
+referencia y un kernel paralelo por fragmentos. Las formulaciones, los
+parámetros de configuración y los resultados publicados se recopilan en
+el Apéndice <a href="#sec:annex-fast-weight" data-reference-type="ref"
+data-reference="sec:annex-fast-weight">26</a>.</p>
+<figure id="fig:gating-template">
+
+<figcaption>Plantilla genérica de compuerta. Una compuerta puede decaer
 la memoria existente, regular la fuerza de escritura o modular las
-salidas de atención densa, dependiendo de la familia del
-bloque.</figcaption>
+salidas de atención densa, según la familia de bloques.</figcaption>
 </figure>
 <h1 id="sec:optimizer-families">Familias de Optimizadores y Dinámicas de
 Entrenamiento</h1>
-<p>La optimización de arquitecturas transformer altamente parametrizadas
-presenta desafíos significativos debido a paisajes de pérdida no
-convexos, puntos de silla y heterogeneidad de bloques entre grupos de
-parámetros. Este sistema aborda estos desafíos mediante un marco
-unificado que soporta veintitrés familias de optimizadores que abarcan
-seis categorías algorítmicas: (1) líneas base clásicas (SGD, AdamW), (2)
-momento avanzado y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS,
-Cautious), (3) variantes eficientes en memoria (Adafactor, GaLore, Lion,
-APOLLO, APOLLO-Mini, Q-APOLLO), (4) métodos sin programación y sin
-parámetros (Schedule-Free AdamW, Prodigy) más escalado de lotes grandes
-mediante LAMB, (5) conscientes de curvatura y segundo orden (Sophia,
-Shampoo, SOAP), (6) orientados a geometría (Muon, Turbo-Muon), y (7)
-optimizadores con adaptabilidad ajustable (Anon). Las descripciones
-algorítmicas detalladas, pseudocódigo y una tabla comparativa de
-memoria/complejidad para todos los optimizadores se proporcionan en el
-Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
+<p>Optimizar arquitecturas transformer grandes se complica por paisajes
+no convexos, puntos de silla y grupos de parámetros heterogéneos. El
+sistema soporta veintitrés familias de optimizadores en siete
+categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
+momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
+AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
+GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
+sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
+grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
+(Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
+Turbo-Muon); y optimizadores de adaptividad ajustable (Anon). Los
+algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
+se recopilan en el Apéndice <a href="#sec:annex-optimizers"
+data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
-<figure id="fig:optimizer-routing" data-latex-placement="t">
+<figure id="fig:optimizer-routing">
 
 <figcaption>Selección de optimizador en la práctica: la clase determina
 la regla de actualización, mientras que el esquema controla cómo se
-aplican los hiperparámetros entre embeddings, normas, bloques
-recurrentes, bloques de atención y otros parámetros.</figcaption>
+aplican los hiperparámetros en embeddings, capas de normalización,
+bloques de atención y el resto de parámetros.</figcaption>
 </figure>
 <h1 id="sec:quantization">Cuantización y Despliegue</h1>
-<p>El stack de despliegue utiliza empaquetado ternario de pesos más
-cuantización de activaciones INT8 para producir artefactos
-eficientes.</p>
-<figure id="fig:deploy-flow" data-latex-placement="t">
-
-<figcaption>Ruta de despliegue desde un checkpoint entrenado hasta un
-artefacto compacto. El código base trata la cuantización como una
-transformación de la etapa de despliegue en lugar de una familia de
-modelos separada.</figcaption>
-</figure>
-<h2 id="cuantización-ternaria-y-escalado-de-activaciones">Cuantización
-Ternaria y Escalado de Activaciones</h2>
-<p>La etapa de despliegue transforma un checkpoint entrenado en un
-artefacto compacto mediante empaquetado ternario de pesos estilo BitNet
-<span class="citation" data-cites="wang_bitnet_2023"></span>, escalado
-de activaciones INT8 y aproximación de almacenamiento de 1.58 bits
-alineada con objetivos de despliegue ligero <span class="citation"
-data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>. Las
-formulaciones matemáticas del escalado ternario de pesos, la
-cuantización/des-cuantización de activaciones INT8 y las estimaciones de
-tamaño FP32/FP16/1.58 bits se difieren al Apéndice <a
+<p>La etapa de despliegue convierte un checkpoint entrenado en un
+artefacto compacto mediante empaquetado ternario de pesos <span
+class="citation" data-cites="wang_bitnet_2023"></span> y escalado de
+activaciones INT8, con estimaciones de tamaño alineadas con objetivos de
+despliegue ligero <span class="citation"
+data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>. El
+mismo subcomando emite artefactos estándar o cuantizados, o exporta
+formatos HuggingFace Transformers y BitNet GGUF para runtimes externos.
+Las formulaciones y las estimaciones de tamaño se remiten al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+<figure id="fig:deploy-flow">
+
+<figcaption>Ruta de despliegue desde un checkpoint entrenado hasta un
+artefacto compacto. La cuantización es una transformación de la etapa de
+despliegue, no una familia de modelos separada.</figcaption>
+</figure>
 <h1 id="sec:sbert">Tareas Posteriores de SBERT</h1>
 <p>El embedding de oraciones se construye sobre entrenamiento estilo
 Siamese <span class="citation"
@@ -2127,7 +1748,7 @@ k-means).</p></li>
 <li><p><strong>Codificación</strong>: exportación persistente de
 embeddings para recuperación posterior.</p></li>
 </ul>
-<figure id="fig:sbert-modes" data-latex-placement="t">
+<figure id="fig:sbert-modes">
 
 <figcaption>Reutilización del flujo de trabajo SBERT. Un único
 codificador soporta puntuación de pares en línea, recuperación sobre
@@ -2135,177 +1756,86 @@ corpus, clustering y exportación persistente de embeddings.</figcaption>
 </figure>
 <p>El pseudocódigo del enrutador de modo de inferencia SBERT—despachando
 entre los modos de similitud, búsqueda, cluster y codificación sobre un
-codificador compartido—se difiere al Apéndice <a
+codificador compartido—se remite al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h1 id="sec:dashai-plugin">Integración Sin Código: El Plugin
 <code>dashai-frankenstein</code></h1>
-<p>El CLI basado en esquemas y el generador web descritos en la
-Sección <a href="#sec:system-design" data-reference-type="ref"
+<p>El CLI y el generador web descritos en la Sección <a
+href="#sec:system-design" data-reference-type="ref"
 data-reference="sec:system-design">3</a> sirven a investigadores cómodos
 con archivos de configuración YAML. Una audiencia
 complementaria—especialistas de dominio, educadores y analistas que
 necesitan un modelo entrenado pero no un script de entrenamiento—está
-mejor servida por un entorno gráfico sin código. Para alcanzar a esa
-audiencia, Frankenstein Transformer distribuye un paquete adaptador
-complementario, <code>dashai-frankenstein</code>, que registra las
-clases de modelo de Frankenstein como componentes de
-<strong>dashAI</strong> (<a
+mejor servida por un entorno gráfico. Por ello, Frankenstein Transformer
+distribuye <code>dashai-frankenstein</code>, un adaptador que registra
+sus clases de modelo como componentes de <strong>dashAI</strong> (<a
 href="https://github.com/DashAISoftware/dashAI"
 class="uri"><code>https://github.com/DashAISoftware/dashAI</code></a>),
 una aplicación de escritorio open-source y local-first para aprendizaje
 automático desarrollada por un consorcio académico chileno (Universidad
-de Chile/FCFM, CENIA, IMFD y financiamiento ANID). Como ambos sistemas
-son basados en esquemas en esencia—dashAI genera sus formularios de
-configuración directamente desde esquemas Pydantic, mientras que
-Frankenstein valida su YAML contra un JSON Schema estricto—la
-integración no requirió cambios en el backend de dashAI: el plugin se
-descubre mediante el grupo de entry-points estándar
-<code>dashai.plugins</code> al inicio, exactamente como documenta la
-guía de plugins de dashAI (<a
+de Chile/FCFM, CENIA, IMFD y financiamiento ANID). Ambos sistemas están
+basados en esquemas—dashAI genera formularios desde esquemas Pydantic y
+Frankenstein valida YAML contra un JSON Schema estricto—por lo que la
+integración deja intacto el backend de dashAI; el plugin se descubre
+mediante el grupo de entry-points estándar <code>dashai.plugins</code>
+documentado en la guía de plugins de dashAI (<a
 href="https://docs.dash-ai.com/learn/guides/plugins/"
-class="uri"><code>https://docs.dash-ai.com/learn/guides/plugins/</code></a>),
-donde los plugins son paquetes PyPI ordinarios cuyas capacidades
-generativas de primera parte se distribuyen ellos mismos como
-plugins.</p>
+class="uri"><code>https://docs.dash-ai.com/learn/guides/plugins/</code></a>).</p>
 <h2 id="componentes-registrados">Componentes Registrados</h2>
-<p>Un único grupo de entry-points <code>dashai.plugins</code> registra
-cinco componentes en el registro de componentes de dashAI, cubriendo
-toda la amplitud de las clases de modelo del toolkit:</p>
+<p>Un único grupo de entry-points registra cinco componentes:</p>
 <ul>
 <li><p><strong><code>FrankensteinMLMModel</code></strong>
-(<code>BaseModel</code>) — se vincula a la
-<code>TextClassificationTask</code> de dashAI. Entrena el encoder de
-Frankenstein con una cabeza de clasificación de precisión completa con
-pooling sobre la salida del encoder (Estrategia A de la auditoría de
-integración), heredando todos los mezcladores de secuencia,
-normalizadores y familias de optimizadores del motor subyacente;
-<code>predict</code> devuelve una matriz de probabilidades por
-clase.</p></li>
+(<code>BaseModel</code>, <code>TextClassificationTask</code>): encoder
+con una cabeza de clasificación sobre la salida agrupada;
+<code>predict</code> devuelve probabilidades por clase.</p></li>
 <li><p><strong><code>FrankensteinDecoderModel</code></strong>
-(<code>BaseGenerativeModel</code>) — se vincula a
-<code>TextToTextGenerationTask</code>. Fuerza
-<code>model_class: frankensteindecoder</code> (que a su vez fuerza
-<code>mode: decoder</code>) y expone muestreo autorregresivo
-top-<em>k</em>; los parámetros de generación
-(<code>max_new_tokens</code>, <code>temperature</code>,
-<code>top_k</code>) permanecen como campos nativos del formulario de
-dashAI porque son ajustes de tiempo de inferencia sin lugar en el
-esquema de entrenamiento de Frankenstein.</p></li>
+(<code>BaseGenerativeModel</code>,
+<code>TextToTextGenerationTask</code>): fuerza la clase decoder y expone
+muestreo autorregresivo top-<span
+class="math inline">\(k\)</span>.</p></li>
 <li><p><strong><code>FrankensteinViTClassifier</code></strong>
-(<code>BaseModel</code>) — se vincula a
-<code>ImageClassificationTask</code>, reutilizando la cabeza de
-clasificación integrada del Vision Transformer (Apéndice <a
-href="#sec:annex-vision" data-reference-type="ref"
+(<code>BaseModel</code>, <code>ImageClassificationTask</code>): usa la
+cabeza de clasificación del ViT (Apéndice <a href="#sec:annex-vision"
+data-reference-type="ref"
 data-reference="sec:annex-vision">23</a>).</p></li>
 <li><p><strong><code>FrankensteinViTSegmenter</code></strong>
-(<code>BaseModel</code>) — se vincula a una
-<code>SegmentationTask</code> proporcionada por el plugin, una nueva
-componente <code>BaseTask</code> que dashAI no incluye; usa la cabeza de
-segmentación del ViT y devuelve mapas de clases por píxel.</p></li>
+(<code>BaseModel</code>, <code>SegmentationTask</code> del plugin): usa
+la cabeza de segmentación del ViT y devuelve mapas de clases por
+píxel.</p></li>
 <li><p><strong><code>SegmentationTask</code></strong>
-(<code>BaseTask</code>) — la tarea complementaria que declara tipos de
-columna imagen-entrada/máscara-salida para el segmentador.</p></li>
+(<code>BaseTask</code>): declara el contrato
+imagen-entrada/máscara-salida que dashAI no incluye.</p></li>
 </ul>
-<p>Los cinco componentes comparten una fachada delgada sobre la API de
-motor reutilizable de Frankenstein (la interfaz sin CLI y sin supervisor
-extraída en la Fase 0 del plan de integración), de modo que existe
-exactamente una dependencia pesada
-(<code>frankenstein-transformer</code>) detrás del plugin.</p>
+<p>Todos comparten una fachada delgada sobre la API del motor, de modo
+que el plugin tiene una única dependencia pesada.</p>
 <h2 id="esquema-de-configuración-de-passthrough">Esquema de
 Configuración de Passthrough</h2>
-<p>La integración preserva la filosofía basada en esquemas de
-Frankenstein (Sección <a href="#sec:system-design"
-data-reference-type="ref" data-reference="sec:system-design">3</a>)
-manteniendo el JSON Schema de Frankenstein como la única fuente de
-verdad en lugar de traducir sus más de <span
-class="math inline">\(150\)</span> campos de modelo y <span
-class="math inline">\(38\)</span> campos de entrenamiento a campos
-nativos de formulario de dashAI—una traducción que sería frágil frente a
-un esquema en evolución activa. En su lugar, cada componente expone un
-esquema Pydantic mínimo cuyo único campo visible para el usuario,
-<code>frankenstein_json</code>, es una cadena que contiene una
-configuración completa de entrenamiento de Frankenstein como documento
-<em>JSON de una sola línea</em> (una concesión a los campos de texto de
-una sola línea de dashAI; los usuarios construyen el YAML con el
-generador web basado en esquemas y lo convierten con una sola línea).
-Antes de que cualquier entrenamiento o construcción de modelo se lance,
-el adaptador ejecuta un pipeline de validación de tres etapas:</p>
-<ol>
-<li><p><strong>Parseo JSON</strong> — detecta errores de sintaxis en la
-carga de una sola línea.</p></li>
-<li><p><strong>Validación JSON Schema</strong> —
-<code>jsonschema.validate</code> contra el esquema de Frankenstein
-resuelto, imponiendo <code>additionalProperties: false</code> y todos
-los rangos de enums (mezcladores, optimizadores, normalizaciones,
-activaciones).</p></li>
-<li><p><strong>Validación del cargador de configuración</strong> — el
-propio <code>load_training_config</code> de Frankenstein impone las
-restricciones cruzadas entre componentes (divisibilidad de
-<code>hidden_size</code> entre <code>num_heads</code>,
-<code>num_kv_heads</code> dividiendo <code>num_heads</code>, acuerdo
-vocabulario/tokenizador, reglas de flags BitNet, presencia del
-optimizador por tarea, <code>frankensteindecoder</code> forzando
-<code>mode: decoder</code>).</p></li>
-</ol>
-<p>Cualquier fallo se presenta al usuario de dashAI como un único
-<code>ValueError</code> legible etiquetado con la etapa fallida, de modo
-que las configuraciones inválidas nunca alcanzan el bucle de
-entrenamiento—el mismo contrato fail-fast que provee el CLI. La
-inyección de datasets la manejan adaptadores que mapean el
-<code>DashAIDataset</code> de dashAI (un envoltorio de Hugging Face
-<code>datasets</code>) sobre las expectativas de dataset de
-Frankenstein, inyectan <code>vocab_size</code> desde el tokenizador
-resuelto para que la matriz de embeddings coincida con el vocabulario, y
-transmiten las métricas por época de vuelta al almacén de métricas de
-dashAI para que el progreso del entrenamiento sea visible en la UI. Dos
-casillas booleanas controlan la fuente de datos:
-<code>use_dashai_dataset</code> (entrenar con el dataset del run vs. el
-bloque <code>text_dataset</code> del JSON) y
-<code>use_dashai_dataset_for_tokenizer</code> (cuando el config
-establece <code>tokenizer.source=train_from_dataset</code>, si el
-tokenizador se entrena desde el dataset del run o desde el corpus
-configurado en el JSON); en este último modo el tokenizador se entrena
-<em>primero</em> y el tamaño de vocabulario resultante se inyecta en
-<code>model.dims.vocab_size</code> antes de construir el modelo.</p>
-<h2 id="trabajo-en-proceso">Trabajo en Proceso</h2>
-<p>El plugin es un trabajo en proceso. Sus fases están implementadas—el
-MVP de clasificación de texto MLM (Fase 1), el decoder generativo y el
-clasificador ViT (Fase 2), y el segmentador ViT más la
-<code>SegmentationTask</code> proporcionada por el plugin (Fase 3)—pero
-el paquete aún no se ha ejecutado dentro de una instancia viva de
-dashAI: el contrato de componentes se implementó a partir de una
-auditoría del registro de plugins, las clases base y la arquitectura de
-cola de trabajos de dashAI en lugar de validarse de extremo a extremo.
-La publicación en PyPI también está pendiente, tanto del propio plugin
-como de su piso de dependencia
-(<code>frankenstein-transformer&gt;=1.1.0</code>, el release con la API
-de motor que reemplaza al <code>1.0.0</code> pre-motor ya en PyPI). Las
-limitaciones conocidas que se arrastran a la siguiente iteración
-incluyen: el componente MLM ejecuta un bucle de clasificación
-supervisada directa en lugar de una receta de preentrenamiento MLM
-seguido de ajuste fino; el esquema de passthrough difiere los campos
-nativos curados para ajustes de alto impacto (clase de modelo, patrón de
-mezclador, familia de optimizador) a una versión futura; y la capacidad
-de dashAI para renderizar columnas de salida de máscaras de segmentación
-no está confirmada y puede requerir una adición local al frontend. Estos
-ítems están registrados en la auditoría de integración del repositorio
-(<a href="https://github.com/erickfmm/frankenstein-transformer"
-class="uri"><code>https://github.com/erickfmm/frankenstein-transformer</code></a>),
-y el diseño deja intencionalmente el núcleo del backend de dashAI
-intacto, de modo que futuros releases de dashAI no puedan romper el
-adaptador mediante acoplamiento.</p>
-<p>La integración completa la historia de accesibilidad del toolkit: el
-mismo contrato de configuración validado que impulsa el CLI, el
-generador Streamlit y el pipeline de exportación ahora también impulsa
-una aplicación de trabajo sin código de terceros, permitiendo que el
-espacio arquitectónico de Frankenstein se explore desde una interfaz
-gráfica sin sacrificar las garantías de esquema de las que depende la
-reproducibilidad.</p>
+<p>El JSON Schema de Frankenstein sigue siendo la única fuente de verdad
+en lugar de traducir sus campos a formularios nativos de dashAI. Cada
+componente expone un campo <code>frankenstein_json</code> que contiene
+una configuración completa de entrenamiento como JSON de una sola línea.
+Antes de ejecutar cualquier entrenamiento, el adaptador parsea el JSON,
+lo valida contra el esquema resuelto y aplica las verificaciones
+cruzadas del cargador de configuración; los fallos se presentan como un
+error legible etiquetado con la etapa fallida. Los adaptadores de
+datasets mapean los datasets de dashAI a las expectativas de
+Frankenstein, inyectan el tamaño de vocabulario desde el tokenizador
+resuelto y transmiten las métricas por época a dashAI.</p>
+<h2 id="estado">Estado</h2>
+<p>Las tres fases de implementación—MVP de clasificación, decoder
+generativo y clasificador ViT, y segmentador ViT—están completas, pero
+el paquete aún no se ha ejecutado dentro de una instancia viva de dashAI
+y la publicación en PyPI está pendiente. Las limitaciones conocidas
+incluyen un bucle de clasificación directo en lugar de preentrenamiento
+MLM, campos nativos diferidos para ajustes de alto impacto y renderizado
+no confirmado de máscaras de segmentación. El adaptador deja
+deliberadamente intacto el núcleo de dashAI, de modo que futuros
+releases no puedan romperlo por acoplamiento.</p>
 <h1 id="sec:discussion">Discusión</h1>
-<p>Las decisiones de diseño en Transformer Encoder Frankenstein reflejan
-varias tensiones de ingeniería e investigación en las herramientas
-modernas de aprendizaje profundo.</p>
+<p>Las decisiones de diseño en Frankenstein Transformer reflejan varias
+tensiones de ingeniería e investigación en las herramientas modernas de
+aprendizaje profundo.</p>
 <h2 id="compromisos-de-diseño-basado-en-esquemas">Compromisos de Diseño
 Basado en Esquemas</h2>
 <p>El enfoque basado en esquemas proporciona beneficios significativos
@@ -2329,46 +1859,47 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las diecisiete arquitecturas de mezclador implementadas abarcan las
-principales direcciones de investigación en modelado de secuencias, pero
-ciertos vacíos permanecen. El sistema carece de arquitecturas híbridas
-recientes como Griffin <span class="citation"
+<p>Las cuarenta y tres arquitecturas de mezclador implementadas abarcan
+las principales direcciones de investigación en modelado de secuencias,
+pero ciertos vacíos permanecen. El sistema carece de arquitecturas
+híbridas recientes como Griffin <span class="citation"
 data-cites="soares_griffin_2024"></span> y Jamba <span class="citation"
 data-cites="gu_jamba_2024"></span>, que combinan compuertas con modelos
 de espacio de estados. El enrutamiento MoE (Mezcla de Expertos) está
 implementado para capas FFN pero no para el cómputo de atención, donde
 trabajos recientes han mostrado beneficios <span class="citation"
 data-cites="lewis_moe_2021"></span>.</p>
-<p>La cobertura de atención dispersa es completa, pero la implementación
-de métodos sin entrenamiento (FASA, SpargeAttn) genera errores en tiempo
-de ejecución durante el entrenamiento, reflejando restricciones
-arquitectónicas: estos métodos requieren checkpoints preentrenados de
-modelos de atención completa o procedimientos específicos de ajuste fino
-que actualmente no están automatizados.</p>
-<p>La cobertura de mecanismos de compuerta y peso rápido es sólida en
-todas las categorías principales (GLA, DeltaNet, Gated DeltaNet, Gated
-DeltaNet-2, HGRN2, FoX, Gated Softmax y las seis variantes Falcon <span
-class="citation" data-cites="zhang_falcon_2026"></span>). El
-macro-diseño del flujo residual está cubierto mediante el flujo residual
-de <span class="math inline">\(n\)</span> streams restringido por
-variedad (mHC) <span class="citation" data-cites="xie_mhc_2025"></span>,
-cuya proyección Sinkhorn–Knopp sobre el politopo de Birkhoff restaura la
-propiedad de mapeo de identidad que pierden las Hyper-Connexions sin
-restricción; mHC está validado solo al nivel de los experimentos MoE
-publicados de 3B–27B, y el marco se beneficiaría de reproducciones
-independientes a escalas menores (ver Apéndice <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">21</a>).</p>
+<p>La cobertura de atención dispersa es amplia, pero los métodos sin
+entrenamiento (FASA, SpargeAttn) generan errores en tiempo de ejecución
+durante el entrenamiento, reflejando restricciones arquitectónicas:
+estos métodos requieren checkpoints preentrenados de modelos de atención
+completa o procedimientos específicos de ajuste fino que actualmente no
+están automatizados.</p>
+<p>La cobertura de mecanismos de compuerta y peso rápido abarca las
+categorías principales, incluidas las seis variantes Falcon <span
+class="citation" data-cites="zhang_falcon_2026"></span>. El macro-diseño
+del flujo residual está cubierto por Attention Residuals <span
+class="citation" data-cites="sun_attnres_2026"></span> y por el flujo
+residual de <span class="math inline">\(n\)</span> streams restringido
+por variedad (mHC) <span class="citation"
+data-cites="xie_mhc_2025"></span>, cuya proyección Sinkhorn–Knopp sobre
+el politopo de Birkhoff restaura la propiedad de mapeo de identidad que
+pierden las hiper-conexiones sin restricción; mHC está validado solo al
+nivel de los experimentos MoE publicados de 3B–27B y se beneficiaría de
+reproducciones independientes a escalas menores (Apéndice <a
+href="#sec:annex-mhc" data-reference-type="ref"
+data-reference="sec:annex-mhc">21</a>).</p>
 <h2 id="fragmentación-del-panorama-de-optimizadores">Fragmentación del
 Panorama de Optimizadores</h2>
-<p>El soporte para veintidós familias de optimizadores en seis
-categorías algorítmicas demuestra exhaustividad pero también resalta el
-estado fragmentado de la investigación en optimización. Los usuarios
-enfrentan una complejidad significativa de decisión al elegir entre
-métodos de reducción de varianza (Adan, MARS), variantes eficientes en
-memoria (GaLore, Adafactor, APOLLO) y enfoques conscientes de curvatura
-(Sophia, Shampoo). El sistema de hiperparámetros prefijados, aunque
-poderoso, requiere comprender qué parámetros son relevantes para cada
-clase de optimizador.</p>
+<p>El soporte para veintitrés familias de optimizadores en siete
+categorías demuestra exhaustividad pero también resalta el estado
+fragmentado de la investigación en optimización. Los usuarios enfrentan
+una complejidad significativa de decisión al elegir entre métodos de
+reducción de varianza (Adan, MARS), variantes eficientes en memoria
+(GaLore, Adafactor, APOLLO) y enfoques conscientes de curvatura (Sophia,
+Shampoo). El sistema de hiperparámetros prefijados, aunque poderoso,
+requiere comprender qué parámetros son relevantes para cada clase de
+optimizador.</p>
 <p>La calidad de implementación varía entre optimizadores: los métodos
 clásicos (AdamW, SGD con momento) están altamente optimizados en
 PyTorch, mientras que los métodos más nuevos (Muon, Turbo-Muon, SOAP)
@@ -2409,43 +1940,39 @@ adicionales y consideraciones de infraestructura que pueden no ser
 apropiadas para todos los entornos, particularmente clústeres HPC sin
 acceso web.</p>
 <h1 id="sec:conclusion">Conclusión</h1>
-<p>Transformer Encoder Frankenstein presenta una plataforma de
-experimentación unificada, impulsada por configuración, que aborda
-desafíos críticos en la investigación moderna de aprendizaje profundo:
-fragmentación arquitectónica entre atención densa, modelos recurrentes,
-patrones dispersos, mecanismos de compuerta y memorias de peso rápido;
-complejidad del panorama de optimizadores que abarca líneas base
-clásicas, métodos de reducción de varianza, variantes eficientes en
-memoria, enfoques sin programación, algoritmos conscientes de curvatura
-y métodos orientados a geometría; y flujos de trabajo de despliegue de
-extremo a extremo que abarcan cuantización y aplicaciones de embeddings
-de oraciones.</p>
+<p>Frankenstein Transformer presenta una plataforma de experimentación
+unificada, impulsada por configuración, que aborda tres desafíos de la
+investigación moderna en aprendizaje profundo: fragmentación
+arquitectónica entre atención densa, modelos recurrentes, patrones
+dispersos, mecanismos de compuerta, compresión latente, memoria
+condicional, memorias de peso rápido y priors geométricos; complejidad
+del panorama de optimizadores que abarca líneas base clásicas, métodos
+de reducción de varianza, variantes eficientes en memoria, enfoques sin
+programación, algoritmos conscientes de curvatura y métodos orientados a
+geometría; y flujos de trabajo de despliegue de extremo a extremo que
+abarcan cuantización y embeddings de oraciones.</p>
 <p>Las contribuciones principales del sistema son:</p>
 <ol>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-diecisiete arquitecturas de mezclador y veintitrés familias de
+cuarenta y tres mezcladores de secuencia y veintitrés familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
-que abarca las principales categorías de investigación incluyendo líneas
-base densas (atención estándar, sigmoide), alternativas recurrentes
-(RetNet, Mamba, estilo EDO, Titans), atención dispersa (Sparse
-Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA)
-mecanismos de compuerta (GLA, DeltaNet, Gated DeltaNet, Gated
-DeltaNet-2, HGRN2, FoX, Gated Softmax, KDA) y atención de peso rápido
-(Falcon-1/2/3, Falcon-1A/2A/3A) <span class="citation"
-data-cites="zhang_falcon_2026"></span>.</p></li>
+que abarca líneas base densas, bloques recurrentes y retentivos,
+atención dispersa, mecanismos con compuerta, compresión latente, memoria
+condicional, atención de peso rápido y atención de campo geométrico, con
+clases de modelo encoder, decoder y Vision Transformer.</p></li>
 <li><p><strong>Marco Unificado de Optimizadores</strong>: Grupos de
 hiperparámetros prefijados que permiten control detallado sobre
-embeddings, capas de normalización, bloques recurrentes, pesos de
-atención y parámetros FFN en líneas base clásicas (SGD+Momentum, AdamW),
-reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious),
-eficientes en memoria (Adafactor, GaLore, Lion, APOLLO, APOLLO-Mini,
-Q-APOLLO), lotes grandes y simplificación de programación (LAMB,
-Schedule-Free AdamW, Prodigy), conscientes de curvatura (Sophia),
-segundo orden (Shampoo, SOAP) y orientados a geometría (Muon,
-Turbo-Muon).</p></li>
+embeddings, capas de normalización, pesos de atención y el resto de
+parámetros en líneas base clásicas (SGD+Momentum, AdamW, RAdam),
+reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious), métodos
+eficientes en memoria y de bajo rango (Adafactor, GaLore, Lion, APOLLO,
+APOLLO-Mini, Q-APOLLO), lotes grandes y simplificación de programación
+(LAMB, Schedule-Free AdamW, Prodigy), conscientes de curvatura (Sophia),
+segundo orden (Shampoo, SOAP), orientados a geometría (Muon, Turbo-Muon)
+y adaptividad ajustable (Anon).</p></li>
 <li><p><strong>Flujos de Trabajo de Extremo a Extremo</strong>: Pipeline
 de despliegue integrado que soporta empaquetado ternario de pesos y
 cuantización de activaciones INT8; entrenamiento e inferencia inspirados
@@ -2506,20 +2033,20 @@ gradiente, pero el análisis formal de condiciones de estabilidad para
 diferentes combinaciones mezclador-optimizador, particularmente con
 bloques en bucle y cuantización agresiva, sigue abierto.</p></li>
 <li><p><strong>Extensiones Multimodales y Específicas de Tarea</strong>:
-El diseño actual se centra en modelado de secuencias. Extensiones para
-modelos de visión-lenguaje, arquitecturas multimodales y flujos de
-trabajo de ajuste fino específicos de tarea (ej., ajuste por
-instrucciones, RLHF) ampliarían la aplicabilidad.</p></li>
+El diseño actual cubre texto e imágenes individuales mediante la clase
+Vision Transformer. Extensiones a modelos de visión-lenguaje,
+arquitecturas multimodales y flujos de trabajo de ajuste fino
+específicos de tarea (ej., ajuste por instrucciones, RLHF) ampliarían la
+aplicabilidad.</p></li>
 </ol>
 <p>La trayectoria de investigación del modelado de secuencias continúa
 hacia enfoques híbridos que combinan fortalezas de múltiples
 paradigmas—compresión de la recurrencia, selectividad de la atención,
 compuertas para gestión de memoria y dispersión para eficiencia. Una
-plataforma de experimentación unificada como Transformer Encoder
-Frankenstein es cada vez más valiosa a medida que esta convergencia se
-acelera, permitiendo a los investigadores explorar sistemáticamente este
-creciente espacio de diseño con infraestructura reproducible y bien
-diseñada.</p>
+plataforma de experimentación unificada como Frankenstein Transformer es
+cada vez más valiosa a medida que esta convergencia se acelera,
+permitiendo a los investigadores explorar este creciente espacio de
+diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
 <p><span>114</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
@@ -6764,10 +6291,10 @@ Estándar y Optimizadores Adaptativos</h2>
 una tasa de aprendizaje fija. En cada iteración <span
 class="math inline">\(t\)</span>, el algoritmo mantiene un promedio
 móvil exponencial <span class="math inline">\(m_t\)</span> de los
-gradientes pasados: <span class="math display">\[\begin{align}
+gradientes pasados: <span class="math display">\[\begin{aligned}
 m_t &amp;= \beta m_{t-1} + g_t \\
 \theta_{t+1} &amp;= \theta_t - \eta m_t
-\end{align}\]</span> donde <span class="math inline">\(g_t = \nabla
+\end{aligned}\]</span> donde <span class="math inline">\(g_t = \nabla
 f(\theta_t)\)</span>, <span class="math inline">\(\beta \in [0.8,
 0.99]\)</span> controla la decadencia del momentum y <span
 class="math inline">\(\eta\)</span> es la tasa de aprendizaje fija. El
@@ -6800,14 +6327,14 @@ parámetros: <span class="math inline">\(\theta_{t+1} \gets \theta_t -
 <p>Adam rastrea promedios móviles exponenciales tanto del primer momento
 (media) como del segundo momento (varianza no centrada) para lograr
 tasas de aprendizaje adaptativas elemento a elemento. La regla de
-actualización es: <span class="math display">\[\begin{align}
+actualización es: <span class="math display">\[\begin{aligned}
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1) g_t \\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \\
 \hat{m}_t &amp;= \frac{m_t}{1-\beta_1^t}, \quad \hat{v}_t =
 \frac{v_t}{1-\beta_2^t} \quad \text{(corrección de sesgo)} \\
 \theta_{t+1} &amp;= \theta_t - \eta
 \left(\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}\right)
-\end{align}\]</span> AdamW introduce una modificación crucial: la
+\end{aligned}\]</span> AdamW introduce una modificación crucial: la
 decadencia de peso se aplica directamente a los parámetros (desacoplada
 de los gradientes): <span class="math inline">\(\theta_t \gets
 \theta_t(1-\eta\lambda)\)</span> en lugar de añadir <span
@@ -6898,14 +6425,14 @@ Avanzado y Reducción de Varianza (2024–2025)</h2>
 Adaptativo).</h4>
 <p>Adan reformula la aceleración de Nesterov sin el cálculo de gradiente
 adicional requerido por el SGD Nesterov clásico. El algoritmo mantiene
-tres búferes de momentum: <span class="math display">\[\begin{align}
+tres búferes de momentum: <span class="math display">\[\begin{aligned}
 m_t &amp;= (1-\beta_1)m_{t-1} + \beta_1 g_t \quad\text{(primer momento)}
 \\
 v_t &amp;= (1-\beta_2)v_{t-1} + \beta_2(g_t - g_{t-1})
 \quad\text{(velocidad/diferencia de gradientes)} \\
 n_t &amp;= (1-\beta_3)n_{t-1} + \beta_3[g_t +
 (1-\beta_1)(g_t-g_{t-1})]^2 \quad\text{(segundo momento Nesterov)}
-\end{align}\]</span> El término de <strong>Estimación de Momentum
+\end{aligned}\]</span> El término de <strong>Estimación de Momentum
 Nesterov</strong> (NME) <span class="math inline">\(\bar{g}_t = g_t +
 (1-\beta_1)(g_t-g_{t-1})\)</span> estima el gradiente en una posición
 futura sin evaluarlo. La actualización combina el momentum con la
@@ -6945,13 +6472,13 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (\bar{m} /
 aparece tanto en la estimación del primer momento como en la del segundo
 momento, creando circularidad. ADOPT <strong>desacopla</strong>
 utilizando el segundo momento del paso anterior para el denominador:
-<span class="math display">\[\begin{align}
+<span class="math display">\[\begin{aligned}
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 m_t &amp;= \beta_1 m_{t-1} +
 (1-\beta_1)\frac{g_t}{\sqrt{v_{t-1}}+\epsilon} \quad\text{(usa
 $v_{t-1}$, no $v_t$)} \\
 \theta_{t+1} &amp;= \theta_t - \eta m_t
-\end{align}\]</span> Este simple reordenamiento logra la tasa de
+\end{aligned}\]</span> Este simple reordenamiento logra la tasa de
 convergencia óptima <span class="math inline">\(O(1/\sqrt{T})\)</span>
 con <strong>cualquier</strong> elección de <span
 class="math inline">\(\beta_2 \in (0,1)\)</span>, sin suposiciones de
@@ -6986,7 +6513,7 @@ m\)</span> <span class="math inline">\(\theta_T\)</span></p>
 <strong>mezcla de dos EMA</strong>: uno de decadencia rápida y otro de
 decadencia lenta. Esto aborda la observación de que los gradientes
 siguen siendo informativos durante decenas de miles de pasos, no solo
-cientos: <span class="math display">\[\begin{align}
+cientos: <span class="math display">\[\begin{aligned}
 m_{1,t} &amp;= \beta_1 m_{1,t-1} + (1-\beta_1)g_t \quad\text{(EMA
 rápido, $\beta_1 \approx 0.9$)} \\
 m_{2,t} &amp;= \beta_3 m_{2,t-1} + (1-\beta_3)g_t \quad\text{(EMA lento,
@@ -6995,7 +6522,7 @@ v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 m_t &amp;= m_{1,t} + \alpha_t m_{2,t} \quad\text{(mezcla con peso
 programado $\alpha_t$)} \\
 \theta_{t+1} &amp;= \theta_t - \eta\frac{m_t}{\sqrt{v_t}+\epsilon}
-\end{align}\]</span> El peso de la mezcla <span
+\end{aligned}\]</span> El peso de la mezcla <span
 class="math inline">\(\alpha_t\)</span> típicamente aumenta durante el
 entrenamiento, permitiendo que el EMA rápido proporcione adaptación
 inmediata mientras que el EMA lento acumula correlaciones de gradiente a
@@ -7034,15 +6561,15 @@ id="mars-haciendo-brillar-las-tasas-de-aprendizaje-adaptativas.">MARS
 <strong>reducción de varianza</strong> mediante momentum recursivo
 estocástico escalado. La innovación central es una estimación del
 gradiente con varianza reducida: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 c_t &amp;= g_t + \gamma(c_{t-1} - g_{t-1}) \quad\text{(estimación
 recursiva tipo SVRG)} \\
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1)c_t \\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)c_t^2 \\
 \theta_{t+1} &amp;= \theta_t - \eta\frac{m_t}{\sqrt{v_t}+\epsilon}
-\end{align}\]</span> donde <span class="math inline">\(\gamma \in [0.01,
-0.1]\)</span> controla cuánta información de gradiente histórico se
-retiene. El gradiente con varianza reducida <span
+\end{aligned}\]</span> donde <span class="math inline">\(\gamma \in
+[0.01, 0.1]\)</span> controla cuánta información de gradiente histórico
+se retiene. El gradiente con varianza reducida <span
 class="math inline">\(c_t\)</span> actúa como un filtro de ruido
 implícito, amplificando las direcciones de señal consistentes y
 amortiguando el ruido contradictorio. MARS-AdamW supera consistentemente
@@ -7079,14 +6606,14 @@ Cautelosos (Cautious AdamW, Cautious Lion).</h4>
 línea</strong> a cualquier optimizador basado en momentum: enmascarar la
 actualización de modo que solo se apliquen las dimensiones donde el
 momentum y la dirección del gradiente coinciden: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 \text{mask}_i &amp;= \begin{cases} 1 &amp; \text{si } m_t[i] \cdot
 g_t[i] &gt; 0 \quad\text{(acuerdo)} \\ 0 &amp; \text{en caso contrario}
 \end{cases} \\
 u_t &amp;= \left(\frac{m_t}{\sqrt{v_t}+\epsilon}\right) \odot
 \text{mask} \quad\text{(enmascaramiento elemento a elemento)} \\
 \theta_{t+1} &amp;= \theta_t - \eta u_t
-\end{align}\]</span> La intuición: el momentum <span
+\end{aligned}\]</span> La intuición: el momentum <span
 class="math inline">\(m_t\)</span> estima la dirección del gradiente a
 partir del historial; el gradiente actual <span
 class="math inline">\(g_t\)</span> es la señal instantánea. Cuando ambos
@@ -7132,7 +6659,7 @@ id="lamb-layer-wise-adaptive-moments-optimizer-for-batch-training.">LAMB
 <p>LAMB extiende Adam con <strong>escalado de tasa adaptativo por
 capas</strong> (inspirado en LARS), permitiendo entrenamiento estable
 con tamaños de lote extremos (e.g., 64K en BERT): <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 m_t^L &amp;= \beta_1 m_{t-1}^L + (1-\beta_1)g_t^L \quad\text{(momento de
 primer orden por capas)} \\
 v_t^L &amp;= \beta_2 v_{t-1}^L + (1-\beta_2)(g_t^L)^2 \\
@@ -7143,7 +6670,7 @@ u_{\text{adam}}^L &amp;= \frac{m_t^L}{\sqrt{v_t^L}+\epsilon} +
 \quad\text{(razón de confianza: normalización por capas)} \\
 \theta_t^L &amp;= \theta_{t-1}^L - \eta \cdot \phi^L \cdot
 u_{\text{adam}}^L
-\end{align}\]</span> La <strong>razón de confianza</strong> <span
+\end{aligned}\]</span> La <strong>razón de confianza</strong> <span
 class="math inline">\(\phi^L = \|\theta^L\|_2 /
 \|u_{\text{adam}}^L\|_2\)</span> normaliza el paso de actualización
 efectivo en relación con la magnitud de los pesos. En lotes muy grandes,
@@ -7183,7 +6710,7 @@ class="math inline">\(\theta_T\)</span></p>
 programación de la receta de optimización. El algoritmo mantiene dos
 flujos de parámetros: <span class="math inline">\(z_t\)</span>
 (exploración) y <span class="math inline">\(x_t\)</span> (promedio
-suavizado): <span class="math display">\[\begin{align}
+suavizado): <span class="math display">\[\begin{aligned}
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \quad\text{(varianza)} \\
 z_t &amp;= z_{t-1}(1-\eta\lambda) - \eta\frac{g_t}{\sqrt{v_t}+\epsilon}
 \quad\text{(paso adaptativo con decaimiento)} \\
@@ -7193,7 +6720,7 @@ x_t &amp;= (1-c_t)x_{t-1} + c_t z_t \quad\text{(promediado de
 iteraciones)} \\
 y_t &amp;= (1-\beta)z_t + \beta x_t \quad\text{(interpolación para el
 punto de evaluación)}
-\end{align}\]</span> El coeficiente de promediado <span
+\end{aligned}\]</span> El coeficiente de promediado <span
 class="math inline">\(c_t = 1/(t+1)\)</span> implementa una programación
 de tasa de aprendizaje implícita sin especificar explícitamente el
 número total de pasos <span class="math inline">\(T\)</span>. Este marco
@@ -7236,7 +6763,7 @@ class="math inline">\(y_T\)</span></p>
 parámetros con forma de matriz, almacenando solo acumuladores de filas y
 columnas en lugar de estados de varianza densos. Para una matriz de
 gradiente <span class="math inline">\(G_t \in \mathbb{R}^{m \times
-n}\)</span>: <span class="math display">\[\begin{align}
+n}\)</span>: <span class="math display">\[\begin{aligned}
 R_t &amp;= \beta_2 R_{t-1} + (1-\beta_2)(G_t^2) \mathbf{1}_n^T
 \quad\text{(varianza por filas)} \\
 C_t &amp;= \beta_2 C_{t-1} + (1-\beta_2) \mathbf{1}_m^\top (G_t^2)
@@ -7247,15 +6774,15 @@ U_t &amp;= \frac{G_t}{\sqrt{\hat{V}_t}+\epsilon} \quad\text{(paso
 adaptativo normalizado)} \\
 \hat{U}_t &amp;= \frac{U_t}{\max(1, \text{RMS}(U_t))}
 \quad\text{(recorte de estabilidad)}
-\end{align}\]</span> En lugar de almacenar <span class="math inline">\(m
-\times n\)</span> valores de segundo momento, Adafactor almacena solo
-<span class="math inline">\(m + n\)</span> acumuladores, reduciendo la
-memoria de <span class="math inline">\(O(n_{\text{params}})\)</span> a
-<span class="math inline">\(O(\sqrt{n_{\text{params}}})\)</span>. Esto
-es más atractivo cuando la VRAM está dominada por el estado del
-optimizador en lugar de las activaciones. La contrapartida es una
-expresividad de optimización reducida y posible inestabilidad en algunas
-tareas.</p>
+\end{aligned}\]</span> En lugar de almacenar <span
+class="math inline">\(m \times n\)</span> valores de segundo momento,
+Adafactor almacena solo <span class="math inline">\(m + n\)</span>
+acumuladores, reduciendo la memoria de <span
+class="math inline">\(O(n_{\text{params}})\)</span> a <span
+class="math inline">\(O(\sqrt{n_{\text{params}}})\)</span>. Esto es más
+atractivo cuando la VRAM está dominada por el estado del optimizador en
+lugar de las activaciones. La contrapartida es una expresividad de
+optimización reducida y posible inestabilidad en algunas tareas.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Matriz de gradiente <span class="math inline">\(G_t \in \mathbb{R}^{m
@@ -7284,7 +6811,7 @@ Projection).</h4>
 la optimización, reduciendo la memoria del estado del optimizador
 mientras mantiene el escalado adaptativo del paso. Para una matriz de
 parámetros 2D <span class="math inline">\(W \in \mathbb{R}^{m \times
-n}\)</span>: <span class="math display">\[\begin{align}
+n}\)</span>: <span class="math display">\[\begin{aligned}
 U, S, V &amp;= \text{SVD}(G_t) \quad\text{(calcular descomposición
 singular)} \\
 P &amp;\in \mathbb{R}^{n \times r} \quad\text{o} \quad P^\top \in
@@ -7296,7 +6823,7 @@ bajo rango)} \\
 \quad\text{(optimizar en el espacio comprimido)} \\
 \Delta &amp;= P \Delta_{\text{low}} \quad\text{(reconstruir en el
 espacio original)}
-\end{align}\]</span> Al proyectar en un subespacio de rango <span
+\end{aligned}\]</span> Al proyectar en un subespacio de rango <span
 class="math inline">\(r\)</span> (típicamente <span
 class="math inline">\(r \ll \min(m,n)\)</span>), el estado del
 optimizador se reduce de <span class="math inline">\(O(mn)\)</span> a
@@ -7338,12 +6865,12 @@ aprendizaje</strong>. En lugar de almacenar momentos densos para cada
 entrada de parámetro, APOLLO proyecta un gradiente matricial <span
 class="math inline">\(G_t \in \mathbb{R}^{m \times n}\)</span> en un
 subespacio aleatorio compacto y rastrea momentos estilo Adam allí: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 R_t &amp;= P_t G_t \quad\text{o}\quad R_t = G_t P_t^\top \\
 M_t^R &amp;= \beta_1 M_{t-1}^R + (1-\beta_1)R_t \\
 V_t^R &amp;= \beta_2 V_{t-1}^R + (1-\beta_2)R_t^2 \\
 \widetilde{R}_t &amp;= \frac{M_t^R}{\sqrt{V_t^R}+\epsilon}
-\end{align}\]</span> El estado proyectado <em>no</em> se expande de
+\end{aligned}\]</span> El estado proyectado <em>no</em> se expande de
 vuelta a una actualización densa de bajo rango como en los métodos
 basados en SVD. En su lugar, APOLLO estima un tensor de escalado
 estructurado <span class="math inline">\(S_t\)</span> en el espacio
@@ -7436,7 +6963,7 @@ class="math inline">\(\gamma=1\)</span>), y extrapolando más allá de
 ambos. La innovación central es el mecanismo Incremental Delay Update
 (IDU), que permite convergencia estable a través de todo el espectro de
 adaptividad de valores reales:</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1) g_t \quad\text{(momento de
 primer orden)}\\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \quad\text{(momento de
@@ -7450,7 +6977,7 @@ segundo orden)}\\
 \end{cases}\\
 \theta_{t+1} &amp;= \theta_t - \frac{\eta}{1-\beta_1^t} \cdot m_t \odot
 \text{fixed\_lr}_{\lfloor\log_2 t\rfloor}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p>A diferencia de los optimizadores adaptativos estándar, IDU actualiza
 el precondicionador solo en potencias de dos (<span
 class="math inline">\(t = 2^k\)</span>), acumulando estadísticas de
@@ -7511,7 +7038,7 @@ class="math inline">\(\theta_T\)</span></p>
 <p>Prodigy adapta la escala efectiva del paso mediante una estadística
 tipo distancia acumulativa, eliminando la necesidad de ajuste explícito
 de la tasa de aprendizaje. El algoritmo mantiene una estimación de
-distancia acumulativa: <span class="math display">\[\begin{align}
+distancia acumulativa: <span class="math display">\[\begin{aligned}
 u_t &amp;= \frac{g_t}{\sqrt{v_t}+\epsilon} \quad\text{(paso adaptativo
 no normalizado)} \\
 s_t &amp;= s_{t-1} + \langle u_t, \theta_t - \theta_0 \rangle
@@ -7519,7 +7046,7 @@ s_t &amp;= s_{t-1} + \langle u_t, \theta_t - \theta_0 \rangle
 d_t &amp;= \max(d_{t-1}, d_0 + d_{\text{coef}} \cdot s_t)
 \quad\text{(estimación de distancia con cota inferior)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \cdot d_t \cdot u_t
-\end{align}\]</span> donde <span class="math inline">\(d_0\)</span> es
+\end{aligned}\]</span> donde <span class="math inline">\(d_0\)</span> es
 una cota inicial y <span class="math inline">\(d_{\text{coef}}\)</span>
 controla qué tan agresivamente se adapta la estimación. La estimación de
 distancia <span class="math inline">\(d_t\)</span> captura la magnitud
@@ -7583,7 +7110,7 @@ id="shampoo-precondicionamiento-matricial-mediante-productos-de-kronecker.">Sham
 que calcula precondicionadores matriciales a partir de estadísticas de
 producto exterior con estructura de Kronecker. Para una matriz de
 parámetros 2D <span class="math inline">\(W \in \mathbb{R}^{m \times
-n}\)</span>: <span class="math display">\[\begin{align}
+n}\)</span>: <span class="math display">\[\begin{aligned}
 L_t &amp;= L_{t-1} + G_t G_t^\top \quad\text{(matriz de Gram
 izquierda/filas, $m \times m$)} \\
 R_t &amp;= R_{t-1} + G_t^\top G_t \quad\text{(matriz de Gram
@@ -7593,7 +7120,7 @@ eigendescomposición)} \\
 R_t^{-1/4} &amp;= Q_R (\Lambda_R)^{-1/4} Q_R^\top \\
 \Delta W_t &amp;= L_t^{-1/4} G_t R_t^{-1/4} \quad\text{(gradiente
 precondicionado)}
-\end{align}\]</span> Shampoo aproxima el precondicionador de matriz
+\end{aligned}\]</span> Shampoo aproxima el precondicionador de matriz
 completa de Adagrad <span class="math inline">\(H^{-1/2}\)</span> (donde
 <span class="math inline">\(H\)</span> es el Hessiano) utilizando
 estructura factorizada de Kronecker. En lugar de almacenar un
@@ -7615,7 +7142,7 @@ in eigenbasis).</h4>
 precondicionamiento del seguimiento de momento. En lugar de álgebra
 matricial compleja sobre gradientes precondicionados, SOAP ejecuta Adam
 estándar en la base de eigenvectores de los precondicionadores de
-Shampoo: <span class="math display">\[\begin{align}
+Shampoo: <span class="math display">\[\begin{aligned}
 L_t &amp;= L_{t-1} + G_t G_t^\top, \quad R_t = R_{t-1} + G_t^\top G_t
 \quad\text{(acumulación de Gram)} \\
 Q_L, \Lambda_L &amp;= \text{eigh}(L_t), \quad Q_R, \Lambda_R =
@@ -7630,7 +7157,7 @@ v_t^{\text{rot}} &amp;= \beta_2 v_{t-1}^{\text{rot}} +
 U_t^{\text{rot}} &amp;=
 \frac{m_t^{\text{rot}}}{\sqrt{v_t^{\text{rot}}}+\epsilon}, \quad U_t =
 Q_L U_t^{\text{rot}} Q_R^\top \quad\text{(rotar de vuelta)}
-\end{align}\]</span> La idea clave: todo el seguimiento de momento
+\end{aligned}\]</span> La idea clave: todo el seguimiento de momento
 ocurre en la base de eigenvectores bien condicionada, simplificando la
 estabilidad numérica y el análisis teórico. SOAP combina los beneficios
 de Shampoo (estructura de curvatura explícita) y Adam (mecánica de
@@ -7666,14 +7193,14 @@ class="math inline">\(\theta_T\)</span></p>
 <h4 id="lion-evolved-sign-momentum.">Lion (EvoLved Sign Momentum).</h4>
 <p>Lion logra un <strong>sobrecosto de memoria mínimo</strong> al usar
 actualizaciones basadas en signo en lugar de escalado adaptativo
-completo:<span class="math display">\[\begin{align}
+completo:<span class="math display">\[\begin{aligned}
 c_t &amp;= \beta_1 m_t + (1-\beta_1) g_t \quad\text{(entrada de
 momento)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \left(\text{sign}(c_t) +
 \lambda\theta_t\right) \quad\text{(actualización con operador signo)} \\
 m_{t+1} &amp;= \beta_2 m_t + (1-\beta_2) g_t \quad\text{(acumulación de
 momento)}
-\end{align}\]</span> Todas las operaciones de escalado elemento a
+\end{aligned}\]</span> Todas las operaciones de escalado elemento a
 elemento se reemplazan con <code>sign()</code>, que produce <span
 class="math inline">\(\{-1, 0, +1\}\)</span>. Esto reduce drásticamente
 la memoria en comparación con métodos tipo Adam: Lion almacena solo el
@@ -7708,7 +7235,7 @@ id="sophia-second-order-hessian-information-with-optimized-approximation.">Sophi
 <p>Sophia utiliza <strong>estimaciones diagonales del Hessiano</strong>
 para escalado consciente de la curvatura sin el costo de memoria y
 cómputo de los métodos densos de segundo orden.<span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1) g_t \quad\text{(momento de
 primer orden)} \\
 h_t &amp;= \beta_2 h_{t-(k-1)} + (1-\beta_2) \hat{h}_t
@@ -7717,7 +7244,7 @@ h_t &amp;= \beta_2 h_{t-(k-1)} + (1-\beta_2) \hat{h}_t
 elemento a elemento)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \cdot
 \text{clip}\left(\frac{m_t}{\max(\gamma h_t, \epsilon)}, 1\right)
-\end{align}\]</span> donde <span
+\end{aligned}\]</span> donde <span
 class="math inline">\(\hat{h}_t\)</span> es una estimación diagonal
 (e.g., estimador de traza de Hutchinson) y <span
 class="math inline">\(\gamma\)</span> es un factor de escala. El
@@ -7761,7 +7288,7 @@ utilizando iteraciones polinomiales de Newton-Schulz para
 ortogonalización. Para una matriz de parámetros 2D <span
 class="math inline">\(W\)</span> con gradiente <span
 class="math inline">\(G_t\)</span>: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 X_0 &amp;= \frac{G_t}{\|G_t\|_F + \epsilon} \quad\text{(gradiente
 normalizado)} \\
 A_k &amp;= X_k X_k^\top \quad\text{(Gramiana)} \\
@@ -7771,7 +7298,7 @@ X_{k+1} &amp;= a X_k + B_k X_k \quad\text{(iteración $k=0,1,\ldots,4$)}
 \\
 W_{t+1} &amp;= W_t - \eta X_K \quad\text{(actualización con dirección
 ortogonalizada)}
-\end{align}\]</span> Muon realiza 5 iteraciones de Newton-Schulz para
+\end{aligned}\]</span> Muon realiza 5 iteraciones de Newton-Schulz para
 producir una dirección aproximadamente ortogonal, asegurando que las
 actualizaciones respeten restricciones geométricas. Turbo-Muon añade un
 paso de <strong>precondicionamiento casi-ortogonal</strong> (AOL) antes
@@ -7893,6 +7420,12 @@ computacional, huella de memoria y simplicidad de despliegue.</p>
 <h2 id="atención-densa-de-referencia-estándar-y-sigmoide">Atención Densa
 de Referencia: Estándar y Sigmoide</h2>
 <h3 id="atención-softmax-estándar">Atención Softmax Estándar</h3>
+<figure id="fig:mixer-standard">
+
+<figcaption>Flujo de datos de la atención softmax estándar: proyecciones
+Q/K/V paralelas, puntuaciones de producto escalar escaladas, softmax por
+filas y proyección de salida.</figcaption>
+</figure>
 <p>La atención multi-cabeza estándar <span class="citation"
 data-cites="vaswani_attention_2017"></span> calcula la similitud de
 producto punto escalado entre embeddings de tokens:</p>
@@ -7935,6 +7468,12 @@ prohíbe contextos muy largos; el caché KV domina la memoria durante la
 generación.</p></li>
 </ul>
 <h3 id="atención-sigmoide">Atención Sigmoide</h3>
+<figure id="fig:mixer-sigmoid">
+
+<figcaption>Flujo de datos de la atención sigmoide: una sigmoide
+elemento a elemento sustituye al softmax por filas, de modo que los
+pesos de atención no tienen por qué sumar uno.</figcaption>
+</figure>
 <p>La atención sigmoide reemplaza el softmax por filas con una
 activación sigmoide elemento a elemento <span class="citation"
 data-cites="ramapuram_theory_2024"></span>:</p>
@@ -7979,6 +7518,13 @@ pérdida auxiliar.</p></li>
 </ul>
 <h3 id="atención-por-consultas-agrupadas-gqa">Atención por Consultas
 Agrupadas (GQA)</h3>
+<figure id="fig:mixer-gqa">
+
+<figcaption>Flujo de datos de la atención por consultas agrupadas: las
+claves y los valores se proyectan a menos cabezas, se expanden mediante
+repetición entrelazada y se comparten en cada grupo de cabezas de
+consulta.</figcaption>
+</figure>
 <p>La atención por consultas agrupadas (GQA) <span class="citation"
 data-cites="ainslie_gqa_2023"></span> tiende un puente entre la atención
 multi-cabeza (MHA) y la atención multi-consulta (MQA) al particionar las
@@ -8039,6 +7585,12 @@ arquitectónicas.</p></li>
 <h2 id="arquitecturas-recurrentes-y-retentivas">Arquitecturas
 Recurrentes y Retentivas</h2>
 <h3 id="redes-retentivas-retnet">Redes Retentivas (RetNet)</h3>
+<figure id="fig:mixer-retnet">
+
+<figcaption>Flujo de datos de RetNet: proyecciones Q/K/V paralelas
+alimentan una recurrencia de estado con decaimiento; el estado se
+propaga entre pasos y la salida lo lee con la consulta.</figcaption>
+</figure>
 <p>RetNet <span class="citation" data-cites="sun_retentive_2023"></span>
 unifica tres paradigmas de cómputo: entrenamiento paralelo, inferencia
 recurrente y despliegue por fragmentos. Su innovación central es el
@@ -8089,6 +7641,15 @@ aprendidos.</p></li>
 </ul>
 <h3 id="mamba-modelos-de-espacio-de-estado-selectivos">Mamba: Modelos de
 Espacio de Estado Selectivos</h3>
+<figure id="fig:mixer-mamba">
+
+<figcaption>Flujo de datos de Mamba: una convolución causal alimenta
+selecciones de <span class="math inline">\(\Delta\)</span>, <span
+class="math inline">\(B\)</span> y <span
+class="math inline">\(C\)</span> dependientes de la entrada, la
+discretización ZOH y un escaneo selectivo de espacio de estados cuyo
+estado se propaga entre pasos.</figcaption>
+</figure>
 <p>Mamba <span class="citation" data-cites="gu_mamba_2023"></span>
 enmarca la recurrencia como un sistema dinámico de tiempo continuo con
 parámetros dependientes de la entrada, logrando tanto entrenamiento
@@ -8144,6 +7705,12 @@ comparación con la atención completa.</p></li>
 id="transformers-de-profundidad-continua-integración-edo">Transformers
 de Profundidad Continua: Integración EDO</h2>
 <h3 id="transformer-edo">Transformer EDO</h3>
+<figure id="fig:mixer-ode">
+
+<figcaption>Flujo de datos del bloque transformer EDO: el estado oculto
+se integra mediante uno o más pasos de Euler/RK4 antes de leer la
+salida.</figcaption>
+</figure>
 <p>El Transformer EDO <span class="citation"
 data-cites="zhang_continuous_2021"></span> interpreta la profundidad de
 la red como integración numérica de un sistema dinámico continuo,
@@ -8195,6 +7762,13 @@ estabilidad.</p></li>
 </ul>
 <h2 id="memoria-en-tiempo-de-prueba-titans">Memoria en Tiempo de Prueba:
 Titans</h2>
+<figure id="fig:mixer-titan">
+
+<figcaption>Flujo de datos de la memoria en tiempo de prueba de Titans:
+la atención densa Q/K/V opera sobre una ventana local mientras
+compuertas de lectura y escritura actualizan una memoria asociativa que
+se propaga entre pasos.</figcaption>
+</figure>
 <p>La arquitectura Titans <span class="citation"
 data-cites="behrouz_titans_2025"></span> introduce una dimensión
 ortogonal: en lugar de pesos estáticos, el modelo mantiene una memoria
@@ -8291,6 +7865,13 @@ factorizado y latente temporal bajo un cuello de botella de rango bajo
 común.</p>
 <h2 id="atención-latente-multi-cabeza-mla">Atención Latente Multi-Cabeza
 (MLA)</h2>
+<figure id="fig:mixer-mla">
+
+<figcaption>Flujo de datos de la atención latente multi-cabeza: las
+claves y los valores se proyectan hacia abajo a un latente de rango
+bajo, se proyectan de vuelta y se atienden con la consulta tras
+RoPE.</figcaption>
+</figure>
 <p>La Atención Latente Multi-Cabeza (MLA, por sus siglas en inglés)
 <span class="citation" data-cites="mehta_mla_2025"></span> comprime el
 estado clave–valor por token en un único vector latente de rango bajo
@@ -8351,6 +7932,13 @@ compartido entre cabezas.</p></li>
 </ul>
 <h2 id="atención-latente-por-consultas-agrupadas-gqla">Atención Latente
 por Consultas Agrupadas (GQLA)</h2>
+<figure id="fig:mixer-gqla">
+
+<figcaption>Flujo de datos de la atención latente por consultas
+agrupadas: la caché latente compartida se proyecta hacia arriba a
+cabezas de clave/valor y se combina con consultas
+agrupadas.</figcaption>
+</figure>
 <p>La Atención Latente por Consultas Agrupadas (GQLA, por sus siglas en
 inglés) <span class="citation" data-cites="meng_gqla_2026"></span> es
 una modificación mínima de MLA que expone dos rutas de decodificación
@@ -8414,6 +8002,12 @@ despliegue.</p></li>
 </ul>
 <h2 id="atención-multi-cabeza-de-rango-bajo-mlra">Atención Multi-Cabeza
 de Rango Bajo (MLRA)</h2>
+<figure id="fig:mixer-mlra">
+
+<figcaption>Flujo de datos de la atención multi-cabeza de rango bajo: el
+latente se particiona entre sub-cabezas, cada una con su propia
+proyección ascendente, antes de la atención.</figcaption>
+</figure>
 <p>La Atención Multi-Cabeza de Rango Bajo (MLRA, por sus siglas en
 inglés) <span class="citation" data-cites="liu_mlra_2026"></span>
 refactoriza el latente único de MLA en <span
@@ -8472,6 +8066,12 @@ class="math inline">\(r_{kv}\)</span>; más matrices de proyección que
 MLA; all-reduce inter-dispositivo en la salida.</p></li>
 </ul>
 <h2 id="atención-tucker">Atención Tucker</h2>
+<figure id="fig:mixer-tucker">
+
+<figcaption>Flujo de datos de la atención Tucker: las consultas y las
+claves/valores se proyectan mediante factores de Tucker y se
+reconstruyen antes del producto escalar escalado.</figcaption>
+</figure>
 <p>La Atención Tucker <span class="citation"
 data-cites="klein_tucker_2026"></span> unifica MHA, GQA y MLA bajo una
 única factorización estilo Tucker de los tensores de pesos de
@@ -8536,6 +8136,12 @@ tarea.</p></li>
 </ul>
 <h2 id="atención-de-cabezas-entrelazadas-iha">Atención de Cabezas
 Entrelazadas (IHA)</h2>
+<figure id="fig:mixer-iha">
+
+<figcaption>Flujo de datos de la atención de cabezas entrelazadas: las
+cabezas se entrelazan en una representación latente de clave/valor que
+la consulta atiende.</figcaption>
+</figure>
 <p>La Atención de Cabezas Entrelazadas (IHA, por sus siglas en inglés)
 <span class="citation" data-cites="duvvuri_iha_2026"></span> construye
 <span class="math inline">\(P\)</span> pseudo-cabezas por cabeza
@@ -8597,6 +8203,12 @@ class="math inline">\(H\)</span> grande.</p></li>
 </ul>
 <h2 id="atención-latent-por-cabezas-agrupadas-gta">Atención laTenT por
 Cabezas Agrupadas (GTA)</h2>
+<figure id="fig:mixer-gta">
+
+<figcaption>Flujo de datos de la atención latente por cabezas agrupadas:
+un mapa compartido produce el estado latente de clave/valor que consumen
+las cabezas agrupadas.</figcaption>
+</figure>
 <p>La Atención laTenT por Cabezas Agrupadas (GTA, por sus siglas en
 inglés) <span class="citation" data-cites="sun_gta_2025"></span> combina
 dos compresiones: (1) un <em>mapa de atención compartido</em> — un
@@ -8654,6 +8266,12 @@ agrupamiento debe elegirse con cuidado.</p></li>
 </ul>
 <h2 id="atención-latente-temporal-multi-cabeza-mtla">Atención Latente
 Temporal Multi-Cabeza (MTLA)</h2>
+<figure id="fig:mixer-mtla">
+
+<figcaption>Flujo de datos de la atención latente temporal multi-cabeza:
+una etapa de compresión temporal produce el estado latente de
+clave/valor que atiende la consulta.</figcaption>
+</figure>
 <p>La Atención Latente Temporal Multi-Cabeza (MTLA, por sus siglas en
 inglés) <span class="citation" data-cites="deng_mtla_2025"></span>
 extiende MLA a lo largo del eje temporal: una hyper-red fusiona
@@ -8724,6 +8342,13 @@ de la máscara no es trivial.</p></li>
 Arquitectónica</h2>
 <h2 id="atención-convolucional-comprimida-cca">Atención Convolucional
 Comprimida (CCA)</h2>
+<figure id="fig:mixer-cca">
+
+<figcaption>Flujo de datos de la atención convolucional comprimida: una
+convolución 1D alimenta una compresión latente <span
+class="math inline">\(c\)</span> que la consulta atiende
+directamente.</figcaption>
+</figure>
 <p>La Atención Convolucional Comprimida (CCA, por sus siglas en inglés)
 <span class="citation" data-cites="figliola_cca_2025"></span> adopta un
 enfoque fundamentalmente diferente para la atención latente: en lugar de
@@ -8791,6 +8416,12 @@ teórica.</p></li>
 <h2
 id="atención-convolucional-comprimida-por-consultas-agrupadas-ccgqa">Atención
 Convolucional Comprimida por Consultas Agrupadas (CCGQA)</h2>
+<figure id="fig:mixer-ccgqa">
+
+<figcaption>Flujo de datos de la atención convolucional comprimida con
+consultas agrupadas: el latente de la convolución alimenta una expansión
+de clave/valor con consultas agrupadas.</figcaption>
+</figure>
 <p>La Atención Convolucional Comprimida por Consultas Agrupadas (CCGQA,
 por sus siglas en inglés) <span class="citation"
 data-cites="figliola_cca_2025"></span> extiende CCA con compartición de
@@ -8861,6 +8492,14 @@ class="math inline">\(K\)</span> fijo manteniendo una interpretación de
 atención normalizada.</p>
 <h2 id="atención-de-mezcla-gaussiana-gma">Atención de Mezcla Gaussiana
 (GMA)</h2>
+<figure id="fig:mixer-gma">
+
+<figcaption>Flujo de datos de la atención de mezcla gaussiana: las
+responsabilidades gaussianas por cabeza enrutan claves y valores hacia
+una memoria de <span class="math inline">\(K\)</span> ranuras que la
+consulta lee de vuelta, normalizada por <span
+class="math inline">\(Z\)</span>.</figcaption>
+</figure>
 <p>La Atención de Mezcla Gaussiana (GMA, por sus siglas en inglés) <span
 class="citation" data-cites="huang_gma_2026"></span> reemplaza la
 interacción pareada explícita <span
@@ -8995,6 +8634,12 @@ algorítmico y comparaciones arquitectónicas exhaustivas.</p>
 <h2
 id="sparse-transformer-patrones-estrideados-y-fijos-factorizados">Sparse
 Transformer: Patrones Estrideados y Fijos Factorizados</h2>
+<figure id="fig:mixer-sparse-transformer">
+
+<figcaption>Flujo de datos del Sparse Transformer: un patrón factorial
+con zancada enmascara la matriz de puntuaciones antes del
+softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-9">Formulación Matemática</h3>
 <p>Sparse Transformer <span class="citation"
 data-cites="child_sparse_transformer_2019"></span> reduce la complejidad
@@ -9089,6 +8734,12 @@ personalizados para eficiencia práctica.</p></li>
 <h2
 id="longformer-ventana-deslizante-dilatación-y-tokens-globales">Longformer:
 Ventana Deslizante, Dilatación y Tokens Globales</h2>
+<figure id="fig:mixer-longformer">
+
+<figcaption>Flujo de datos de Longformer: las máscaras de ventana
+deslizante y de tokens globales se aplican a la matriz de puntuaciones
+antes del softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-10">Formulación Matemática</h3>
 <p>Longformer <span class="citation"
 data-cites="beltagy_longformer_2020"></span> logra una complejidad
@@ -9167,6 +8818,12 @@ de atención densos.</p></li>
 </ul>
 <h2 id="bigbird-grafo-disperso-aleatorio-local-y-global">BigBird: Grafo
 Disperso Aleatorio, Local y Global</h2>
+<figure id="fig:mixer-bigbird">
+
+<figcaption>Flujo de datos de BigBird: la adyacencia local, aleatoria y
+global enmascara la matriz de puntuaciones antes del
+softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-11">Formulación Matemática</h3>
 <p>BigBird <span class="citation"
 data-cites="zaheer_bigbird_2020"></span> preserva la aproximación
@@ -9252,6 +8909,12 @@ tarea.</p></li>
 </ul>
 <h2 id="atención-sparsek-selección-diferencial-top-k">Atención SparseK:
 Selección Diferencial Top-<span class="math inline">\(k\)</span></h2>
+<figure id="fig:mixer-sparsek">
+
+<figcaption>Flujo de datos de SparseK: un selector top-<span
+class="math inline">\(k\)</span> diferenciable conserva solo las claves
+con mayor puntuación antes del softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-12">Formulación Matemática</h3>
 <p>SparseK <span class="citation" data-cites="lou_sparsek_2024"></span>
 permite dispersidad aprendible mediante un <strong>operador top-<span
@@ -9333,6 +8996,12 @@ sobrecarga.</p></li>
 id="nsa-native-sparse-attention-ramas-jerárquicas-alineadas-con-el-hardware">NSA
 (Native Sparse Attention): Ramas Jerárquicas Alineadas con el
 Hardware</h2>
+<figure id="fig:mixer-nsa">
+
+<figcaption>Flujo de datos de NSA: la puntuación y selección jerárquica
+de bloques restringen la matriz de puntuaciones a los bloques
+elegidos.</figcaption>
+</figure>
 <h3 id="formulación-matemática-13">Formulación Matemática</h3>
 <p>NSA <span class="citation" data-cites="yuan_nsa_2025"></span>
 descompone la atención dispersa en tres ramas paralelas que se combinan
@@ -9445,6 +9114,12 @@ sobrecarga de ingeniería.</p></li>
 </ul>
 <h2 id="fasa-atención-dispersa-consciente-de-la-frecuencia">FASA:
 Atención Dispersa Consciente de la Frecuencia</h2>
+<figure id="fig:mixer-fasa">
+
+<figcaption>Flujo de datos de FASA: una etapa de poda sensible a la
+frecuencia (solo evaluación) descarta bloques de claves de bajo valor
+antes del softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-14">Formulación Matemática</h3>
 <p>FASA <span class="citation" data-cites="wang_fasa_2026"></span> es un
 <strong>método en tiempo de inferencia sin entrenamiento</strong> que
@@ -9538,6 +9213,11 @@ preprocesamiento.</p></li>
 <h2
 id="spargeattn-filtrado-de-dos-etapas-a-nivel-de-bloques">SpargeAttn:
 Filtrado de Dos Etapas a Nivel de Bloques</h2>
+<figure id="fig:mixer-sparge">
+
+<figcaption>Flujo de datos de SpargeAttn: un predictor disperso (solo
+evaluación) poda bloques de claves antes del softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-15">Formulación Matemática</h3>
 <p>SpargeAttn <span class="citation"
 data-cites="zhang_spargeattn_2025"></span> es un <strong>método
@@ -9621,6 +9301,11 @@ modelos.</p></li>
 id="msa-minimax-sparse-attention-atención-dispersa-por-bloques-con-rama-de-índice-ligera">MSA
 (MiniMax Sparse Attention): Atención Dispersa por Bloques con Rama de
 Índice Ligera</h2>
+<figure id="fig:mixer-msa">
+
+<figcaption>Flujo de datos de MSA: una máscara de bloques dispersos
+restringe la matriz de puntuaciones antes del softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-16">Formulación Matemática</h3>
 <p>MSA <span class="citation" data-cites="lai_minimax_2026"></span> es
 un mecanismo de atención dispersa por bloques construido sobre atención
@@ -9741,6 +9426,11 @@ dispersos.</p></li>
 id="sparda-atención-dispersa-desacoplada-selección-de-bloques-anticipada-guiada-por-pronóstico">SparDA
 (Atención Dispersa Desacoplada): Selección de Bloques Anticipada Guiada
 por Pronóstico</h2>
+<figure id="fig:mixer-sparda">
+
+<figcaption>Flujo de datos de SparDA: una proyección de pronóstico guía
+la selección anticipada de bloques antes del softmax.</figcaption>
+</figure>
 <h3 id="formulación-matemática-17">Formulación Matemática</h3>
 <p>SparDA <span class="citation" data-cites="fu_sparda_2026"></span>
 introduce un esquema de atención dispersa <strong>desacoplado</strong>
@@ -9905,6 +9595,12 @@ matemáticos, características de eficiencia en hardware y compensaciones
 empíricas.</p>
 <h2 id="atención-lineal-con-compuerta-gla">1. Atención Lineal con
 Compuerta (GLA)</h2>
+<figure id="fig:mixer-gla">
+
+<figcaption>Flujo de datos de GLA: una compuerta sigmoide decae el
+estado recurrente antes de sumar el producto externo
+clave/valor.</figcaption>
+</figure>
 <h3 id="fundamento-matemático">Fundamento Matemático</h3>
 <p>La Atención Lineal con Compuerta <span class="citation"
 data-cites="yang_gla_2023"></span> aumenta la atención lineal estándar
@@ -10029,6 +9725,11 @@ asociaciones específicas borrar.</td>
 </table>
 <h2 id="deltanet-atención-lineal-con-corrección-de-errores">2. DeltaNet:
 Atención Lineal con Corrección de Errores</h2>
+<figure id="fig:mixer-deltanet">
+
+<figcaption>Flujo de datos de DeltaNet: la compuerta beta aplica una
+regla delta correctora de errores al estado recurrente.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-1">Fundamento Matemático</h3>
 <p>DeltaNet <span class="citation"
 data-cites="yang_deltanet_2024"></span> aplica una <strong>regla de
@@ -10153,6 +9854,12 @@ diagonales).</td>
 </table>
 <h2 id="gated-deltanet-síntesis-de-compuerta-y-corrección-de-errores">3.
 Gated DeltaNet: Síntesis de Compuerta y Corrección de Errores</h2>
+<figure id="fig:mixer-gated-deltanet">
+
+<figcaption>Flujo de datos de Gated DeltaNet: las compuertas de
+decaimiento y escritura modulan la actualización del estado por regla
+delta.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-2">Fundamento Matemático</h3>
 <p>Gated DeltaNet <span class="citation"
 data-cites="yang_gated_deltanet_2024"></span> sintetiza las fortalezas
@@ -10246,6 +9953,11 @@ diversas tareas a costa de un rendimiento ligeramente reducido debido a
 matrices de transición más ricas.</p>
 <h2 id="hgrn2-compuerta-jerárquica-con-expansión-de-producto-externo">4.
 HGRN2: Compuerta Jerárquica con Expansión de Producto Externo</h2>
+<figure id="fig:mixer-hgrn2">
+
+<figcaption>Flujo de datos de HGRN2: una compuerta jerárquica mezcla el
+estado transportado con el producto externo clave/valor.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-3">Fundamento Matemático</h3>
 <p>HGRN2 <span class="citation" data-cites="qin_hgrn2_2024"></span> usa
 una expansión de estado basada en producto externo con
@@ -10314,6 +10026,11 @@ de regla delta.</p>
 id="forgetting-transformer-fox-compuerta-en-el-espacio-de-logits-softmax">5.
 Forgetting Transformer (FoX): Compuerta en el Espacio de Logits
 Softmax</h2>
+<figure id="fig:mixer-fox">
+
+<figcaption>Flujo de datos de FoX: una compuerta de olvido aprendida se
+convierte en un sesgo aditivo en el espacio de logits.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-4">Fundamento Matemático</h3>
 <p>Forgetting Transformer (FoX), propuesto por Lin et al. <span
 class="citation" data-cites="lin_forgetting_transformer_2025"></span>,
@@ -10389,6 +10106,12 @@ d)\)</span> por paso en inferencia con caché KV, limitando las
 longitudes de secuencia extremas.</p>
 <h2 id="atención-con-compuerta-post-sdpa-sigmoide">6. Atención con
 Compuerta (Post-SDPA Sigmoide)</h2>
+<figure id="fig:mixer-gated-softmax">
+
+<figcaption>Flujo de datos de la atención con compuerta posterior a
+SDPA: una compuerta sigmoide escala la salida del softmax antes de la
+proyección.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-5">Fundamento Matemático</h3>
 <p>El Mejor Artículo de NeurIPS 2025 del equipo de Qwen propone aplicar
 una compuerta sigmoide <strong>después</strong> de la atención de
@@ -10463,6 +10186,12 @@ forma consistente.</p></li>
 </ul>
 <h2 id="gated-deltanet-2-borrado-y-escritura-canalizados-decouplados">7.
 Gated DeltaNet-2: Borrado y Escritura Canalizados Decouplados</h2>
+<figure id="fig:mixer-gated-deltanet2">
+
+<figcaption>Flujo de datos de Gated DeltaNet-2: compuertas desacopladas
+de borrado y escritura por canal actúan dentro de la regla
+delta.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-6">Fundamento Matemático</h3>
 <p>Gated DeltaNet-2 <span class="citation"
 data-cites="hatamizadeh_gated_deltanet2_2026"></span> aborda una
@@ -10632,6 +10361,12 @@ class="math inline">\(\mathcal{O}(d^2)\)</span>.</td>
 id="kimi-delta-attention-kda-compuerta-de-decaimiento-canalizada-para-la-regla-delta">8.
 Kimi Delta Attention (KDA): Compuerta de Decaimiento Canalizada para la
 Regla Delta</h2>
+<figure id="fig:mixer-kda">
+
+<figcaption>Flujo de datos de KDA: el decaimiento por canal y una
+compuerta escalar de escritura modulan la actualización del estado por
+regla delta.</figcaption>
+</figure>
 <h3 id="fundamento-matemático-7">Fundamento Matemático</h3>
 <p>Kimi Delta Attention <span class="citation"
 data-cites="kimi_kda_2025"></span> es el módulo central de Kimi Linear y
@@ -11265,6 +11000,13 @@ por capa.</p></li>
 para regularización del enrutador.</p></li>
 </ul>
 <h2 id="memoria-condicional-engram">Memoria Condicional Engram</h2>
+<figure id="fig:mixer-engram">
+
+<figcaption>Flujo de datos de la memoria condicional de Engram: una
+convolución causal depthwise aporta contexto de corto alcance, las
+búsquedas hash de N-gramas recuperan embeddings por orden, y las
+búsquedas se suman a la salida de la convolución.</figcaption>
+</figure>
 <p>Engram (<code>engram_attn</code>) implementa memoria condicional
 mediante búsqueda N-gram escalable <span class="citation"
 data-cites="cheng2026conditionalmemoryscalablelookup"></span>. Construye
@@ -11412,7 +11154,7 @@ en funciones logísticas y algebraicas <span class="citation"
 data-cites="lederer2021activations dubey2021activations"></span>. Todas
 comparten monotonicía o casi-monotonicía y son continuamente
 derivables.</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
   \text{Sigmoid}(x) &amp;= \frac{1}{1+e^{-x}}
     &amp; \text{Rango: } (0,1),\;\text{monótona, suave}
     &amp; \quad \text{\citep{lederer2021activations}} \\[4pt]
@@ -11434,8 +11176,8 @@ survey)}
   \text{Identity}(x) &amp;= x
     &amp; \text{Rango: } (-\infty,\infty),\;\text{lineal, }C^\infty
     &amp; \quad \text{(interna)}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{Softplus}(x) &amp;= \log(1+e^{x})
     &amp; \text{Rango: } [0,\infty),\;\text{suave, }C^\infty
     &amp; \quad \text{\citep{glorot2011softplus}} \\[4pt]
@@ -11462,7 +11204,7 @@ probabilística}
     &amp; \text{Rango: } (\approx{-0.278},\infty),\;\text{no monótona,
 suave}
     &amp; \quad \text{\citep{elfwing2018silu}}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p><strong>SiLU</strong> (Sigmoid Linear Unit) es la activación por
 defecto (<code>ffn_activation=silu</code>). Cuando <span
 class="math inline">\(\beta=1\)</span>, el Swish paramétrico se reduce a
@@ -11477,7 +11219,7 @@ activaciones)</h2>
 aprendibles, variantes acotadas y formas hiperbólicas rectificadas <span
 class="citation"
 data-cites="nair2010relu dubey2021activations"></span>.</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
   \text{LeakyReLU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ a\,x &amp;
 x &lt; 0 \end{cases},
     \quad a=0.01
@@ -11502,8 +11244,8 @@ rampa de signo}
     &amp; \text{Rango: } [0,\infty),\;\beta=1.0,\;\text{compresión
 logarítmica}
     &amp; \quad \text{\citep{dubey2021activations}}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{BReLU}(x) &amp;= \min\!\big(\max(0,x),\,t\big),\quad t=1.0
     &amp; \text{Rango: } [0,t],\;\text{rectificador acotado}
     &amp; \quad \text{\citep{dubey2021activations}} \\[4pt]
@@ -11524,7 +11266,7 @@ logarítmica}
     &amp; \text{Rango: } [0,\infty)\;\text{(magnitud), no monótona,
 suave}
     &amp; \quad \text{\citep{roy2019lisht}}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p><strong>PReLU</strong> <span class="citation"
 data-cites="he2015prelu"></span> convierte la pendiente negativa en un
 parámetro aprendible por canal, permitiendo a la red aprender la fuga
@@ -11540,7 +11282,7 @@ ELU (12 activaciones)</h2>
 variantes auto-normalizadoras <span class="citation"
 data-cites="clevert2016elu klambauer2017selu dubey2021activations"></span>.
 Varios miembros introducen parámetros aprendibles por canal.</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
   \text{ELU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ \alpha(e^{x}-1)
 &amp; x&lt;0 \end{cases},
     \quad \alpha=1.0
@@ -11565,8 +11307,8 @@ x\ge 0 \\
 \text{ReLU}(x)+\beta\cdot\text{ELU}_{\alpha}(x)\cdot\mathbb{1}_{x&lt;0}
     &amp; \alpha,\beta\text{ aprendibles por canal}
     &amp; \quad \text{\citep{dubey2021activations}}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{FELU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ \alpha(e^{x}-1)
 &amp; x&lt;0 \end{cases}
     &amp; \alpha\text{ aprendible, acotado a } [0,1]
@@ -11592,8 +11334,8 @@ x\ge 0 \\
     \end{cases}
     &amp; \alpha\text{ aprendible; interp.\ exp/lineal/log}
     &amp; \quad \text{\citep{godfrey2015softexp}}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{ELiSH}(x) &amp;= \begin{cases} x\,\sigma(x) &amp; x\ge 0 \\
     (e^{x}-1)\,\sigma(x) &amp; x&lt;0 \end{cases}
     &amp; \text{Rama pos.\ Swish, rama neg.\ con compuerta ELU}
@@ -11603,7 +11345,7 @@ x\ge 0 \\
     (e^{x}-1)\cdot\text{hard\_sigmoid}(x) &amp; x&lt;0 \end{cases}
     &amp; \text{Variante con sigmoide rígida de ELiSH}
     &amp; \quad \text{\citep{basirat2019elish}}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p>donde <span
 class="math inline">\(\text{hard\_sigmoid}(x)=\text{ReLU6}(x+3)/6\)</span>.</p>
 <p><strong>ELU</strong> <span class="citation"
@@ -12027,7 +11769,7 @@ activado), <span class="math inline">\(\varphi_l\)</span> usa
 </ul>
 <p>El módulo vive en <code>src/model/mhc.py</code>:</p>
 <ul>
-<li><p><code>Sinkhorn­Knopp­Function</code>
+<li><p><code>SinkhornKnoppFunction</code>
 (<code>torch.autograd.Function</code>): el pase hacia adelante aplica
 las normalizaciones alternadas de filas y columnas de <span
 class="math inline">\(\exp(\cdot)\)</span>; el pase hacia atrás
@@ -12124,11 +11866,11 @@ bucle <span class="math inline">\(\{W^{\tau}_l, b^{\tau}_l,
 \{\text{pre}, \text{post}, \text{res}\}\)</span> más un embedding de
 posición de bucle <span class="math inline">\(e_l \in
 \mathbb{R}^C\)</span>, la recurrencia es <span
-class="math display">\[\begin{equation}
-y^{(l+1)}_t = H^{\text{res}}_l\, y^{(l)}_t + H^{\text{post}}_l \otimes
-\bigl( F(H^{\text{pre}}_l\, y^{(l)}_t) + e_l \bigr),
-\end{equation}\]</span> con los coeficientes dependientes de datos <span
-class="math display">\[\begin{align*}
+class="math display">\[y^{(l+1)}_t = H^{\text{res}}_l\, y^{(l)}_t +
+H^{\text{post}}_l \otimes
+\bigl( F(H^{\text{pre}}_l\, y^{(l)}_t) + e_l \bigr),\]</span> con los
+coeficientes dependientes de datos <span
+class="math display">\[\begin{aligned}
 H^{\text{pre}}_l &amp;= \sigma\bigl(\alpha^{\text{pre}}_l
 (W^{\text{pre}}_l z^{(l)}_t) + b^{\text{pre}}_l\bigr), &amp;
 H^{\text{post}}_l &amp;= 2\sigma\bigl(\alpha^{\text{post}}_l
@@ -12136,7 +11878,7 @@ H^{\text{post}}_l &amp;= 2\sigma\bigl(\alpha^{\text{post}}_l
 H^{\text{res}}_l &amp;= \mathrm{diag}\bigl(\sigma(\alpha^{\text{res}}_l
 (W^{\text{res}}_l z^{(l)}_t) + b^{\text{res}}_l)\bigr) &amp;
 W^{\text{res}}_l &amp;\in \mathbb{R}^{n \times nC}
-\end{align*}\]</span> (el <span
+\end{aligned}\]</span> (el <span
 class="math inline">\(H^{\text{res}}\)</span> diagonal sustituye el
 <span class="math inline">\(\mathrm{sinkhorn}(\cdot)\)</span> de mHC
 sobre una proyección densa <span class="math inline">\(n^2 \times
@@ -12181,7 +11923,7 @@ completa.</p></li>
 <li><p><code>hyperloop_res_parameterization</code> (enum, por defecto
 <code>diagonal</code>): <code>diagonal</code>, <code>sinkhorn</code>
 (mezcla doblemente estocástica completa estilo mHC, reutilizando
-<code>Sinkhorn­Knopp­Function</code>) o <code>identity</code>.</p></li>
+<code>SinkhornKnoppFunction</code>) o <code>identity</code>.</p></li>
 </ul>
 <p>Implementación: <code>src/model/hyperloop.py</code> aloja
 <code>HyperloopConnections</code> con <code>projs</code> /
@@ -12478,7 +12220,7 @@ buffer de salidas de capa (Full AttnRes) o a la suma parcial
 intra-bloque (Block AttnRes); el resto pasa sin cambios y se re-ensambla
 mediante la lógica existente de MoD. MoD es mutuamente excluyente con
 mHC (se lanza un <code>ValueError</code> en
-<code>HybridLayer.­_­init__</code> si ambos están habilitados); las
+<code>HybridLayer._init__</code> si ambos están habilitados); las
 combinaciones correspondientes son <span
 class="math inline">\((\text{no\_mHC}, \text{MoD},
 \text{AttnRes})\)</span>, <span class="math inline">\((\text{mHC},
@@ -13163,6 +12905,13 @@ class="math inline">\(\sim\)</span>12M) siendo <span
 class="math inline">\(\sim\)</span>20% más pequeño y <span
 class="math inline">\(\sim\)</span>30% más barato por pasada, y por +17
 puntos en CIFAR-100 con receta igualada.</p>
+<figure id="fig:mixer-ssog">
+
+<figcaption>Flujo de datos de SSOG: los valores pasan por pasadas
+separables de filtrado gaussiano por filas y columnas para cada átomo,
+con direccionamiento opcional de los parámetros del átomo por
+contenido.</figcaption>
+</figure>
 <h2 id="formulación-matemática-18">Formulación Matemática</h2>
 <p>Sea el raster row-major de una rejilla <span
 class="math inline">\(G_h \times G_w\)</span> los tokens. El peso de
@@ -13345,6 +13094,12 @@ que es <span class="math inline">\(L_t\)</span>-suave con <span
 class="math inline">\(L_t = \|x_t\|^2 + \lambda_t\)</span>.</p>
 <h3 id="falcon-1-regresión-nlms-escalar">Falcon-1: Regresión NLMS
 Escalar</h3>
+<figure id="fig:mixer-falcon1">
+
+<figcaption>Flujo de datos de Falcon-1: el par clave/valor alineado al
+prefijo impulsa una actualización escalar NLMS por regla delta del
+estado de pesos rápidos.</figcaption>
+</figure>
 <p>La variante escalar de la regla delta — la recursión NLMS clásica del
 filtrado adaptativo, mejorada con el flujo desplazado y un ridge
 explícito: <span class="math display">\[S_t = (1 - \eta_t \lambda_t)\,
@@ -13372,6 +13127,11 @@ residuo simple <span class="math inline">\(L = \operatorname{tril}(G,
 positivo.</p>
 <h3 id="falcon-2-regresión-nlms-por-columnas">Falcon-2: Regresión NLMS
 por Columnas</h3>
+<figure id="fig:mixer-falcon2">
+
+<figcaption>Flujo de datos de Falcon-2: tamaños de paso NLMS por columna
+actualizan el estado de pesos rápidos canal a canal.</figcaption>
+</figure>
 <p>La pérdida ridge se descompone a lo largo de las coordenadas de
 valor, de modo que cada canal de valor <span
 class="math inline">\(j\)</span> recibe su propio tamaño de paso
@@ -13392,6 +13152,12 @@ class="math inline">\(\Sigma = \sqrt{\tilde{\boldsymbol{\eta}}}\)</span>
 artículo.</p>
 <h3 id="falcon-3-regresión-de-minilote-con-ventana-deslizante">Falcon-3:
 Regresión de Minilote con Ventana Deslizante</h3>
+<figure id="fig:mixer-falcon3">
+
+<figcaption>Flujo de datos de Falcon-3: una ventana deslizante de pares
+alineados al prefijo aporta el estadístico espectral y la escritura por
+minilote.</figcaption>
+</figure>
 <p>Repetición acotada (bounded rehearsal): cada paso regresa la memoria
 rápida sobre los últimos <span class="math inline">\(B_t \le B\)</span>
 pares prefix-alineados, con <em>todos los residuos de ventana evaluados
@@ -13431,6 +13197,17 @@ v_t \rangle + \tfrac{\lambda_t}{2}\|S\|_F^2
 produce escrituras puramente aditivas (hebbianas) con ganancias
 normalizadas por energía.</p>
 <h3 id="falcon-1a-y-falcon-2a">Falcon-1A y Falcon-2A</h3>
+<figure id="fig:mixer-falcon1a">
+
+<figcaption>Flujo de datos de Falcon-1A: una escritura aditiva
+(hebbiana) normalizada por energía con decaimiento
+derivado.</figcaption>
+</figure>
+<figure id="fig:mixer-falcon2a">
+
+<figcaption>Flujo de datos de Falcon-2A: escrituras aditivas por columna
+con decaimiento por canal.</figcaption>
+</figure>
 <p><span class="math display">\[\text{Falcon-1A:}\quad S_t = \gamma_t
 S_{t-1} + \eta_t\, x_t v_t^\top,
 \quad \gamma_t = 1 - \min(\eta_t \lambda_t,\, 1 - \varepsilon_\gamma);
@@ -13449,6 +13226,12 @@ class="math inline">\(M_{t,i} = \eta_i \prod_{r=i+1}^{t}
 \gamma_r\)</span> (máscaras por canal para Falcon-2A).</p>
 <h3 id="falcon-3a-producto-interno-con-ventana-deslizante">Falcon-3A:
 Producto Interno con Ventana Deslizante</h3>
+<figure id="fig:mixer-falcon3a">
+
+<figcaption>Flujo de datos de Falcon-3A: un estadístico de energía media
+en ventana deslizante normaliza la escritura aditiva de la
+ventana.</figcaption>
+</figure>
 <p>La variante aditiva con ventana — la mejor configuración de
 extrapolación de longitud de la familia: <span
 class="math display">\[\bar{N}_t^{(B)} = \frac{1}{B_t} \sum_{j \in
