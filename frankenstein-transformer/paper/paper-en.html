@@ -7,9 +7,6 @@
   <meta name="author" content="Erick F. Merino M. This work is not affiliated erickfmm@gmail.com" />
   <title>Frankenstein Transformer: Unified Encoder-Decoder Library, CLI, and Research-Grounded Design Notes</title>
   <style>
-    /* Default styles provided by pandoc.
-    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -181,8 +178,7 @@
       vertical-align: middle;
     }
   </style>
-  <script defer=""
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  <script src="/usr/share/javascript/mathjax/MathJax.js"
   type="text/javascript"></script>
 </head>
 <body>
@@ -193,49 +189,33 @@ Notes</h1>
 <p class="author">Erick F. Merino M.<br />
 This work is not affiliated<br />
 <code>erickfmm@gmail.com</code></p>
-<p class="date">February 2026</p>
+<p class="date">October 2026</p>
 <div class="abstract">
 <div class="abstract-title">Abstract</div>
-<p>Transformer architectures have become the dominant paradigm for
-sequence modeling across natural language processing, computer vision,
-and computational biology. Recent years have witnessed a rapid
-diversification of attention mechanisms and optimization strategies,
-with innovations spanning dense softmax variants, recurrent and
-retentive alternatives, sparse attention patterns, gated linear
-mechanisms, latent-space projections, and memory-augmented blocks.
-Concurrently, the optimizer landscape has expanded beyond classical
-AdamW to include variance-reduction methods, memory-efficient variants,
-schedule-free approaches, second-order preconditioners, and low-rank
-approximations. Despite this wealth of architectural and algorithmic
-advances, the research ecosystem remains fragmented: comparing sequence
-mixers and optimizers under consistent training conditions requires
-substantial engineering effort, hindering reproducibility and slowing
-scientific progress. In this work, we propose Frankenstein Transformer,
-a configuration-driven CLI toolkit
-(<code>frankenstein-transformer</code>) that unifies the definition,
-training, and deployment of transformer models through a strict YAML
-schema. The toolkit supports forty-three sequence mixer variants across
-eight families (dense, recurrent, sparse, gated, latent,
-memory-augmented, fast-weight, and geometric-field) and twenty-three
-optimizer families with prefixed per-parameter-group hyperparameter
-control. It provides subcommands for training (<code>train</code>,
-including SBERT-style sentence-embedding objectives), deployment and
-export (<code>deploy</code> with quantized, standard, HuggingFace
-Transformers, and BitNet GGUF formats), inference (<code>infer</code>),
-and a web-based configuration builder (<code>web-server</code>). The
-toolkit further supports a Vision Transformer model class
-(<code>frankenstein_vit</code>) for image understanding tasks including
-autosupervised masked patch prediction, classification, and
-segmentation, reusing the same attention mixer and optimizer
-infrastructure. The system enforces reproducibility through a strict
-schema contract with <code>additionalProperties: false</code>
-constraints, offers a Streamlit-based web interface for schema-driven
-form rendering with real-time validation and CLI command generation, and
-provides end-to-end workflows for quantized deployment via ternary
-weight packing and sentence-embedding pipelines inspired by SBERT. A
-comprehensive automated testing suite with unit tests, YAML preset
-validation, and continuous integration ensures reliability across
-supported Python versions.</p>
+<p>Transformer architectures dominate sequence modeling across natural
+language processing, computer vision, and computational biology. Recent
+work has diversified attention beyond dense softmax—recurrent and
+retentive blocks, sparse patterns, gated mechanisms, latent projections,
+memory-augmented layers, and fast-weight rules—while optimizers have
+expanded beyond AdamW with variance-reduction, memory-efficient,
+schedule-free, second-order, and low-rank methods. Comparing these ideas
+under consistent conditions remains costly: each variant must be
+implemented, wired into a training pipeline, and maintained, which
+hinders reproducibility. We propose Frankenstein Transformer, a
+configuration-driven CLI toolkit (<code>frankenstein-transformer</code>)
+that unifies model definition, training, deployment, and inference
+behind one strict YAML schema. The toolkit covers forty-three sequence
+mixers across eight families and twenty-three optimizer families with
+per-parameter-group hyperparameter control, and supports encoder,
+decoder, and Vision Transformer model classes for masked language
+modeling, causal language modeling, sentence embeddings, and image
+tasks. The contribution of this software is a validated experimentation
+contract: invalid configurations fail before training, every
+architecture and optimizer shares one operational interface, and the
+same document drives training, quantized deployment and export, and a
+schema-generated web builder. We describe the architecture taxonomy,
+optimizer routing, deployment paths, and integration surface, and defer
+mathematical and implementation detail to the appendices.</p>
 </div>
 </header>
 <nav id="TOC" role="doc-toc">
@@ -245,13 +225,10 @@ supported Python versions.</p>
 <li><a href="#motivation-and-problem-statement"
 id="toc-motivation-and-problem-statement">Motivation and Problem
 Statement</a></li>
-<li><a href="#contributions"
-id="toc-contributions">Contributions</a></li>
+<li><a href="#proposal-and-contributions"
+id="toc-proposal-and-contributions">Proposal and Contributions</a></li>
 <li><a href="#reading-guide" id="toc-reading-guide">Reading
 Guide</a></li>
-<li><a href="#web-based-configuration-builder"
-id="toc-web-based-configuration-builder">Web-Based Configuration
-Builder</a></li>
 </ul></li>
 <li><a href="#related-work" id="toc-related-work">Related Work</a>
 <ul>
@@ -279,10 +256,8 @@ id="toc-sec:schema-validation">Schema Scope and Validation
 Rules</a></li>
 <li><a href="#configuration-schema"
 id="toc-configuration-schema">Configuration Schema</a></li>
-<li><a href="#training-task-types" id="toc-training-task-types">Training
-Task Types</a></li>
-<li><a href="#optimizer-configuration"
-id="toc-optimizer-configuration">Optimizer Configuration</a></li>
+<li><a href="#training-tasks" id="toc-training-tasks">Training
+Tasks</a></li>
 <li><a href="#training-safety-and-runtime-semantics"
 id="toc-training-safety-and-runtime-semantics">Training Safety and
 Runtime Semantics</a></li>
@@ -307,19 +282,15 @@ Attention Family</a></li>
 <li><a href="#sparse-attention-extensions"
 id="toc-sparse-attention-extensions">Sparse Attention
 Extensions</a></li>
-<li><a href="#gated-attention-extensions"
-id="toc-gated-attention-extensions">Gated Attention Extensions</a></li>
+<li><a href="#gated-and-fast-weight-attention"
+id="toc-gated-and-fast-weight-attention">Gated and Fast-Weight
+Attention</a></li>
 </ul></li>
 <li><a href="#sec:optimizer-families"
 id="toc-sec:optimizer-families">Optimizer Families and Training
 Dynamics</a></li>
 <li><a href="#sec:quantization" id="toc-sec:quantization">Quantization
-and Deployment</a>
-<ul>
-<li><a href="#ternary-quantization-and-activation-scaling"
-id="toc-ternary-quantization-and-activation-scaling">Ternary
-Quantization and Activation Scaling</a></li>
-</ul></li>
+and Deployment</a></li>
 <li><a href="#sec:sbert" id="toc-sec:sbert">SBERT Downstream
 Tasks</a></li>
 <li><a href="#sec:dashai-plugin" id="toc-sec:dashai-plugin">No-Code
@@ -330,8 +301,7 @@ id="toc-registered-components">Registered Components</a></li>
 <li><a href="#passthrough-configuration-schema"
 id="toc-passthrough-configuration-schema">Passthrough Configuration
 Schema</a></li>
-<li><a href="#work-in-progress" id="toc-work-in-progress">Work in
-Progress</a></li>
+<li><a href="#status" id="toc-status">Status</a></li>
 </ul></li>
 <li><a href="#sec:discussion" id="toc-sec:discussion">Discussion</a>
 <ul>
@@ -1117,228 +1087,110 @@ id="toc-when-to-use-each-variant">When to Use Each Variant</a></li>
 <h1 id="introduction">Introduction</h1>
 <h2 id="motivation-and-problem-statement">Motivation and Problem
 Statement</h2>
-<p>Transformer architectures have fundamentally transformed the
-landscape of sequence modeling across natural language processing <span
-class="citation" data-cites="vaswani_attention_2017"></span>, computer
-vision, and computational biology. The success of models such as BERT
-<span class="citation" data-cites="devlin_bert_2019"></span>, GPT, and
-their variants has established the transformer as the de facto standard
-for representation learning in deep learning. However, the rapid
-proliferation of architectural innovations presents significant
-practical challenges for researchers and practitioners.</p>
-<p>Recent years have witnessed an explosion of alternative attention and
-sequence-mixing mechanisms, each addressing specific limitations of
-standard softmax attention: quadratic computational complexity <span
-class="citation" data-cites="child_sparse_transformer_2019"></span>,
-memory-efficient inference requirements <span class="citation"
-data-cites="sun_retentive_2023 gu_mamba_2023"></span>, content-based
-selective state management <span class="citation"
-data-cites="behrouz_titans_2025"></span>, and hardware-aware
-optimizations <span class="citation"
-data-cites="ramapuram_theory_2024"></span>. Simultaneously, the
-optimization literature has diversified beyond classical AdamW,
-introducing variance-reduction techniques <span class="citation"
-data-cites="xie_adan_2022 pagliardini_ademamix_2024 yuan_mars_2024"></span>,
-memory-efficient variants <span class="citation"
-data-cites="shazeer_adafactor_2018 zhao_galore_2024"></span>,
-schedule-free approaches <span class="citation"
-data-cites="defazio_road_2024"></span>, and second-order preconditioning
-methods <span class="citation"
-data-cites="gupta_shampoo_2018 vyas_soap_2024"></span>.</p>
-<p>The practical consequence is a fragmented research ecosystem where
-experimental comparison across architectures and optimizers requires
-significant engineering effort. Researchers must implement and debug
-multiple variants from scratch, ensure consistent training pipelines,
-and manage complex hyperparameter spaces. This fragmentation hampers
-reproducibility, slows scientific progress, and increases the barrier to
-entry for new researchers.</p>
-<p>This work addresses these challenges through a unified,
-configuration-driven experimentation toolkit available at <a
+<p>Transformer architectures are the dominant paradigm for sequence
+modeling in natural language processing <span class="citation"
+data-cites="vaswani_attention_2017"></span>, computer vision, and
+computational biology, with models such as BERT <span class="citation"
+data-cites="devlin_bert_2019"></span> and GPT establishing the standard
+for representation learning. The field has since diversified rapidly:
+recurrent and retentive blocks, sparse attention, gated mechanisms,
+latent projections, memory-augmented layers, fast-weight rules, and
+continuous-depth formulations each address a different limitation of
+dense attention, while the optimizer landscape has expanded beyond AdamW
+with variance-reduction, memory-efficient, schedule-free, second-order,
+and low-rank methods <span class="citation"
+data-cites="child_sparse_transformer_2019 sun_retentive_2023 gu_mamba_2023 behrouz_titans_2025 ramapuram_theory_2024 xie_adan_2022 pagliardini_ademamix_2024 yuan_mars_2024 shazeer_adafactor_2018 zhao_galore_2024 defazio_road_2024 gupta_shampoo_2018 vyas_soap_2024"></span>.</p>
+<p>The practical consequence is a fragmented ecosystem. Comparing
+sequence mixers or optimizers under identical training conditions
+requires re-implementing each variant, wiring it into a training
+pipeline, and maintaining the result across framework changes. This
+effort hinders reproducibility, slows scientific progress, and raises
+the barrier to entry for new researchers.</p>
+<h2 id="proposal-and-contributions">Proposal and Contributions</h2>
+<p>We propose <strong>Frankenstein Transformer</strong> (<a
 href="https://github.com/erickfmm/frankenstein-transformer"
-class="uri">https://github.com/erickfmm/frankenstein-transformer</a>
-that provides:</p>
+class="uri">https://github.com/erickfmm/frankenstein-transformer</a>), a
+configuration-driven toolkit that treats architecture, optimizer, and
+training choices as a single validated document. The project
+provides:</p>
 <ol>
-<li><p><strong>Schema-First Design</strong>: A strict, validated
-configuration contract that enforces reproducibility while supporting
-forty-three sequence mixer variants across eight families and
-twenty-three optimizer families.</p></li>
-<li><p><strong>Architecture Agnostic Training</strong>: Common training
-infrastructure supporting dense attention baselines (standard, sigmoid),
-recurrent alternatives (RetNet, Mamba, ODE-style blocks), adaptive depth
-routing (Mixture-of-Depths) <span class="citation"
-data-cites="zhu2026mixtureofdepthsattention"></span>, conditional memory
-blocks (Engram) <span class="citation"
-data-cites="cheng2026conditionalmemoryscalablelookup"></span>,
-manifold-constrained residual connections (mHC) <span class="citation"
-data-cites="xie_mhc_2025"></span>, sparse attention patterns (Sparse
-Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA), gated
-mechanisms (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX,
-Gated Softmax), and fast-weight attention (Falcon-1/2/3 and
-Falcon-1A/2A/3A) <span class="citation"
-data-cites="zhang_falcon_2026"></span>.</p></li>
-<li><p><strong>Optimizer Routing Framework</strong>: Prefixed
-hyperparameter groups enabling fine-grained control over embeddings,
-normalization layers, recurrent blocks, attention blocks, and other
-parameter subsets across diverse optimizers, including the APOLLO family
-(Apollo, Apollo-Mini, Q-Apollo) <span class="citation"
+<li><p><strong>Schema-first design</strong>: a strict YAML contract
+supporting forty-three sequence mixers across eight families and
+twenty-three optimizer families, enforced before training
+begins.</p></li>
+<li><p><strong>Architecture-agnostic training</strong>: one pipeline for
+dense baselines, recurrent and retentive blocks, sparse patterns, gated
+mechanisms, latent compression, conditional memory, fast-weight
+attention, and geometric-field attention, with encoder and decoder modes
+<span class="citation"
+data-cites="zhu2026mixtureofdepthsattention cheng2026conditionalmemoryscalablelookup xie_mhc_2025 zhang_falcon_2026 pisoni_ssog_2026"></span>.</p></li>
+<li><p><strong>Optimizer routing</strong>: prefixed hyperparameter
+groups that control embeddings, normalization layers, attention blocks,
+and remaining parameters independently for each optimizer family <span
+class="citation"
 data-cites="zhu2025apollosgdlikememoryadamwlevel"></span>.</p></li>
-<li><p><strong>End-to-End Workflows</strong>: Integrated deployment via
-quantization (ternary weight packing, INT8 activations) and
-sentence-embedding capabilities inspired by SBERT <span class="citation"
+<li><p><strong>End-to-end workflows</strong>: training (including
+sentence-embedding objectives), deployment and export (quantized,
+standard, HuggingFace Transformers, and BitNet GGUF formats), inference,
+and a schema-driven web builder inspired by SBERT-style workflows <span
+class="citation"
 data-cites="reimers_sentence-bert_2019"></span>.</p></li>
-<li><p><strong>Interactive Configuration</strong>: Web-based interface
-providing schema-driven form rendering, real-time validation, and CLI
-command generation.</p></li>
-<li><p><strong>Reliability Tooling</strong>: Comprehensive automated
-testing with unit-test suites, YAML preset validation, and CI automation
-across supported Python versions.</p></li>
+<li><p><strong>Vision support</strong>: a Vision Transformer model class
+covering masked patch prediction, classification, and segmentation under
+the same mixer and optimizer infrastructure.</p></li>
+<li><p><strong>Validation tooling</strong>: unit tests, YAML preset
+validation, and continuous integration across supported Python
+versions.</p></li>
 </ol>
-<p>The project command surface is:</p>
-<div class="center">
-<p><code>frankenstein-transformer</code></p>
-</div>
-<p>with subcommands for encoder and decoder workflows:
-<code>train</code> (including SBERT-style sentence-embedding objectives
-via <code>training.task: sbert</code>), <code>deploy</code>
-(quantized/standard artifacts plus HuggingFace Transformers and BitNet
-GGUF export formats), <code>infer</code>, and
-<code>web-server</code>.</p>
-<p>The <code>web-server</code> command launches a Streamlit-based
-configuration builder that provides:</p>
-<ul>
-<li><p>Schema-driven form fields with parameter titles and detailed
-descriptions</p></li>
-<li><p>Real-time tooltips and help text for each configuration
-option</p></li>
-<li><p>Live YAML preview and download functionality</p></li>
-<li><p>Generated CLI commands for training, deployment, inference, and
-SBERT workflows</p></li>
-</ul>
-<p>This interactive interface serves as an alternative to manual YAML
-editing, improving usability for users exploring available configuration
-options and understanding their impact on model behavior and training
-dynamics.</p>
-<h2 id="contributions">Contributions</h2>
-<p>This work makes the following primary contributions:</p>
-<ol>
-<li><p><strong>Unified Configuration Schema</strong>: A YAML-based
-schema contract with strict validation that supports forty-three
-sequence mixer variants across eight families (dense, recurrent, sparse,
-gated, latent, memory-augmented, fast-weight, and geometric-field),
-alongside adaptive depth and conditional memory controls, while
-enforcing reproducibility through
-<code>additionalProperties: false</code> constraints.</p></li>
-<li><p><strong>Comprehensive Architecture Support</strong>:
-Implementation of modern transformer variants including standard softmax
-attention <span class="citation"
-data-cites="vaswani_attention_2017"></span>, sigmoid attention <span
-class="citation" data-cites="ramapuram_theory_2024"></span>, RetNet
-<span class="citation" data-cites="sun_retentive_2023"></span>, Mamba
-<span class="citation" data-cites="gu_mamba_2023"></span>, ODE-style
-continuous transformers <span class="citation"
-data-cites="zhang_continuous_2021"></span>, Titans memory-augmented
-attention <span class="citation"
-data-cites="behrouz_titans_2025"></span>, Engram conditional memory
-layers <span class="citation"
-data-cites="cheng2026conditionalmemoryscalablelookup"></span>,
-Mixture-of-Depths token routing <span class="citation"
-data-cites="zhu2026mixtureofdepthsattention"></span>, sparse attention
-mechanisms <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026"></span>,
-gated attention architectures <span class="citation"
-data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025"></span>,
-and fast-weight attention for continual learning <span class="citation"
-data-cites="zhang_falcon_2026"></span>. System supports both
-encoder-mode training with bidirectional attention for masked language
-modeling (MLM) and decoder-mode training with causal masking for
-autoregressive next-token prediction.</p></li>
-<li><p><strong>Optimizer Routing Framework</strong>: Prefixed
-hyperparameter system enabling per-parameter-group control across
-twenty-three optimizers, including the adaptivity-tunable Anon <span
-class="citation" data-cites="anon2026anon"></span>, variance-reduction
-methods (MARS, Adan, AdEMAMix, Cautious AdamW), memory-efficient
-variants (Adafactor, GaLore, Lion), schedule-free approaches
-(Schedule-Free AdamW), curvature-aware methods (Sophia), second-order
-preconditioners (Shampoo, SOAP), orthogonality-oriented optimizers
-(Muon, Turbo-Muon), large-batch scaling (LAMB), and the APOLLO family
-(Apollo, Apollo-Mini, Q-Apollo) <span class="citation"
-data-cites="zhu2025apollosgdlikememoryadamwlevel"></span>.</p></li>
-<li><p><strong>Quantization and Deployment</strong>: Integrated
-deployment pipeline supporting ternary weight packing and INT8
-activation quantization with size estimates following <span
-class="math inline">\(1.58\)</span>-bit storage approximation.</p></li>
-<li><p><strong>Sentence-Embedding Workflows</strong>: SBERT-inspired
-training and inference pipelines supporting similarity scoring,
-retrieval, clustering, and persistent embedding export.</p></li>
-<li><p><strong>Interactive Configuration Interface</strong>:
-Streamlit-based web server providing schema-driven form generation,
-real-time validation, inline documentation, and CLI command
-generation.</p></li>
-<li><p><strong>Automated Validation Pipeline</strong>: Continuous
-integration and expanded unit testing that verify model training paths,
-optimizer/schema integration, and YAML example compatibility.</p></li>
-</ol>
+<p>The command surface is <code>frankenstein-transformer</code>, with
+four subcommands: <code>train</code>, <code>deploy</code>,
+<code>infer</code>, and <code>web-server</code>. The last launches a
+Streamlit configuration builder that renders schema metadata as forms,
+validates input live, previews the resulting YAML, and generates the
+equivalent CLI command, serving both as a configuration aid and as
+documentation of the available design space.</p>
 <h2 id="reading-guide">Reading Guide</h2>
-<p>This document is organized as a technical reference addressing four
-operational concerns:</p>
+<p>This document is organized as a technical reference:</p>
 <ol>
 <li><p><strong>Prerequisites</strong>: Appendix <a
 href="#sec:annex-tutorial" data-reference-type="ref"
-data-reference="sec:annex-tutorial">11</a> provides an accessible
-introduction to transformers and attention mechanisms for readers new to
-the field.</p></li>
-<li><p><strong>Configuration Contract</strong>: Section <a
+data-reference="sec:annex-tutorial">11</a> introduces transformers and
+attention for readers new to the field.</p></li>
+<li><p><strong>Configuration contract</strong>: Section <a
 href="#sec:config-centric-architecture" data-reference-type="ref"
 data-reference="sec:config-centric-architecture">3.1</a> describes the
-YAML schema that enforces valid experiments and Section <a
-href="#sec:schema-validation" data-reference-type="ref"
-data-reference="sec:schema-validation">3.2</a> explains validation
-rules.</p></li>
-<li><p><strong>Architecture Selection</strong>: Section <a
+schema and Section <a href="#sec:schema-validation"
+data-reference-type="ref" data-reference="sec:schema-validation">3.2</a>
+its validation rules.</p></li>
+<li><p><strong>Architecture selection</strong>: Section <a
 href="#sec:attention-families" data-reference-type="ref"
-data-reference="sec:attention-families">4.1</a> provides comprehensive
-comparison of sequence mixer families; Appendices <a
-href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">15</a>, <a
-href="#sec:annex-latent" data-reference-type="ref"
+data-reference="sec:attention-families">4.1</a> compares sequence-mixer
+families; Appendices <a href="#sec:annex-transformer"
+data-reference-type="ref" data-reference="sec:annex-transformer">15</a>,
+<a href="#sec:annex-latent" data-reference-type="ref"
 data-reference="sec:annex-latent">16</a>, <a href="#sec:annex-sparse"
 data-reference-type="ref" data-reference="sec:annex-sparse">17</a>, and
 <a href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">18</a> synthesize supporting
-literature; Appendix <a href="#sec:annex-norm-bitnet-mod"
+data-reference="sec:annex-gated">18</a> collect the supporting
+literature, with normalization, BitNet, and conditional-memory details
+in Appendix <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a> details normalization
-variants, BitNet quantization, Mixture-of-Depths routing, and Engram
-conditional memory; Appendix <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">21</a> details
-manifold-constrained residual connections (mHC).</p></li>
-<li><p><strong>Optimization Dynamics</strong>: Section <a
+data-reference="sec:annex-norm-bitnet-mod">19</a> and
+manifold-constrained residuals in Appendix <a href="#sec:annex-mhc"
+data-reference-type="ref"
+data-reference="sec:annex-mhc">21</a>.</p></li>
+<li><p><strong>Optimization</strong>: Section <a
 href="#sec:optimizer-families" data-reference-type="ref"
-data-reference="sec:optimizer-families">5</a> details optimizer routing
-and training dynamics; Appendix <a href="#sec:annex-optimizers"
+data-reference="sec:optimizer-families">5</a> summarizes optimizer
+routing; Appendix <a href="#sec:annex-optimizers"
 data-reference-type="ref" data-reference="sec:annex-optimizers">14</a>
-provides comprehensive optimizer family analysis.</p></li>
-<li><p><strong>Deployment and Inference</strong>: Sections <a
+provides the full family analysis.</p></li>
+<li><p><strong>Deployment and inference</strong>: Sections <a
 href="#sec:quantization" data-reference-type="ref"
 data-reference="sec:quantization">6</a> and <a href="#sec:sbert"
-data-reference-type="ref" data-reference="sec:sbert">7</a> describe
-quantized deployment and sentence-embedding workflows.</p></li>
+data-reference-type="ref" data-reference="sec:sbert">7</a> cover
+quantized deployment and sentence embeddings.</p></li>
 </ol>
-<h2 id="web-based-configuration-builder">Web-Based Configuration
-Builder</h2>
-<p>In addition to direct YAML editing, this project provides a
-Streamlit-based web interface (accessed via <code>web-server</code>
-command) that improves configuration accessibility and discoverability.
-The interface dynamically generates schema-driven forms with inline
-parameter documentation, real-time YAML preview, and automatic CLI
-command generation for training, deployment, inference, and SBERT
-workflows. Schema metadata (titles and descriptions) are rendered
-systematically across all configuration sections, including model
-architecture, training runtime, optimizer hyperparameters, deployment,
-and SBERT-specific parameters. This approach reduces the need to
-memorize YAML structure, prevents typos through schema validation, and
-serves as both a configuration tool and a learning resource for users
-exploring novel architectures.</p>
 <h1 id="related-work">Related Work</h1>
 <p>This work sits at the intersection of deep learning frameworks,
 training tooling, and configuration-driven experimentation. While
@@ -1479,7 +1331,7 @@ interaction between architectural choices and training dynamics.</p>
 a schema-first configuration system purpose-built for architecture
 experimentation. Its key differentiators include:</p>
 <ul>
-<li><p><strong>35+ sequence mixers</strong> spanning dense attention,
+<li><p><strong>43 sequence mixers</strong> spanning dense attention,
 recurrent/retentive blocks, sparse attention patterns, gated mechanisms,
 adaptive depth routing, and conditional memory layers, all selectable
 via a single YAML field.</p></li>
@@ -1511,444 +1363,260 @@ not provided by any existing tool in the ecosystem.</p>
 <h1 id="sec:system-design">System Design and Architecture</h1>
 <h2 id="sec:config-centric-architecture">Configuration-Centric
 Architecture</h2>
-<p>The core design choice in this repository is that experimentation is
-<em>schema first</em>. Instead of exposing a large number of loosely
-checked flags, the project forces model topology, optimizer family,
-training limits, and telemetry options through a single validated
-configuration document. This reduces ambiguity when reproducing results
-and makes it possible to compare many architectures under a consistent
-operational interface.</p>
-<p>The authoritative contract is <code>configs/schema.yaml</code>. It
-enforces three top-level objects:</p>
+<p>Experimentation in this project is <em>schema first</em>. Rather than
+exposing loosely checked flags, model topology, optimizer family,
+training limits, and telemetry pass through a single validated
+configuration document, which reduces ambiguity when reproducing results
+and lets many architectures share one operational interface.</p>
+<p>The authoritative contract is <code>src/schema.yaml</code>, a modular
+JSON Schema whose modules under <code>src/schema/</code> cover the
+model, model class, tokenizer, optimizer, SBERT, training, and dataset
+blocks. The top-level objects are <code>base_model</code>,
+<code>tokenizer</code>, <code>model_class</code>, <code>model</code>,
+<code>training</code>, <code>image</code>, <code>vision_dataset</code>,
+and <code>text_dataset</code>.</p>
+<h4 id="model-class.">Model class.</h4>
+<p>The <code>model_class</code> field selects among three variants:</p>
 <ul>
-<li><p><code>model_class</code></p></li>
-<li><p><code>model</code></p></li>
-<li><p><code>training</code></p></li>
+<li><p><strong><code>frankenstein</code></strong>: mixed-architecture
+encoder with the full range of sequence mixers, MoE, and advanced
+normalization, trained with masked language modeling.</p></li>
+<li><p><strong><code>frankensteindecoder</code></strong>: autoregressive
+causal decoder for next-token generation; the runtime forces decoder
+masking.</p></li>
+<li><p><strong><code>frankenstein_vit</code></strong>: Vision
+Transformer over image patches for masked patch prediction,
+classification, and segmentation; the runtime forces encoder masking and
+the configuration requires the <code>image</code> and
+<code>vision_dataset</code> blocks.</p></li>
 </ul>
-<h4 id="model-class-selection.">Model Class Selection.</h4>
-<p>The <code>model_class</code> field determines the architectural
-variant instantiated by the training pipeline. Two options are
-supported:</p>
-<ul>
-<li><p><strong>frankenstein</strong>: Mixed-architecture encoder models
-supporting diverse attention mechanisms (standard, sigmoid, retentive,
-state-space, sparse, and gated mixers) with MoE (Mixture of Experts) and
-advanced features. Optimized for bidirectional encoder-style training
-with masked language modeling (MLM) objectives.</p></li>
-<li><p><strong>frankensteindecoder</strong>: Autoregressive causal
-decoder for LLM-style next-token generation. Enables causal attention
-masking for sequential text generation tasks. When this class is
-selected, runtime enforces <code>mode=’decoder’</code>.</p></li>
-</ul>
-<h4 id="training-mode-selection.">Training Mode Selection.</h4>
-<p>The <code>model.mode</code> field controls attention masking behavior
-across the model:</p>
-<ul>
-<li><p><strong>encoder</strong>: Uses bidirectional attention where all
-tokens attend to all other tokens in the sequence. Suitable for masked
-language modeling (MLM) pre-training tasks where the model learns to
-predict randomly masked tokens based on full context.</p></li>
-<li><p><strong>decoder</strong>: Uses causal masking where each token
-can only attend to previous tokens in the sequence. Required for
-autoregressive (AR) next-token prediction tasks such as language
-modeling and text generation. When
-<code>model_class=’frankensteindecoder’</code>, the system automatically
-forces <code>mode=’decoder’</code> at runtime.</p></li>
-</ul>
-<p>This dual architecture support enables the system to handle both
-encoder-style pre-training (MLM on bidirectional contexts) and
-decoder-style generation (causal autoregressive prediction) through a
-unified configuration interface.</p>
-<p><strong>Sequence Mixer Pattern Selection</strong>: The
-<code>layer_pattern</code> field accepts an ordered list of mixer
-identifiers spanning eight families: dense baselines
-(<code>standard_attn</code>, <code>sigmoid_attn</code>,
-<code>gqa</code>), recurrent/retentive (<code>retnet</code>,
-<code>retnet_attn</code>, <code>mamba</code>, <code>ode</code>,
-<code>titan_attn</code>), sparse attention
-(<code>sparse_transformer_attn</code>, <code>longformer_attn</code>,
-<code>bigbird_attn</code>, <code>sparsek_attn</code>,
-<code>nsa_attn</code>, <code>sparge_attn</code>, <code>fasa_attn</code>,
-<code>msa_attn</code>, <code>sparda_attn</code>), gated mechanisms
-(<code>gla_attn</code>, <code>deltanet_attn</code>,
-<code>gated_deltanet_attn</code>, <code>gated_deltanet2_attn</code>,
-<code>hgrn2_attn</code>, <code>fox_attn</code>,
-<code>gated_softmax_attn</code>, <code>kda_attn</code>), latent
-compression (<code>mla_attn</code>, <code>gqla_attn</code>,
-<code>mlra_attn</code>, <code>tucker_attn</code>, <code>iha_attn</code>,
-<code>gta_attn</code>, <code>mtla_attn</code>, <code>cca_attn</code>,
-<code>ccgqa_attn</code>, <code>gma_attn</code>), conditional memory
-(<code>engram_attn</code>), fast-weight attention
-(<code>falcon1_attn</code>, <code>falcon2_attn</code>,
-<code>falcon3_attn</code>, <code>falcon1a_attn</code>,
-<code>falcon2a_attn</code>, <code>falcon3a_attn</code>), and geometric
-field (<code>ssog_attn</code>). The complete taxonomy with references is
-provided in Section <a href="#sec:architecture-taxonomy"
-data-reference-type="ref"
-data-reference="sec:architecture-taxonomy">4</a> and Appendix <a
+<h4 id="training-mode.">Training mode.</h4>
+<p><code>model.dims.mode</code> controls masking: <code>encoder</code>
+uses bidirectional attention for masked language modeling, and
+<code>decoder</code> uses causal masking for autoregressive
+prediction.</p>
+<h4 id="mixer-selection.">Mixer selection.</h4>
+<p><code>model.dims.layer_pattern</code> is an ordered list of mixer
+identifiers drawn from the eight families described in Section <a
+href="#sec:architecture-taxonomy" data-reference-type="ref"
+data-reference="sec:architecture-taxonomy">4</a>; the schema fixes the
+accepted identifiers, and the complete enumeration appears in Figure <a
+href="#fig:comprehensive-taxonomy" data-reference-type="ref"
+data-reference="fig:comprehensive-taxonomy">2</a> and Appendix <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">13</a>.</p>
-<p>The <code>training.optimizer.optimizer_class</code> supports a broad
-optimizer family: <code>sgd_momentum</code>, <code>adamw</code>,
-<code>adafactor</code>, <code>galore_adamw</code>, <code>prodigy</code>,
-<code>lion</code>, <code>sophia</code>, <code>muon</code>,
-<code>turbo_muon</code>, <code>radam</code>, <code>adan</code>,
-<code>adopt</code>, <code>ademamix</code>, <code>mars_adamw</code>,
-<code>cautious_adamw</code>, <code>lamb</code>,
-<code>schedulefree_adamw</code>, <code>shampoo</code>,
-<code>soap</code>, <code>anon</code>, <code>apollo</code>,
-<code>apollo_mini</code>, and <code>q_apollo</code>.</p>
-<figure id="fig:system-architecture" data-latex-placement="t">
+<h4 id="optimizer-selection.">Optimizer selection.</h4>
+<p><code>training.optimizer.optimizer_class</code> selects one of
+twenty-three optimizer families, summarized in Section <a
+href="#sec:optimizer-families" data-reference-type="ref"
+data-reference="sec:optimizer-families">5</a> and detailed in
+Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
+data-reference="sec:annex-optimizers">14</a>.</p>
+<figure id="fig:system-architecture">
 
 <figcaption>System architecture: configuration flows through validation,
-partitions into model/training/optimizer, executes runtime, produces
-deployment/SBERT artifacts.</figcaption>
+partitions into model, training, and optimizer components, executes at
+runtime, and produces deployment and SBERT artifacts.</figcaption>
 </figure>
 <h2 id="sec:schema-validation">Schema Scope and Validation Rules</h2>
-<p>The schema is strict: top-level and nested objects set
-<code>additionalProperties: false</code>. This guarantees that unknown
-keys fail fast instead of being silently ignored. The
-<code>training.optimizer.parameters</code> object is additionally
-constrained by optimizer-specific prefix rules through
-<code>allOf</code>+<code>if/then</code> pattern checks.</p>
-<p>Normalization values currently accepted by schema are: <span
-class="math display">\[\texttt{norm\_type} \in \{\texttt{layer\_norm},
-\texttt{dynamic\_tanh}, \texttt{derf}, \texttt{rms\_norm},
-\texttt{prms\_norm}\}\]</span></p>
+<p>Top-level and nested objects set
+<code>additionalProperties: false</code>, so unknown keys fail fast
+instead of being silently ignored. Optimizer parameters are further
+constrained by per-family prefix rules. Cross-component validation
+rejects incompatible combinations before training: hidden size must be
+divisible by the number of heads, the number of key–value heads must
+divide the number of heads, vocabulary size must match the tokenizer, a
+base model requires a task and (for MLM) a tokenizer, each task requires
+its matching optimizer block, BitNet router flags require BitNet to be
+enabled, and the decoder and vision classes force their respective
+masking modes.</p>
 <h2 id="configuration-schema">Configuration Schema</h2>
-<p>The complete model and training configuration schema, including all
-fields, types, ranges, and validation rules, is documented in
-Appendix <a href="#sec:annex-schema" data-reference-type="ref"
-data-reference="sec:annex-schema">12</a>. The schema enforces
-<code>additionalProperties: false</code> at all levels, guaranteeing
-that unknown keys fail fast.</p>
-<p>Looped depth induced by schema is: <span
-class="math display">\[L_{\text{logical}} = \texttt{num\_layers} \times
-\texttt{num\_loops}\]</span> which is the configuration-level definition
-of looped blocks.</p>
-<h2 id="training-task-types">Training Task Types</h2>
-<p>The <code>training.task</code> field determines the training
-objective, working in conjunction with <code>model.mode</code> to define
-how the model learns:</p>
-<h4 id="masked-language-modeling-mlm.">Masked Language Modeling
-(MLM).</h4>
-<ul>
-<li><p><strong>Mode</strong>: Requires <code>mode=’encoder’</code> for
-bidirectional attention.</p></li>
-<li><p><strong>Objective</strong>: Randomly mask tokens in input
-sequence (typically 15%) and train model to predict masked tokens based
-on full bidirectional context.</p></li>
-<li><p><strong>Use Case</strong>: Pre-training encoders for
-representation learning, following BERT-style methodology <span
-class="citation" data-cites="devlin_bert_2019"></span>. Model learns
-bidirectional representations capturing context from both left and
-right.</p></li>
-<li><p><strong>Configuration</strong>: Uses <code>mlm_probability</code>
-parameter to control masking fraction.</p></li>
-</ul>
-<h4 id="causal-language-modeling-causal_lm.">Causal Language Modeling
-(<code>causal_lm</code>).</h4>
-<ul>
-<li><p><strong>Mode</strong>: Requires <code>mode=’decoder’</code> for
-causal masking.</p></li>
-<li><p><strong>Objective</strong>: Autoregressive next-token prediction
-— each position <span class="math inline">\(i\)</span> predicts token
-<span class="math inline">\(i+1\)</span> given all preceding tokens
-only. Cross-entropy is computed over all shifted non-pad positions (no
-masking), in contrast to MLM which supervises only randomly masked
-positions.</p></li>
-<li><p><strong>Use Case</strong>: Language generation and LLM-style
-tasks following GPT methodology. Model learns sequential dependencies
-with causal attention where each token can only attend to preceding
-tokens.</p></li>
-<li><p><strong>Model Class</strong>: Set <code>task=’causal_lm’</code>
-and <code>model_class=’frankensteindecoder’</code>; the schema and
-runtime require the decoder class for this task (causal masking is only
-provided by the decoder).</p></li>
-<li><p><strong>Configuration</strong>: Reuses
-<code>training.optimizer</code>; the streaming dataset stores sequences
-unmasked (<code>labels == input_ids</code>) so the trainer can compute
-the shifted next-token loss.</p></li>
-</ul>
-<p>This task support enables unified experimentation across
-encoder-style pre-training (MLM for bidirectional understanding),
-decoder-style generation (<code>causal_lm</code> for autoregressive
-next-token prediction), and sentence embedding (SBERT), all within the
-same codebase.</p>
-<h2 id="optimizer-configuration">Optimizer Configuration</h2>
-<p>The <code>training.optimizer</code> object selects among 23 optimizer
-families via <code>optimizer_class</code> and provides
-per-parameter-group hyperparameter control through a prefixed naming
-convention. The complete optimizer prefix contract and supported
-families are documented in Appendix <a href="#sec:annex-schema"
-data-reference-type="ref" data-reference="sec:annex-schema">12</a>.</p>
+<p>The complete schema—fields, types, ranges, and validation rules—is
+documented in Appendix <a href="#sec:annex-schema"
+data-reference-type="ref" data-reference="sec:annex-schema">12</a>.
+Looped blocks are configured through <code>num_layers</code> and
+<code>num_loops</code>, giving <code>num_layers</code><span
+class="math inline">\(\times\)</span><code>num_loops</code> logical
+layers at fixed parameter count.</p>
+<h2 id="training-tasks">Training Tasks</h2>
+<p><code>training.task</code> selects the objective: <code>mlm</code>
+(masked language modeling), <code>causal_lm</code> (autoregressive
+next-token prediction, decoder class only), <code>sbert</code> (sentence
+embeddings), <code>text_classification</code> (encoder class only), and
+the vision tasks <code>patch_prediction</code>,
+<code>classification</code>, and <code>segmentation</code> (Vision
+Transformer only). NLP tasks consume <code>text_dataset</code>; vision
+tasks consume <code>vision_dataset</code>. Sentence-embedding workflows
+are described in Section <a href="#sec:sbert" data-reference-type="ref"
+data-reference="sec:sbert">7</a>.</p>
 <h2 id="training-safety-and-runtime-semantics">Training Safety and
 Runtime Semantics</h2>
-<p>Schema-level safety features include accumulation, clipping,
-post-clip explosion checks, and NaN retries: <span
-class="math display">\[g_{\text{acc}}=\frac{1}{K}\sum_{i=1}^{K}
-g_i,\quad K=\texttt{gradient\_accumulation\_steps}\]</span> <span
-class="math display">\[g_{\text{clip}} = g_{\text{acc}}\cdot
-\min\left(1,\frac{\tau}{\|g_{\text{acc}}\|_2+\epsilon}\right),\quad
-\tau=\texttt{grad\_clip\_max\_norm}\]</span> then overflow guards use
-<code>inf_post_clip_threshold</code> and retry logic bounded by
-<code>max_nan_retries</code>.</p>
-<p>The complete pseudocode for the schema-driven training step—including
-gradient accumulation, global-norm clipping, post-clip explosion guards,
-bounded NaN/Inf retries, scheduler dispatch, and rolling/best checkpoint
-rotation—is deferred to Appendix <a href="#sec:annex-norm-bitnet-mod"
-data-reference-type="ref"
+<p>The training step accumulates gradients over micro-batches, clips the
+global norm, checks for post-clip overflow, retries a bounded number of
+times on non-finite values, dispatches the configured scheduler, and
+rotates rolling and best checkpoints. The full pseudocode is deferred to
+Appendix <a href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:normalization">Normalization Variants</h2>
-<p>Normalization controls activation scale across depth and is also a
-schema compatibility question, since the accepted <code>norm_type</code>
-values are <code>layer_norm</code>, <code>dynamic_tanh</code>,
-<code>derf</code>, <code>rms_norm</code>, and <code>prms_norm</code>
-(partial RMSNorm). The mathematical formulations of LayerNorm, RMSNorm,
-pRMSNorm, Dynamic Tanh (DyT) <span class="citation"
-data-cites="zhu_transformers_2025"></span>, and Dynamic Erf (Derf) <span
-class="citation" data-cites="chen_stronger_2025"></span>, together with
-a comparison table, are detailed in Appendix <a
-href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+<p>Normalization is both a modeling choice and a schema compatibility
+question. The accepted <code>norm.type</code> values are
+<code>layer_norm</code>, <code>dynamic_tanh</code>, <code>derf</code>,
+<code>rms_norm</code>, <code>prms_norm</code> (partial RMSNorm), and
+<code>flash_norm</code> (weightless RMSNorm). Their formulations and
+comparison are detailed in Appendix <a href="#sec:annex-norm-bitnet-mod"
+data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:residual-stream">Residual-Stream Architectures</h2>
-<p>The residual connection is not only a modeling choice but also a
-macro-design decision. The system exposes four residual-connection
-strategies via the <code>model.residuals</code> sub-object
-(<code>residual_type</code> flat key, default
-<code>standard</code>):</p>
+<p>Residual connections are exposed as a macro-design choice through the
+<code>model.residuals</code> block:</p>
 <ul>
-<li><p><strong>Standard residual</strong>
-(<code>residual_type="standard"</code>): the classical identity residual
-<span class="citation" data-cites="he_deep_2016"></span>, <span
-class="math inline">\(x_{l+1} = x_l + F(x_l, W_l)\)</span>. Stateless,
-no extra parameters.</p></li>
-<li><p><strong>No residual</strong> (<code>residual_type="none"</code>,
-experimental): <span class="math inline">\(x_{l+1} = F(x_l,
-W_l)\)</span>, dropping the skip connection entirely. Useful only as an
+<li><p><strong>Standard</strong>: the classical identity residual <span
+class="citation" data-cites="he_deep_2016"></span>.</p></li>
+<li><p><strong>None</strong>: no skip connection, retained only as an
 ablation probe.</p></li>
-<li><p><strong>Attention Residuals</strong>
-(<code>residual_type="full_attn"</code> or <code>"block_attn"</code>)
-<span class="citation" data-cites="sun_attnres_2026"></span>: replace
-the fixed unit-coefficient residual sum with learned softmax attention
-over depth. Each layer attends over all previous layer outputs (Full
-AttnRes) or over a small set of block-wise accumulated representations
-(Block AttnRes). Adds <span class="math inline">\(L \cdot C\)</span>
-parameters (one learned query vector <span
-class="math inline">\(\mathbf{w}_l\)</span> per layer). Zero-init
-queries make the initial attention an equal-weight average, matching the
-standard residual at step zero.</p></li>
-<li><p><strong>Manifold-Constrained Hyper-Connections</strong>
-(<code>residual_type</code> combined with <code>mhc.enabled=true</code>,
-documented separately in Appendix <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">21</a>): the
-n-stream residual <span class="citation"
-data-cites="xie_mhc_2025"></span> whose stream-mixing matrix is
-constrained to the Birkhoff polytope via Sinkhorn–Knopp.</p></li>
+<li><p><strong>Attention Residuals</strong> (<code>full_attn</code> or
+<code>block_attn</code>): learned attention over depth replaces the
+fixed residual sum, either over all previous layers or over block-wise
+summaries <span class="citation"
+data-cites="sun_attnres_2026"></span>.</p></li>
+<li><p><strong>Manifold-constrained hyper-connections</strong>
+(<code>mhc.enabled</code>): an <span
+class="math inline">\(n\)</span>-stream residual whose mixing matrix is
+constrained to the Birkhoff polytope <span class="citation"
+data-cites="xie_mhc_2025"></span>.</p></li>
 </ul>
-<p>AttnRes integrates orthogonally with mHC and with Mixture-of-Depths:
-the <code>model.residuals.mhc_stream_mode</code> field selects whether
-the depth-wise attention runs per stream (<code>independent</code>) or
-jointly over the flattened <span class="math inline">\(nC\)</span>
-projection (<code>joint</code>) when mHC is active. The full
-formulation, the four strategies, the implementation wiring, and the
-reported results are detailed in Appendix <a href="#sec:annex-attnres"
-data-reference-type="ref" data-reference="sec:annex-attnres">22</a>. mHC
-alone is detailed in Appendix <a href="#sec:annex-mhc"
+<p>Attention Residuals compose with mHC and Mixture-of-Depths; the
+formulations, wiring, and reported results are collected in
+Appendices <a href="#sec:annex-attnres" data-reference-type="ref"
+data-reference="sec:annex-attnres">22</a> and <a href="#sec:annex-mhc"
 data-reference-type="ref" data-reference="sec:annex-mhc">21</a>.</p>
 <h1 id="sec:architecture-taxonomy">Architecture Taxonomy and
 Implementation</h1>
 <h2 id="sec:attention-families">Attention and Sequence-Mixer
 Families</h2>
-<p>This system implements forty-three sequence mixer variants organized
-into eight functional categories reflecting research trends in sequence
-modeling design. The taxonomical organization reflects evolving
-understanding of how to balance expressivity, computational efficiency,
-and memory constraints.</p>
+<p>The system implements forty-three sequence mixers organized into
+eight functional categories that reflect how each method balances
+expressivity, computational cost, and memory.</p>
 <ol>
-<li><p><strong>Dense Attention Baselines</strong> (3): Standard softmax
-attention, sigmoid attention, and Grouped-Query Attention (GQA) provide
-full global contextualization at quadratic computational cost, serving
-as reference baselines for comparison with more efficient
-alternatives.</p></li>
-<li><p><strong>Recurrent and Retentive Architectures</strong> (5):
-RetNet, Mamba, ODE-style blocks, Titans, and Engram maintain state
-representations enabling <span
-class="math inline">\(\mathcal{O}(1)\)</span> inference cost while
-preserving expressivity through recurrent dynamics, selective
-parameters, or test-time memory adaptation.</p></li>
-<li><p><strong>Sparse Attention Patterns</strong> (9): Sparse
-Transformer, Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA, MSA,
-and SparDA reduce quadratic complexity through structured sparsity,
-token selection, or training-free pruning strategies.</p></li>
-<li><p><strong>Gated Memory Mechanisms</strong> (8): GLA, DeltaNet,
-Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, and KDA
-introduce data-dependent control over memory retention, forgetting, and
-update strength.</p></li>
-<li><p><strong>Latent and Low-Rank Compression</strong> (10): MLA, GQLA,
-MLRA, Tucker, IHA, GTA, MTLA, CCA, CCGQA, and GMA compress key–value
-representations into low-rank latent bottlenecks (or, for GMA, route
-through a learned Gaussian-mixture latent memory), trading a small
-reconstruction error for substantial memory and compute
-savings.</p></li>
-<li><p><strong>Conditional Memory</strong> (1): Engram provides
-test-time memory through learned read/write operations over an external
-memory bank.</p></li>
-<li><p><strong>Fast-Weight Attention</strong> (6): Falcon-1, Falcon-2,
-Falcon-3, Falcon-1A, Falcon-2A, and Falcon-3A <span class="citation"
-data-cites="zhang_falcon_2026"></span> treat the recurrent fast-weight
-state transition as an online continual-learning rule under
-read-after-write semantics, with normalized step sizes, explicit ridge
-forgetting, and optional bounded sliding-window rehearsal.</p></li>
-<li><p><strong>Geometric Field</strong> (1): SSOG <span class="citation"
-data-cites="pisoni_ssog_2026"></span> applies a structured
-geometric/sparsity field over the attention matrix, encoding
-domain-specific spatial or graph-structured inductive biases that the
-other seven families do not capture.</p></li>
+<li><p><strong>Dense baselines</strong> (3): standard softmax attention,
+sigmoid attention, and Grouped-Query Attention (GQA) provide full global
+routing at quadratic cost.</p></li>
+<li><p><strong>Recurrent and retentive</strong> (5): RetNet, Mamba,
+ODE-style blocks, and Titans maintain state for constant-time inference
+through recurrence, selective state spaces, continuous depth, or
+test-time memory.</p></li>
+<li><p><strong>Sparse patterns</strong> (9): Sparse Transformer,
+Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA, MSA, and SparDA
+reduce quadratic cost through structured sparsity, token selection, or
+training-free pruning.</p></li>
+<li><p><strong>Gated mechanisms</strong> (8): GLA, DeltaNet, Gated
+DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, and KDA introduce
+data-dependent control over retention, forgetting, and update
+strength.</p></li>
+<li><p><strong>Latent compression</strong> (10): MLA, GQLA, MLRA,
+Tucker, IHA, GTA, MTLA, CCA, CCGQA, and GMA compress key–value state
+into low-rank bottlenecks or route through a Gaussian-mixture latent
+memory.</p></li>
+<li><p><strong>Conditional memory</strong> (1): Engram provides
+test-time read/write memory through learned lookups.</p></li>
+<li><p><strong>Fast-weight attention</strong> (6): Falcon-1/2/3 and
+Falcon-1A/2A/3A treat the recurrent state transition as an online
+continual-learning rule <span class="citation"
+data-cites="zhang_falcon_2026"></span>.</p></li>
+<li><p><strong>Geometric field</strong> (1): SSOG applies a structured
+geometric prior over the attention matrix <span class="citation"
+data-cites="pisoni_ssog_2026"></span>.</p></li>
 </ol>
-<figure id="fig:comprehensive-taxonomy" data-latex-placement="t">
+<figure id="fig:comprehensive-taxonomy">
 
-<figcaption>Comprehensive taxonomy of forty-three sequence mixer
-variants across eight functional categories. Dense baselines provide
-full global routing at quadratic cost. Recurrent architectures enable
-constant-time inference through state compression. Sparse variants
-reduce complexity through structured patterns or token selection. Gated
-mechanisms introduce data-dependent control over memory retention and
-forgetting. Latent methods compress key–value representations into
-low-rank bottlenecks or route through probabilistic Gaussian-mixture
-latents. Conditional memory provides test-time read/write over an
-external memory bank. Fast-weight methods treat the recurrent state
-transition as an online continual-learning rule. Geometric-field methods
-encode spatial or graph-structured inductive biases over the attention
-matrix.</figcaption>
+<figcaption>Taxonomy of the forty-three sequence mixers across eight
+functional categories. Dense baselines provide full global routing at
+quadratic cost; recurrent methods compress state for constant-time
+inference; sparse variants restrict the attention pattern; gated
+mechanisms modulate retention and forgetting; latent methods compress
+key–value representations; conditional memory adds test-time read/write
+lookups; fast-weight methods cast the state transition as an online
+learning rule; geometric methods encode structured priors.</figcaption>
 </figure>
 <h2 id="dense-and-recurrent-families">Dense and Recurrent Families</h2>
-<p>The dense baselines (standard softmax <span class="citation"
-data-cites="vaswani_attention_2017"></span> and sigmoid <span
-class="citation" data-cites="ramapuram_theory_2024"></span>) and the
-recurrent/retentive family (RetNet <span class="citation"
+<p>The dense baselines—standard softmax <span class="citation"
+data-cites="vaswani_attention_2017"></span> and sigmoid attention <span
+class="citation" data-cites="ramapuram_theory_2024"></span>—and the
+recurrent family—RetNet <span class="citation"
 data-cites="sun_retentive_2023"></span>, Mamba <span class="citation"
-data-cites="gu_mamba_2023"></span>, ODE-style continuous blocks <span
+data-cites="gu_mamba_2023"></span>, ODE-style blocks <span
 class="citation" data-cites="zhang_continuous_2021"></span>, and Titans
-test-time memory <span class="citation"
-data-cites="behrouz_titans_2025"></span>) provide the foundational
-expressiveness-versus-efficiency tradeoff. Mathematical formulations,
-parallel and recurrent forms, algorithmic pseudocode, and an
-architectural comparison table are collected in Appendix <a
-href="#sec:annex-transformer" data-reference-type="ref"
-data-reference="sec:annex-transformer">15</a>. The pattern-driven mixer
-dispatch algorithm (including the training-free enforcement policy for
-<code>fasa_attn</code> and <code>sparge_attn</code>) is likewise
-detailed there.</p>
+<span class="citation" data-cites="behrouz_titans_2025"></span>—define
+the expressiveness-versus-efficiency trade-off. Formulations, parallel
+and recurrent forms, pseudocode, and a comparison table are collected in
+Appendix <a href="#sec:annex-transformer" data-reference-type="ref"
+data-reference="sec:annex-transformer">15</a>.</p>
+<figure id="fig:dense-map">
+
+<figcaption>Dense attention baselines. Standard and sigmoid attention
+compute full pairwise interactions; Grouped-Query Attention shares
+key–value heads across query groups, reducing memory traffic while
+keeping full attention expressivity.</figcaption>
+</figure>
+<figure id="fig:recurrent-map">
+
+<figcaption>Recurrent and retentive family. RetNet offers parallel and
+recurrent forms, Mamba uses selective state-space parameters, ODE blocks
+model continuous depth, and Titans add test-time memory; all achieve
+constant-time per-step inference.</figcaption>
+</figure>
 <h2 id="latent-and-low-rank-attention-family">Latent and Low-Rank
 Attention Family</h2>
-<p>A complementary family compresses the per-token key–value state into
-a low-rank latent: Multi-Head Latent Attention (MLA), Group-Query Latent
-Attention (GQLA), Multi-Head Low-Rank Attention (MLRA), Tucker
-Attention, Interleaved Head Attention (IHA), Grouped-head laTenT
-Attention (GTA), and Multi-head Temporal Latent Attention (MTLA). These
-methods unify grouped-query, latent, factorised, and temporal-latent
-designs under a common low-rank bottleneck. Gaussian Mixture Attention
-(GMA) takes a different route: it replaces the pairwise <span
-class="math inline">\(QK^\top\)</span> interaction with probabilistic
-routing through <span class="math inline">\(K\)</span> learned
-Gaussian-mixture components per head, writing values into a <span
-class="math inline">\(K\)</span>-slot latent memory and reading back via
-posterior responsibilities, yielding <span
-class="math inline">\(\mathcal{O}(NK)\)</span> activation storage for
-fixed <span class="math inline">\(K\)</span>. Full formulations,
-pseudocode, and a comparison table are collected in Appendix <a
-href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">16</a>.</p>
+<p>This family compresses per-token key–value state into a low-rank
+latent: MLA, GQLA, MLRA, Tucker, IHA, GTA, and MTLA unify grouped-query,
+latent, factorized, and temporal designs. CCA and CCGQA formulate
+attention in a compressed latent with decoupled grouping, while GMA
+replaces pairwise interaction with probabilistic routing through learned
+Gaussian-mixture components. Formulations, pseudocode, and a comparison
+table are collected in Appendix <a href="#sec:annex-latent"
+data-reference-type="ref" data-reference="sec:annex-latent">16</a>.</p>
+<figure id="fig:latent-map">
+
+<figcaption>Latent and low-rank attention. Key–value pairs are projected
+into a low-rank latent space, where attention is computed at reduced
+cost, and projected back. Variants differ in factorization, head
+interleaving, temporal compression, cross-covariance formulation, and
+probabilistic routing.</figcaption>
+</figure>
 <h2 id="sparse-attention-extensions">Sparse Attention Extensions</h2>
-<p>The mixer registry includes nine sparse blocks:
-<code>sparse_transformer_attn</code>, <code>longformer_attn</code>,
-<code>bigbird_attn</code>, <code>sparsek_attn</code>,
-<code>nsa_attn</code>, <code>sparge_attn</code>, <code>fasa_attn</code>,
-<code>msa_attn</code>, and <code>sparda_attn</code> <span
-class="citation"
+<p>The registry includes nine sparse blocks <span class="citation"
 data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026"></span>.
-The implementation enforces an explicit execution policy for
-training-free sparse methods: <code>fasa_attn</code> and
-<code>sparge_attn</code> are eval/inference-only and raise runtime
-errors if used while the model is in training mode. Mathematical
-formulations, algorithmic pseudocode, per-block characteristics, and a
-comparison table are collected in Appendix <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
-<figure id="fig:sparse-map" data-latex-placement="t">
+Two training-free methods, <code>fasa_attn</code> and
+<code>sparge_attn</code>, are evaluation-only and raise an error if used
+during training. Formulations, pseudocode, per-block characteristics,
+and a comparison table are collected in Appendix <a
+href="#sec:annex-sparse" data-reference-type="ref"
+data-reference="sec:annex-sparse">17</a>.</p>
+<figure id="fig:sparse-map">
 
-<figcaption>Conceptual map of sparse attention design choices used in
-the codebase. Different methods reduce cost by restricting
-neighborhoods, constructing sparse graphs, or selecting only high-value
-tokens/blocks.</figcaption>
+<figcaption>Sparse attention design choices. Methods reduce cost by
+restricting neighborhoods, constructing sparse graphs, or selecting only
+high-value tokens or blocks.</figcaption>
 </figure>
-<figure id="fig:dense-map" data-latex-placement="t">
-
-<figcaption>Three dense attention baselines. Standard softmax and
-sigmoid attention compute full <span
-class="math inline">\(QK^\top\)</span> matrices. Grouped-Query Attention
-(GQA) shares key–value heads across query groups, reducing memory
-bandwidth while preserving full attention expressivity.</figcaption>
-</figure>
-<figure id="fig:recurrent-map" data-latex-placement="t">
-
-<figcaption>Recurrent and retentive architecture family. RetNet provides
-dual parallel and recurrent forms. Mamba uses selective state-space
-parameters. ODE blocks model continuous-depth dynamics. Titans introduce
-test-time memory adaptation. All achieve constant-time per-step
-inference.</figcaption>
-</figure>
-<figure id="fig:latent-map" data-latex-placement="t">
-
-<figcaption>Latent and low-rank attention concept. Key–value pairs are
-compressed through a down-projection into a low-rank latent space (<span
-class="math inline">\(r \ll d\)</span>), where attention is computed at
-reduced cost, then up-projected back. Variants differ in factorization
-structure (MLA, GQLA, MLRA, Tucker), head interleaving (IHA, GTA),
-temporal compression (MTLA), cross-covariance formulations (CCA, CCGQA),
-and probabilistic Gaussian-mixture routing (GMA).</figcaption>
-</figure>
-<h2 id="gated-attention-extensions">Gated Attention Extensions</h2>
-<p>The mixer registry includes eight gated blocks:
-<code>gla_attn</code>, <code>deltanet_attn</code>,
-<code>gated_deltanet_attn</code>, <code>gated_deltanet2_attn</code>,
-<code>hgrn2_attn</code>, <code>fox_attn</code>,
-<code>gated_softmax_attn</code>, and <code>kda_attn</code> <span
-class="citation"
+<h2 id="gated-and-fast-weight-attention">Gated and Fast-Weight
+Attention</h2>
+<p>The gated family contains eight blocks <span class="citation"
 data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025"></span>.
-The unifying idea is that gating controls <em>what information
-survives</em>: some gates act on recurrent state updates (GLA, DeltaNet
-variants, HGRN2), while others modify the full attention path itself
-(FoX and Gated Softmax). KDA extends Gated DeltaNet with a
-finer-grained, channel-wise gating (decay) mechanism on the delta-rule
-state update <span class="math inline">\(S_t = (I - \beta_t k_t
-k_t^\top)D_t S_{t-1} + \beta_t k_t v_t^\top\)</span>, where <span
-class="math inline">\(D_t = \mathrm{Diag}(d_t)\)</span> applies a
-per-channel decay. This makes gating especially useful when the model
-must trade off recall, recency, and bounded memory. Mathematical
-formulations, algorithmic pseudocode, a generic gating template, and a
-comparison table are collected in Appendix <a href="#sec:annex-gated"
+Gating controls what information survives, either in recurrent state
+updates (GLA, DeltaNet variants, HGRN2, KDA) or in the full attention
+path (FoX, Gated Softmax). Formulations, pseudocode, and a comparison
+table are collected in Appendix <a href="#sec:annex-gated"
 data-reference-type="ref" data-reference="sec:annex-gated">18</a>.</p>
-<p>A sixth family recasts the recurrent fast-weight update itself as an
-online continual-learning rule: the mixer registry includes six
-fast-weight blocks — <code>falcon1_attn</code>,
-<code>falcon2_attn</code>, <code>falcon3_attn</code>,
-<code>falcon1a_attn</code>, <code>falcon2a_attn</code>, and
-<code>falcon3a_attn</code> <span class="citation"
-data-cites="zhang_falcon_2026"></span>. Falcon unifies DeltaNet-style
-regression and linear-attention-style additive writes under
-read-after-write (prefix-aligned) semantics with normalized step sizes
-<span class="math inline">\(\eta_t = \beta_t/(\text{statistic}_t +
-\lambda_t + \varepsilon)\)</span>, an objective-derived carry <span
-class="math inline">\(\gamma_t = 1 - \eta_t\lambda_t\)</span>, and
-bounded sliding-window rehearsal in the Falcon-3 variants. Every variant
-ships a recurrent reference scan and an SSD-style chunk-parallel kernel,
-sharing one configuration block. Mathematical formulations, algorithmic
-pseudocode, the positive-decay renormalization, configuration knobs, and
-published results are collected in Appendix <a
+<p>Fast-weight attention recasts the recurrent update as an online
+continual-learning rule; the six Falcon variants <span class="citation"
+data-cites="zhang_falcon_2026"></span> unify DeltaNet-style regression
+and linear-attention writes under read-after-write semantics with
+normalized step sizes and explicit forgetting. Each variant ships a
+recurrent reference scan and a chunk-parallel kernel. Formulations,
+configuration knobs, and published results are collected in Appendix <a
 href="#sec:annex-fast-weight" data-reference-type="ref"
 data-reference="sec:annex-fast-weight">26</a>.</p>
-<figure id="fig:gating-template" data-latex-placement="t">
+<figure id="fig:gating-template">
 
 <figcaption>Generic gating template. A gate can decay existing memory,
 regulate write strength, or modulate dense attention outputs, depending
@@ -1956,51 +1624,45 @@ on the block family.</figcaption>
 </figure>
 <h1 id="sec:optimizer-families">Optimizer Families and Training
 Dynamics</h1>
-<p>Optimization of highly parameterized transformer architectures
-presents significant challenges due to non-convex loss landscapes,
-saddle points, and block heterogeneity across parameter groups. This
-system addresses these challenges through a unified framework supporting
-twenty-three optimizer families spanning six algorithmic categories: (1)
-classical baselines (SGD, AdamW), (2) advanced momentum and variance
-reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious), (3) memory-efficient
-variants (Adafactor, GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO), (4)
-schedule-free and parameter-free methods (Schedule-Free AdamW, Prodigy)
-plus large-batch scaling through LAMB, (5) curvature-aware and
-second-order (Sophia, Shampoo, SOAP), (6) geometry-oriented (Muon,
-Turbo-Muon), and (7) adaptivity-tunable optimizers (Anon). Detailed
-algorithmic descriptions, pseudocode, and a memory/complexity comparison
-table for all optimizers are provided in Appendix <a
-href="#sec:annex-optimizers" data-reference-type="ref"
+<p>Optimizing large transformer architectures is complicated by
+non-convex landscapes, saddle points, and heterogeneous parameter
+groups. The system supports twenty-three optimizer families in seven
+categories: classical baselines (SGD with momentum, AdamW, RAdam);
+momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
+AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
+APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
+(Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
+curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
+geometry-oriented methods (Muon, Turbo-Muon); and adaptivity-tunable
+optimizers (Anon). Algorithms, pseudocode, and memory and complexity
+comparisons are collected in Appendix <a href="#sec:annex-optimizers"
+data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
-<figure id="fig:optimizer-routing" data-latex-placement="t">
+<figure id="fig:optimizer-routing">
 
 <figcaption>Optimizer selection in practice: the class determines the
-update rule, while the schema controls how hyperparameters are applied
-across embeddings, norms, recurrent blocks, attention blocks, and other
+update rule, while the schema controls how hyperparameters apply across
+embeddings, normalization layers, attention blocks, and the remaining
 parameters.</figcaption>
 </figure>
 <h1 id="sec:quantization">Quantization and Deployment</h1>
-<p>The deploy stack uses ternary weight packing plus INT8 activation
-quantization for efficient artifacts.</p>
-<figure id="fig:deploy-flow" data-latex-placement="t">
+<p>The deploy stage converts a trained checkpoint into a compact
+artifact through ternary weight packing <span class="citation"
+data-cites="wang_bitnet_2023"></span> and INT8 activation scaling, with
+size estimates aligned with lightweight deployment goals <span
+class="citation"
+data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>. The
+same subcommand emits standard or quantized artifacts, or exports
+HuggingFace Transformers and BitNet GGUF formats for external runtimes.
+The formulations and size estimates are deferred to Appendix <a
+href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+<figure id="fig:deploy-flow">
 
 <figcaption>Deployment path from a trained checkpoint to a compact
-artifact. The codebase treats quantization as a deploy-stage
-transformation rather than a separate model family.</figcaption>
+artifact. Quantization is a deploy-stage transformation rather than a
+separate model family.</figcaption>
 </figure>
-<h2 id="ternary-quantization-and-activation-scaling">Ternary
-Quantization and Activation Scaling</h2>
-<p>The deploy-stage transforms a trained checkpoint into a compact
-artifact via BitNet-style ternary weight packing <span class="citation"
-data-cites="wang_bitnet_2023"></span>, INT8 activation scaling, and
-1.58-bit storage approximation aligned with lightweight deployment goals
-<span class="citation"
-data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>. The
-mathematical formulations of the ternary weight scaling, the INT8
-activation quantization/dequantization, and the FP32/FP16/1.58-bit size
-estimates are deferred to Appendix <a href="#sec:annex-norm-bitnet-mod"
-data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h1 id="sec:sbert">SBERT Downstream Tasks</h1>
 <p>Sentence embedding is built on Siamese-style training <span
 class="citation" data-cites="reimers_sentence-bert_2019"></span>. For
@@ -2023,7 +1685,7 @@ k-means).</p></li>
 <li><p><strong>Encode</strong>: persistent embedding export for later
 retrieval.</p></li>
 </ul>
-<figure id="fig:sbert-modes" data-latex-placement="t">
+<figure id="fig:sbert-modes">
 
 <figcaption>SBERT workflow reuse. A single encoder supports online pair
 scoring, corpus retrieval, clustering, and persistent embedding
@@ -2036,153 +1698,76 @@ data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h1 id="sec:dashai-plugin">No-Code Integration: The
 <code>dashai-frankenstein</code> Plugin</h1>
-<p>The schema-driven CLI and web builder described in Section <a
+<p>The CLI and web builder described in Section <a
 href="#sec:system-design" data-reference-type="ref"
-data-reference="sec:system-design">3</a> serve researchers who are
-comfortable with YAML configuration files. A complementary
-audience—domain specialists, educators, and analysts who need a trained
-model but not a training script—is better served by a graphical, no-code
-environment. To reach that audience, Frankenstein Transformer ships a
-companion adapter package, <code>dashai-frankenstein</code>, that
-registers the Frankenstein model classes as components of
-<strong>dashAI</strong> (<a
+data-reference="sec:system-design">3</a> serve researchers comfortable
+with YAML configuration files. A complementary audience—domain
+specialists, educators, and analysts who need a trained model but not a
+training script—is better served by a graphical environment.
+Frankenstein Transformer therefore ships
+<code>dashai-frankenstein</code>, an adapter that registers its model
+classes as components of <strong>dashAI</strong> (<a
 href="https://github.com/DashAISoftware/dashAI"
 class="uri"><code>https://github.com/DashAISoftware/dashAI</code></a>),
-an open-source, local-first desktop workbench for machine learning
-developed by a Chilean academic consortium (Universidad de Chile/FCFM,
-CENIA, IMFD, and ANID funding). Because both systems are schema-driven
-at heart—dashAI renders its configuration forms directly from Pydantic
-schemas, while Frankenstein validates its YAML against a strict JSON
-Schema—the integration required no changes to dashAI’s backend: the
-plugin is discovered through the standard <code>dashai.plugins</code>
-entry-points group on startup, exactly as documented in dashAI’s plugin
-guide (<a href="https://docs.dash-ai.com/learn/guides/plugins/"
-class="uri"><code>https://docs.dash-ai.com/learn/guides/plugins/</code></a>),
-where plugins are ordinary PyPI packages whose first-party generative
-capabilities are themselves distributed as plugins.</p>
+an open-source, local-first machine-learning workbench developed by a
+Chilean academic consortium (Universidad de Chile/FCFM, CENIA, IMFD, and
+ANID funding). Both systems are schema-driven—dashAI renders forms from
+Pydantic schemas, Frankenstein validates YAML against a strict JSON
+Schema—so the integration leaves dashAI’s backend untouched; the plugin
+is discovered through the standard <code>dashai.plugins</code>
+entry-points group documented in dashAI’s plugin guide (<a
+href="https://docs.dash-ai.com/learn/guides/plugins/"
+class="uri"><code>https://docs.dash-ai.com/learn/guides/plugins/</code></a>).</p>
 <h2 id="registered-components">Registered Components</h2>
-<p>A single <code>dashai.plugins</code> entry-points group registers
-five components in the dashAI component registry, covering the full
-breadth of the toolkit’s model classes:</p>
+<p>A single entry-points group registers five components:</p>
 <ul>
 <li><p><strong><code>FrankensteinMLMModel</code></strong>
-(<code>BaseModel</code>) — binds to dashAI’s
-<code>TextClassificationTask</code>. It trains the Frankenstein encoder
-with a full-precision classification head pooled over the encoder output
-(Strategy A of the integration audit), inheriting all sequence mixers,
-normalizers, and optimizer families from the underlying engine;
-<code>predict</code> returns a per-class probability matrix.</p></li>
+(<code>BaseModel</code>, <code>TextClassificationTask</code>): encoder
+with a classification head over pooled output; <code>predict</code>
+returns per-class probabilities.</p></li>
 <li><p><strong><code>FrankensteinDecoderModel</code></strong>
-(<code>BaseGenerativeModel</code>) — binds to
-<code>TextToTextGenerationTask</code>. It forces
-<code>model_class: frankensteindecoder</code> (which in turn forces
-<code>mode: decoder</code>) and exposes autoregressive top-<em>k</em>
-sampling; generation-specific parameters (<code>max_new_tokens</code>,
-<code>temperature</code>, <code>top_k</code>) remain as native dashAI
-form fields because they are inference-time knobs with no home in the
-Frankenstein training schema.</p></li>
+(<code>BaseGenerativeModel</code>,
+<code>TextToTextGenerationTask</code>): forces the decoder class and
+exposes autoregressive top-<span class="math inline">\(k\)</span>
+sampling.</p></li>
 <li><p><strong><code>FrankensteinViTClassifier</code></strong>
-(<code>BaseModel</code>) — binds to
-<code>ImageClassificationTask</code>, reusing the Vision Transformer’s
-built-in classification head (Appendix <a href="#sec:annex-vision"
+(<code>BaseModel</code>, <code>ImageClassificationTask</code>): uses the
+ViT classification head (Appendix <a href="#sec:annex-vision"
 data-reference-type="ref"
 data-reference="sec:annex-vision">23</a>).</p></li>
 <li><p><strong><code>FrankensteinViTSegmenter</code></strong>
-(<code>BaseModel</code>) — binds to a plugin-provided
-<code>SegmentationTask</code>, a new <code>BaseTask</code> component
-that dashAI does not ship; it uses the ViT segmentation head and returns
-per-pixel class maps.</p></li>
+(<code>BaseModel</code>, plugin <code>SegmentationTask</code>): uses the
+ViT segmentation head and returns per-pixel class maps.</p></li>
 <li><p><strong><code>SegmentationTask</code></strong>
-(<code>BaseTask</code>) — the companion task declaring image-in/mask-out
-column types for the segmenter.</p></li>
+(<code>BaseTask</code>): declares the image-in/mask-out contract that
+dashAI does not ship.</p></li>
 </ul>
-<p>All five components share one thin engine facade over Frankenstein’s
-reusable engine API (the non-CLI, non-supervisor interface extracted in
-Phase 0 of the integration plan), so there is exactly one heavy
-dependency (<code>frankenstein-transformer</code>) behind the
-plugin.</p>
+<p>All share one thin facade over the engine API, so the plugin has a
+single heavy dependency.</p>
 <h2 id="passthrough-configuration-schema">Passthrough Configuration
 Schema</h2>
-<p>The integration preserves Frankenstein’s schema-first philosophy
-(Section <a href="#sec:system-design" data-reference-type="ref"
-data-reference="sec:system-design">3</a>) by keeping the Frankenstein
-JSON Schema as the single source of truth rather than translating its
-<span class="math inline">\(150+\)</span> model and <span
-class="math inline">\(38\)</span> training fields into native dashAI
-form fields—a translation that would be brittle against an actively
-evolving schema. Instead, each component exposes a minimal Pydantic
-schema whose only user-facing field, <code>frankenstein_json</code>, is
-a string containing a complete Frankenstein training config as a
-<em>single-line JSON</em> document (a concession to dashAI’s single-line
-text fields; users build the YAML with the schema-driven web builder and
-convert it with a one-liner). Before any training or model construction
-launches, the adapter runs a three-stage validation pipeline:</p>
-<ol>
-<li><p><strong>JSON parsing</strong> — catches syntax errors in the
-single-line payload.</p></li>
-<li><p><strong>JSON Schema validation</strong> —
-<code>jsonschema.validate</code> against the resolved Frankenstein
-schema, enforcing <code>additionalProperties: false</code> and every
-enum range (mixers, optimizers, norms, activations).</p></li>
-<li><p><strong>Config-loader validation</strong> — Frankenstein’s own
-<code>load_training_config</code> enforces the cross-component
-constraints (divisibility of <code>hidden_size</code> by
-<code>num_heads</code>, <code>num_kv_heads</code> dividing
-<code>num_heads</code>, vocabulary/tokenizer agreement, BitNet flag
-rules, optimizer presence per task, <code>frankensteindecoder</code>
-forcing <code>mode: decoder</code>).</p></li>
-</ol>
-<p>Any failure surfaces to the dashAI user as a single readable
-<code>ValueError</code> tagged with the failing stage, so invalid
-configurations never reach the training loop—the same fail-fast contract
-the CLI provides. Dataset injection is handled by adapters that map
-dashAI’s <code>DashAIDataset</code> (a Hugging Face
-<code>datasets</code> wrapper) onto Frankenstein’s dataset expectations,
-inject <code>vocab_size</code> from the resolved tokenizer so the
-embedding matrix matches the vocabulary, and stream per-epoch metrics
-back into dashAI’s metric store so training progress is visible in the
-UI. Two boolean checkboxes control the data source:
-<code>use_dashai_dataset</code> (train on the run dataset vs. the JSON’s
-<code>text_dataset</code> block) and
-<code>use_dashai_dataset_for_tokenizer</code> (when the config sets
-<code>tokenizer.source=train_from_dataset</code>, whether the tokenizer
-is trained from the run dataset or from the JSON-configured corpus); in
-the latter mode the tokenizer is trained <em>first</em> and the
-resulting vocabulary size is injected into
-<code>model.dims.vocab_size</code> before model construction.</p>
-<h2 id="work-in-progress">Work in Progress</h2>
-<p>The plugin is a work in progress. Its phases are implemented—the MLM
-text-classification MVP (Phase 1), the generative decoder and ViT
-classifier (Phase 2), and the ViT segmenter plus the plugin-provided
-<code>SegmentationTask</code> (Phase 3)—but the package has not yet been
-executed inside a live dashAI instance: the component contract was
-implemented from an audit of dashAI’s plugin registry, base classes, and
-job-queue architecture rather than validated end-to-end. Publication to
-PyPI is likewise pending, both for the plugin itself and for its
-dependency floor (<code>frankenstein-transformer&gt;=1.1.0</code>, the
-engine-API release that supersedes the pre-engine <code>1.0.0</code>
-already on PyPI). Known limitations carried into the next iteration
-include: the MLM component runs a direct supervised classification loop
-rather than an MLM-pretrain-then-finetune recipe; the passthrough schema
-defers curated native form fields for high-leverage knobs (model class,
-mixer pattern, optimizer family) to a future version; and dashAI’s
-ability to render segmentation-mask output columns is unconfirmed and
-may require a local frontend addition. These items are tracked in the
-repository’s integration audit (<a
-href="https://github.com/erickfmm/frankenstein-transformer"
-class="uri"><code>https://github.com/erickfmm/frankenstein-transformer</code></a>),
-and the design intentionally leaves dashAI’s backend core untouched, so
-future dashAI releases cannot break the adapter through coupling.</p>
-<p>The integration completes the toolkit’s accessibility story: the same
-validated configuration contract that drives the CLI, the Streamlit
-builder, and the export pipeline now also drives a third-party no-code
-workbench, allowing Frankenstein’s architecture space to be explored
-from a graphical interface without sacrificing the schema guarantees on
-which reproducibility depends.</p>
+<p>The Frankenstein JSON Schema remains the single source of truth
+instead of translating its fields into native dashAI forms. Each
+component exposes one <code>frankenstein_json</code> field holding a
+complete training configuration as single-line JSON. Before any training
+runs, the adapter parses the JSON, validates it against the resolved
+schema, and applies the config loader’s cross-component checks; failures
+surface as a readable error tagged with the failing stage. Dataset
+adapters map dashAI datasets onto Frankenstein’s expectations, inject
+the vocabulary size from the resolved tokenizer, and stream per-epoch
+metrics back to dashAI.</p>
+<h2 id="status">Status</h2>
+<p>The three implementation phases—classification MVP, generative
+decoder and ViT classifier, and ViT segmenter—are complete, but the
+package has not yet run inside a live dashAI instance and PyPI
+publication is pending. Known limitations include a direct
+classification loop rather than MLM pretraining, deferred native form
+fields for high-leverage knobs, and unconfirmed rendering of
+segmentation masks. The adapter deliberately leaves dashAI’s core
+untouched, so future releases cannot break it through coupling.</p>
 <h1 id="sec:discussion">Discussion</h1>
-<p>The design choices in Transformer Encoder Frankenstein reflect
-several engineering and research tensions in modern deep learning
-tooling.</p>
+<p>The design choices in Frankenstein Transformer reflect several
+engineering and research tensions in modern deep learning tooling.</p>
 <h2 id="schema-driven-design-trade-offs">Schema-Driven Design
 Trade-offs</h2>
 <p>The schema-first approach provides significant reproducibility
@@ -2203,35 +1788,35 @@ optimizer-specific groups, default values aligned with research best
 practices, and documentation strings for web interface rendering.</p>
 <h2 id="architectural-coverage-and-gaps">Architectural Coverage and
 Gaps</h2>
-<p>The seventeen implemented mixer architectures span major research
-directions in sequence modeling, but certain gaps remain. The system
-lacks recent hybrid architectures such as Griffin <span class="citation"
+<p>The forty-three implemented mixers span the major research directions
+in sequence modeling, but certain gaps remain. The system lacks recent
+hybrid architectures such as Griffin <span class="citation"
 data-cites="soares_griffin_2024"></span> and Jamba <span
 class="citation" data-cites="gu_jamba_2024"></span>, which combine
-gating with state-space models. MoE (Mixture of Experts) routing is
-implemented for FFN layers but not for attention computation, where
-recent work has shown benefits <span class="citation"
-data-cites="lewis_moe_2021"></span>.</p>
-<p>The sparse attention coverage is comprehensive, but implementation of
-training-free methods (FASA, SpargeAttn) raises runtime errors during
-training, reflecting architectural constraints: these methods require
-pretrained checkpoints from full-attention models or specific
-fine-tuning procedures that are not currently automated.</p>
-<p>The gated and fast-weight mechanism coverage is strong across major
-categories (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX,
-Gated Softmax, and the six Falcon variants <span class="citation"
-data-cites="zhang_falcon_2026"></span>). Residual-stream macro-design is
-covered through the manifold-constrained n-stream residual (mHC) <span
+gating with state-space models. MoE routing is implemented for FFN
+layers but not for attention computation, where recent work has shown
+benefits <span class="citation" data-cites="lewis_moe_2021"></span>.</p>
+<p>The sparse attention coverage is broad, but the training-free methods
+(FASA, SpargeAttn) raise runtime errors during training, reflecting
+architectural constraints: these methods require pretrained checkpoints
+from full-attention models or specific fine-tuning procedures that are
+not currently automated.</p>
+<p>The gated and fast-weight coverage spans the major categories,
+including the six Falcon variants <span class="citation"
+data-cites="zhang_falcon_2026"></span>. Residual-stream macro-design is
+covered by Attention Residuals <span class="citation"
+data-cites="sun_attnres_2026"></span> and by the manifold-constrained
+<span class="math inline">\(n\)</span>-stream residual (mHC) <span
 class="citation" data-cites="xie_mhc_2025"></span>, whose Sinkhorn–Knopp
 projection onto the Birkhoff polytope restores the identity-mapping
-property lost by unconstrained Hyper-Connections; mHC is validated only
-at the level of the published 3B–27B MoE experiments, and the framework
-would benefit from independent reproductions at smaller scales (see
-Appendix <a href="#sec:annex-mhc" data-reference-type="ref"
+property lost by unconstrained hyper-connections; mHC is validated only
+at the level of the published 3B–27B MoE experiments and would benefit
+from independent reproductions at smaller scales (Appendix <a
+href="#sec:annex-mhc" data-reference-type="ref"
 data-reference="sec:annex-mhc">21</a>).</p>
 <h2 id="optimizer-landscape-fragmentation">Optimizer Landscape
 Fragmentation</h2>
-<p>The support for twenty-two optimizer families across six algorithmic
+<p>The support for twenty-three optimizer families across seven
 categories demonstrates comprehensiveness but also highlights the
 fragmented state of optimization research. Users face significant
 decision complexity when choosing among variance-reduction methods
@@ -2276,38 +1861,37 @@ alongside training jobs requires additional resources and infrastructure
 considerations that may not be appropriate for all environments,
 particularly HPC clusters without web access.</p>
 <h1 id="sec:conclusion">Conclusion</h1>
-<p>Transformer Encoder Frankenstein presents a unified,
-configuration-driven experimentation platform addressing critical
-challenges in modern deep learning research: architectural fragmentation
-across dense attention, recurrent models, sparse patterns, gated
-mechanisms, and fast-weight memories; optimizer landscape complexity
-spanning classical baselines, variance-reduction methods,
-memory-efficient variants, schedule-free approaches, curvature-aware
-algorithms, and geometry-oriented methods; and end-to-end deployment
-workflows spanning quantization and sentence embedding applications.</p>
+<p>Frankenstein Transformer presents a unified, configuration-driven
+experimentation platform addressing three challenges in modern deep
+learning research: architectural fragmentation across dense attention,
+recurrent models, sparse patterns, gated mechanisms, latent compression,
+conditional memory, fast-weight memories, and geometric priors;
+optimizer landscape complexity spanning classical baselines,
+variance-reduction methods, memory-efficient variants, schedule-free
+approaches, curvature-aware algorithms, and geometry-oriented methods;
+and end-to-end deployment workflows spanning quantization and sentence
+embedding.</p>
 <p>The system’s primary contributions are:</p>
 <ol>
 <li><p><strong>Schema-First Design</strong>: A strict YAML-based
 configuration contract with validation and prefixed hyperparameter
-routing enabling reproducible experiments across seventeen mixer
-architectures and twenty-three optimizer families.</p></li>
+routing enabling reproducible experiments across forty-three sequence
+mixers and twenty-three optimizer families.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
-Implementation spanning major research categories including dense
-baselines (standard, sigmoid attention), recurrent alternatives (RetNet,
-Mamba, ODE-style, Titans), sparse attention (Sparse Transformer,
-Longformer, BigBird, SparseK, NSA, SpargeAttn, FASA), gated mechanisms
-(GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated
-Softmax, KDA), and fast-weight attention (Falcon-1/2/3, Falcon-1A/2A/3A)
-<span class="citation" data-cites="zhang_falcon_2026"></span>.</p></li>
+Implementation spanning dense baselines, recurrent and retentive blocks,
+sparse attention, gated mechanisms, latent compression, conditional
+memory, fast-weight attention, and geometric-field attention, with
+encoder, decoder, and Vision Transformer model classes.</p></li>
 <li><p><strong>Unified Optimizer Framework</strong>: Prefixed
 hyperparameter groups enabling fine-grained control over embeddings,
-normalization layers, recurrent blocks, attention weights, and FFN
-parameters across classical baselines (SGD+Momentum, AdamW),
-variance-reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious),
-memory-efficient (Adafactor, GaLore, Lion, APOLLO, APOLLO-Mini,
+normalization layers, attention weights, and the remaining parameters
+across classical baselines (SGD+Momentum, AdamW, RAdam), variance
+reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious), memory-efficient and
+low-rank methods (Adafactor, GaLore, Lion, APOLLO, APOLLO-Mini,
 Q-APOLLO), large-batch and schedule simplification (LAMB, Schedule-Free
 AdamW, Prodigy), curvature-aware (Sophia), second-order (Shampoo, SOAP),
-and geometry-oriented (Muon, Turbo-Muon) optimizers.</p></li>
+geometry-oriented (Muon, Turbo-Muon), and adaptivity-tunable (Anon)
+optimizers.</p></li>
 <li><p><strong>End-to-End Workflows</strong>: Integrated deployment
 pipeline supporting ternary weight packing and INT8 activation
 quantization; SBERT-inspired training and inference for semantic
@@ -2362,18 +1946,18 @@ analysis of stability conditions for different mixer-optimizer
 combinations, particularly with looped blocks and aggressive
 quantization, remains open.</p></li>
 <li><p><strong>Multimodal and Task-Specific Extensions</strong>: The
-current design focuses on sequence modeling. Extensions for
-vision-language models, multimodal architectures, and task-specific
-fine-tuning workflows (e.g., instruction tuning, RLHF) would broaden
-applicability.</p></li>
+current design covers text and single-image tasks through the Vision
+Transformer class. Extensions to vision-language models, multimodal
+architectures, and task-specific fine-tuning workflows (e.g.,
+instruction tuning, RLHF) would broaden applicability.</p></li>
 </ol>
 <p>The research trajectory of sequence modeling continues toward hybrid
-approaches that combine strengths of multiple paradigms—compression from
-recurrence, selectivity from attention, gating for memory management,
-and sparsity for efficiency. A unified experimentation platform like
-Transformer Encoder Frankenstein is increasingly valuable as this
-convergence accelerates, enabling researchers to systematically explore
-this expanding design space with reproducible, well-engineered
+approaches that combine the strengths of multiple paradigms—compression
+from recurrence, selectivity from attention, gating for memory
+management, and sparsity for efficiency. A unified experimentation
+platform like Frankenstein Transformer becomes increasingly valuable as
+this convergence accelerates, enabling researchers to explore this
+expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
 <p><span>114</span> urlstyle</p>
@@ -6561,10 +6145,10 @@ Adaptive Optimizers</h2>
 fixed learning rate. At each iteration <span
 class="math inline">\(t\)</span>, the algorithm maintains an exponential
 moving average <span class="math inline">\(m_t\)</span> of past
-gradients: <span class="math display">\[\begin{align}
+gradients: <span class="math display">\[\begin{aligned}
 m_t &amp;= \beta m_{t-1} + g_t \\
 \theta_{t+1} &amp;= \theta_t - \eta m_t
-\end{align}\]</span> where <span class="math inline">\(g_t = \nabla
+\end{aligned}\]</span> where <span class="math inline">\(g_t = \nabla
 f(\theta_t)\)</span>, <span class="math inline">\(\beta \in [0.8,
 0.99]\)</span> controls the momentum decay, and <span
 class="math inline">\(\eta\)</span> is the fixed learning rate. The
@@ -6595,14 +6179,14 @@ class="math inline">\(\theta_T\)</span></p>
 <p>Adam tracks exponential moving averages of both first moment (mean)
 and second moment (uncentered variance) to achieve element-wise adaptive
 learning rates. The update rule is: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1) g_t \\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \\
 \hat{m}_t &amp;= \frac{m_t}{1-\beta_1^t}, \quad \hat{v}_t =
 \frac{v_t}{1-\beta_2^t} \quad \text{(bias correction)} \\
 \theta_{t+1} &amp;= \theta_t - \eta
 \left(\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}\right)
-\end{align}\]</span> AdamW introduces a crucial modification: weight
+\end{aligned}\]</span> AdamW introduces a crucial modification: weight
 decay is applied directly to parameters (decoupled from gradients):
 <span class="math inline">\(\theta_t \gets
 \theta_t(1-\eta\lambda)\)</span> rather than adding <span
@@ -6690,14 +6274,14 @@ Momentum and Variance Reduction (2024–2025)</h2>
 Momentum).</h4>
 <p>Adan reformulates Nesterov acceleration without the extra gradient
 computation required by classical Nesterov SGD. The algorithm maintains
-three momentum buffers: <span class="math display">\[\begin{align}
+three momentum buffers: <span class="math display">\[\begin{aligned}
 m_t &amp;= (1-\beta_1)m_{t-1} + \beta_1 g_t \quad\text{(first moment)}
 \\
 v_t &amp;= (1-\beta_2)v_{t-1} + \beta_2(g_t - g_{t-1})
 \quad\text{(velocity/gradient difference)} \\
 n_t &amp;= (1-\beta_3)n_{t-1} + \beta_3[g_t +
 (1-\beta_1)(g_t-g_{t-1})]^2 \quad\text{(Nesterov second moment)}
-\end{align}\]</span> The <strong>Nesterov Momentum Estimation</strong>
+\end{aligned}\]</span> The <strong>Nesterov Momentum Estimation</strong>
 (NME) term <span class="math inline">\(\bar{g}_t = g_t +
 (1-\beta_1)(g_t-g_{t-1})\)</span> estimates the gradient at a future
 position without evaluating it. The update combines momentum with
@@ -6736,13 +6320,13 @@ Pruned Tuning).</h4>
 appears in both the first moment and second moment estimates, creating
 circularity. ADOPT <strong>decouples</strong> by using the previous
 step’s second moment for the denominator: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 m_t &amp;= \beta_1 m_{t-1} +
 (1-\beta_1)\frac{g_t}{\sqrt{v_{t-1}}+\epsilon} \quad\text{(uses
 $v_{t-1}$, not $v_t$)} \\
 \theta_{t+1} &amp;= \theta_t - \eta m_t
-\end{align}\]</span> This simple reordering achieves the optimal
+\end{aligned}\]</span> This simple reordering achieves the optimal
 convergence rate <span class="math inline">\(O(1/\sqrt{T})\)</span> with
 <strong>any</strong> choice of <span class="math inline">\(\beta_2 \in
 (0,1)\)</span>, without bounded-noise assumptions. The practical
@@ -6776,7 +6360,7 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta m\)</span>
 <strong>mixture of two EMAs</strong>: one fast-decaying and one
 slow-decaying. This addresses the observation that gradients remain
 informative over tens of thousands of steps, not just hundreds: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 m_{1,t} &amp;= \beta_1 m_{1,t-1} + (1-\beta_1)g_t \quad\text{(fast EMA,
 $\beta_1 \approx 0.9$)} \\
 m_{2,t} &amp;= \beta_3 m_{2,t-1} + (1-\beta_3)g_t \quad\text{(slow EMA,
@@ -6785,7 +6369,7 @@ v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 m_t &amp;= m_{1,t} + \alpha_t m_{2,t} \quad\text{(mixture with scheduled
 weight $\alpha_t$)} \\
 \theta_{t+1} &amp;= \theta_t - \eta\frac{m_t}{\sqrt{v_t}+\epsilon}
-\end{align}\]</span> The mixture weight <span
+\end{aligned}\]</span> The mixture weight <span
 class="math inline">\(\alpha_t\)</span> typically increases during
 training, allowing the fast EMA to provide immediate adaptation while
 the slow EMA accumulates long-range gradient correlations. Empirically,
@@ -6821,15 +6405,15 @@ learning Rates Shine).</h4>
 <p>MARS combines preconditioned gradient methods (e.g., AdamW) with
 <strong>variance reduction</strong> via scaled stochastic recursive
 momentum. The core innovation is a variance-reduced gradient estimate:
-<span class="math display">\[\begin{align}
+<span class="math display">\[\begin{aligned}
 c_t &amp;= g_t + \gamma(c_{t-1} - g_{t-1}) \quad\text{(SVRG-style
 recursive estimate)} \\
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1)c_t \\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)c_t^2 \\
 \theta_{t+1} &amp;= \theta_t - \eta\frac{m_t}{\sqrt{v_t}+\epsilon}
-\end{align}\]</span> where <span class="math inline">\(\gamma \in [0.01,
-0.1]\)</span> controls how much historical gradient information is
-retained. The variance-reduced gradient <span
+\end{aligned}\]</span> where <span class="math inline">\(\gamma \in
+[0.01, 0.1]\)</span> controls how much historical gradient information
+is retained. The variance-reduced gradient <span
 class="math inline">\(c_t\)</span> acts as an implicit noise filter,
 amplifying consistent signal directions and dampening contradictory
 noise. MARS-AdamW consistently outperforms bare AdamW by significant
@@ -6864,14 +6448,14 @@ Optimizers (Cautious AdamW, Cautious Lion).</h4>
 <p>The Cautious framework applies a <strong>one-line
 modification</strong> to any momentum-based optimizer: mask the update
 so that only dimensions where momentum and gradient directions agree are
-applied: <span class="math display">\[\begin{align}
+applied: <span class="math display">\[\begin{aligned}
 \text{mask}_i &amp;= \begin{cases} 1 &amp; \text{if } m_t[i] \cdot
 g_t[i] &gt; 0 \quad\text{(agreement)} \\ 0 &amp; \text{otherwise}
 \end{cases} \\
 u_t &amp;= \left(\frac{m_t}{\sqrt{v_t}+\epsilon}\right) \odot
 \text{mask} \quad\text{(element-wise masking)} \\
 \theta_{t+1} &amp;= \theta_t - \eta u_t
-\end{align}\]</span> The intuition: momentum <span
+\end{aligned}\]</span> The intuition: momentum <span
 class="math inline">\(m_t\)</span> estimates the gradient direction from
 history; the current gradient <span class="math inline">\(g_t\)</span>
 is instantaneous signal. When both agree, the optimizer is confident and
@@ -6916,7 +6500,7 @@ id="lamb-layer-wise-adaptive-moments-optimizer-for-batch-training.">LAMB
 <p>LAMB extends Adam with <strong>layer-wise adaptive rate
 scaling</strong> (inspired by LARS), enabling stable training with
 extreme batch sizes (e.g., 64K on BERT): <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 m_t^L &amp;= \beta_1 m_{t-1}^L + (1-\beta_1)g_t^L \quad\text{(layer-wise
 first moment)} \\
 v_t^L &amp;= \beta_2 v_{t-1}^L + (1-\beta_2)(g_t^L)^2 \\
@@ -6926,7 +6510,7 @@ u_{\text{adam}}^L &amp;= \frac{m_t^L}{\sqrt{v_t^L}+\epsilon} +
 \quad\text{(trust ratio: layer normalization)} \\
 \theta_t^L &amp;= \theta_{t-1}^L - \eta \cdot \phi^L \cdot
 u_{\text{adam}}^L
-\end{align}\]</span> The <strong>trust ratio</strong> <span
+\end{aligned}\]</span> The <strong>trust ratio</strong> <span
 class="math inline">\(\phi^L = \|\theta^L\|_2 /
 \|u_{\text{adam}}^L\|_2\)</span> normalizes the effective update step
 relative to weight magnitude. In very large batches, stochastic gradient
@@ -6963,7 +6547,7 @@ class="math inline">\(\theta_T\)</span></p>
 optimization recipe. The algorithm maintains two parameter streams:
 <span class="math inline">\(z_t\)</span> (exploration) and <span
 class="math inline">\(x_t\)</span> (smooth average): <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \quad\text{(variance)} \\
 z_t &amp;= z_{t-1}(1-\eta\lambda) - \eta\frac{g_t}{\sqrt{v_t}+\epsilon}
 \quad\text{(adaptive step with decay)} \\
@@ -6972,7 +6556,7 @@ over time)} \\
 x_t &amp;= (1-c_t)x_{t-1} + c_t z_t \quad\text{(iterate averaging)} \\
 y_t &amp;= (1-\beta)z_t + \beta x_t \quad\text{(interpolation for
 evaluation point)}
-\end{align}\]</span> The averaging coefficient <span
+\end{aligned}\]</span> The averaging coefficient <span
 class="math inline">\(c_t = 1/(t+1)\)</span> implements an implicit
 learning-rate schedule without explicitly specifying total steps <span
 class="math inline">\(T\)</span>. This framework unifies scheduling and
@@ -7013,7 +6597,7 @@ class="math inline">\(y_T\)</span></p>
 second-moment statistics for matrix-shaped parameters, storing only row
 and column accumulators rather than dense variance states. For a
 gradient matrix <span class="math inline">\(G_t \in \mathbb{R}^{m \times
-n}\)</span>: <span class="math display">\[\begin{align}
+n}\)</span>: <span class="math display">\[\begin{aligned}
 R_t &amp;= \beta_2 R_{t-1} + (1-\beta_2)(G_t^2) \mathbf{1}_n^T
 \quad\text{(row variance)} \\
 C_t &amp;= \beta_2 C_{t-1} + (1-\beta_2) \mathbf{1}_m^\top (G_t^2)
@@ -7024,7 +6608,7 @@ U_t &amp;= \frac{G_t}{\sqrt{\hat{V}_t}+\epsilon} \quad\text{(normalized
 adaptive step)} \\
 \hat{U}_t &amp;= \frac{U_t}{\max(1, \text{RMS}(U_t))}
 \quad\text{(stability clipping)}
-\end{align}\]</span> Instead of storing <span class="math inline">\(m
+\end{aligned}\]</span> Instead of storing <span class="math inline">\(m
 \times n\)</span> second-moment values, Adafactor stores only <span
 class="math inline">\(m + n\)</span> accumulators, reducing memory from
 <span class="math inline">\(O(n_{\text{params}})\)</span> to <span
@@ -7059,7 +6643,7 @@ Projection).</h4>
 optimization, reducing optimizer-state memory while maintaining adaptive
 step scaling. For a 2D parameter matrix <span class="math inline">\(W
 \in \mathbb{R}^{m \times n}\)</span>: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 U, S, V &amp;= \text{SVD}(G_t) \quad\text{(compute singular
 decomposition)} \\
 P &amp;\in \mathbb{R}^{n \times r} \quad\text{or} \quad P^\top \in
@@ -7070,7 +6654,7 @@ G_{\text{low}} &amp;= P^\top G_t \quad\text{(project to low-rank space)}
 \quad\text{(optimize in compressed space)} \\
 \Delta &amp;= P \Delta_{\text{low}} \quad\text{(reconstruct in original
 space)}
-\end{align}\]</span> By projecting into a rank-<span
+\end{aligned}\]</span> By projecting into a rank-<span
 class="math inline">\(r\)</span> subspace (typically <span
 class="math inline">\(r \ll \min(m,n)\)</span>), optimizer state is
 reduced from <span class="math inline">\(O(mn)\)</span> to <span
@@ -7110,12 +6694,12 @@ Rather than storing dense moments for every parameter entry, APOLLO
 projects a matrix gradient <span class="math inline">\(G_t \in
 \mathbb{R}^{m \times n}\)</span> into a compact random subspace and
 tracks Adam-style moments there: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 R_t &amp;= P_t G_t \quad\text{or}\quad R_t = G_t P_t^\top \\
 M_t^R &amp;= \beta_1 M_{t-1}^R + (1-\beta_1)R_t \\
 V_t^R &amp;= \beta_2 V_{t-1}^R + (1-\beta_2)R_t^2 \\
 \widetilde{R}_t &amp;= \frac{M_t^R}{\sqrt{V_t^R}+\epsilon}
-\end{align}\]</span> The projected state is <em>not</em> expanded back
+\end{aligned}\]</span> The projected state is <em>not</em> expanded back
 into a dense low-rank update as in SVD-based methods. Instead, APOLLO
 estimates a structured scaling tensor <span
 class="math inline">\(S_t\)</span> in the original space. In the
@@ -7201,7 +6785,7 @@ Adam-like (<span class="math inline">\(\gamma=1\)</span>) behaviors, and
 extrapolating beyond both. The core innovation is the Incremental Delay
 Update (IDU) mechanism, which enables stable convergence across the
 entire real-valued adaptivity spectrum:</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1) g_t \quad\text{(first
 moment)}\\
 v_t &amp;= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \quad\text{(second
@@ -7215,7 +6799,7 @@ moment)}\\
 \end{cases}\\
 \theta_{t+1} &amp;= \theta_t - \frac{\eta}{1-\beta_1^t} \cdot m_t \odot
 \text{fixed\_lr}_{\lfloor\log_2 t\rfloor}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p>Unlike standard adaptive optimizers, IDU updates the preconditioner
 only at powers of two (<span class="math inline">\(t = 2^k\)</span>),
 accumulating gradient statistics between updates and aggregating them
@@ -7272,7 +6856,7 @@ class="math inline">\(\theta_T\)</span></p>
 <p>Prodigy adapts the effective step scale through a running
 distance-like statistic, eliminating the need for explicit learning-rate
 tuning. The algorithm maintains a cumulative distance estimate: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 u_t &amp;= \frac{g_t}{\sqrt{v_t}+\epsilon} \quad\text{(unnormalized
 adaptive step)} \\
 s_t &amp;= s_{t-1} + \langle u_t, \theta_t - \theta_0 \rangle
@@ -7280,7 +6864,7 @@ s_t &amp;= s_{t-1} + \langle u_t, \theta_t - \theta_0 \rangle
 d_t &amp;= \max(d_{t-1}, d_0 + d_{\text{coef}} \cdot s_t)
 \quad\text{(distance estimate with lower bound)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \cdot d_t \cdot u_t
-\end{align}\]</span> where <span class="math inline">\(d_0\)</span> is
+\end{aligned}\]</span> where <span class="math inline">\(d_0\)</span> is
 an initial bound and <span
 class="math inline">\(d_{\text{coef}}\)</span> controls how aggressively
 the estimate adapts. The distance estimate <span
@@ -7342,7 +6926,7 @@ class="math inline">\(\Delta \theta \gets L^{-1/4} G R^{-1/4}\)</span>
 computes matrix preconditioners from Kronecker-structured outer-product
 statistics. For a 2D parameter matrix <span class="math inline">\(W \in
 \mathbb{R}^{m \times n}\)</span>: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 L_t &amp;= L_{t-1} + G_t G_t^\top \quad\text{(left/row Gram matrix, $m
 \times m$)} \\
 R_t &amp;= R_{t-1} + G_t^\top G_t \quad\text{(right/column Gram matrix,
@@ -7352,7 +6936,7 @@ eigendecomposition)} \\
 R_t^{-1/4} &amp;= Q_R (\Lambda_R)^{-1/4} Q_R^\top \\
 \Delta W_t &amp;= L_t^{-1/4} G_t R_t^{-1/4} \quad\text{(preconditioned
 gradient)}
-\end{align}\]</span> Shampoo approximates the full-matrix Adagrad
+\end{aligned}\]</span> Shampoo approximates the full-matrix Adagrad
 preconditioner <span class="math inline">\(H^{-1/2}\)</span> (where
 <span class="math inline">\(H\)</span> is the Hessian) using
 Kronecker-factored structure. Instead of storing a <span
@@ -7373,7 +6957,7 @@ in eigenbasis).</h4>
 preconditioning from momentum tracking. Instead of complex matrix
 algebra on preconditioned gradients, SOAP runs standard Adam in the
 eigenbasis of Shampoo’s preconditioners: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 L_t &amp;= L_{t-1} + G_t G_t^\top, \quad R_t = R_{t-1} + G_t^\top G_t
 \quad\text{(Gram accumulation)} \\
 Q_L, \Lambda_L &amp;= \text{eigh}(L_t), \quad Q_R, \Lambda_R =
@@ -7387,7 +6971,7 @@ v_t^{\text{rot}} &amp;= \beta_2 v_{t-1}^{\text{rot}} +
 U_t^{\text{rot}} &amp;=
 \frac{m_t^{\text{rot}}}{\sqrt{v_t^{\text{rot}}}+\epsilon}, \quad U_t =
 Q_L U_t^{\text{rot}} Q_R^\top \quad\text{(rotate back)}
-\end{align}\]</span> The key insight: all momentum tracking occurs in
+\end{aligned}\]</span> The key insight: all momentum tracking occurs in
 the well-conditioned eigenbasis, simplifying numerical stability and
 theoretical analysis. SOAP combines benefits of Shampoo (explicit
 curvature structure) and Adam (proven momentum mechanics), while being
@@ -7423,13 +7007,13 @@ class="math inline">\(\theta_T\)</span></p>
 <h4 id="lion-evolved-sign-momentum.">Lion (EvoLved Sign Momentum).</h4>
 <p>Lion achieves <strong>minimal memory overhead</strong> by using
 sign-based updates instead of full adaptive scaling: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 c_t &amp;= \beta_1 m_t + (1-\beta_1) g_t \quad\text{(momentum input)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \left(\text{sign}(c_t) +
 \lambda\theta_t\right) \quad\text{(sign operator update)} \\
 m_{t+1} &amp;= \beta_2 m_t + (1-\beta_2) g_t \quad\text{(momentum
 accumulation)}
-\end{align}\]</span> All element-wise scaling operations are replaced
+\end{aligned}\]</span> All element-wise scaling operations are replaced
 with <code>sign()</code>, which outputs <span
 class="math inline">\(\{-1, 0, +1\}\)</span>. This dramatically reduces
 memory compared to Adam-like methods: Lion stores only the momentum
@@ -7461,7 +7045,7 @@ id="sophia-second-order-hessian-information-with-optimized-approximation.">Sophi
 (Second-Order Hessian Information with Optimized Approximation).</h4>
 <p>Sophia uses <strong>diagonal Hessian estimates</strong> for
 curvature-aware scaling without the memory and compute cost of dense
-second-order methods. <span class="math display">\[\begin{align}
+second-order methods. <span class="math display">\[\begin{aligned}
 m_t &amp;= \beta_1 m_{t-1} + (1-\beta_1) g_t \quad\text{(first moment)}
 \\
 h_t &amp;= \beta_2 h_{t-(k-1)} + (1-\beta_2) \hat{h}_t
@@ -7470,7 +7054,7 @@ h_t &amp;= \beta_2 h_{t-(k-1)} + (1-\beta_2) \hat{h}_t
 clipping)} \\
 \theta_{t+1} &amp;= \theta_t - \eta \cdot
 \text{clip}\left(\frac{m_t}{\max(\gamma h_t, \epsilon)}, 1\right)
-\end{align}\]</span> where <span
+\end{aligned}\]</span> where <span
 class="math inline">\(\hat{h}_t\)</span> is a diagonal estimate (e.g.,
 Hutchinson-trace estimator) and <span
 class="math inline">\(\gamma\)</span> is a scaling factor. The diagonal
@@ -7511,7 +7095,7 @@ optimizers</strong> that reshape update geometry using Newton-Schulz
 polynomial iterations for orthogonalization. For a 2D parameter matrix
 <span class="math inline">\(W\)</span> with gradient <span
 class="math inline">\(G_t\)</span>: <span
-class="math display">\[\begin{align}
+class="math display">\[\begin{aligned}
 X_0 &amp;= \frac{G_t}{\|G_t\|_F + \epsilon} \quad\text{(normalized
 gradient)} \\
 A_k &amp;= X_k X_k^\top \quad\text{(Gramian)} \\
@@ -7521,8 +7105,8 @@ X_{k+1} &amp;= a X_k + B_k X_k \quad\text{(iteration $k=0,1,\ldots,4$)}
 \\
 W_{t+1} &amp;= W_t - \eta X_K \quad\text{(update with orthogonalized
 direction)}
-\end{align}\]</span> Muon performs 5 Newton-Schulz iterations to produce
-an approximately orthogonal direction, ensuring updates respect
+\end{aligned}\]</span> Muon performs 5 Newton-Schulz iterations to
+produce an approximately orthogonal direction, ensuring updates respect
 geometric constraints. Turbo-Muon adds an <strong>almost-orthogonal
 preconditioning</strong> (AOL) step before iterations, reducing the
 number of required orthogonalization steps to 4. The rationale:
@@ -7637,6 +7221,12 @@ computational cost, memory footprint, and deployment simplicity.</p>
 <h2 id="dense-attention-baselines-standard-and-sigmoid">Dense Attention
 Baselines: Standard and Sigmoid</h2>
 <h3 id="standard-softmax-attention">Standard Softmax Attention</h3>
+<figure id="fig:mixer-standard">
+
+<figcaption>Dataflow of standard softmax attention: parallel Q/K/V
+projections, scaled dot-product scores, row-wise softmax, and output
+projection.</figcaption>
+</figure>
 <p>Standard multi-head self-attention <span class="citation"
 data-cites="vaswani_attention_2017"></span> computes scaled dot-product
 similarity between token embeddings:</p>
@@ -7676,6 +7266,12 @@ history recall; highly parallelizable.</p></li>
 long contexts; KV cache dominates memory during generation.</p></li>
 </ul>
 <h3 id="sigmoid-attention">Sigmoid Attention</h3>
+<figure id="fig:mixer-sigmoid">
+
+<figcaption>Dataflow of sigmoid attention: an element-wise sigmoid
+replaces the row-wise softmax, so attention weights need not sum to
+one.</figcaption>
+</figure>
 <p>Sigmoid attention replaces row-wise softmax with element-wise sigmoid
 activation <span class="citation"
 data-cites="ramapuram_theory_2024"></span>:</p>
@@ -7717,6 +7313,12 @@ implementation.</p></li>
 loss.</p></li>
 </ul>
 <h3 id="grouped-query-attention-gqa">Grouped-Query Attention (GQA)</h3>
+<figure id="fig:mixer-gqa">
+
+<figcaption>Dataflow of grouped-query attention: keys and values are
+projected to fewer heads, expanded by repeat-interleave, and shared
+across each group of query heads.</figcaption>
+</figure>
 <p>Grouped-query attention <span class="citation"
 data-cites="ainslie_gqa_2023"></span> bridges multi-head attention (MHA)
 and multi-query attention (MQA) by partitioning query heads into groups,
@@ -7776,6 +7378,12 @@ choices.</p></li>
 <h2 id="recurrent-and-retentive-architectures">Recurrent and Retentive
 Architectures</h2>
 <h3 id="retentive-networks-retnet">Retentive Networks (RetNet)</h3>
+<figure id="fig:mixer-retnet">
+
+<figcaption>Dataflow of RetNet: parallel Q/K/V projections feed a
+decayed state recurrence; the state carries across steps and the output
+reads it with the query.</figcaption>
+</figure>
 <p>RetNet <span class="citation" data-cites="sun_retentive_2023"></span>
 unifies three computation paradigms: parallel training, recurrent
 inference, and chunkwise deployment. Its core innovation is the
@@ -7824,6 +7432,14 @@ bias; may truncate learned long-range patterns.</p></li>
 </ul>
 <h3 id="mamba-selective-state-space-models">Mamba: Selective State-Space
 Models</h3>
+<figure id="fig:mixer-mamba">
+
+<figcaption>Dataflow of Mamba: a causal convolution feeds
+input-dependent <span class="math inline">\(\Delta\)</span>, <span
+class="math inline">\(B\)</span>, <span class="math inline">\(C\)</span>
+selections, ZOH discretization, and a selective state-space scan whose
+state carries across steps.</figcaption>
+</figure>
 <p>Mamba <span class="citation" data-cites="gu_mamba_2023"></span>
 frames recurrence as a continuous-time dynamical system with
 input-dependent parameters, achieving both linear training and
@@ -7876,6 +7492,12 @@ attention.</p></li>
 <h2 id="continuous-depth-transformers-ode-integration">Continuous-Depth
 Transformers: ODE Integration</h2>
 <h3 id="ode-transformer">ODE Transformer</h3>
+<figure id="fig:mixer-ode">
+
+<figcaption>Dataflow of the ODE transformer block: the hidden state is
+integrated through one or more Euler/RK4 steps before the output is
+read.</figcaption>
+</figure>
 <p>The ODE Transformer <span class="citation"
 data-cites="zhang_continuous_2021"></span> interprets network depth as
 numerical integration of a continuous dynamical system, using
@@ -7925,6 +7547,12 @@ class="math inline">\(k\)</span>; complex gating required for
 stability.</p></li>
 </ul>
 <h2 id="test-time-memory-titans">Test-Time Memory: Titans</h2>
+<figure id="fig:mixer-titan">
+
+<figcaption>Dataflow of Titans test-time memory: dense Q/K/V attention
+runs over a local window while read and write gates update an
+associative memory that carries across steps.</figcaption>
+</figure>
 <p>The Titans architecture <span class="citation"
 data-cites="behrouz_titans_2025"></span> introduces an orthogonal
 dimension: instead of static weights, the model maintains a learnable
@@ -8014,6 +7642,12 @@ latent, factorised, and temporal-latent designs under a common low-rank
 bottleneck.</p>
 <h2 id="multi-head-latent-attention-mla">Multi-Head Latent Attention
 (MLA)</h2>
+<figure id="fig:mixer-mla">
+
+<figcaption>Dataflow of multi-head latent attention: keys and values are
+down-projected to a low-rank latent, up-projected back, and attended
+with the query after RoPE.</figcaption>
+</figure>
 <p>Multi-Head Latent Attention (MLA) <span class="citation"
 data-cites="mehta_mla_2025"></span> compresses the per-token key–value
 state into a single low-rank latent vector <span
@@ -8071,6 +7705,12 @@ latent rank is a fixed global budget shared across heads.</p></li>
 </ul>
 <h2 id="group-query-latent-attention-gqla">Group-Query Latent Attention
 (GQLA)</h2>
+<figure id="fig:mixer-gqla">
+
+<figcaption>Dataflow of group-query latent attention: the shared latent
+cache is up-projected to key/value heads and combined with grouped
+queries.</figcaption>
+</figure>
 <p>Group-Query Latent Attention (GQLA) <span class="citation"
 data-cites="meng_gqla_2026"></span> is a minimal modification of MLA
 that exposes two algebraically equivalent decoding paths over the same
@@ -8130,6 +7770,12 @@ path selection is a deployment-time heuristic.</p></li>
 </ul>
 <h2 id="multi-head-low-rank-attention-mlra">Multi-Head Low-Rank
 Attention (MLRA)</h2>
+<figure id="fig:mixer-mlra">
+
+<figcaption>Dataflow of multi-head low-rank attention: the latent is
+partitioned across sub-heads, each with its own up-projection, before
+attention.</figcaption>
+</figure>
 <p>Multi-Head Low-Rank Attention (MLRA) <span class="citation"
 data-cites="liu_mlra_2026"></span> refactors the single MLA latent into
 <span class="math inline">\(L\)</span> disjoint sub-heads each of rank
@@ -8186,6 +7832,12 @@ class="math inline">\(r_{kv}\)</span>; more projection matrices than
 MLA; inter-device all-reduce on output.</p></li>
 </ul>
 <h2 id="tucker-attention">Tucker Attention</h2>
+<figure id="fig:mixer-tucker">
+
+<figcaption>Dataflow of Tucker attention: queries and key/values are
+projected through Tucker factors and reconstructed before the scaled dot
+product.</figcaption>
+</figure>
 <p>Tucker Attention <span class="citation"
 data-cites="klein_tucker_2026"></span> unifies MHA, GQA and MLA under a
 single Tucker-style factorisation of the query/key/value weight tensors
@@ -8247,6 +7899,12 @@ latency; rank selection is a per-task tuning problem.</p></li>
 </ul>
 <h2 id="interleaved-head-attention-iha">Interleaved Head Attention
 (IHA)</h2>
+<figure id="fig:mixer-iha">
+
+<figcaption>Dataflow of interleaved-head attention: heads are
+interleaved into a latent key/value representation that is attended by
+the query.</figcaption>
+</figure>
 <p>Interleaved Head Attention (IHA) <span class="citation"
 data-cites="duvvuri_iha_2026"></span> constructs <span
 class="math inline">\(P\)</span> pseudo-heads per original head
@@ -8308,6 +7966,12 @@ class="math inline">\(H\)</span>.</p></li>
 </ul>
 <h2 id="grouped-head-latent-attention-gta">Grouped-head laTenT Attention
 (GTA)</h2>
+<figure id="fig:mixer-gta">
+
+<figcaption>Dataflow of grouped-head latent attention: a shared map
+produces the latent key/value state consumed by the grouped
+heads.</figcaption>
+</figure>
 <p>Grouped-head laTenT Attention (GTA) <span class="citation"
 data-cites="sun_gta_2025"></span> combines two compressions: (1) a
 <em>shared attention map</em> — one attention-score tensor per group of
@@ -8362,6 +8026,12 @@ carefully.</p></li>
 </ul>
 <h2 id="multi-head-temporal-latent-attention-mtla">Multi-head Temporal
 Latent Attention (MTLA)</h2>
+<figure id="fig:mixer-mtla">
+
+<figcaption>Dataflow of multi-head temporal latent attention: a temporal
+compression stage produces the latent key/value state attended by the
+query.</figcaption>
+</figure>
 <p>Multi-head Temporal Latent Attention (MTLA) <span class="citation"
 data-cites="deng_mtla_2025"></span> extends MLA along the temporal axis:
 a hyper-network dynamically merges <span
@@ -8428,6 +8098,13 @@ detail; hyper-network adds compute; mask design is non-trivial.</p></li>
 and Synthesis</h2>
 <h2 id="compressed-convolutional-attention-cca">Compressed Convolutional
 Attention (CCA)</h2>
+<figure id="fig:mixer-cca">
+
+<figcaption>Dataflow of compressed convolutional attention: a 1D
+convolution feeds a latent compression <span
+class="math inline">\(c\)</span>, which the query attends
+directly.</figcaption>
+</figure>
 <p>Compressed Convolutional Attention (CCA) <span class="citation"
 data-cites="figliola_cca_2025"></span> takes a fundamentally different
 approach to latent attention: rather than compressing the KV-cache and
@@ -8527,6 +8204,12 @@ bias; fused kernel needed for theoretical speedup.</p></li>
 <h2
 id="compressed-convolutional-grouped-query-attention-ccgqa">Compressed
 Convolutional Grouped Query Attention (CCGQA)</h2>
+<figure id="fig:mixer-ccgqa">
+
+<figcaption>Dataflow of compressed convolutional grouped-query
+attention: the convolution latent supplies a grouped-query key/value
+expansion.</figcaption>
+</figure>
 <p>Compressed Convolutional Grouped Query Attention (CCGQA) <span
 class="citation" data-cites="figliola_cca_2025"></span> extends CCA with
 GQA-style key/value head sharing applied <em>inside</em> the compressed
@@ -8606,6 +8289,13 @@ class="math inline">\(\mathcal{O}(NK)\)</span> sequence mixing for fixed
 attention-style interpretation.</p>
 <h2 id="gaussian-mixture-attention-gma">Gaussian Mixture Attention
 (GMA)</h2>
+<figure id="fig:mixer-gma">
+
+<figcaption>Dataflow of Gaussian-mixture attention: per-head Gaussian
+responsibilities route keys and values into a <span
+class="math inline">\(K\)</span>-slot memory that the query reads back,
+normalized by <span class="math inline">\(Z\)</span>.</figcaption>
+</figure>
 <p>Gaussian Mixture Attention (GMA) <span class="citation"
 data-cites="huang_gma_2026"></span> replaces the explicit pairwise <span
 class="math inline">\(QK^\top\)</span> interaction of standard
@@ -8733,6 +8423,11 @@ formulations, algorithmic pseudocode, and comprehensive architectural
 comparisons.</p>
 <h2 id="sparse-transformer-factorized-strided-and-fixed-patterns">Sparse
 Transformer: Factorized Strided and Fixed Patterns</h2>
+<figure id="fig:mixer-sparse-transformer">
+
+<figcaption>Dataflow of the Sparse Transformer: a strided factorized
+pattern masks the score matrix before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-10">Mathematical Formulation</h3>
 <p>The Sparse Transformer <span class="citation"
 data-cites="child_sparse_transformer_2019"></span> reduces quadratic
@@ -8825,6 +8520,11 @@ practical efficiency.</p></li>
 <h2
 id="longformer-sliding-window-dilation-and-global-tokens">Longformer:
 Sliding Window, Dilation, and Global Tokens</h2>
+<figure id="fig:mixer-longformer">
+
+<figcaption>Dataflow of Longformer: sliding-window and global-token
+masks are applied to the score matrix before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-11">Mathematical Formulation</h3>
 <p>Longformer <span class="citation"
 data-cites="beltagy_longformer_2020"></span> achieves linear <span
@@ -8899,6 +8599,11 @@ patterns.</p></li>
 </ul>
 <h2 id="bigbird-random-local-and-global-sparse-graph">BigBird: Random,
 Local, and Global Sparse Graph</h2>
+<figure id="fig:mixer-bigbird">
+
+<figcaption>Dataflow of BigBird: local, random, and global adjacency
+masks the score matrix before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-12">Mathematical Formulation</h3>
 <p>BigBird <span class="citation"
 data-cites="zaheer_bigbird_2020"></span> preserves universal
@@ -8980,6 +8685,12 @@ g\)</span> hyperparameters remains task-dependent.</p></li>
 <h2 id="sparsek-attention-differentiable-top-k-selection">SparseK
 Attention: Differentiable Top-<span class="math inline">\(k\)</span>
 Selection</h2>
+<figure id="fig:mixer-sparsek">
+
+<figcaption>Dataflow of SparseK: a differentiable top-<span
+class="math inline">\(k\)</span> selector keeps only the highest-scoring
+keys before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-13">Mathematical Formulation</h3>
 <p>SparseK <span class="citation" data-cites="lou_sparsek_2024"></span>
 enables learnable sparsity via a <strong>differentiable top-<span
@@ -9057,6 +8768,11 @@ efficiency on some hardware; scoring network adds overhead.</p></li>
 <h2
 id="nsa-native-sparse-attention-hardware-aligned-hierarchical-branches">NSA
 (Native Sparse Attention): Hardware-Aligned Hierarchical Branches</h2>
+<figure id="fig:mixer-nsa">
+
+<figcaption>Dataflow of NSA: hierarchical block scoring and selection
+restrict the score matrix to selected blocks.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-14">Mathematical Formulation</h3>
 <p>NSA <span class="citation" data-cites="yuan_nsa_2025"></span>
 decomposes sparse attention into three parallel branches that are
@@ -9164,6 +8880,11 @@ overhead.</p></li>
 </ul>
 <h2 id="fasa-frequency-aware-sparse-attention">FASA: Frequency-Aware
 Sparse Attention</h2>
+<figure id="fig:mixer-fasa">
+
+<figcaption>Dataflow of FASA: a frequency-aware prune stage (evaluation
+only) drops low-value key blocks before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-15">Mathematical Formulation</h3>
 <p>FASA <span class="citation" data-cites="wang_fasa_2026"></span> is a
 <strong>training-free inference-time method</strong> that exploits
@@ -9254,6 +8975,11 @@ overhead.</p></li>
 </ul>
 <h2 id="spargeattn-two-stage-block-level-filtering">SpargeAttn:
 Two-Stage Block-Level Filtering</h2>
+<figure id="fig:mixer-sparge">
+
+<figcaption>Dataflow of SpargeAttn: a sparse predictor (evaluation only)
+prunes key blocks before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-16">Mathematical Formulation</h3>
 <p>SpargeAttn <span class="citation"
 data-cites="zhang_spargeattn_2025"></span> is a <strong>universal
@@ -9336,6 +9062,11 @@ tuning required per model family.</p></li>
 id="msa-minimax-sparse-attention-blockwise-sparse-attention-with-lightweight-index-branch">MSA
 (MiniMax Sparse Attention): Blockwise Sparse Attention with Lightweight
 Index Branch</h2>
+<figure id="fig:mixer-msa">
+
+<figcaption>Dataflow of MSA: a block-sparse mask restricts the score
+matrix before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-17">Mathematical Formulation</h3>
 <p>MSA <span class="citation" data-cites="lai_minimax_2026"></span> is a
 blockwise sparse attention mechanism built on grouped-query attention
@@ -9447,6 +9178,11 @@ engineering complexity and require custom block-sparse kernels.</p></li>
 id="sparda-sparse-decoupled-attention-forecast-guided-lookahead-block-selection">SparDA
 (Sparse Decoupled Attention): Forecast-Guided Lookahead Block
 Selection</h2>
+<figure id="fig:mixer-sparda">
+
+<figcaption>Dataflow of SparDA: a forecast projection guides lookahead
+block selection before softmax.</figcaption>
+</figure>
 <h3 id="mathematical-formulation-18">Mathematical Formulation</h3>
 <p>SparDA <span class="citation" data-cites="fu_sparda_2026"></span>
 introduces a <strong>decoupled</strong> sparse attention scheme that
@@ -9594,6 +9330,11 @@ selectively scale SDPA output channels.</p></li>
 published 2023–2026, analyzing their mathematical foundations, hardware
 efficiency characteristics, and empirical trade-offs.</p>
 <h2 id="gated-linear-attention-gla">1. Gated Linear Attention (GLA)</h2>
+<figure id="fig:mixer-gla">
+
+<figcaption>Dataflow of GLA: a sigmoid gate decays the recurrent state
+before the key/value outer product is added.</figcaption>
+</figure>
 <h3 id="mathematical-foundation">Mathematical Foundation</h3>
 <p>Gated Linear Attention <span class="citation"
 data-cites="yang_gla_2023"></span> augments vanilla linear attention
@@ -9713,6 +9454,11 @@ erase.</td>
 </table>
 <h2 id="deltanet-error-correcting-linear-attention">2. DeltaNet:
 Error-Correcting Linear Attention</h2>
+<figure id="fig:mixer-deltanet">
+
+<figcaption>Dataflow of DeltaNet: the beta gate applies an
+error-correcting delta rule to the recurrent state.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-1">Mathematical Foundation</h3>
 <p>DeltaNet <span class="citation"
 data-cites="yang_deltanet_2024"></span> applies a classical
@@ -9824,6 +9570,11 @@ to richer transition matrices (rank-1 instead of diagonal).</td>
 </table>
 <h2 id="gated-deltanet-synthesis-of-gating-and-error-correction">3.
 Gated DeltaNet: Synthesis of Gating and Error Correction</h2>
+<figure id="fig:mixer-gated-deltanet">
+
+<figcaption>Dataflow of Gated DeltaNet: decay and write gates modulate
+the delta-rule state update.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-2">Mathematical Foundation</h3>
 <p>Gated DeltaNet <span class="citation"
 data-cites="yang_gated_deltanet_2024"></span> synthesizes the strengths
@@ -9915,6 +9666,11 @@ diverse tasks at the cost of slightly reduced throughput due to richer
 transition matrices.</p>
 <h2 id="hgrn2-hierarchical-gating-with-outer-product-expansion">4.
 HGRN2: Hierarchical Gating with Outer-Product Expansion</h2>
+<figure id="fig:mixer-hgrn2">
+
+<figcaption>Dataflow of HGRN2: a hierarchical gate mixes the carried
+state with the key/value outer product.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-3">Mathematical Foundation</h3>
 <p>HGRN2 <span class="citation" data-cites="qin_hgrn2_2024"></span> uses
 an outer-product-based state expansion with <strong>hierarchically
@@ -9978,6 +9734,11 @@ gating (as opposed to element-wise selection) provides less per-item
 flexibility than delta-rule variants.</p>
 <h2 id="forgetting-transformer-fox-gating-in-softmax-logit-space">5.
 Forgetting Transformer (FoX): Gating in Softmax Logit Space</h2>
+<figure id="fig:mixer-fox">
+
+<figcaption>Dataflow of FoX: a learned forget gate becomes an additive
+log-bias on the score matrix.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-4">Mathematical Foundation</h3>
 <p>Forgetting Transformer (FoX), proposed by Lin et al. <span
 class="citation" data-cites="lin_forgetting_transformer_2025"></span>,
@@ -10049,6 +9810,11 @@ class="math inline">\(\mathcal{O}(L d)\)</span> per step at inference
 with KV cache, limiting extreme sequence lengths.</p>
 <h2 id="gated-attention-post-sdpa-sigmoid-gating">6. Gated Attention
 (Post-SDPA Sigmoid Gating)</h2>
+<figure id="fig:mixer-gated-softmax">
+
+<figcaption>Dataflow of post-SDPA gated attention: a sigmoid gate scales
+the softmax output before the projection.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-5">Mathematical Foundation</h3>
 <p>The NeurIPS 2025 Best Paper by the Qwen team proposes applying a
 sigmoid gate <strong>after</strong> scaled dot-product attention (SDPA):
@@ -10117,6 +9883,11 @@ model scales from 800M to 110B parameters consistently.</p></li>
 </ul>
 <h2 id="gated-deltanet-2-decoupled-channel-wise-erase-and-write">7.
 Gated DeltaNet-2: Decoupled Channel-wise Erase and Write</h2>
+<figure id="fig:mixer-gated-deltanet2">
+
+<figcaption>Dataflow of Gated DeltaNet-2: decoupled channel-wise erase
+and write gates act inside the delta rule.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-6">Mathematical Foundation</h3>
 <p>Gated DeltaNet-2 <span class="citation"
 data-cites="hatamizadeh_gated_deltanet2_2026"></span> addresses a shared
@@ -10280,6 +10051,11 @@ scale.</td>
 id="kimi-delta-attention-kda-channel-wise-decay-gating-for-the-delta-rule">8.
 Kimi Delta Attention (KDA): Channel-wise Decay Gating for the Delta
 Rule</h2>
+<figure id="fig:mixer-kda">
+
+<figcaption>Dataflow of KDA: channel-wise decay and a scalar write gate
+modulate the delta-rule state update.</figcaption>
+</figure>
 <h3 id="mathematical-foundation-7">Mathematical Foundation</h3>
 <p>Kimi Delta Attention <span class="citation"
 data-cites="kimi_kda_2025"></span> is the core module of Kimi Linear and
@@ -10883,6 +10659,13 @@ layer.</p></li>
 router regularization.</p></li>
 </ul>
 <h2 id="engram-conditional-memory">Engram Conditional Memory</h2>
+<figure id="fig:mixer-engram">
+
+<figcaption>Dataflow of Engram conditional memory: a causal depthwise
+convolution supplies short-range context, N-gram hash lookups retrieve
+per-order embeddings, and the lookups are summed with the convolution
+output.</figcaption>
+</figure>
 <p>Engram (<code>engram_attn</code>) implements conditional memory via
 scalable N-gram lookup <span class="citation"
 data-cites="cheng2026conditionalmemoryscalablelookup"></span>. It builds
@@ -11027,7 +10810,7 @@ in logistic and algebraic functions <span class="citation"
 data-cites="lederer2021activations dubey2021activations"></span>. All
 share monotonicity or near-monotonicity and are continuously
 differentiable.</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
   \text{Sigmoid}(x) &amp;= \frac{1}{1+e^{-x}}
     &amp; \text{Range: } (0,1),\;\text{monotonic, smooth}
     &amp; \quad \text{\citep{lederer2021activations}} \\[4pt]
@@ -11049,8 +10832,8 @@ notation)}
   \text{Identity}(x) &amp;= x
     &amp; \text{Range: } (-\infty,\infty),\;\text{linear, }C^\infty
     &amp; \quad \text{(internal)}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{Softplus}(x) &amp;= \log(1+e^{x})
     &amp; \text{Range: } [0,\infty),\;\text{smooth, }C^\infty
     &amp; \quad \text{\citep{glorot2011softplus}} \\[4pt]
@@ -11077,7 +10860,7 @@ at 0}
     &amp; \text{Range: } (\approx{-0.278},\infty),\;\text{non-monotonic,
 smooth}
     &amp; \quad \text{\citep{elfwing2018silu}}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p><strong>SiLU</strong> (Sigmoid Linear Unit) is the default activation
 (<code>ffn_activation=silu</code>). When <span
 class="math inline">\(\beta=1\)</span>, the parametric Swish reduces to
@@ -11091,7 +10874,7 @@ activations)</h2>
 <p>The rectifier family extends ReLU with learnable slopes, bounded
 variants, and rectified-hyperbolic forms <span class="citation"
 data-cites="nair2010relu dubey2021activations"></span>.</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
   \text{LeakyReLU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ a\,x &amp;
 x &lt; 0 \end{cases},
     \quad a=0.01
@@ -11116,8 +10899,8 @@ sign-ramp}
     &amp; \text{Range: } [0,\infty),\;\beta=1.0,\;\text{logarithmic
 compression}
     &amp; \quad \text{\citep{dubey2021activations}}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{BReLU}(x) &amp;= \min\!\big(\max(0,x),\,t\big),\quad t=1.0
     &amp; \text{Range: } [0,t],\;\text{bounded rectifier}
     &amp; \quad \text{\citep{dubey2021activations}} \\[4pt]
@@ -11137,7 +10920,7 @@ compression}
     &amp; \text{Range: } [0,\infty)\;\text{(magnitude), non-monotonic,
 smooth}
     &amp; \quad \text{\citep{roy2019lisht}}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p><strong>PReLU</strong> <span class="citation"
 data-cites="he2015prelu"></span> makes the negative slope a per-channel
 learnable parameter, enabling the network to learn the optimal leak per
@@ -11152,7 +10935,7 @@ MobileNetV1 for fixed-point quantization friendliness.</p>
 self-normalizing variants <span class="citation"
 data-cites="clevert2016elu klambauer2017selu dubey2021activations"></span>.
 Several members introduce per-channel learnable parameters.</p>
-<p><span class="math display">\[\begin{align}
+<p><span class="math display">\[\begin{aligned}
   \text{ELU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ \alpha(e^{x}-1)
 &amp; x&lt;0 \end{cases},
     \quad \alpha=1.0
@@ -11177,8 +10960,8 @@ x\ge 0 \\
 \text{ReLU}(x)+\beta\cdot\text{ELU}_{\alpha}(x)\cdot\mathbb{1}_{x&lt;0}
     &amp; \alpha,\beta\text{ learnable per-channel}
     &amp; \quad \text{\citep{dubey2021activations}}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{FELU}(x) &amp;= \begin{cases} x &amp; x\ge 0 \\ \alpha(e^{x}-1)
 &amp; x&lt;0 \end{cases}
     &amp; \alpha\text{ learnable, clamped to } [0,1]
@@ -11204,8 +10987,8 @@ x\ge 0 \\
     \end{cases}
     &amp; \alpha\text{ learnable; exp/linear/log interpolation}
     &amp; \quad \text{\citep{godfrey2015softexp}}
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
+\end{aligned}\]</span></p>
+<p><span class="math display">\[\begin{aligned}
   \text{ELiSH}(x) &amp;= \begin{cases} x\,\sigma(x) &amp; x\ge 0 \\
     (e^{x}-1)\,\sigma(x) &amp; x&lt;0 \end{cases}
     &amp; \text{Swish pos.\ branch, ELU-gated neg.\ branch}
@@ -11215,7 +10998,7 @@ x\ge 0 \\
     (e^{x}-1)\cdot\text{hard\_sigmoid}(x) &amp; x&lt;0 \end{cases}
     &amp; \text{Hard-sigmoid variant of ELiSH}
     &amp; \quad \text{\citep{basirat2019elish}}
-\end{align}\]</span></p>
+\end{aligned}\]</span></p>
 <p>where <span
 class="math inline">\(\text{hard\_sigmoid}(x)=\text{ReLU6}(x+3)/6\)</span>.</p>
 <p><strong>ELU</strong> <span class="citation"
@@ -11620,7 +11403,7 @@ class="math inline">\(\varphi_l\)</span> uses
 </ul>
 <p>The module lives in <code>src/model/mhc.py</code>:</p>
 <ul>
-<li><p><code>Sinkhorn­Knopp­Function</code>
+<li><p><code>SinkhornKnoppFunction</code>
 (<code>torch.autograd.Function</code>): the forward pass applies the
 alternating row/column normalizations of <span
 class="math inline">\(\exp(\cdot)\)</span>; the backward pass recomputes
@@ -11709,11 +11492,10 @@ parameters <span class="math inline">\(\{W^{\tau}_l, b^{\tau}_l,
 \alpha^{\tau}_l\}\)</span> for <span class="math inline">\(\tau \in
 \{\text{pre}, \text{post}, \text{res}\}\)</span> plus a loop position
 embedding <span class="math inline">\(e_l \in \mathbb{R}^C\)</span>, the
-recurrence is <span class="math display">\[\begin{equation}
-y^{(l+1)}_t = H^{\text{res}}_l\, y^{(l)}_t + H^{\text{post}}_l \otimes
-\bigl( F(H^{\text{pre}}_l\, y^{(l)}_t) + e_l \bigr),
-\end{equation}\]</span> with the data-dependent coefficients <span
-class="math display">\[\begin{align*}
+recurrence is <span class="math display">\[y^{(l+1)}_t =
+H^{\text{res}}_l\, y^{(l)}_t + H^{\text{post}}_l \otimes
+\bigl( F(H^{\text{pre}}_l\, y^{(l)}_t) + e_l \bigr),\]</span> with the
+data-dependent coefficients <span class="math display">\[\begin{aligned}
 H^{\text{pre}}_l &amp;= \sigma\bigl(\alpha^{\text{pre}}_l
 (W^{\text{pre}}_l z^{(l)}_t) + b^{\text{pre}}_l\bigr), &amp;
 H^{\text{post}}_l &amp;= 2\sigma\bigl(\alpha^{\text{post}}_l
@@ -11721,7 +11503,7 @@ H^{\text{post}}_l &amp;= 2\sigma\bigl(\alpha^{\text{post}}_l
 H^{\text{res}}_l &amp;= \mathrm{diag}\bigl(\sigma(\alpha^{\text{res}}_l
 (W^{\text{res}}_l z^{(l)}_t) + b^{\text{res}}_l)\bigr) &amp;
 W^{\text{res}}_l &amp;\in \mathbb{R}^{n \times nC}
-\end{align*}\]</span> (the diagonal <span
+\end{aligned}\]</span> (the diagonal <span
 class="math inline">\(H^{\text{res}}\)</span> substitutes mHC’s <span
 class="math inline">\(\mathrm{sinkhorn}(\cdot)\)</span> over a dense
 <span class="math inline">\(n^2 \times nC\)</span> projection with a
@@ -11762,7 +11544,7 @@ class="math inline">\(2L \to 4L(\times3) \to 2L\)</span> at 16 layers).
 <li><p><code>hyperloop_res_parameterization</code> (enum, default
 <code>diagonal</code>): <code>diagonal</code>, <code>sinkhorn</code>
 (full mHC-style doubly stochastic mixing, reusing
-<code>Sinkhorn­Knopp­Function</code>) or <code>identity</code>.</p></li>
+<code>SinkhornKnoppFunction</code>) or <code>identity</code>.</p></li>
 </ul>
 <p>Implementation: <code>src/model/hyperloop.py</code> hosts
 <code>HyperloopConnections</code> with per-loop <code>projs</code> /
@@ -12039,7 +11821,7 @@ AttnRes residual, only the tokens selected by MoD contribute to the
 layer-output buffer (Full AttnRes) or the intra-block partial sum (Block
 AttnRes); the rest pass through unchanged and are scattered back by
 MoD’s existing logic. MoD is mutually exclusive with mHC (a
-<code>ValueError</code> is raised in <code>HybridLayer.­_­init__</code> if
+<code>ValueError</code> is raised in <code>HybridLayer._init__</code> if
 both are enabled); the corresponding combinations are <span
 class="math inline">\((\text{no\_mHC}, \text{MoD},
 \text{AttnRes})\)</span>, <span class="math inline">\((\text{mHC},
@@ -12769,6 +12551,12 @@ recipe the full mechanism beats its matched SDPA twin on ImageNet-1k
 being <span class="math inline">\(\sim\)</span>20% smaller and <span
 class="math inline">\(\sim\)</span>30% cheaper per forward, and by +17
 points on CIFAR-100 at matched recipe.</p>
+<figure id="fig:mixer-ssog">
+
+<figcaption>Dataflow of SSOG: values pass through separable row and
+column Gaussian filter passes per atom, with optional content steering
+of the atom parameters.</figcaption>
+</figure>
 <h2 id="mathematical-formulation-19">Mathematical Formulation</h2>
 <p>Let tokens be the row-major raster of a <span
 class="math inline">\(G_h \times G_w\)</span> grid. The attention weight
@@ -12943,6 +12731,12 @@ which is <span class="math inline">\(L_t\)</span>-smooth with <span
 class="math inline">\(L_t = \|x_t\|^2 + \lambda_t\)</span>.</p>
 <h3 id="falcon-1-scalar-nlms-regression">Falcon-1: Scalar NLMS
 Regression</h3>
+<figure id="fig:mixer-falcon1">
+
+<figcaption>Dataflow of Falcon-1: the prefix-aligned key/value pair
+drives a scalar NLMS delta-rule update of the fast-weight
+state.</figcaption>
+</figure>
 <p>The scalar delta-rule variant — the classical NLMS recursion of
 adaptive filtering upgraded with the shifted write stream and an
 explicit ridge: <span class="math display">\[S_t = (1 - \eta_t
@@ -12969,6 +12763,11 @@ class="math inline">\(G = X^\top X\)</span> (Algorithm 8 of the paper),
 after the positive-decay renormalization.</p>
 <h3 id="falcon-2-per-column-nlms-regression">Falcon-2: Per-Column NLMS
 Regression</h3>
+<figure id="fig:mixer-falcon2">
+
+<figcaption>Dataflow of Falcon-2: per-column NLMS step sizes update the
+fast-weight state channel by channel.</figcaption>
+</figure>
 <p>The ridge loss decomposes across value coordinates, so each value
 channel <span class="math inline">\(j\)</span> receives its own step
 size while sharing the NLMS normalizer: <span
@@ -12987,6 +12786,12 @@ class="math inline">\(\Sigma = \sqrt{\tilde{\boldsymbol{\eta}}}\)</span>
 (Algorithm 1). Defined but not separately benchmarked in the paper.</p>
 <h3 id="falcon-3-sliding-window-minibatch-regression">Falcon-3:
 Sliding-Window Minibatch Regression</h3>
+<figure id="fig:mixer-falcon3">
+
+<figcaption>Dataflow of Falcon-3: a sliding window of prefix-aligned
+pairs provides the spectral statistic and the minibatch
+write.</figcaption>
+</figure>
 <p>Bounded rehearsal: each step regresses the fast memory on the last
 <span class="math inline">\(B_t \le B\)</span> prefix-aligned pairs,
 with <em>all window residuals evaluated at the pre-update state</em>
@@ -13024,6 +12829,16 @@ v_t \rangle + \tfrac{\lambda_t}{2}\|S\|_F^2
 yields purely additive (Hebbian) writes with energy-normalized
 gains.</p>
 <h3 id="falcon-1a-and-falcon-2a">Falcon-1A and Falcon-2A</h3>
+<figure id="fig:mixer-falcon1a">
+
+<figcaption>Dataflow of Falcon-1A: an energy-normalized additive
+(Hebbian) write with a derived decay.</figcaption>
+</figure>
+<figure id="fig:mixer-falcon2a">
+
+<figcaption>Dataflow of Falcon-2A: per-column additive writes with a
+per-channel decay.</figcaption>
+</figure>
 <p><span class="math display">\[\text{Falcon-1A:}\quad S_t = \gamma_t
 S_{t-1} + \eta_t\, x_t v_t^\top,
 \quad \gamma_t = 1 - \min(\eta_t \lambda_t,\, 1 - \varepsilon_\gamma);
@@ -13042,6 +12857,11 @@ linear attention with <span class="math inline">\(M_{t,i} = \eta_i
 Falcon-2A).</p>
 <h3 id="falcon-3a-sliding-window-inner-product">Falcon-3A:
 Sliding-Window Inner-Product</h3>
+<figure id="fig:mixer-falcon3a">
+
+<figcaption>Dataflow of Falcon-3A: a sliding-window mean-energy
+statistic normalizes the additive window write.</figcaption>
+</figure>
 <p>The windowed additive variant — the family’s best
 length-extrapolation configuration: <span
 class="math display">\[\bar{N}_t^{(B)} = \frac{1}{B_t} \sum_{j \in
