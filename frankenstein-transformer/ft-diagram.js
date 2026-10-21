@@ -737,7 +737,7 @@ var FTDiagram = (function () {
         var m = cfg.model || {};
         var tr = cfg.training || {};
         var mc = cfg.model_class || '';
-        var dec = mc === 'frankensteindecoder' || pick(m, 'dims.mode', 'mode', '') === 'decoder';
+        var dec = mc === 'frankenstein_text_decoder' || pick(m, 'dims.mode', 'mode', '') === 'decoder';
         var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard_attn']);
         if (typeof pat === 'string') pat = [pat];
         var nL = pick(m, 'dims.num_layers', 'num_layers', 1);
@@ -976,7 +976,7 @@ var FTDiagram = (function () {
         return {
             modelClass: cfg.model_class || cfg.base_model || 'unknown',
             isBase: !!cfg.base_model,
-            isDecoder: cfg.model_class === 'frankensteindecoder',
+            isDecoder: cfg.model_class === 'frankenstein_text_decoder',
             hiddenSize: pick(m, 'dims.hidden_size', 'hidden_size', undefined),
             numLayers: nL,
             numLoops: loops,

@@ -309,7 +309,7 @@ var FTParamEstimator = (function () {
     }
     var m = config.model || {};
     var isVit = config.model_class === 'frankenstein_vit';
-    var isDecoder = config.model_class === 'frankensteindecoder';
+    var isDecoder = config.model_class === 'frankenstein_text_decoder';
 
     // dims — defaults mirror FrankensteinModelConfig dataclass defaults.
     var V = toNum(pick(m, 'dims.vocab_size', 'vocab_size', 50000), 50000);
