@@ -296,6 +296,34 @@ input[type="checkbox"] { width: auto; margin-right: 6px; accent-color: var(--acc
   border-color: rgba(88, 166, 255, 0.55);
   background: rgba(88, 166, 255, 0.1);
 }
+/* Restore-saved-configuration prompt (localStorage persistence). */
+.restore-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px solid rgba(88, 166, 255, 0.55);
+  background: rgba(88, 166, 255, 0.1);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.restore-banner[hidden] { display: none !important; }
+.restore-banner .rb-text { flex: 1 1 280px; }
+.restore-banner .rb-text small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.autosave-note {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
 /* Parameter-count estimate banner — prominent, shown above the model section. */
 .param-estimate-banner {
   display: flex;
@@ -780,6 +808,9 @@ pre {
     <span class="tt-label" id="tt-label">Dark mode</span>
   </button>
 
+  <button type="button" class="btn btn-sm" id="clear-saved-btn" onclick="clearSavedSettings()" style="margin-top:10px"></button>
+  <div id="autosave-note" class="autosave-note"></div>
+
   <div id="sidebar-examples">
     <h2>📁 Load Example</h2>
     <button class="btn btn-sm" onclick="loadExample('standard')">Standard</button>
@@ -820,6 +851,14 @@ pre {
 
   <!-- TAB: BUILDER -->
   <div class="tab-content active" id="tab-builder" role="tabpanel" aria-labelledby="tab-button-builder">
+    <div id="restore-banner" class="restore-banner" role="status" hidden>
+      <div class="rb-text">
+        <div id="restore-banner-title"></div>
+        <small id="restore-banner-hint"></small>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" id="restore-btn" onclick="restoreSavedSettings()"></button>
+      <button type="button" class="btn btn-sm" id="discard-btn" onclick="discardSavedSettings()"></button>
+    </div>
     <div id="builder-status" class="info" aria-live="polite"></div>
     <div id="validation-summary" class="error-summary" role="alert" aria-live="assertive"></div>
     <div id="warnings-summary" class="warning-summary" role="status" aria-live="polite"></div>
@@ -1045,12 +1084,22 @@ const UI = {
   warnTopKExceedsExperts: { en:'moe.top_k must be <= moe.num_experts.', es:'moe.top_k debe ser <= moe.num_experts.' },
   warnBlockIgnored: { en:'this block is ignored for the selected task.', es:'este bloque se ignora para la tarea seleccionada.' },
   warnTokenizerIgnored: { en:'the tokenizer block only applies to mlm/causal_lm/text_classification.', es:'el bloque tokenizer solo aplica a mlm/causal_lm/text_classification.' },
+  savedConfigTitle: { en:'You have a saved configuration in this browser.', es:'Tienes una configuracion guardada en este navegador.' },
+  savedConfigHint: { en:'Restore it, or start fresh with the standard example. Edits are saved automatically as you work.', es:'Restáurala o empieza de cero con el ejemplo standard. Los cambios se guardan automáticamente mientras trabajas.' },
+  restoreBtn: { en:'↩ Restore my configuration', es:'↩ Restaurar mi configuracion' },
+  startFreshBtn: { en:'✨ Start fresh', es:'✨ Empezar de cero' },
+  configRestored: { en:'Saved configuration restored.', es:'Configuracion guardada restaurada.' },
+  configDiscarded: { en:'Started fresh — the saved configuration was discarded.', es:'Empezando de cero — la configuracion guardada fue descartada.' },
+  savedSettingsCleared: { en:'Saved settings cleared.', es:'Configuracion guardada borrada.' },
+  clearSavedBtn: { en:'🗑 Clear saved settings', es:'🗑 Borrar configuracion guardada' },
+  autosaveNote: { en:'💾 Edits are saved automatically in this browser.', es:'💾 Los cambios se guardan automáticamente en este navegador.' },
 };
 
 const t = (key) => (UI[key] ? (UI[key][lang] || UI[key]['en']) : key);
 
 // ====== INIT ======
 async function init() {
+  applyStaticI18n();
   loadSchema();
   populateRepoExamples();
   initMermaid();
@@ -1070,11 +1119,23 @@ async function loadSchema() {
     const baseDir = schemaAbs.substring(0, schemaAbs.lastIndexOf('/') + 1);
     const root = jsyaml.load(yamlText) || {};
     SCHEMA = await resolveSchemaRefs(root, baseDir);
+    // Reopen in the language the user last used (persisted with the builder
+    // state). Applied before buildAll so the UI renders in the right language.
+    const persisted = readPersistedState();
+    if (persisted && (persisted.lang === 'en' || persisted.lang === 'es')) {
+      lang = persisted.lang;
+      const langEl = document.getElementById('lang-select');
+      if (langEl) langEl.value = lang;
+    }
+    applyStaticI18n();
     statusEl.textContent = '✅ ' + t('schemaLoaded');
     setFeedback(t('schemaLoaded'), 'success');
     document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
-    loadExample('standard');
+    loadExample('standard', { silent: true });
     updateCmdPreview();
+    // Ask before restoring: show the prompt once the standard preset has been
+    // applied (loadExample applies it on a 100ms timer).
+    if (persisted) setTimeout(showRestorePrompt, 180);
   } catch(e) {
     statusEl.textContent = '❌ ' + t('schemaLoadError');
     setFeedback(t('schemaLoadError'), 'error', 'assertive');
@@ -2182,6 +2243,7 @@ function listBuilderAdd(fieldId) {
   items.push(select.value);
   hidden.value = JSON.stringify(items);
   listBuilderRender(fieldId);
+  autosaveAfterUserEdit();
 }
 
 function listBuilderRemove(fieldId, index) {
@@ -2190,6 +2252,7 @@ function listBuilderRemove(fieldId, index) {
   items.splice(index, 1);
   hidden.value = JSON.stringify(items);
   listBuilderRender(fieldId);
+  autosaveAfterUserEdit();
 }
 
 function listBuilderMove(fieldId, from, to) {
@@ -2200,6 +2263,7 @@ function listBuilderMove(fieldId, from, to) {
   items.splice(to, 0, moved);
   hidden.value = JSON.stringify(items);
   listBuilderRender(fieldId);
+  autosaveAfterUserEdit();
 }
 
 function initListBuilders() {
@@ -2703,6 +2767,9 @@ function scheduleBuilderRefresh() {
     updateYamlOutput();
     updateCmdPreview();
     updateParamEstimate();
+    // Persist after the derived views settle. A first real edit also answers
+    // the pending "restore saved configuration?" prompt implicitly.
+    autosaveAfterUserEdit();
   }, 120);
 }
 
@@ -2870,13 +2937,18 @@ const PRESETS = {
   }
 };
 
-function loadExample(name) {
+function loadExample(name, opts) {
   const preset = PRESETS[name];
   if (!preset) return;
   configData = preset;
   if (SCHEMA) buildAll();
-  // Apply preset values after DOM renders
-  setTimeout(() => { applyPreset(name); updateParamEstimate(); }, 100);
+  // Apply preset values after DOM renders. `opts.silent` is used for the
+  // initial standard load so it doesn't overwrite a saved configuration.
+  setTimeout(() => {
+    applyPreset(name);
+    updateParamEstimate();
+    if (!(opts && opts.silent)) autosaveAfterUserEdit();
+  }, 100);
 }
 
 function applyPreset(name) {
@@ -3112,6 +3184,8 @@ function applyYamlConfig(config) {
   updateYamlOutput();
   updateCmdPreview();
   updateParamEstimate();
+  // Persist after the optimizer-parameter timer above (50ms) has settled.
+  setTimeout(persistBuilderState, 80);
 }
 
 // Inverse of the dotted-key flattening used by PRESETS: turn flat dotted keys
@@ -3269,10 +3343,13 @@ function onLangChange() {
   const saved = saveAllFormValues();
   lang = document.getElementById('lang-select').value;
   document.getElementById('lang-status').textContent = 'Language: ' + (lang==='en'?'English':'Español');
-  document.getElementById('sidebar-lang-title').textContent = UI.langTitle[lang] || UI.langTitle.en;
+  applyStaticI18n();
   if (SCHEMA) {
     buildAll();
-    setTimeout(() => restoreAllFormValues(saved, { activeElementId, scrollTop }), 100);
+    setTimeout(() => {
+      restoreAllFormValues(saved, { activeElementId, scrollTop });
+      persistBuilderState();
+    }, 100);
   }
   // Reload paper content on language change if paper tab is active
   if (activeTab === 'paper') {
@@ -3308,6 +3385,15 @@ function saveAllFormValues() {
 
 function restoreAllFormValues(saved, context) {
   if (!saved) return;
+  // The optimizer parameter block is re-rendered by onOptimizerChange(), so the
+  // saved optimizer class must be applied first — otherwise its
+  // <class>-prefixed param inputs don't exist yet and their values are dropped.
+  const optClassId = createId('training.optimizer.optimizer_class');
+  const optClassEl = document.getElementById(optClassId);
+  if (optClassEl && saved[optClassId] !== undefined && optClassEl.value !== saved[optClassId]) {
+    optClassEl.value = saved[optClassId];
+    onOptimizerChange();
+  }
   document.querySelectorAll('input:not([type="hidden"]):not([type="radio"]), select, textarea').forEach(el => {
     if (el.id && saved[el.id] !== undefined) {
       if (el.type === 'checkbox') el.checked = saved[el.id];
@@ -3645,6 +3731,153 @@ function buildPrintSvg(svgHtml) {
 function copyMermaid() {
   var src = document.getElementById('mermaid-source').textContent;
   navigator.clipboard.writeText(src).then(function () { setFeedback(t('mermaidCopied'), 'success'); }).catch(function () { setFeedback(t('mermaidCopied'), 'error', 'assertive'); });
+}
+
+// ====== LOCAL PERSISTENCE (builder state + language) ======
+// Keeps the YAML builder configuration in localStorage so reopening the page
+// can offer to restore it. Shape: { version, savedAt, lang, values } where
+// values is the saveAllFormValues() snapshot keyed by element id. Reads and
+// writes are wrapped in try/catch (private browsing / quota errors must never
+// break the builder) and gated on a version so a later page or schema change
+// can discard stale blobs. Unknown ids in a snapshot are ignored by
+// restoreAllFormValues(), which walks the *current* DOM.
+const FT_STATE_KEY = 'ft-builder-state-v1';
+const FT_STATE_VERSION = 1;
+// True between showing the restore prompt and the user's choice. While set,
+// background saves are blocked so the stored snapshot can't be overwritten by
+// the default "standard" config before the user decides.
+let _restorePromptPending = false;
+
+function persistBuilderState() {
+  if (!SCHEMA || _restorePromptPending) return;
+  try {
+    const values = saveAllFormValues();
+    // Persist the YAML builder form + language only. The Command-tab controls
+    // are out of scope (its `opt-*` fields are already excluded) and the
+    // language is stored separately as `lang`.
+    delete values['cmd-select'];
+    delete values['lang-select'];
+    localStorage.setItem(FT_STATE_KEY, JSON.stringify({
+      version: FT_STATE_VERSION,
+      savedAt: Date.now(),
+      lang: lang,
+      values: values,
+    }));
+  } catch (e) { /* storage unavailable — ignore */ }
+}
+
+function readPersistedState() {
+  try {
+    const raw = localStorage.getItem(FT_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== FT_STATE_VERSION || !parsed.values) return null;
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearPersistedState() {
+  try { localStorage.removeItem(FT_STATE_KEY); } catch (e) {}
+}
+
+// Cancel a queued debounced refresh/persist. Needed when clearing or discarding
+// so an in-flight save can't immediately rewrite the key (a blur fired by the
+// very click that clears it would otherwise re-persist the form).
+function cancelPendingAutosave() {
+  if (_builderRefreshTimer) {
+    clearTimeout(_builderRefreshTimer);
+    _builderRefreshTimer = null;
+  }
+}
+
+// Persist after a user-initiated edit. A first edit implicitly answers a
+// pending restore prompt (the user is clearly moving on), so it is dismissed.
+function autosaveAfterUserEdit() {
+  if (_restorePromptPending) {
+    _restorePromptPending = false;
+    const banner = document.getElementById('restore-banner');
+    if (banner) banner.hidden = true;
+  }
+  persistBuilderState();
+}
+
+// Labels that live in static markup and are refreshed on language changes.
+function applyStaticI18n() {
+  const langTitle = document.getElementById('sidebar-lang-title');
+  if (langTitle) langTitle.textContent = UI.langTitle[lang] || UI.langTitle.en;
+  const clearBtn = document.getElementById('clear-saved-btn');
+  if (clearBtn) clearBtn.textContent = t('clearSavedBtn');
+  const note = document.getElementById('autosave-note');
+  if (note) note.textContent = t('autosaveNote');
+  const banner = document.getElementById('restore-banner');
+  if (banner && !banner.hidden) {
+    const title = document.getElementById('restore-banner-title');
+    const hint = document.getElementById('restore-banner-hint');
+    const restore = document.getElementById('restore-btn');
+    const discard = document.getElementById('discard-btn');
+    if (title) title.textContent = t('savedConfigTitle');
+    if (hint) hint.textContent = t('savedConfigHint');
+    if (restore) restore.textContent = t('restoreBtn');
+    if (discard) discard.textContent = t('startFreshBtn');
+  }
+}
+
+function showRestorePrompt() {
+  const banner = document.getElementById('restore-banner');
+  if (!banner) return;
+  _restorePromptPending = true;
+  banner.hidden = false;
+  applyStaticI18n();
+}
+
+function restoreBuilderState(saved) {
+  if (!saved || !saved.values) return;
+  // loadSchema normally pre-applies the language before buildAll; rebuild here
+  // only if it still differs.
+  if ((saved.lang === 'en' || saved.lang === 'es') && saved.lang !== lang) {
+    lang = saved.lang;
+    const langEl = document.getElementById('lang-select');
+    if (langEl) langEl.value = lang;
+    applyStaticI18n();
+    buildAll();
+    if (PRESETS.standard) applyPreset('standard');
+  }
+  // restoreAllFormValues re-renders the optimizer parameter block for the
+  // saved optimizer class before applying values.
+  restoreAllFormValues(saved.values, {});
+  updateParamEstimate();
+}
+
+function restoreSavedSettings() {
+  cancelPendingAutosave();
+  const banner = document.getElementById('restore-banner');
+  const saved = readPersistedState();
+  if (banner) banner.hidden = true;
+  _restorePromptPending = false;
+  if (!saved) return;
+  restoreBuilderState(saved);
+  persistBuilderState();
+  setFeedback(t('configRestored'), 'success');
+}
+
+function discardSavedSettings() {
+  cancelPendingAutosave();
+  const banner = document.getElementById('restore-banner');
+  if (banner) banner.hidden = true;
+  _restorePromptPending = false;
+  clearPersistedState();
+  setFeedback(t('configDiscarded'), 'info');
+}
+
+function clearSavedSettings() {
+  cancelPendingAutosave();
+  const banner = document.getElementById('restore-banner');
+  if (banner) banner.hidden = true;
+  _restorePromptPending = false;
+  clearPersistedState();
+  setFeedback(t('savedSettingsCleared'), 'success');
 }
 
 // ====== THEME (light/dark) ======
