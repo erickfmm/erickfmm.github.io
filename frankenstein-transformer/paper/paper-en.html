@@ -119,8 +119,8 @@
      overflow: visible;
     }
     hr {
+      background-color: #1a1a1a;
       border: none;
-      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -178,6 +178,7 @@
       vertical-align: middle;
     }
   </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="/usr/share/javascript/mathjax/MathJax.js"
   type="text/javascript"></script>
 </head>
@@ -1378,12 +1379,13 @@ and <code>text_dataset</code>.</p>
 <h4 id="model-class.">Model class.</h4>
 <p>The <code>model_class</code> field selects among three variants:</p>
 <ul>
-<li><p><strong><code>frankenstein</code></strong>: mixed-architecture
-encoder with the full range of sequence mixers, MoE, and advanced
-normalization, trained with masked language modeling.</p></li>
-<li><p><strong><code>frankensteindecoder</code></strong>: autoregressive
-causal decoder for next-token generation; the runtime forces decoder
-masking.</p></li>
+<li><p><strong><code>frankenstein_text_encoder</code></strong>:
+mixed-architecture encoder with the full range of sequence mixers, MoE,
+and advanced normalization, trained with masked language
+modeling.</p></li>
+<li><p><strong><code>frankenstein_text_decoder</code></strong>:
+autoregressive causal decoder for next-token generation; the runtime
+forces decoder masking.</p></li>
 <li><p><strong><code>frankenstein_vit</code></strong>: Vision
 Transformer over image patches for masked patch prediction,
 classification, and segmentation; the runtime forces encoder masking and
@@ -2629,9 +2631,9 @@ data-reference-type="ref"
 data-reference="subsec:tokenizer-config">12.4</a>). Required when using
 <code>base_model</code> with the <code>mlm</code> task.</p></li>
 <li><p><code>model_class</code> (enum) — Model architecture variant:
-<code>frankenstein</code> (mixed-architecture encoder),
-<code>frankensteindecoder</code> (autoregressive causal decoder), or
-<code>frankenstein_vit</code> (vision transformer). Required when
+<code>frankenstein_text_encoder</code> (mixed-architecture encoder),
+<code>frankenstein_text_decoder</code> (autoregressive causal decoder),
+or <code>frankenstein_vit</code> (vision transformer). Required when
 <code>base_model</code> is not set.</p></li>
 <li><p><code>model</code> (object) — Model architecture parameters (see
 §<a href="#subsec:model-config" data-reference-type="ref"
@@ -2658,57 +2660,57 @@ their types and descriptions.</p>
 <caption>Complete model configuration fields. All fields are optional
 unless marked required.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Field</strong></th>
 <th style="text-align: left;"><strong>Type</strong></th>
 <th style="text-align: left;"><strong>Description</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Field</strong></td>
 <td style="text-align: left;"><strong>Type</strong></td>
 <td style="text-align: left;"><strong>Description</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dims.mode</td>
 <td style="text-align: left;">enum (encoder, decoder)</td>
 <td style="text-align: left;">Attention masking mode.
 <code>encoder</code> = bidirectional; <code>decoder</code> =
 causal.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">dims.vocab_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span> (required)</td>
 <td style="text-align: left;">Number of unique tokens in the vocabulary.
 Must match the tokenizer’s vocab size.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dims.hidden_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span> (required)</td>
 <td style="text-align: left;">Hidden dimension. Must be divisible by
 <code>num_heads</code>. Typical: 512–2048.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">dims.num_layers</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span> (required)</td>
 <td style="text-align: left;">Number of physical transformer layers.
 Typical: 6–24.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dims.num_loops</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -2716,20 +2718,20 @@ Typical: 6–24.</td>
 <code>layer_pattern</code> runs <code>num_loops</code> times. Default:
 1.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">dims.num_heads</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span> (required)</td>
 <td style="text-align: left;">Number of parallel attention heads. Must
 divide <code>hidden_size</code> evenly.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dims.dropout</td>
 <td style="text-align: left;">float [0,1]</td>
 <td style="text-align: left;">Global dropout rate. Typical: 0.1 (BERT
 standard).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">dims.layer_pattern</td>
 <td style="text-align: left;">array of enum (required)</td>
 <td style="text-align: left;">Ordered sequence of layer types. Length
@@ -2737,12 +2739,12 @@ must equal <code>num_layers</code>. 43 mixer codes available (see
 Table <a href="#tab:layer-pattern" data-reference-type="ref"
 data-reference="tab:layer-pattern">12.2.1</a>).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">norm.type</td>
 <td style="text-align: left;">enum</td>
 <td style="text-align: left;">Normalization strategy:
@@ -2750,72 +2752,72 @@ data-reference="tab:layer-pattern">12.2.1</a>).</td>
 <code>rms_norm</code>, <code>prms_norm</code>,
 <code>flash_norm</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">norm.partial_ratio</td>
 <td style="text-align: left;">float (0,1]</td>
 <td style="text-align: left;">Fraction of hidden dims for pRMSNorm
 estimation. Default: 0.0625.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">embedding.factorized.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable embedding matrix factorization to
 reduce parameters.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">embedding.factorized.dim</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Intermediate dimension for factorized
 embeddings. Typical: 64–256.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">embedding.conv.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Apply Conv1d over token embeddings to
 capture local n-gram patterns.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">embedding.conv.kernel</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Kernel size for embedding Conv1d. Typical:
 3.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.ode.solver</td>
 <td style="text-align: left;">enum (rk4, euler)</td>
 <td style="text-align: left;">Numerical integration method for ODE
 layers. Default: rk4.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.ode.steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Integration steps between consecutive
 transformer layers. Default: 2.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.retnet.heads</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -2823,150 +2825,150 @@ transformer layers. Default: 2.</td>
 <code>retnet</code>/<code>retnet_attn</code> layers. Must divide
 <code>hidden_size</code>. Default: 8.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.mla.latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Rank of joint KV latent for MLA. Default:
 <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.gqla.latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Rank of joint KV latent for GQLA. Default:
 <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.gqla.num_groups</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of GQA groups for GQLA decode path.
 Must divide <code>num_heads</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.gqla.decode_path</td>
 <td style="text-align: left;">enum (mqa_absorb, gqa)</td>
 <td style="text-align: left;">Decoding path for GQLA.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.mlra.latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Total latent rank for MLRA. Default:
 <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.mlra.num_latent_heads</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of disjoint latent sub-spaces for
 MLRA. Default: 4.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.tucker.query_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Tucker rank for query weight tensor.
 Default: <code>hidden_size</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.tucker.key_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Tucker rank for key weight tensor.
 Default: <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.tucker.value_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Tucker rank for value weight tensor.
 Default: <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.iha.num_pseudo_heads</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of pseudo-heads per head for IHA.
 Default: <code>num_heads</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.gta.num_shared_groups</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of head groups sharing an attention
 map for GTA. Must divide <code>num_heads</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.gta.value_latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Rank of value-cache latent for GTA.
 Default: <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.mtla.latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Latent rank for MTLA. Default:
 <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.mtla.merge_factor</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of consecutive KV entries merged
 per temporal slot. Default: 2.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.mtla.stride</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Stride between merged temporal slots.
 Default: <code>mtla_merge_factor</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.cca.latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -2974,205 +2976,205 @@ Default: <code>mtla_merge_factor</code>.</td>
 <code>hidden_size // 4</code>. Must be divisible by
 <code>num_heads</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.cca.num_conv_layers</td>
 <td style="text-align: left;">enum (0, 1, 2)</td>
 <td style="text-align: left;">Number of convolution layers in CCA.
 Default: 2.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.cca.conv_kernel_seq</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Kernel size of depth-wise causal sequence
 conv. Default: 4.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.cca.conv_kernel_ch</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Kernel size of head-wise grouped channel
 conv. Default: 3.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.cca.qk_mean</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable q-k-mean bias in CCA. Default:
 <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.cca.value_shift</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable value-shift in CCA. Default:
 <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.ccgqa.query_latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Query latent width for CCGQA. Default:
 <code>hidden_size // 2</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.ccgqa.kv_latent_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">KV latent width for CCGQA. Default:
 <code>hidden_size // 8</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.ccgqa.num_kv_heads</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of KV heads for CCGQA. Must divide
 <code>num_heads</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.ccgqa.num_conv_layers</td>
 <td style="text-align: left;">enum (0, 1, 2)</td>
 <td style="text-align: left;">Number of convolution layers in CCGQA.
 Default: 2.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.ccgqa.conv_kernel_seq</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Kernel size of depth-wise causal sequence
 conv. Default: 4.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.ccgqa.conv_kernel_ch</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Kernel size of head-wise grouped channel
 conv. Default: 3.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.ccgqa.qk_mean</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable q-k-mean bias in CCGQA. Default:
 <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.ccgqa.value_shift</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable value-shift in CCGQA. Default:
 <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.msa.block_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Block size for MiniMax Sparse Attention.
 Default: 128.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.msa.topk_blocks</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of blocks selected per GQA group
 per query. Default: 16.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.msa.index_dim</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Dimensionality of Index Branch heads.
 Default: 64.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.msa.kl_loss_weight</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Weight of KL alignment loss for MSA index
 branch. Default: 0.0.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.sparda.block_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">KV block size for SparDA. Default:
 128.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.sparda.topk_blocks</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of KV blocks selected per GQA
 group. Default: 16.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.sparda.forecast_dim</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Dimensionality of Forecast projection.
 Default: 64.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.engram.max_ngram_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 2\)</span></td>
 <td style="text-align: left;">Maximum N-gram order for Engram memory
 module.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.engram.n_heads_per_ngram</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of hash heads per N-gram
 order.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.engram.embed_dim_per_head</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Embedding dimension per hash head.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">attention.engram.kernel_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Causal depthwise conv kernel width for
 Engram.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">attention.engram.seed</td>
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">Random seed for N-gram hash
 multipliers.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mhc.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable the manifold-constrained n-stream
 residual (mHC, arXiv:2512.24880). Default: <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mhc.expansion_rate</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -3182,7 +3184,7 @@ class="math inline">\(n \times\)</span> <code>hidden_size</code>. <span
 class="math inline">\(1\)</span> recovers the identity mapping. Default:
 4.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mhc.sinkhorn_iters</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -3190,45 +3192,45 @@ class="math inline">\(1\)</span> recovers the identity mapping. Default:
 constraining <span class="math inline">\(H^{\text{res}}\)</span> to be
 doubly stochastic. Default: 20.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mhc.gating_init</td>
 <td style="text-align: left;">float <span class="math inline">\(&gt;
 0\)</span></td>
 <td style="text-align: left;">Initial value of the mHC gating scalars
 <span class="math inline">\(\alpha\)</span>. Default: 0.01.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mhc.checkpoint</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Gradient checkpointing on mHC layers to
 mitigate the <span class="math inline">\(\sim n\times\)</span>
 activation-memory increase. Default: <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mhc.full_prec_under_bitnet</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Keep the mHC coefficient projection
 full-precision under BitNet. Default: <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">moe.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable Mixture of Experts in FFN layers.
 Default: <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">moe.num_experts</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Total number of expert networks. Default:
 8.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">moe.top_k</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -3236,25 +3238,25 @@ Default: <code>true</code>.</td>
 class="math inline">\(\le\)</span> <code>num_experts</code>. Default:
 2.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">bitnet.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable BitLinear ternary weight
 quantization. Default: <code>true</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">bitnet.routers</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Also quantize routing/scoring projections.
 Requires <code>bitnet.enabled=true</code>. Default:
 <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">bitnet.conv</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Quantize embedding Conv1d with BitConv1d.
@@ -3262,24 +3264,24 @@ Requires <code>bitnet.enabled=true</code> and
 <code>embedding.conv.enabled=true</code>. Default:
 <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mixture_of_depths.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable Mixture-of-Depths token routing.
 Default: <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mixture_of_depths.capacity_ratio</td>
 <td style="text-align: left;">float (0,1]</td>
 <td style="text-align: left;">Fraction of tokens updated per layer.
 Default: 0.5.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td
 style="text-align: left;">mixture_of_depths.router_aux_loss_weight</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
@@ -3287,65 +3289,65 @@ style="text-align: left;">mixture_of_depths.router_aux_loss_weight</td>
 <td style="text-align: left;">Weight for the router auxiliary loss.
 Default: 0.0.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ssmax.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable Scalable Softmax
 (arXiv:2505.22842). Default: <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ssmax.s_init</td>
 <td style="text-align: left;">float <span class="math inline">\(&gt;
 0\)</span></td>
 <td style="text-align: left;">Initial per-head SSMax scalar. Default:
 1.0.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ffn.hidden_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Intermediate FFN dimension. Default: <span
 class="math inline">\(2\times\)</span> <code>hidden_size</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ffn.activation</td>
 <td style="text-align: left;">enum</td>
 <td style="text-align: left;">FFN non-linearity (43 values). Default:
 <code>silu</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ffn.activation_config</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Parameters for learnable/parametric
 activations.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">classification_head.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable the NLP sequence-classification
 head. Default: <code>false</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">classification_head.num_labels</td>
 <td style="text-align: left;">int or null</td>
 <td style="text-align: left;">Number of classes.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">classification_head.pooling_mode</td>
 <td style="text-align: left;">enum (cls, gap)</td>
 <td style="text-align: left;">Pooling for the classification head.
@@ -3373,7 +3375,7 @@ with their training and inference support.</p>
 class="math inline">\(\checkmark\)</span> = supported, <span
 class="math inline">\(\times\)</span> = not supported.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Type</strong></th>
 <th style="text-align: left;"><strong>Description</strong></th>
 <th style="text-align: center;"><strong>Train</strong></th>
@@ -3381,153 +3383,153 @@ class="math inline">\(\times\)</span> = not supported.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Type</strong></td>
 <td style="text-align: left;"><strong>Description</strong></td>
 <td style="text-align: center;"><strong>Train</strong></td>
 <td style="text-align: center;"><strong>Infer</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">standard_attn</td>
 <td style="text-align: left;">Classic multi-head self-attention
 (BERT-style)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sigmoid_attn</td>
 <td style="text-align: left;">Sigmoid-gated attention</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gated_softmax_attn</td>
 <td style="text-align: left;">Gated softmax attention with post-SDPA
 sigmoid</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">titan_attn</td>
 <td style="text-align: left;">Titan attention with positional encoding
 (HoPE/RoPE)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">retnet / retnet_attn</td>
 <td style="text-align: left;">Retention Network (RNN+transformer
 hybrid)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mamba</td>
 <td style="text-align: left;">Selective state-space model (SSM)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ode</td>
 <td style="text-align: left;">Continuous-depth ODE layer</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gla_attn</td>
 <td style="text-align: left;">Gated Linear Attention with multiplicative
 decay</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">deltanet_attn / gated_deltanet_attn</td>
 <td style="text-align: left;">DeltaNet with corrective delta rule</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gated_deltanet2_attn</td>
 <td style="text-align: left;">Gated DeltaNet-2 with decoupled
 channel-wise erase/write gates</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">hgrn2_attn</td>
 <td style="text-align: left;">HGRN2 with hierarchical forget gates</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">fox_attn</td>
 <td style="text-align: left;">Forgetting Transformer (FoX) with forget
 bias in logits</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">nsa_attn</td>
 <td style="text-align: left;">Native Sparse Attention
 (three-branch)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">engram_attn</td>
 <td style="text-align: left;">N-gram conditional memory lookup</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gqa_attn</td>
 <td style="text-align: left;">Grouped-Query Attention with configurable
 KV heads</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">longformer_attn</td>
 <td style="text-align: left;">Longformer: sliding windows + global
 tokens</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">bigbird_attn</td>
 <td style="text-align: left;">BigBird: local + random + global
 attention</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sparse_transformer_attn</td>
 <td style="text-align: left;">Sparse Transformer: factorized
 patterns</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sparsek_attn</td>
 <td style="text-align: left;">SparseK: differentiable top-k KV
 selection</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sparge_attn</td>
 <td style="text-align: left;">SpargeAttn — two-stage block pruning</td>
 <td style="text-align: center;"><span
 class="math inline">\(\times\)</span></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">fasa_attn</td>
 <td style="text-align: left;">FASA — frequency-aware token
 selection</td>
@@ -3535,28 +3537,28 @@ selection</td>
 class="math inline">\(\times\)</span></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">msa_attn</td>
 <td style="text-align: left;">MiniMax Sparse Attention — block-sparse on
 GQA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sparda_attn</td>
 <td style="text-align: left;">SparDA — decoupled sparse attention with
 Forecast projection</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">kda_attn</td>
 <td style="text-align: left;">Kimi Delta Attention — channel-wise decay
 + scalar write gate</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">falcon1_attn / falcon2_attn /
 falcon3_attn</td>
 <td style="text-align: left;">Falcon regression family — RAW
@@ -3564,7 +3566,7 @@ prefix-aligned NLMS delta rule</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">falcon1a_attn / falcon2a_attn /
 falcon3a_attn</td>
 <td style="text-align: left;">Falcon inner-product family — shifted
@@ -3572,69 +3574,69 @@ additive writes with ridge decay</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mla_attn</td>
 <td style="text-align: left;">Multi-Head Latent Attention + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gqla_attn</td>
 <td style="text-align: left;">Group-Query Latent Attention — two
 decoding paths</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mlra_attn</td>
 <td style="text-align: left;">Multi-Head Low-Rank Attention —
 partitionable latent</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">tucker_attn</td>
 <td style="text-align: left;">Tucker Attention — generalised low-rank
 factorisation</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">iha_attn</td>
 <td style="text-align: left;">Interleaved Head Attention — cross-head
 pseudo-heads</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gta_attn</td>
 <td style="text-align: left;">Grouped-head laTenT Attention — shared map
 + latent values</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mtla_attn</td>
 <td style="text-align: left;">Multi-head Temporal Latent Attention —
 temporal KV merge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">cca_attn</td>
 <td style="text-align: left;">Compressed Convolutional Attention —
 latent-space attention + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ccgqa_attn</td>
 <td style="text-align: left;">Compressed Convolutional Grouped Query
 Attention — CCA + GQA in latent</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gma_attn</td>
 <td style="text-align: left;">Gaussian Mixture Attention — probabilistic
 latent routing, <span class="math inline">\(\mathcal{O}(NK)\)</span>
@@ -3642,7 +3644,7 @@ linear-time</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ssog_attn</td>
 <td style="text-align: left;">Separable Sum of Gaussians — Gaussian
 field over relative position, near-linear <span
@@ -3663,24 +3665,24 @@ fields.</p>
 <table>
 <caption>Complete training configuration fields.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Field</strong></th>
 <th style="text-align: left;"><strong>Type</strong></th>
 <th style="text-align: left;"><strong>Description</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Field</strong></td>
 <td style="text-align: left;"><strong>Type</strong></td>
 <td style="text-align: left;"><strong>Description</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">task</td>
 <td style="text-align: left;">enum (mlm, sbert, causal_lm)
 (required)</td>
@@ -3688,88 +3690,88 @@ fields.</p>
 Masked Language Modeling; <code>sbert</code> = Sentence-BERT
 fine-tuning; <code>causal_lm</code> = autoregressive next-token
 prediction (requires
-<code>model_class=’frankensteindecoder’</code>).</td>
+<code>model_class=’frankenstein_text_decoder’</code>).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">num_epochs</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Complete passes through the training
 dataset (MLM only).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">batch_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Examples per optimizer step (before
 gradient accumulation).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dataloader_workers</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Parallel worker processes for data
 loading.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">max_length</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Maximum token sequence length. Typical:
 128–2048.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mlm_probability</td>
 <td style="text-align: left;">float [0,1]</td>
 <td style="text-align: left;">Fraction of tokens masked for MLM
 prediction. Standard: 0.15.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">max_samples</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Total samples before stopping, independent
 of epochs.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dataset_batch_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Internal batch size for streaming
 dataset.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">num_workers</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Parallel workers for dataset streaming
 pipeline.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">cache_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Directory for caching processed
 datasets.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">local_parquet_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Path to local parquet files for offline
 streaming.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">prefer_local_cache</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Check local cache first before remote
 download.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">stream_local_parquet</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Stream from local parquet when
 <code>local_parquet_dir</code> is set.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">join_temp_data_context_window</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
@@ -3777,26 +3779,26 @@ download.</td>
 class="math inline">\(&gt;0\)</span>, joins cached token chunks into
 sequences of this length.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">join_temp_data_min_remainder_tokens</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Minimum content tokens in last partial
 joined window.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">use_amp</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable FP16 mixed precision.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gradient_accumulation_steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Accumulate gradients over N mini-batches
 before optimizer step.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">optimizer</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Optimizer configuration (see §<a
@@ -3804,7 +3806,7 @@ href="#subsec:optimizer-config" data-reference-type="ref"
 data-reference="subsec:optimizer-config">12.5</a>). Required when
 <code>task=mlm</code> or <code>task=causal_lm</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sbert</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">SBERT training configuration (see §<a
@@ -3812,192 +3814,192 @@ href="#subsec:sbert-config" data-reference-type="ref"
 data-reference="subsec:sbert-config">12.6</a>). Required when
 <code>task=sbert</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">scheduler_total_steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Total optimizer steps for LR
 schedule.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">scheduler_warmup_ratio</td>
 <td style="text-align: left;">float [0,1]</td>
 <td style="text-align: left;">Fraction of
 <code>scheduler_total_steps</code> for LR warmup.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">scheduler_type</td>
 <td style="text-align: left;">enum (cosine, constant,
 linear_warmup_then_constant)</td>
 <td style="text-align: left;">LR decay strategy.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">grad_clip_max_norm</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Maximum allowed gradient norm. 0 =
 disabled.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">inf_post_clip_threshold</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Threshold for flagging post-clip gradient
 explosions.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">max_nan_retries</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Maximum retries on NaN/Inf gradients
 before stopping.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">checkpoint_every_n_steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Save rolling checkpoint every N
 steps.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">max_rolling_checkpoints</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Maximum rolling checkpoints kept. Oldest
 deleted when exceeded.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">num_best_checkpoints</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of best checkpoints kept
 permanently (by validation loss).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">nan_check_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between NaN/Inf checks.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">log_gradient_stats</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Log per-layer gradient norms,
 min/max.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gradient_log_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between gradient stat logs.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">csv_log_path</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">File path for step-level training metrics
 in CSV format.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">csv_rotate_on_schema_change</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Rotate CSV file when schema changes.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gpu_metrics_backend</td>
 <td style="text-align: left;">enum (nvml, none)</td>
 <td style="text-align: left;">GPU telemetry backend.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">nvml_device_index</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">GPU index to monitor (0 = first GPU).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">enable_block_grad_norms</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Log gradient norms per block (embeddings,
 attention, FFN, etc.).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">telemetry_log_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between heavy telemetry logs.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gpu_temp_guard_enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Strict GPU temperature monitoring.
 Requires <code>gpu_metrics_backend=nvml</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">switch_on_thermal</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Critical temp triggers GPU<span
 class="math inline">\(\to\)</span>CPU fallback, auto-resume on
 cooldown.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gpu_temp_pause_threshold_c</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Temperature (<span
 class="math inline">\(^\circ\)</span>C) to pause training.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gpu_temp_resume_threshold_c</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Temperature (<span
 class="math inline">\(^\circ\)</span>C) to resume training after
 pause.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gpu_temp_critical_threshold_c</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Informational logging marker for severe
 thermal events.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gpu_temp_poll_interval_seconds</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Seconds between temp checks during
 cooldown wait.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">use_galore</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable Gradient Low-Rank Projection for
 memory-efficient training.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">galore_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Low-rank projection dimension for
 GaLore.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">galore_update_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between projection matrix
 recomputation.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">galore_scale</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Scaling factor for projected
 gradients.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">galore_max_dim</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Maximum tensor dimension for GaLore
 projection.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">hf_output_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Directory for saving final model via
@@ -4038,19 +4040,19 @@ data-reference="tab:tokenizer-training">4</a> lists the
 <caption><code>tokenizer.training.*</code> fields (required when
 <code>source=train_from_dataset</code>).</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Field</strong></th>
 <th style="text-align: left;"><strong>Type</strong></th>
 <th style="text-align: left;"><strong>Description</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Field</strong></td>
 <td style="text-align: left;"><strong>Type</strong></td>
 <td style="text-align: left;"><strong>Description</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">algorithm</td>
 <td style="text-align: left;">enum (bpe, wordpiece, wordlevel,
 unigram)</td>
@@ -4060,7 +4062,7 @@ unigram)</td>
 lookup table); <code>unigram</code> (subword language model,
 auto-pruning).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">vocab_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -4068,44 +4070,44 @@ auto-pruning).</td>
 <code>bpe</code>/<code>wordpiece</code>/<code>wordlevel</code>; optional
 for <code>unigram</code>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">min_frequency</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Minimum token frequency to keep (default
 2).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">special_tokens</td>
 <td style="text-align: left;">array of string</td>
 <td style="text-align: left;">Special tokens registered in the tokenizer
 (default <code>[PAD]/[UNK]/[CLS]/[SEP]/[MASK]</code>).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">save_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Directory persisted via
 <code>save_pretrained()</code>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">lowercase</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Lowercase all text before training
 (default <code>false</code>).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">strip_accents</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Strip diacritics before training (default
 <code>false</code>).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">pre_tokenizer</td>
 <td style="text-align: left;">enum (whitespace, bytelevel, bert)</td>
 <td style="text-align: left;">Pre-tokenization strategy (default
 <code>whitespace</code>).</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">max_token_length</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
@@ -4165,122 +4167,122 @@ optimizer name).</p>
 prefixed with the optimizer class name (e.g.,
 <code>sgd_momentum-momentum</code>).</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Optimizer</strong></th>
 <th style="text-align: left;"><strong>Specific Global
 Suffixes</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Optimizer</strong></td>
 <td style="text-align: left;"><strong>Specific Global
 Suffixes</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sgd_momentum</td>
 <td style="text-align: left;"><code>momentum</code>,
 <code>nesterov</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">adamw</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">adafactor</td>
 <td style="text-align: left;"><code>beta2_decay</code>,
 <code>clip_threshold</code>, <code>eps1</code>, <code>eps2</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">galore_adamw</td>
 <td style="text-align: left;"><code>rank</code>,
 <code>update_proj_gap</code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">prodigy</td>
 <td style="text-align: left;"><code>d_coef</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">lion</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sophia</td>
 <td style="text-align: left;"><code>rho</code>,
 <code>update_k</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">muon</td>
 <td style="text-align: left;"><code>momentum</code>,
 <code>nesterov</code>, <code>ns_steps</code>, <code>ns_eps</code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">turbo_muon</td>
 <td style="text-align: left;"><code>momentum</code>,
 <code>nesterov</code>, <code>ns_steps</code>, <code>ns_eps</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">radam</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">adan</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">adopt</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ademamix</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mars_adamw</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">cautious_adamw</td>
 <td style="text-align: left;"><code>cautious_clip</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">lamb</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">schedulefree_adamw</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">shampoo</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">soap</td>
 <td style="text-align: left;">(none — shared suffixes only)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">anon</td>
 <td style="text-align: left;"><code>gamma</code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">apollo</td>
 <td style="text-align: left;"><code>rank</code>,
 <code>update_proj_gap</code>, <code>scale</code>,
 <code>scale_type</code>, <code>proj_type</code>,
 <code>scale_front</code>, <code>disable_nl</code></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">apollo_mini</td>
 <td style="text-align: left;"><code>update_proj_gap</code>,
 <code>scale</code>, <code>proj_type</code>, <code>scale_front</code>,
 <code>disable_nl</code></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">q_apollo</td>
 <td style="text-align: left;"><code>rank</code>,
 <code>update_proj_gap</code>, <code>scale</code>,
@@ -4381,7 +4383,7 @@ model construction.</p></li>
 <li><p><code>task: mlm</code> requires <code>training.optimizer</code>;
 <code>task: sbert</code> requires <code>training.sbert</code>;
 <code>task: causal_lm</code> requires <code>training.optimizer</code>
-and <code>model_class=’frankensteindecoder’</code>.</p></li>
+and <code>model_class=’frankenstein_text_decoder’</code>.</p></li>
 <li><p><code>bitnet.routers=true</code> requires
 <code>bitnet.enabled=true</code>. The flag has no effect
 otherwise.</p></li>
@@ -4394,7 +4396,7 @@ stream, which conflicts with the n-stream residual.</p></li>
 evaluation-only layer types. They raise <code>RuntimeError</code> if
 used during training. They must not appear in
 <code>model.dims.layer_pattern</code> for training runs.</p></li>
-<li><p><code>model_class: frankensteindecoder</code> forces
+<li><p><code>model_class: frankenstein_text_decoder</code> forces
 <code>model.dims.mode: decoder</code> at runtime. Setting
 <code>model.dims.mode: encoder</code> with this class is
 overridden.</p></li>
@@ -4428,7 +4430,7 @@ class="math inline">\(k\)</span> = sparsity parameter, <span
 class="math inline">\(C\)</span> = compression ratio. Family-specific
 parameters are defined in the corresponding annex.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Name</strong></th>
 <th style="text-align: left;"><strong>Family</strong></th>
 <th style="text-align: left;"><strong>Training</strong></th>
@@ -4438,7 +4440,7 @@ parameters are defined in the corresponding annex.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Name</strong></td>
 <td style="text-align: left;"><strong>Family</strong></td>
 <td style="text-align: left;"><strong>Training</strong></td>
@@ -4446,11 +4448,11 @@ parameters are defined in the corresponding annex.</caption>
 <td style="text-align: left;"><strong>Key Characteristic</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="6" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
@@ -4458,7 +4460,7 @@ page</em></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">standard_attn</td>
 <td style="text-align: left;">Dense</td>
 <td style="text-align: left;"><span
@@ -4470,7 +4472,7 @@ sequences</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sigmoid_attn</td>
 <td style="text-align: left;">Dense</td>
 <td style="text-align: left;"><span
@@ -4482,7 +4484,7 @@ replacement for softmax</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ramapuram_theory_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gqa</td>
 <td style="text-align: left;">Dense</td>
 <td style="text-align: left;"><span
@@ -4495,11 +4497,11 @@ heads</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ainslie_gqa_2023"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="6" style="text-align: center;"><strong>Recurrent
 (5)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">retnet_attn</td>
 <td style="text-align: left;">Recurrent</td>
 <td style="text-align: left;"><span
@@ -4511,7 +4513,7 @@ class="math inline">\(\mathcal{O}(1)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="sun_retentive_2023"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mamba</td>
 <td style="text-align: left;">Recurrent</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(n
@@ -4523,7 +4525,7 @@ hardware-aware parallel scan</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="gu_mamba_2023"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ode</td>
 <td style="text-align: left;">Recurrent</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(k
@@ -4535,7 +4537,7 @@ step solver</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_continuous_2021"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">titan_attn</td>
 <td style="text-align: left;">Recurrent</td>
 <td style="text-align: left;"><span
@@ -4547,7 +4549,7 @@ surprise-driven write dynamics</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="behrouz_titans_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">engram_attn</td>
 <td style="text-align: left;">Memory</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(n
@@ -4559,11 +4561,11 @@ scalable retrieval</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="cheng2026conditionalmemoryscalablelookup"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="6" style="text-align: center;"><strong>Sparse
 (9)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sparse_transformer_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(n
@@ -4575,7 +4577,7 @@ class="math inline">\(\sqrt{n}\)</span> sparsity pattern</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="child_sparse_transformer_2019"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">longformer_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(n
@@ -4587,7 +4589,7 @@ linear in <span class="math inline">\(n\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="beltagy_longformer_2020"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">bigbird_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span
@@ -4599,7 +4601,7 @@ attention</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zaheer_bigbird_2020"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sparsek_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(n
@@ -4611,7 +4613,7 @@ class="math inline">\(k\)</span> selection; learned sparsity mask</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lou_sparsek_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">nsa_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span
@@ -4623,7 +4625,7 @@ token/neighbor/window</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="yuan_nsa_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sparge_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span
@@ -4635,7 +4637,7 @@ training)</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_spargeattn_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">fasa_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(t
@@ -4647,7 +4649,7 @@ eval-only</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="wang_fasa_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">msa_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span
@@ -4660,7 +4662,7 @@ class="math inline">\(\mathcal{O}(n)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lai_minimax_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sparda_attn</td>
 <td style="text-align: left;">Sparse</td>
 <td style="text-align: left;"><span
@@ -4673,11 +4675,11 @@ predictive sparsity</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="fu_sparda_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="6" style="text-align: center;"><strong>Gated
 (8)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gla_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4689,7 +4691,7 @@ attention with gating</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="yang_gla_2023"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">deltanet_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4701,7 +4703,7 @@ attention</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="yang_deltanet_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gated_deltanet_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4713,7 +4715,7 @@ delta framework</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="yang_gated_deltanet_2024"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gated_deltanet2_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4725,7 +4727,7 @@ improved gating</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="hatamizadeh_gated_deltanet2_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">hgrn2_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4737,7 +4739,7 @@ multi-scale recurrence</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="qin_hgrn2_2024"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">fox_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span
@@ -4749,7 +4751,7 @@ compatible</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lin_forgetting_transformer_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gated_softmax_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span
@@ -4761,7 +4763,7 @@ mitigation</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="qiu_gated_attention_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">kda_attn</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4773,11 +4775,11 @@ Linear design</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="kimi_kda_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="6" style="text-align: center;"><strong>Fast-Weight
 (6)</strong></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">falcon1_attn</td>
 <td style="text-align: left;">Fast-weight</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4789,7 +4791,7 @@ perplexity of the family</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_falcon_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">falcon2_attn</td>
 <td style="text-align: left;">Fast-weight</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4800,7 +4802,7 @@ class="math inline">\(\mathcal{O}(d^2)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_falcon_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">falcon3_attn</td>
 <td style="text-align: left;">Fast-weight</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4813,7 +4815,7 @@ exact window statistics</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_falcon_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">falcon1a_attn</td>
 <td style="text-align: left;">Fast-weight</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4825,7 +4827,7 @@ ridge decay</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_falcon_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">falcon2a_attn</td>
 <td style="text-align: left;">Fast-weight</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4836,7 +4838,7 @@ class="math inline">\(\mathcal{O}(d^2)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_falcon_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">falcon3a_attn</td>
 <td style="text-align: left;">Fast-weight</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(L
@@ -4849,11 +4851,11 @@ extrapolation</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_falcon_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="6" style="text-align: center;"><strong>Latent
 (9)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mla_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4866,7 +4868,7 @@ DeepSeek-style</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="mehta_mla_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gqla_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4878,7 +4880,7 @@ latent fusion</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="meng_gqla_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mlra_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4890,7 +4892,7 @@ sub-heads; 4-way tensor-parallel compatible</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="liu_mlra_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">tucker_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4902,7 +4904,7 @@ MHA/GQA/MLA</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="klein_tucker_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">iha_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4914,7 +4916,7 @@ class="math inline">\(\Theta(\sqrt{k})\)</span> parameter scaling</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="duvvuri_iha_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gta_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4926,7 +4928,7 @@ reduction</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="sun_gta_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mtla_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4939,7 +4941,7 @@ class="math inline">\(5.3\times\)</span> decode speedup</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="deng_mtla_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">cca_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4951,7 +4953,7 @@ class="math inline">\(C\times\)</span> fewer FLOPs</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="figliola_cca_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ccgqa_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span
@@ -4964,7 +4966,7 @@ class="math inline">\(8\times\)</span> cache reduction</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="figliola_cca_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gma_attn</td>
 <td style="text-align: left;">Latent</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(nK
@@ -4978,7 +4980,7 @@ class="math inline">\(K\)</span>; causal via prefix cumsums</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="huang_gma_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ssog_attn</td>
 <td style="text-align: left;">Geometric field</td>
 <td style="text-align: left;"><span class="math inline">\(\mathcal{O}(R
@@ -5012,7 +5014,7 @@ class="math inline">\(k\)</span> = Newton–Schulz iteration count. State
 buffers lists the number of optimizer state tensors maintained per
 parameter group.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Optimizer</strong></th>
 <th style="text-align: left;"><strong>Family</strong></th>
 <th style="text-align: left;"><strong>State Buffers</strong></th>
@@ -5022,7 +5024,7 @@ parameter group.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Optimizer</strong></td>
 <td style="text-align: left;"><strong>Family</strong></td>
 <td style="text-align: left;"><strong>State Buffers</strong></td>
@@ -5030,11 +5032,11 @@ parameter group.</caption>
 <td style="text-align: left;"><strong>Key Hyperparams</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="6" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
@@ -5042,7 +5044,7 @@ page</em></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">SGD+Momentum</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;">1 (<span
@@ -5053,7 +5055,7 @@ class="math inline">\(\mathcal{O}(n)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="polyak_1964"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">AdamW</td>
 <td style="text-align: left;">Adaptive</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5066,7 +5068,7 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="loshchilov_decoupled_2017"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">RAdam</td>
 <td style="text-align: left;">Adaptive</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5079,11 +5081,11 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="liu_variance_2019"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="6" style="text-align: center;"><strong>Variance Reduction
 &amp; Advanced Momentum</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Adan</td>
 <td style="text-align: left;">Variance reduction</td>
 <td style="text-align: left;">3 (<span class="math inline">\(m\)</span>,
@@ -5098,7 +5100,7 @@ class="math inline">\(\beta_3\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="xie_adan_2022"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ADOPT</td>
 <td style="text-align: left;">Adam variant</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5111,7 +5113,7 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="taniguchi_adopt_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">AdEMAMix</td>
 <td style="text-align: left;">Multi-EMA</td>
 <td style="text-align: left;">3 (<span
@@ -5127,7 +5129,7 @@ class="math inline">\(\beta_3\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="pagliardini_ademamix_2024"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">MARS</td>
 <td style="text-align: left;">Variance-reduced</td>
 <td style="text-align: left;">3 (<span class="math inline">\(m\)</span>,
@@ -5142,7 +5144,7 @@ class="math inline">\(\gamma\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="yuan_mars_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Cautious AdamW</td>
 <td style="text-align: left;">Masked momentum</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5155,11 +5157,11 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="liang_cautious_2024"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="6" style="text-align: center;"><strong>Large-Batch,
 Memory-Efficient &amp; Parameter-Free</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">LAMB</td>
 <td style="text-align: left;">Layer-wise adaptive</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5172,7 +5174,7 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="you_largebatch_2020"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Schedule-Free</td>
 <td style="text-align: left;">Scheduler-free</td>
 <td style="text-align: left;">3 (<span class="math inline">\(z\)</span>,
@@ -5186,7 +5188,7 @@ class="math inline">\(\beta_2\)</span>, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="defazio_road_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Adafactor</td>
 <td style="text-align: left;">Memory-efficient</td>
 <td style="text-align: left;">1–2 (row/col)</td>
@@ -5198,7 +5200,7 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="shazeer_adafactor_2018"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">GaLore</td>
 <td style="text-align: left;">Low-rank projection</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5212,7 +5214,7 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhao_galore_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Prodigy</td>
 <td style="text-align: left;">Parameter-free</td>
 <td style="text-align: left;">3 (<span class="math inline">\(m\)</span>,
@@ -5227,7 +5229,7 @@ class="math inline">\(d_0\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="mishchenko_prodigy_2023"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Lion</td>
 <td style="text-align: left;">Sign momentum</td>
 <td style="text-align: left;">1 (<span
@@ -5240,11 +5242,11 @@ class="math inline">\(\beta_2\)</span>, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="chen_symbolic_2023"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="6" style="text-align: center;"><strong>Second-Order,
 Geometric &amp; Orthogonality</strong></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Shampoo</td>
 <td style="text-align: left;">Second-order</td>
 <td style="text-align: left;"><span class="math inline">\(2d\)</span>
@@ -5256,7 +5258,7 @@ class="math inline">\(\mathcal{O}(n^{1+2/d})\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="gupta_shampoo_2018"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">SOAP</td>
 <td style="text-align: left;">Second-order</td>
 <td style="text-align: left;"><span class="math inline">\(2d +
@@ -5270,7 +5272,7 @@ class="math inline">\(\beta_2\)</span>, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vyas_soap_2024"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Sophia</td>
 <td style="text-align: left;">Curvature-aware</td>
 <td style="text-align: left;">3 (<span class="math inline">\(m\)</span>,
@@ -5285,7 +5287,7 @@ class="math inline">\(k\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="liu_sophia_2023"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Muon</td>
 <td style="text-align: left;">Orthogonality</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5297,7 +5299,7 @@ class="math inline">\(k\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="shen_convergence_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Turbo-Muon</td>
 <td style="text-align: left;">Orthogonality</td>
 <td style="text-align: left;">2 (<span class="math inline">\(m\)</span>,
@@ -5309,11 +5311,11 @@ class="math inline">\(k\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="boissin_turbo-muon_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="6" style="text-align: center;"><strong>Low-Rank Adaptive
 &amp; Tunable Adaptivity</strong></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">APOLLO</td>
 <td style="text-align: left;">Low-rank adaptive</td>
 <td style="text-align: left;">2 low-rank + proj</td>
@@ -5324,7 +5326,7 @@ class="math inline">\(r\)</span>, update gap, scale, betas, eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhu2025apollosgdlikememoryadamwlevel"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">APOLLO-Mini</td>
 <td style="text-align: left;">Low-rank adaptive</td>
 <td style="text-align: left;">2 rank-1 + proj</td>
@@ -5334,7 +5336,7 @@ class="math inline">\(\mathcal{O}(n)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhu2025apollosgdlikememoryadamwlevel"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Q-APOLLO</td>
 <td style="text-align: left;">Quantized low-rank</td>
 <td style="text-align: left;">2 quantized + proj</td>
@@ -5346,7 +5348,7 @@ eps, wd</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhu2025apollosgdlikememoryadamwlevel"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Anon</td>
 <td style="text-align: left;">Adaptivity-tunable</td>
 <td style="text-align: left;">3 (<span class="math inline">\(m\)</span>,
@@ -5382,7 +5384,7 @@ weightless (no learnable parameters); the per-dim scale is folded into
 the subsequent linear layer per Prop. 1 of <span class="citation"
 data-cites="graef2026flashnorm"></span>.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Method</strong></th>
 <th style="text-align: left;"><strong>Formula</strong></th>
 <th style="text-align: left;"><strong>Stats Needed</strong></th>
@@ -5390,17 +5392,17 @@ data-cites="graef2026flashnorm"></span>.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Method</strong></td>
 <td style="text-align: left;"><strong>Formula</strong></td>
 <td style="text-align: left;"><strong>Stats Needed</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="4" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">LayerNorm</td>
 <td style="text-align: left;"><span class="math inline">\(\gamma_i (x_i
 - \mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i\)</span></td>
@@ -5408,7 +5410,7 @@ page</em></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ba2016layer"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">RMSNorm</td>
 <td style="text-align: left;"><span class="math inline">\(\gamma_i x_i /
 \sqrt{\frac{1}{d}\sum_j x_j^2 + \epsilon}\)</span></td>
@@ -5416,7 +5418,7 @@ data-cites="ba2016layer"></span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_root_2019"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">pRMSNorm</td>
 <td style="text-align: left;"><span class="math inline">\(\gamma_i x_i /
 \sqrt{\frac{1}{k}\sum_{j \le k} x_j^2 + \epsilon}\)</span></td>
@@ -5425,7 +5427,7 @@ class="math inline">\(p\)</span> %)</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhang_root_2019"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Dynamic Tanh (DyT)</td>
 <td style="text-align: left;"><span class="math inline">\(\tanh(\alpha
 x)\)</span></td>
@@ -5433,7 +5435,7 @@ x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="zhu_transformers_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Dynamic Erf (Derf)</td>
 <td style="text-align: left;"><span
 class="math inline">\(\operatorname{erf}(\alpha x + s)\)</span></td>
@@ -5441,7 +5443,7 @@ class="math inline">\(\operatorname{erf}(\alpha x + s)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="chen_stronger_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">FlashNorm</td>
 <td style="text-align: left;"><span class="math inline">\(x_i /
 \sqrt{\frac{1}{d}\sum_j x_j^2 + \epsilon}\)</span></td>
@@ -5482,7 +5484,7 @@ controlled by <code>model.residuals.type</code>; mHC by
 <code>model.mhc</code>. Full details in the mHC and AttnRes
 appendices.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Scheme</strong></th>
 <th style="text-align: left;"><strong>Stream Update</strong></th>
 <th style="text-align: left;"><strong>Constraint</strong></th>
@@ -5490,17 +5492,17 @@ appendices.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Scheme</strong></td>
 <td style="text-align: left;"><strong>Stream Update</strong></td>
 <td style="text-align: left;"><strong>Constraint</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="4" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Standard residual</td>
 <td style="text-align: left;"><span class="math inline">\(x_{l+1} = x_l
 + F(x_l, W_l)\)</span></td>
@@ -5508,14 +5510,14 @@ page</em></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="he_deep_2016"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">No residual (experimental)</td>
 <td style="text-align: left;"><span class="math inline">\(x_{l+1} =
 F(x_l, W_l)\)</span></td>
 <td style="text-align: left;">No skip path</td>
 <td style="text-align: left;">—</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Full AttnRes</td>
 <td style="text-align: left;"><span class="math inline">\(x_{l+1} =
 \sum_{i=0}^{l} \mathrm{softmax}_i(\mathbf{w}_l^{\top}
@@ -5526,7 +5528,7 @@ on keys; <span class="math inline">\(L \cdot C\)</span> parameters</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="sun_attnres_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Block AttnRes</td>
 <td style="text-align: left;"><span class="math inline">\(x_{l+1} =
 \sum_{m=0}^{n} \mathrm{softmax}_m(\mathbf{w}_l^{\top}
@@ -5538,7 +5540,7 @@ sum; <span class="math inline">\(L \cdot C\)</span> parameters</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="sun_attnres_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Hyper-Connections (HC)</td>
 <td style="text-align: left;"><span class="math inline">\(x_{l+1} =
 H^{\text{res}}_l x_l + (H^{\text{post}}_l)^{\top} F(H^{\text{pre}}_l
@@ -5547,7 +5549,7 @@ x_l, W_l)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="xie_mhc_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mHC (this codebase)</td>
 <td style="text-align: left;">same update as HC</td>
 <td style="text-align: left;"><span
@@ -5560,7 +5562,7 @@ class="math inline">\(0.01\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="xie_mhc_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Hyperloop (this codebase)</td>
 <td style="text-align: left;"><span class="math inline">\(y^{(l+1)}_t =
 H^{\text{res}}_l y^{(l)}_t + H^{\text{post}}_l \otimes
@@ -5590,7 +5592,7 @@ trainable parameters. RAF = Rational Activation Function (learnable Padé
 ratio). <span class="math inline">\(\sigma\)</span> is the logistic
 sigmoid.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Name</strong></th>
 <th style="text-align: left;"><strong>Family</strong></th>
 <th style="text-align: left;"><strong>Formula</strong></th>
@@ -5599,25 +5601,25 @@ sigmoid.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Name</strong></td>
 <td style="text-align: left;"><strong>Family</strong></td>
 <td style="text-align: left;"><strong>Formula</strong></td>
 <td style="text-align: left;"><strong>Learn.</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="5" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">silu / swish</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5627,7 +5629,7 @@ class="math inline">\(\beta\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ramachandran2017swish"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">gelu</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5636,7 +5638,7 @@ class="math inline">\(x\,\Phi(x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="hendrycks2016gelu"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">gelu_tanh</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5645,7 +5647,7 @@ class="math inline">\(\tfrac{x}{2}\big(1+\tanh\!\sqrt{\tfrac{2}{\pi}}(x{+}0.0447
 <td style="text-align: left;"><span class="citation"
 data-cites="hendrycks2016gelu"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">relu</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5654,7 +5656,7 @@ class="math inline">\(\max(0,x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="nair2010relu"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sigmoid</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5663,7 +5665,7 @@ class="math inline">\(1/(1+e^{-x})\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lederer2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">tanh</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5672,7 +5674,7 @@ class="math inline">\((e^x-e^{-x})/(e^x+e^{-x})\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lederer2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">arctan</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5681,7 +5683,7 @@ class="math inline">\(\arctan(x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lederer2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">softsign / elliott</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5690,7 +5692,7 @@ class="math inline">\(x/(1+|x|)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="lederer2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">identity</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5698,7 +5700,7 @@ class="math inline">\(x\)</span></td>
 <td style="text-align: left;">no</td>
 <td style="text-align: left;">(internal)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">softplus</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5707,7 +5709,7 @@ class="math inline">\(\log(1+e^x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="glorot2011softplus"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">mish</td>
 <td style="text-align: left;">Classical</td>
 <td style="text-align: left;"><span
@@ -5716,11 +5718,11 @@ class="math inline">\(x\tanh(\log(1+e^x))\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="misra2019mish"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="5" style="text-align: center;"><strong>Rectified family
 (12)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">leaky_relu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5730,7 +5732,7 @@ class="math inline">\(a{=}0.01\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="maas2013leakyrelu"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">relu6</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5739,7 +5741,7 @@ class="math inline">\(\min(\max(0,x),6)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="howard2019hardswish"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">hardswish</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5748,7 +5750,7 @@ class="math inline">\(x\,\text{ReLU6}(x{+}3)/6\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="howard2019hardswish"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">prelu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5757,7 +5759,7 @@ class="math inline">\(\max(0,x)+\mathbf{p}\odot\min(0,x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="he2015prelu"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">abs_relu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5766,7 +5768,7 @@ class="math inline">\(\max(0,x)-\max(0,-x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">nl_relu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5775,7 +5777,7 @@ class="math inline">\(\beta\log(1+\max(0,x))\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">brelu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5784,7 +5786,7 @@ class="math inline">\(\min(\max(0,x),t)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">vrelu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5793,7 +5795,7 @@ class="math inline">\(|x|\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">hexpo</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5802,7 +5804,7 @@ class="math inline">\(a\max(0,x)-c\max(0,-x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ptanh</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5811,7 +5813,7 @@ class="math inline">\(\max(0,\tanh(x))\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">dis_relu</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5820,7 +5822,7 @@ class="math inline">\(\max(0,x-\delta)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">lisht</td>
 <td style="text-align: left;">Rectified</td>
 <td style="text-align: left;"><span
@@ -5829,11 +5831,11 @@ class="math inline">\(x\tanh(x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="roy2019lisht"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="5" style="text-align: center;"><strong>Exponential / ELU
 family (12)</strong></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">elu</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;"><span class="math inline">\(x\)</span> if
@@ -5843,7 +5845,7 @@ class="math inline">\(\alpha(e^x{-}1)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="clevert2016elu"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">selu</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;"><span
@@ -5852,7 +5854,7 @@ class="math inline">\(\lambda\,\text{ELU}_{\alpha&#39;}(x)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="klambauer2017selu"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">celu</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;"><span class="math inline">\(x\)</span> if
@@ -5862,7 +5864,7 @@ class="math inline">\(\alpha(e^{x/\alpha}{-}1)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="barron2017celu"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">pelu</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;"><span
@@ -5872,7 +5874,7 @@ class="math inline">\(\alpha(e^{x/\beta}{-}1)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">mpelu</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;">ELU + learnable <span
@@ -5881,7 +5883,7 @@ class="math inline">\(\alpha,\beta\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">felu / eelu / pdelu / preu</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;">ELU variants w/ learnable params</td>
@@ -5889,7 +5891,7 @@ data-cites="dubey2021activations"></span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">softexp</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;">exp/linear/log interpolation</td>
@@ -5897,7 +5899,7 @@ data-cites="dubey2021activations"></span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dubey2021activations"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">elish / hardelish</td>
 <td style="text-align: left;">Exponential</td>
 <td style="text-align: left;">Swish <span
@@ -5906,11 +5908,11 @@ class="math inline">\(\cup\)</span> ELU gated branches</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="basirat2019elish"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="5" style="text-align: center;"><strong>Learnable / Adaptive
 (4)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">swish_trainable</td>
 <td style="text-align: left;">Learnable</td>
 <td style="text-align: left;"><span
@@ -5920,7 +5922,7 @@ class="math inline">\(\beta\)</span> trainable</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ramachandran2017swish"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">maxout</td>
 <td style="text-align: left;">Learnable</td>
 <td style="text-align: left;"><span class="math inline">\(\max_{i}(W_i
@@ -5929,7 +5931,7 @@ x+b_i)\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="goodfellow2013maxout"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">raf</td>
 <td style="text-align: left;">Learnable</td>
 <td style="text-align: left;"><span
@@ -5939,11 +5941,11 @@ class="math inline">\((5,4)\)</span>, version A</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="fang2023raft"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td colspan="5" style="text-align: center;"><strong>Gated FFN variants
 (3)</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">swiglu</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span
@@ -5952,7 +5954,7 @@ class="math inline">\(\text{SiLU}(xW_g)\odot(xW_u)\,W_d\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="shazeer2020glu"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">geglu</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span
@@ -5961,7 +5963,7 @@ class="math inline">\(\text{GELU}(xW_g)\odot(xW_u)\,W_d\)</span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="shazeer2020glu"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">reglu</td>
 <td style="text-align: left;">Gated</td>
 <td style="text-align: left;"><span
@@ -5989,28 +5991,28 @@ vocabulary size, <span class="math inline">\(H\)</span> = hidden size,
 dimension. The first 12 rows are positional encodings (Annex 12); the
 last two are structural embedding optimizations.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Method</strong></th>
 <th style="text-align: left;"><strong>Description</strong></th>
 <th style="text-align: left;"><strong>Reference</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Method</strong></td>
 <td style="text-align: left;"><strong>Description</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="3" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">RoPE</td>
 <td style="text-align: left;">Rotary Position Embedding; frequency-based
 rotation of Q/K, encoding relative position via inner-product
@@ -6018,7 +6020,7 @@ geometry</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="su_rope_2024"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">HoPE</td>
 <td style="text-align: left;">Hyperbolic Rotary Positional Encoding;
 Lorentz-inspired rotation using hyperbolic functions; monotonic
@@ -6026,7 +6028,7 @@ attention decay with distance; RoPE is a special case</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dai_hope_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">NoPE</td>
 <td style="text-align: left;">No Positional Encoding; model learns
 position implicitly from causal mask; outperforms explicit PE on length
@@ -6034,7 +6036,7 @@ generalization</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="kazemnejad_nope_2023"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">ALiBi</td>
 <td style="text-align: left;">Attention with Linear Biases; static
 distance-proportional penalty on attention scores; enables length
@@ -6042,7 +6044,7 @@ extrapolation</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="press_alibi_2022"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">BAM</td>
 <td style="text-align: left;">Bayesian Attention Mechanism;
 Generalized-Gaussian relative-position bias with learnable per-head
@@ -6053,7 +6055,7 @@ class="math inline">\(\beta=1\)</span>; SSMax rescale via
 <td style="text-align: left;"><span class="citation"
 data-cites="bianchessi_bam_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">PaPE</td>
 <td style="text-align: left;">Parabolic Position Encoding; parabolic
 basis functions concatenated to Q/K; vision-centric, <span
@@ -6061,51 +6063,51 @@ class="math inline">\(n\)</span>-D, extrapolatable</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ohrstrom_pape_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">PaPE-Efficient</td>
 <td style="text-align: left;">Pure-PyTorch PaPE; no custom Triton
 kernels, same math</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ohrstrom_pape_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">PaPE-RI</td>
 <td style="text-align: left;">Rotation-invariant PaPE (PaPE-RI)</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ohrstrom_pape_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Sinusoidal Absolute</td>
 <td style="text-align: left;">Fixed sinusoidal added to embeddings
 (original Transformer)</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Sinusoidal Rotary</td>
 <td style="text-align: left;">Sinusoidal frequencies as a rotation
 matrix on Q/K</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Learned Absolute</td>
 <td style="text-align: left;">Learnable parameter matrix added to
 embeddings</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">None</td>
 <td style="text-align: left;">Null module; no positional information
 injected</td>
 <td style="text-align: left;">—</td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="3" style="text-align: center;"><strong>Structural Embedding
 Optimizations (2)</strong></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Factorized Embeddings</td>
 <td style="text-align: left;">Decomposes <span class="math inline">\(V
 \times H\)</span> embedding matrix into <span class="math inline">\(V
@@ -6116,7 +6118,7 @@ class="math inline">\(\mathcal{O}(V R + R H)\)</span>; controlled by
 <code>factorized_embedding_dim</code></td>
 <td style="text-align: left;">(internal)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Embedding Convolution</td>
 <td style="text-align: left;">Depthwise Conv1d applied over the
 embedding stream before the first transformer block; provides
@@ -7151,7 +7153,7 @@ class="math inline">\(\theta\)</span></strong></p>
 </div>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Group</strong></th>
 <th style="text-align: left;"><strong>Methods</strong></th>
 <th style="text-align: left;"><strong>Primary Goal</strong></th>
@@ -7160,14 +7162,14 @@ Survey</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Classical baseline</td>
 <td style="text-align: left;">SGD, AdamW, RAdam</td>
 <td style="text-align: left;">stability and reference baselines</td>
 <td style="text-align: left;">These define the comparison floor for
 newer optimizer claims.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Momentum redesign</td>
 <td style="text-align: left;">Adan, AdEMAMix, MARS, Cautious AdamW</td>
 <td style="text-align: left;">faster or safer first-order
@@ -7175,7 +7177,7 @@ adaptation</td>
 <td style="text-align: left;">Best when convergence speed or
 noisy-gradient stability is the main concern.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Large-batch and schedule
 simplification</td>
 <td style="text-align: left;">LAMB, Schedule-Free AdamW</td>
@@ -7183,7 +7185,7 @@ simplification</td>
 <td style="text-align: left;">Reduce brittleness from batch-size growth
 or schedule engineering.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Memory-efficient</td>
 <td style="text-align: left;">Adafactor, GaLore, APOLLO, APOLLO-Mini,
 Q-APOLLO, Lion</td>
@@ -7192,14 +7194,14 @@ Q-APOLLO, Lion</td>
 optimizer state rather than activations; APOLLO-family methods replace
 dense AdamW moments with projected or quantized structured scaling.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Curvature-aware</td>
 <td style="text-align: left;">Shampoo, SOAP, Sophia</td>
 <td style="text-align: left;">better conditioning</td>
 <td style="text-align: left;">Prefer when richer geometry is worth
 implementation and compute overhead.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Geometry-oriented</td>
 <td style="text-align: left;">Muon, Turbo-Muon</td>
 <td style="text-align: left;">orthogonalized update structure</td>
@@ -9420,14 +9422,14 @@ heads and <span class="math inline">\(C\)</span> is chunk size.</p>
 <h3 id="strengths-and-limitations">Strengths and Limitations</h3>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Aspect</strong></th>
 <th style="text-align: left;"><strong>Strengths</strong></th>
 <th style="text-align: left;"><strong>Limitations</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Computational efficiency</td>
 <td style="text-align: left;">Sub-quadratic training via chunkwise
 parallelism. Constant-memory inference <span
@@ -9435,14 +9437,14 @@ class="math inline">\(O(d^2)\)</span>.</td>
 <td style="text-align: left;">Requires custom CUDA/Triton kernels; not
 available in all frameworks.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Context generalization</td>
 <td style="text-align: left;">Extends 2K-token training to 20K+ tokens
 with negligible perplexity degradation.</td>
 <td style="text-align: left;">Still underperforms softmax on
 retrieval-heavy benchmarks (needle-in-haystack).</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Selectivity</td>
 <td style="text-align: left;">Per-key-dimension data-dependent
 decay.</td>
@@ -9536,14 +9538,14 @@ class="math inline">\(\mathbf{S}_{t}\)</span></p>
 <h3 id="strengths-and-limitations-1">Strengths and Limitations</h3>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Aspect</strong></th>
 <th style="text-align: left;"><strong>Strengths</strong></th>
 <th style="text-align: left;"><strong>Limitations</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Associative recall</td>
 <td style="text-align: left;">Perfect recall on Multi-Query Associative
 Recall (MQAR) benchmark; error-correcting semantics naturally fit
@@ -9552,14 +9554,14 @@ retrieval patterns.</td>
 crowds over extreme sequence lengths; requires periodic reset mechanisms
 for unbounded context.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Theory</td>
 <td style="text-align: left;">Grounded in online MSE optimization; clear
 connection to test-time training paradigm.</td>
 <td style="text-align: left;">Requires L2-normalized keys for numerical
 stability; double-width normalization adds overhead.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Throughput</td>
 <td style="text-align: left;">WY representation enables efficient
 chunkwise training.</td>
@@ -10015,28 +10017,28 @@ models on tasks requiring local evidence aggregation.</p>
 class="citation"
 data-cites="hatamizadeh_gated_deltanet2_2026"></span>.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Aspect</strong></th>
 <th style="text-align: left;"><strong>Strength</strong></th>
 <th style="text-align: left;"><strong>Limitation</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Recall</td>
 <td style="text-align: left;">Best-in-class among recurrent delta-rule
 models on multi-key NIAH.</td>
 <td style="text-align: left;">Recurrent variant still gaps Transformer
 on NQ/DROP.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Throughput</td>
 <td style="text-align: left;">Near-flat scaling 2K<span
 class="math inline">\(\to\)</span>16K; small overhead vs KDA.</td>
 <td style="text-align: left;">Requires a new gate-aware WY Triton
 backward kernel.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Memory</td>
 <td style="text-align: left;">Constant <span
 class="math inline">\(\mathcal{O}(d^2)\)</span> inference state.</td>
@@ -10147,14 +10149,14 @@ long-context recall relative to scalar-decay Gated DeltaNet.</p>
 <caption>KDA trade-offs in Kimi Linear (3B activated / 48B total) <span
 class="citation" data-cites="kimi_kda_2025"></span>.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Aspect</strong></th>
 <th style="text-align: left;"><strong>Strength</strong></th>
 <th style="text-align: left;"><strong>Limitation</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Recall</td>
 <td style="text-align: left;">Channel-wise decay improves long-context
 recall over scalar-decay baselines; deployed in Kimi Linear (3B/48B
@@ -10163,7 +10165,7 @@ hybrid).</td>
 class="math inline">\(\mathcal{O}(d^2)\)</span> is heavier than
 diagonal-gated linear attention.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Throughput</td>
 <td style="text-align: left;">Up to <span
 class="math inline">\(6\times\)</span> decoding throughput at 1M
@@ -10172,7 +10174,7 @@ full MLA.</td>
 <td style="text-align: left;">Requires DPLR-aware chunkwise kernels for
 hardware efficiency.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Memory</td>
 <td style="text-align: left;">Constant <span
 class="math inline">\(\mathcal{O}(d^2)\)</span> inference state (matrix
@@ -10236,7 +10238,7 @@ immediate gains without major refactoring.</p></li>
 <h3 id="hardware-considerations">Hardware Considerations</h3>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Hardware Target</strong></th>
 <th style="text-align: left;"><strong>Recommended
 Architectures</strong></th>
@@ -10244,21 +10246,21 @@ Architectures</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">GPU (H100/A100)</td>
 <td style="text-align: left;">Gated Softmax, FoX, Gated DeltaNet, Gated
 DeltaNet-2</td>
 <td style="text-align: left;">Mature softmax/linear implementations.
 GLA/DeltaNet require custom kernels.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">TPU (high memory)</td>
 <td style="text-align: left;">GLA, DeltaNet, Gated DeltaNet, Gated
 DeltaNet-2, HGRN2</td>
 <td style="text-align: left;">Hardware supports efficient matmuls;
 linear recurrent methods shine.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Mobile/Edge</td>
 <td style="text-align: left;">RetNet, lightweight Gated Softmax</td>
 <td style="text-align: left;">Constant-memory inference critical.</td>
@@ -10446,7 +10448,7 @@ operation, with an adaptive dispatch that falls back to the sequential
 path in the memory-bound (decode) regime:</p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Scale</strong></th>
 <th style="text-align: left;"><strong>Tokens</strong></th>
 <th style="text-align: right;"><strong>Sequential (ms)</strong></th>
@@ -10456,7 +10458,7 @@ path in the memory-bound (decode) regime:</p>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">SmolLM2-135M</td>
 <td style="text-align: left;">4096</td>
 <td style="text-align: right;">0.704</td>
@@ -10465,7 +10467,7 @@ path in the memory-bound (decode) regime:</p>
 class="math inline">\(+33.6\%\)</span></td>
 <td style="text-align: right;">compute-bound (prefill)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">SmolLM2-135M</td>
 <td style="text-align: left;">8192</td>
 <td style="text-align: right;">0.929</td>
@@ -10474,7 +10476,7 @@ class="math inline">\(+33.6\%\)</span></td>
 class="math inline">\(+35.5\%\)</span></td>
 <td style="text-align: right;">compute-bound (prefill)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Llama-7B</td>
 <td style="text-align: left;">1024</td>
 <td style="text-align: right;">1.882</td>
@@ -10483,7 +10485,7 @@ class="math inline">\(+35.5\%\)</span></td>
 class="math inline">\(+12.1\%\)</span></td>
 <td style="text-align: right;">compute-bound (prefill)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Llama-7B</td>
 <td style="text-align: left;">4096</td>
 <td style="text-align: right;">7.628</td>
@@ -10500,26 +10502,26 @@ validation.</h4>
 bit-identical outputs on three open-weight checkpoints:</p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Model</strong></th>
 <th style="text-align: left;"><strong>Precision</strong></th>
 <th style="text-align: left;"><strong>Result</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">SmolLM2-135M</td>
 <td style="text-align: left;">fp16</td>
 <td style="text-align: left;">max diff <span
 class="math inline">\(=0.0\)</span>, cosine sim <span
 class="math inline">\(=1.0\)</span>, identical text</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Llama-3.2-1B</td>
 <td style="text-align: left;">fp32</td>
 <td style="text-align: left;">bit-identical greedy generation</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Llama-3.1-8B</td>
 <td style="text-align: left;">fp32</td>
 <td style="text-align: left;">bit-identical greedy generation</td>
@@ -10533,7 +10535,7 @@ word_ppl).</p>
 <h3 id="comparison">Comparison</h3>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Method</strong></th>
 <th style="text-align: left;"><strong>Formula</strong></th>
 <th style="text-align: left;"><strong>Stats Needed</strong></th>
@@ -10541,7 +10543,7 @@ word_ppl).</p>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">LayerNorm</td>
 <td style="text-align: left;"><span class="math inline">\(\gamma_i (x_i
 - \mu)/\sqrt{\sigma^2 + \epsilon} + \beta_i\)</span></td>
@@ -10549,7 +10551,7 @@ word_ppl).</p>
 <td style="text-align: left;">Default; full centering and rescaling
 <span class="citation" data-cites="ba2016layer"></span>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">RMSNorm</td>
 <td style="text-align: left;"><span class="math inline">\(\gamma_i
 x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}\)</span></td>
@@ -10557,7 +10559,7 @@ x_i/\sqrt{\frac{1}{d}\sum_j x_j^2+\epsilon}\)</span></td>
 <td style="text-align: left;">Lower overhead; widely used baseline <span
 class="citation" data-cites="zhang_root_2019"></span>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">pRMSNorm</td>
 <td style="text-align: left;"><span class="math inline">\(\gamma_i
 x_i/\sqrt{\frac{1}{k}\sum_{j\le k} x_j^2+\epsilon}\)</span></td>
@@ -10568,7 +10570,7 @@ class="math inline">\(p\)</span>% of dims;
 class="math inline">\(6.25\%\)</span> <span class="citation"
 data-cites="zhang_root_2019"></span>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Dynamic Tanh</td>
 <td style="text-align: left;"><span class="math inline">\(\tanh(\alpha
 x)\)</span></td>
@@ -10577,7 +10579,7 @@ x)\)</span></td>
 drop-in replacement <span class="citation"
 data-cites="zhu_transformers_2025"></span>.</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Dynamic Erf</td>
 <td style="text-align: left;"><span
 class="math inline">\(\mathrm{erf}(\alpha x+s)\)</span></td>
@@ -10586,7 +10588,7 @@ class="math inline">\(\mathrm{erf}(\alpha x+s)\)</span></td>
 over DyT <span class="citation"
 data-cites="chen_stronger_2025"></span>.</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">FlashNorm</td>
 <td style="text-align: left;"><span
 class="math inline">\(x_i/\sqrt{\frac{1}{d}\sum_j
@@ -12380,7 +12382,7 @@ positional encodings.</p>
 (rotation, score-bias, Q/K-augmentation, additive). “Params” lists the
 principal config knobs.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Name</strong></th>
 <th style="text-align: left;"><strong>Style</strong></th>
 <th style="text-align: left;"><strong>Key Idea</strong></th>
@@ -12389,18 +12391,18 @@ principal config knobs.</caption>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><strong>Name</strong></td>
 <td style="text-align: left;"><strong>Style</strong></td>
 <td style="text-align: left;"><strong>Key Idea</strong></td>
 <td style="text-align: left;"><strong>Params</strong></td>
 <td style="text-align: left;"><strong>Reference</strong></td>
 </tr>
-<tr>
+<tr class="even">
 <td colspan="5" style="text-align: right;"><em>continued on next
 page</em></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">rope</td>
 <td style="text-align: left;">Rotation</td>
 <td style="text-align: left;">Frequency-based rotation of Q/K; relative
@@ -12410,7 +12412,7 @@ position via inner-product geometry</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="su_rope_2024"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">hope</td>
 <td style="text-align: left;">Rotation</td>
 <td style="text-align: left;">Hyperbolic Lorentz rotation; monotonic
@@ -12420,7 +12422,7 @@ attention decay with distance</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="dai_hope_2025"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">nope</td>
 <td style="text-align: left;">None</td>
 <td style="text-align: left;">Explicit no-PE; model learns position
@@ -12429,7 +12431,7 @@ implicitly from causal mask</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="kazemnejad_nope_2023"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">alibi</td>
 <td style="text-align: left;">Score bias</td>
 <td style="text-align: left;">Static linear distance penalty added to
@@ -12438,7 +12440,7 @@ attention scores; length extrapolation</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="press_alibi_2022"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">bam</td>
 <td style="text-align: left;">Score bias</td>
 <td style="text-align: left;">Generalized-Gaussian relative-position
@@ -12453,7 +12455,7 @@ class="math inline">\(\beta=1\)</span>; SSMax rescale via
 <td style="text-align: left;"><span class="citation"
 data-cites="bianchessi_bam_2025"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">pape</td>
 <td style="text-align: left;">Q/K aug.</td>
 <td style="text-align: left;">Parabolic basis functions concatenated to
@@ -12463,7 +12465,7 @@ Q/K; vision-centric, <span class="math inline">\(n\)</span>-D</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ohrstrom_pape_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">pape_efficient</td>
 <td style="text-align: left;">Q/K aug.</td>
 <td style="text-align: left;">Pure-PyTorch PaPE; no custom Triton
@@ -12472,7 +12474,7 @@ kernels</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ohrstrom_pape_2026"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">pape_ri</td>
 <td style="text-align: left;">Q/K aug.</td>
 <td style="text-align: left;">Rotation-invariant PaPE (PaPE-RI)</td>
@@ -12480,7 +12482,7 @@ data-cites="ohrstrom_pape_2026"></span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="ohrstrom_pape_2026"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">sinusoidal_absolute</td>
 <td style="text-align: left;">Additive</td>
 <td style="text-align: left;">Fixed sinusoidal added to embeddings
@@ -12490,7 +12492,7 @@ data-cites="ohrstrom_pape_2026"></span></td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">sinusoidal_rotary</td>
 <td style="text-align: left;">Rotation</td>
 <td style="text-align: left;">Sinusoidal frequencies as a rotation
@@ -12499,7 +12501,7 @@ matrix on Q/K</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">learned_absolute</td>
 <td style="text-align: left;">Additive</td>
 <td style="text-align: left;">Learnable parameter matrix added to
@@ -12509,7 +12511,7 @@ embeddings</td>
 <td style="text-align: left;"><span class="citation"
 data-cites="vaswani_attention_2017"></span></td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">None</td>
 <td style="text-align: left;">Null module; no positional information
@@ -12893,41 +12895,41 @@ a per-mixer positional-encoding opt-out
 <code>falcon{1,2,3,1a,2a,3a}_attn_use_pe</code>, default
 <code>False</code> like other recurrent/decay mixers.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Key</strong></th>
 <th style="text-align: left;"><strong>Default</strong></th>
 <th style="text-align: left;"><strong>Description</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>chunk_size</code></td>
 <td style="text-align: left;"><span
 class="math inline">\(64\)</span></td>
 <td style="text-align: left;">Chunk size of the chunk-parallel kernels;
 <code>null</code> selects the recurrent reference scan</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>qk_norm</code></td>
 <td style="text-align: left;"><code>rms_norm</code></td>
 <td style="text-align: left;">QK normalization (<code>rms_norm</code> or
 <code>l2_norm</code>); RMSNorm computed in fp32</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>beta_mode</code></td>
 <td style="text-align: left;"><code>ctx_eta</code></td>
 <td style="text-align: left;">Plasticity gate parameterization:
 <code>static</code>, <code>ctx_beta</code> (content-conditioned gain),
 or <code>ctx_eta</code> (content-conditioned normalized step)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>lambda_mode</code></td>
 <td style="text-align: left;"><code>ctx</code></td>
 <td style="text-align: left;">Forgetting gate: <code>static</code> or
 <code>ctx</code> (scale-couples with the detached curvature
 statistic)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>beta</code> /
 <code>lambda</code></td>
 <td style="text-align: left;"><span class="math inline">\(1.0\)</span> /
@@ -12935,14 +12937,14 @@ statistic)</td>
 <td style="text-align: left;">Static gain and ridge (used when the
 corresponding mode is <code>static</code>)</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>window</code></td>
 <td style="text-align: left;"><span
 class="math inline">\(4\)</span></td>
 <td style="text-align: left;">Sliding window <span
 class="math inline">\(B\)</span> (Falcon-3 / Falcon-3A only)</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>short_conv</code> /
 <code>conv_kernel</code></td>
 <td style="text-align: left;"><code>true</code> / <span
@@ -12950,7 +12952,7 @@ class="math inline">\(4\)</span></td>
 <td style="text-align: left;">Causal depth-wise short convolutions on
 the q/k/v projections</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>eps</code> /
 <code>eps_gamma</code></td>
 <td style="text-align: left;"><span
@@ -12984,7 +12986,7 @@ reaches <strong>87.2%</strong> mean accuracy versus 65.8% for a RoPE
 Transformer and 85.9% for Falcon-1A.3: the inner-product family carries
 arithmetic, while the regression family carries perplexity.</caption>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><strong>Model (124M, 49.2B FineWeb-Edu
 tokens)</strong></th>
 <th style="text-align: center;"><strong>WikiText ppl</strong></th>
@@ -12994,42 +12996,42 @@ tokens)</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Transformer (RoPE)</td>
 <td style="text-align: center;">33.25</td>
 <td style="text-align: center;">47.43</td>
 <td style="text-align: center;">17.38</td>
 <td style="text-align: center;">48.16</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Mamba-2</td>
 <td style="text-align: center;">34.53</td>
 <td style="text-align: center;">48.74</td>
 <td style="text-align: center;">17.70</td>
 <td style="text-align: center;">48.80</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">DeltaNet</td>
 <td style="text-align: center;">34.19</td>
 <td style="text-align: center;">52.84</td>
 <td style="text-align: center;">17.84</td>
 <td style="text-align: center;">48.88</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Gated DeltaNet</td>
 <td style="text-align: center;">30.99</td>
 <td style="text-align: center;">46.70</td>
 <td style="text-align: center;">17.32</td>
 <td style="text-align: center;">48.78</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">Falcon-1A.3</td>
 <td style="text-align: center;">34.02</td>
 <td style="text-align: center;">49.84</td>
 <td style="text-align: center;">17.40</td>
 <td style="text-align: center;">48.95</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">Falcon-1.3</td>
 <td style="text-align: center;">33.00</td>
 <td style="text-align: center;">48.70</td>
