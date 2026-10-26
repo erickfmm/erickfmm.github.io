@@ -1740,14 +1740,20 @@ probabilístico.</figcaption>
 Dispersa</h2>
 <p>El registro incluye diez bloques dispersos <span class="citation"
 data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026"></span>.
-Dos métodos sin entrenamiento, <code>fasa_attn</code> y
-<code>sparge_attn</code>, son solo de evaluación y lanzan un error si se
-usan durante el entrenamiento; <code>swa_attn</code> también es sin
-entrenamiento pero es un mixer entrenable normal, por lo que funciona
-tanto en entrenamiento como en inferencia. Las formulaciones, el
-pseudocódigo, las características por bloque y una tabla comparativa se
-recopilan en el Apéndice <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
+Dos métodos en tiempo de inferencia, <code>fasa_attn</code> y
+<code>sparge_attn</code>, aplican su heurística dispersa solo cuando el
+modelo está en modo evaluación: durante el entrenamiento la capa híbrida
+contenedora sustituye atención estándar densa sobre las mismas
+proyecciones <span
+class="math inline">\(\mathbf{q}/\mathbf{k}/\mathbf{v}/\mathbf{o}\)</span>,
+de modo que los pesos entrenados son exactamente los que lee la ruta
+dispersa en inferencia. <code>swa_attn</code> también es sin
+entrenamiento pero es un mixer entrenable normal, por lo que ejecuta su
+patrón de ventana tanto en entrenamiento como en inferencia. Las
+formulaciones, el pseudocódigo, las características por bloque y una
+tabla comparativa se recopilan en el Apéndice <a
+href="#sec:annex-sparse" data-reference-type="ref"
+data-reference="sec:annex-sparse">17</a>.</p>
 <figure id="fig:sparse-map">
 
 <figcaption>Decisiones de diseño en atención dispersa. Los métodos
@@ -1966,12 +1972,14 @@ de espacio de estados. El enrutamiento MoE (Mezcla de Expertos) está
 implementado para capas FFN pero no para el cómputo de atención, donde
 trabajos recientes han mostrado beneficios <span class="citation"
 data-cites="lewis_moe_2021"></span>.</p>
-<p>La cobertura de atención dispersa es amplia, pero los métodos sin
-entrenamiento (FASA, SpargeAttn) generan errores en tiempo de ejecución
-durante el entrenamiento, reflejando restricciones arquitectónicas:
-estos métodos requieren checkpoints preentrenados de modelos de atención
-completa o procedimientos específicos de ajuste fino que actualmente no
-están automatizados.</p>
+<p>La cobertura de atención dispersa es amplia. Los dos métodos en
+tiempo de inferencia (FASA, SpargeAttn) conservan su carácter sin
+entrenamiento en el sentido de que su regla de dispersidad nunca se
+aprende; en cambio, la implementación entrena la capa como atención
+estándar densa sobre las mismas proyecciones y activa la ruta de
+selección/poda dispersa solo en evaluación, de modo que ambos mixers
+pueden entrenarse desde cero y su comportamiento disperso es exactamente
+el descrito en los artículos originales.</p>
 <p>La cobertura de mecanismos de compuerta y peso rápido abarca las
 categorías principales, incluidas las seis variantes Falcon <span
 class="citation" data-cites="zhang_falcon_2026"></span>. El macro-diseño
@@ -3605,7 +3613,10 @@ inferencia.</p>
 <table>
 <caption>Enumeración completa de <code>layer_pattern</code>. <span
 class="math inline">\(\checkmark\)</span> = soportado, <span
-class="math inline">\(\times\)</span> = no soportado.</caption>
+class="math inline">\(\times\)</span> = no soportado.
+<code>fasa_attn</code> y <code>sparge_attn</code> entrenan como atención
+estándar densa sobre sus propias proyecciones y aplican su heurística
+dispersa solo en inferencia.</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;"><strong>Tipo</strong></th>
@@ -3759,17 +3770,15 @@ diferenciable</td>
 <tr class="even">
 <td style="text-align: left;">sparge_attn</td>
 <td style="text-align: left;">SpargeAttn — poda de bloques en dos
-etapas</td>
-<td style="text-align: center;"><span
-class="math inline">\(\times\)</span></td>
+etapas; entrenamiento denso, inferencia dispersa</td>
+<td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">fasa_attn</td>
 <td style="text-align: left;">FASA — selección de tokens consciente de
-frecuencia</td>
-<td style="text-align: center;"><span
-class="math inline">\(\times\)</span></td>
+frecuencia; entrenamiento denso, inferencia dispersa</td>
+<td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="even">
@@ -4635,10 +4644,13 @@ class="math inline">\(C\)</span>-dimensional único, en conflicto con el
 flujo residual de <span class="math inline">\(n\)</span>
 streams.</p></li>
 <li><p><code>fasa_attn</code> y <code>sparge_attn</code> son tipos de
-capa solo para evaluación. Lanzan <code>RuntimeError</code> si se usan
-durante el entrenamiento. No deben aparecer en
-<code>model.dims.layer_pattern</code> para ejecuciones de
-entrenamiento.</p></li>
+capa dispersos en inferencia: aplican su heurística dispersa solo en
+modo evaluación. Durante el entrenamiento la capa híbrida contenedora
+sustituye atención estándar densa sobre las mismas proyecciones <span
+class="math inline">\(\mathbf{q}/\mathbf{k}/\mathbf{v}/\mathbf{o}\)</span>,
+por lo que pueden aparecer en <code>model.dims.layer_pattern</code> para
+ejecuciones de entrenamiento; los pesos entrenados son los que lee la
+ruta dispersa en inferencia.</p></li>
 <li><p><code>model_class: frankenstein_text_decoder</code> fuerza
 <code>model.dims.mode: decoder</code> en tiempo de ejecución. Establecer
 <code>model.dims.mode: encoder</code> con esta clase se
@@ -4761,13 +4773,13 @@ data-cites="yuan_nsa_2025"></span><br />
 sparge_attn &amp; Disperso &amp; <span
 class="math inline">\(\mathcal{O}(n^2 \cdot s \cdot d)\)</span> &amp;
 <span class="math inline">\(\mathcal{O}(n)\)</span> &amp; Filtrado de
-bloques en dos etapas; solo evaluación (sin entrenamiento) &amp; <span
-class="citation" data-cites="zhang_spargeattn_2025"></span><br />
+bloques en dos etapas; entrenamiento denso, inferencia dispersa &amp;
+<span class="citation" data-cites="zhang_spargeattn_2025"></span><br />
 fasa_attn &amp; Disperso &amp; <span class="math inline">\(\mathcal{O}(t
 \cdot N_{\text{tip}} + N_{\text{fac}} \cdot d)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> &amp; Dispersidad
-consciente de frecuencia RoPE; solo evaluación &amp; <span
-class="citation" data-cites="wang_fasa_2026"></span><br />
+consciente de frecuencia RoPE; entrenamiento denso, inferencia dispersa
+&amp; <span class="citation" data-cites="wang_fasa_2026"></span><br />
 msa_attn &amp; Disperso &amp; <span
 class="math inline">\(\mathcal{O}(H_{\text{kv}} \cdot d_{\text{idx}}
 \cdot N^2 + H_q \cdot d_h \cdot N \cdot k \cdot B_k)\)</span> &amp;
@@ -7362,26 +7374,28 @@ coordinación.</p></li>
 <h2 id="despacho-de-mezclador-guiado-por-patrón">Despacho de Mezclador
 Guiado por Patrón</h2>
 <p>El código base selecciona un mezclador por bloque a partir del
-<code>layer_pattern</code> configurado. La lógica de despacho impone la
-política sin entrenamiento para bloques de solo evaluación y enruta a la
-implementación de familia correspondiente.</p>
+<code>layer_pattern</code> configurado. La lógica de despacho enruta los
+bloques dispersos en tiempo de inferencia (<code>fasa_attn</code>,
+<code>sparge_attn</code>) a atención estándar densa mientras el modelo
+está en modo entrenamiento, y a su implementación dispersa durante la
+evaluación; el resto de bloques se enruta a la implementación de familia
+correspondiente.</p>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Estados ocultos <span class="math inline">\(H\)</span>, patrón <span
 class="math inline">\(P\)</span>, índice de capa <span
 class="math inline">\(\ell\)</span> <span class="math inline">\(m \gets
-P[\ell \bmod |P|]\)</span> lanzar error de configuración/tiempo de
-ejecución (bloque sin entrenamiento en modo entrenar) <span
-class="math inline">\(H \gets \text{softmax-attention}(H)\)</span> <span
-class="math inline">\(H \gets \text{sigmoid-attention}(H)\)</span> <span
-class="math inline">\(H \gets \text{retention}(H)\)</span> <span
-class="math inline">\(H \gets \text{selective-ssm}(H)\)</span> <span
-class="math inline">\(H \gets \text{rk-step}(H)\)</span> <span
-class="math inline">\(H \gets \text{sparse-attention-family}(H)\)</span>
-<span class="math inline">\(H \gets
-\text{gated-attention-family}(H)\)</span> <span class="math inline">\(H
-\gets \text{memory-augmented-attn}(H)\)</span> <span
-class="math inline">\(H\)</span></p>
+P[\ell \bmod |P|]\)</span> <span class="math inline">\(H \gets
+\text{softmax-attention}(H)\)</span> <span class="math inline">\(H \gets
+\text{softmax-attention}(H)\)</span> <span class="math inline">\(H \gets
+\text{sigmoid-attention}(H)\)</span> <span class="math inline">\(H \gets
+\text{retention}(H)\)</span> <span class="math inline">\(H \gets
+\text{selective-ssm}(H)\)</span> <span class="math inline">\(H \gets
+\text{rk-step}(H)\)</span> <span class="math inline">\(H \gets
+\text{sparse-attention-family}(H)\)</span> <span class="math inline">\(H
+\gets \text{gated-attention-family}(H)\)</span> <span
+class="math inline">\(H \gets \text{memory-augmented-attn}(H)\)</span>
+<span class="math inline">\(H\)</span></p>
 </div>
 </div>
 <p>El campo exhibe una progresión clara a lo largo de dos ejes: (i)
@@ -8867,6 +8881,16 @@ decodificación; ortogonal a la cuantización.</p></li>
 la identificación de FC dominantes añade sobrecarga de
 preprocesamiento.</p></li>
 </ul>
+<h4 id="nota-de-implementación-entrenamiento-vs.-inferencia.">Nota de
+implementación (entrenamiento vs. inferencia).</h4>
+<p>En este repositorio la ruta dispersa TIP/FAC es solo de inferencia.
+Mientras el modelo está en modo entrenamiento, la capa híbrida
+contenedora sustituye atención estándar densa sobre las mismas
+proyecciones <span
+class="math inline">\(\mathbf{q}/\mathbf{k}/\mathbf{v}/\mathbf{o}\)</span>,
+de modo que el mixer puede entrenarse desde cero y los pesos optimizados
+durante el entrenamiento son exactamente los que lee la ruta dispersa en
+evaluación.</p>
 <h2
 id="spargeattn-filtrado-de-dos-etapas-a-nivel-de-bloques">SpargeAttn:
 Filtrado de Dos Etapas a Nivel de Bloques</h2>
@@ -8954,6 +8978,16 @@ dispersidad inherente; la granularidad a nivel de bloque puede pasar por
 alto patrones más finos; se requiere ajuste de umbral por familia de
 modelos.</p></li>
 </ul>
+<h4 id="nota-de-implementación-entrenamiento-vs.-inferencia.-1">Nota de
+implementación (entrenamiento vs. inferencia).</h4>
+<p>En este repositorio el filtro de bloques en dos etapas es solo de
+inferencia. Mientras el modelo está en modo entrenamiento, la capa
+híbrida contenedora sustituye atención estándar densa sobre las mismas
+proyecciones <span
+class="math inline">\(\mathbf{q}/\mathbf{k}/\mathbf{v}/\mathbf{o}\)</span>,
+de modo que el mixer puede entrenarse desde cero y los pesos optimizados
+durante el entrenamiento son exactamente los que lee la ruta dispersa en
+evaluación.</p>
 <h2
 id="msa-minimax-sparse-attention-atención-dispersa-por-bloques-con-rama-de-índice-ligera">MSA
 (MiniMax Sparse Attention): Atención Dispersa por Bloques con Rama de
