@@ -1,4 +1,4 @@
-\begin{thebibliography}{114}
+\begin{thebibliography}{116}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -304,6 +304,13 @@ Yongchao Huang and Hassan Raza.
 \newblock Gaussian mixture attention: Linear-time sequence mixing via
   probabilistic latent routing, 2026.
 \newblock URL \url{https://arxiv.org/abs/2606.18283}.
+
+\bibitem[Jolicoeur-Martineau et~al.(2026)Jolicoeur-Martineau, Sukthanker,
+  Cameron, and Gervais]{jolicoeur_sliding_window_2026}
+Alexia Jolicoeur-Martineau, Rhea~Sanjay Sukthanker, Pashmina Cameron, and Emy
+  Gervais.
+\newblock Sliding window beats linear attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2608.28444}.
 
 \bibitem[Kazemnejad et~al.(2023)Kazemnejad, Padhi, Natesan~Ramamurthy, Das, and
   Reddy]{kazemnejad_nope_2023}
@@ -688,6 +695,14 @@ Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue,
 \newblock In \emph{Proceedings of the 2020 Conference on Empirical Methods in
   Natural Language Processing: System Demonstrations (EMNLP)}, pages 38--45,
   2020.
+
+\bibitem[Xiao et~al.(2024)Xiao, Tian, Chen, Han, and
+  Lewis]{xiao_streaming_sinks_2024}
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
+\newblock Efficient streaming language models with attention sinks.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024.
+\newblock URL \url{https://arxiv.org/abs/2309.17453}.
 
 \bibitem[Xie et~al.(2022)Xie, Zhou, Li, Lin, and Yan]{xie_adan_2022}
 Xingyu Xie, Pan Zhou, Huan Li, Zhouchen Lin, and Shuicheng Yan.

@@ -19,7 +19,7 @@ dispatches to factories and registries.
 
 | Dimension | Count | Defined in |
 |---|---:|---|
-| `model.dims.layer_pattern` values | **43** (42 concrete mixers + `mamba`) | `src/schema/_model/_dims.yaml` |
+| `model.dims.layer_pattern` values | **44** (43 concrete mixers + `mamba`) | `src/schema/_model/_dims.yaml` |
 | Optimizer families | **23** | `src/schema/_optimizer.yaml` |
 | Normalization types | **6** | `src/schema/_model/_norm.yaml` |
 | Positional encodings | **12** (11 active + `none`) | `src/schema/_model/_positional_encoding.yaml` |
@@ -32,7 +32,7 @@ dispatches to factories and registries.
 | Deployment formats | **4** | `src/cli.py` (`deploy --format`) |
 
 > The schema enums are the executable contract for code. README badges say
-> "42 mixers / 11 positional encodings" because they exclude the placeholder
+> "43 mixers / 11 positional encodings" because they exclude the placeholder
 > `mamba` layer and the `none` encoding. The mathematical definitions stay in
 > the paper; this document tracks what is actually wired up.
 
@@ -73,7 +73,7 @@ override accepted by the CLI.
 | `src/model/frankenstein_vit.py` | Vision Transformer (forces `mode=encoder`) |
 | `src/model/mhc.py`, `src/model/hyperloop.py` | Manifold-constrained hyper-connections and loop-level variants |
 | `src/model/residuals/**` | Residual strategies + factory |
-| `src/model/attention/**` | 43 mixers: `gated/`, `latent/`, `sparse/`, top-level modules |
+| `src/model/attention/**` | 44 mixers: `gated/`, `latent/`, `sparse/`, top-level modules |
 | `src/model/norm/**` | 6 norms + factory |
 | `src/model/embeddings/**` | 12 positional encodings + factorized embedding + factory |
 | `src/model/activation_function/**` | 43 activations + `ALL_ACTIVATIONS` factory |
@@ -182,7 +182,7 @@ flowchart TD
 
     subgraph HYBRID["HybridLayer internals"]
       N1["norm1 = get_norm()"]
-      MX["mixer registry<br/>(43 names)"]
+      MX["mixer registry<br/>(44 names)"]
       FF["FFN / GatedFFN / MoE"]
       N2["norm2 = get_norm()<br/>or FlashNormLinear fusion"]
       MOD["Mixture-of-Depths router"]
@@ -277,7 +277,7 @@ Cross-field rules enforced in `config_loader.py` and
 
 ### 7.4 Sequence mixers (`model.dims.layer_pattern`)
 
-43 enum values in 8 families. `config subkey` is the optional
+44 enum values in 8 families. `config subkey` is the optional
 `model.attention.<subkey>` object; "—" means no knobs.
 
 | Mixer | Family | Config subkey | Train |
@@ -293,6 +293,7 @@ Cross-field rules enforced in `config_loader.py` and
 | `engram_attn` | Recurrent / memory | `engram.*` | yes |
 | `sparse_transformer_attn` | Sparse | — | yes |
 | `longformer_attn` | Sparse | — | yes |
+| `swa_attn` | Sparse | `swa.*` | yes |
 | `bigbird_attn` | Sparse | — | yes |
 | `sparsek_attn` | Sparse | — | yes |
 | `nsa_attn` | Sparse | — | yes |
@@ -328,6 +329,13 @@ Cross-field rules enforced in `config_loader.py` and
 
 Training-free guard: `HybridLayer.TRAINING_FREE_LAYERS = {"fasa_attn", "sparge_attn"}`
 raises when used in `train()` mode. Never put them in a training preset.
+
+`swa_attn` implements SWA($w$, $s$) from arXiv:2608.28444: every query attends
+to the first `swa.num_sinks` tokens plus the `swa.window_size -
+swa.num_sinks` most recent tokens (causal in decoder mode, symmetric in
+encoder mode). The mask is built vectorized; there are no extra parameters
+beyond the standard attention projections, and the receptive field after `l`
+layers is `l·(w−s)` plus the always-visible sink prefix.
 
 Registry: the local `mixer_registry` dict in `src/model/hybrid_layer.py` maps
 names to classes; `mamba` is handled as a linear projection special case.
@@ -521,6 +529,26 @@ parameters (including ODE/RetNet/Mamba) route to `attention`.
 NaN retries, CSV/NVML telemetry, the GPU thermal guard (`gpu_temp_*`), and
 optional GaLore settings. The guard pauses at `gpu_temp_pause_threshold_c`
 (default 90 °C) and resumes at `gpu_temp_resume_threshold_c` (80 °C).
+
+**Per-block gradient norms.** With `enable_block_grad_norms: true` (default),
+each logged step records the L2 gradient norm of every canonical parameter
+block — `embeddings`, `pos`, `attention`, `ffn`, `norm`, `head`, `mhc`,
+`router`, `residual`, `other` — as `grad_norm_<block>` CSV columns and in the
+`metrics_callback` payload. The taxonomy is defined once in
+`src/utils/param_categories.py` and shared with
+`full_tests/param_count_check.py`, so it matches the website parameter
+estimator breakdown. Mixer-internal norms (QK-norm, GroupNorm) count as
+`attention`; MoE experts count as `ffn`, exactly as in the estimator. The
+legacy CSV schema (which had `experts`/`ode`/`retnet`/`mamba`/`norms` columns)
+rotates automatically under `csv_rotate_on_schema_change: true`.
+
+**Weights & Biases.** `training.wandb_project` (unset by default) enables W&B
+step logging; `training.wandb_mode` is `online`/`offline`/`disabled`. When
+`enable_block_grad_norms` is also true, each block is logged as
+`grad_norm/<block>` alongside loss, LR, `grad_norm`, clip ratio, step time,
+tokens/s and GPU telemetry. W&B lives in the optional `wandb` extra
+(`pip install -e ".[wandb]"`); without it, a configured project emits a
+one-time warning and training continues.
 
 ### 8.3 CLI surface
 
@@ -758,5 +786,6 @@ Every extension must keep these green. Run them on CPU (see `AGENTS.md`).
 - [`docs/paper/`](paper/) and [`docs/paper-es/`](paper-es/) — **source of truth
   for theory**: mathematical formulations and annexes (mixers, optimizers,
   activations, mHC, positional encodings).
-- [`docs/bibliography/`](bibliography/) — per-family literature notes.
+- [`docs/bibliography/`](bibliography/) — BibTeX databases (`.bib`) used by the
+  papers; literature reviews live in the paper annexes, not as separate docs.
 - `src/schema/**` — the executable specification.
