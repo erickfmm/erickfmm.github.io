@@ -526,6 +526,15 @@ pre {
 }
 .list-builder-item:hover { border-color: var(--border); }
 .list-builder-item .btn { padding:3px 8px; font-size:11px; }
+.object-list-builder { display:flex; flex-direction:column; gap:6px; }
+.object-list-row {
+  display:flex; align-items:flex-end; gap:6px; flex-wrap:wrap;
+  padding:6px; border:1px solid var(--border-soft); border-radius:6px;
+  background:var(--surface);
+}
+.object-list-row .checkbox-wrap { margin:0 0 2px; }
+.object-list-row select { min-width:140px; }
+.object-list-row .btn { padding:3px 8px; font-size:11px; }
 /* responsive */
 /* Paper content styles */
 .paper-content { line-height: 1.7; font-size: 15px; }
@@ -865,6 +874,7 @@ pre {
     <div id="param-estimate" class="param-estimate-banner" aria-live="polite" hidden></div>
     <div id="model-section"></div>
     <div id="training-section"></div>
+    <div id="inference-section"></div>
   </div>
 
   <!-- TAB: YAML -->
@@ -886,7 +896,8 @@ pre {
       <select id="cmd-select" onchange="updateCmdPreview()">
         <option value="train">Train — Run main training</option>
         <option value="deploy">Deploy — Convert to deployment artifacts / export formats</option>
-        <option value="infer">Infer — Run deployed model or SBERT inference</option>
+        <option value="infer">Infer — Run deployed model, causal generation, or SBERT inference</option>
+        <option value="web-server">Web Server — Launch the Streamlit YAML builder</option>
       </select>
       <p id="cmd-info" class="info"></p>
     </div>
@@ -895,13 +906,14 @@ pre {
     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn" onclick="copyCmd()">📋 Copy Command</button>
     </div>
-    <div style="margin-top:16px">
+    <div id="output-path-wrap" style="margin-top:16px">
       <label for="output-path">Output Config Path</label>
       <input type="text" id="output-path" value="./config_generated.yaml" oninput="updateCmdPreview()">
+      <div class="info" style="margin-top:4px">Used as <code>--config</code> for train, and as the fallback inference config for causal_lm.</div>
     </div>
     <details class="field-group" style="margin-top:16px">
       <summary>Optional CLI Parameters</summary>
-      <div style="margin-top:8px">
+      <div id="opt-device-wrap" style="margin-top:8px">
         <label for="opt-device">Device</label>
         <select id="opt-device" onchange="updateCmdPreview()">
           <option value="">(default)</option>
@@ -926,31 +938,66 @@ pre {
         <div><label for="opt-deploy-output">--output</label><input type="text" id="opt-deploy-output" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
         <div><label for="opt-deploy-format">--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default: quantized)</option><option value="--format quantized">quantized</option><option value="--format standard">standard</option><option value="--format transformers">transformers</option><option value="--format gguf">gguf</option></select></div>
         <div><label for="opt-deploy-yaml">--yaml</label><input type="text" id="opt-deploy-yaml" oninput="updateCmdPreview()" placeholder="config.yaml (required for transformers/gguf)"></div>
+        <div><label for="opt-deploy-config">--config</label><input type="text" id="opt-deploy-config" oninput="updateCmdPreview()" placeholder="model.json (standard/quantized only)"></div>
         <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-validate" onchange="updateCmdPreview()"><label for="opt-deploy-validate">--validate</label></div>
         <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-check" onchange="updateCmdPreview()"><label for="opt-deploy-check">--check (gguf compatibility check only)</label></div>
       </div>
       <div id="opt-infer" class="cmd-opt-group" style="display:none">
         <div><label for="opt-infer-model">--model</label><input type="text" id="opt-infer-model" oninput="updateCmdPreview()" placeholder="deployed_model"></div>
-        <div><label for="opt-infer-task">--task</label><select id="opt-infer-task" onchange="updateCmdPreview();updateInferTaskExtra()"><option value="">(default: mlm)</option><option value="--task mlm">mlm</option><option value="--task sbert">sbert</option></select></div>
+        <div><label for="opt-infer-task">--task</label><select id="opt-infer-task" onchange="updateCmdPreview();updateInferTaskExtra()"><option value="">(default: mlm)</option><option value="--task mlm">mlm</option><option value="--task sbert">sbert</option><option value="--task causal_lm">causal_lm</option></select></div>
+        <div><label for="opt-infer-config">--config</label><input type="text" id="opt-infer-config" oninput="updateCmdPreview()" placeholder="./config_generated.yaml (optional inference block)"></div>
         <div id="opt-infer-mlm-extra">
           <div><label for="opt-infer-text">--text</label><input type="text" id="opt-infer-text" oninput="updateCmdPreview()" placeholder="Input text"></div>
           <div class="row"><div><label for="opt-infer-input">--input</label><input type="text" id="opt-infer-input" oninput="updateCmdPreview()" placeholder="texts.txt"></div>
           <div><label for="opt-infer-output">--output</label><input type="text" id="opt-infer-output" oninput="updateCmdPreview()" placeholder="preds.pt"></div></div>
           <div><label for="opt-infer-batch">--batch-size</label><input type="number" id="opt-infer-batch" oninput="updateCmdPreview()" value="" placeholder="8"></div>
+          <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-fp16" onchange="updateCmdPreview()"><label for="opt-infer-fp16">--fp16</label></div>
           <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark" onchange="updateCmdPreview()"><label for="opt-infer-benchmark">--benchmark</label></div>
         </div>
         <div id="opt-infer-sbert-extra" style="display:none">
-          <div><label for="opt-infer-mode">--mode</label><select id="opt-infer-mode" onchange="updateCmdPreview()"><option value="--mode similarity" selected>similarity</option><option value="--mode search">search</option><option value="--mode cluster">cluster</option><option value="--mode encode">encode</option></select></div>
+          <div>
+            <label for="opt-infer-mode">--mode</label>
+            <select id="opt-infer-mode" onchange="updateCmdPreview()">
+              <option value="--mode similarity" selected>similarity</option>
+              <option value="--mode search">search</option>
+              <option value="--mode cluster">cluster</option>
+              <option value="--mode encode">encode</option>
+            </select>
+          </div>
           <div class="row"><div><label for="opt-infer-sentence1">--sentence1</label><input type="text" id="opt-infer-sentence1" oninput="updateCmdPreview()" placeholder="First sentence"></div>
           <div><label for="opt-infer-sentence2">--sentence2</label><input type="text" id="opt-infer-sentence2" oninput="updateCmdPreview()" placeholder="Second sentence"></div></div>
           <div class="row"><div><label for="opt-infer-query">--query</label><input type="text" id="opt-infer-query" oninput="updateCmdPreview()" placeholder="Search query"></div>
           <div><label for="opt-infer-corpus">--corpus-file</label><input type="text" id="opt-infer-corpus" oninput="updateCmdPreview()" placeholder="corpus.txt"></div></div>
-          <div class="row"><div><label for="opt-infer-sentences-file">--sentences-file</label><input type="text" id="opt-infer-sentences-file" oninput="updateCmdPreview()" placeholder="sentences.txt"></div>
-          <div><label for="opt-infer-output-file">--output-file</label><input type="text" id="opt-infer-output-file" oninput="updateCmdPreview()" placeholder="embeddings.npz"></div></div>
+          <div class="row"><div><label for="opt-infer-sentences-file">--sentences-file</label><input type="text" id="opt-infer-sentences-file" oninput="updateCmdPreview()" placeholder="sentences.txt (cluster)"></div>
+          <div><label for="opt-infer-input-file">--input-file</label><input type="text" id="opt-infer-input-file" oninput="updateCmdPreview()" placeholder="sentences.txt (encode)"></div></div>
+          <div><label for="opt-infer-output-file">--output-file</label><input type="text" id="opt-infer-output-file" oninput="updateCmdPreview()" placeholder="embeddings.npz"></div>
           <div class="row"><div><label for="opt-infer-top-k">--top-k</label><input type="number" id="opt-infer-top-k" oninput="updateCmdPreview()" value="5"></div>
           <div><label for="opt-infer-n-clusters">--n-clusters</label><input type="number" id="opt-infer-n-clusters" oninput="updateCmdPreview()" value="5"></div></div>
-          <div><label for="opt-infer-sbert-batch">--batch-size</label><input type="number" id="opt-infer-sbert-batch" oninput="updateCmdPreview()" value="32"></div>
+          <div><label for="opt-infer-sbert-batch">--batch-size</label><input type="number" id="opt-infer-sbert-batch" oninput="updateCmdPreview()" value="8"></div>
         </div>
+        <div id="opt-infer-causal-extra" style="display:none">
+          <div><label for="opt-infer-prompt">--prompt</label><input type="text" id="opt-infer-prompt" oninput="updateCmdPreview()" placeholder="Prompt text"></div>
+          <div class="row"><div><label for="opt-infer-max-new-tokens">--max-new-tokens</label><input type="number" id="opt-infer-max-new-tokens" oninput="updateCmdPreview()" placeholder="64"></div>
+          <div><label for="opt-infer-temperature">--temperature</label><input type="number" id="opt-infer-temperature" oninput="updateCmdPreview()" step="any" placeholder="1.0"></div></div>
+          <div class="row"><div><label for="opt-infer-causal-top-k">--top-k</label><input type="number" id="opt-infer-causal-top-k" oninput="updateCmdPreview()" placeholder="50"></div>
+          <div><label for="opt-infer-top-p">--top-p</label><input type="number" id="opt-infer-top-p" oninput="updateCmdPreview()" step="any" placeholder="1.0"></div></div>
+          <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-greedy" onchange="updateCmdPreview()"><label for="opt-infer-greedy">--greedy</label></div>
+          <div><label for="opt-infer-kv-cache">KV cache</label><select id="opt-infer-kv-cache" onchange="updateCmdPreview()"><option value="">(default: YAML / disabled)</option><option value="--kv-cache">--kv-cache (enabled)</option><option value="--no-kv-cache">--no-kv-cache (disabled)</option></select></div>
+          <div class="row"><div><label for="opt-infer-kv-quant">--kv-quant</label><select id="opt-infer-kv-quant" onchange="updateCmdPreview()"><option value="">(default: none)</option><option value="--kv-quant none">none</option><option value="--kv-quant int8">int8</option><option value="--kv-quant int4_kivi">int4_kivi</option></select></div>
+          <div><label for="opt-infer-kv-compress">--kv-compress</label><select id="opt-infer-kv-compress" onchange="updateCmdPreview()"><option value="">(default: none)</option><option value="--kv-compress none">none</option><option value="--kv-compress window_sinks">window_sinks</option></select></div></div>
+          <div class="row"><div><label for="opt-infer-kv-group-size">--kv-group-size</label><input type="number" id="opt-infer-kv-group-size" oninput="updateCmdPreview()" placeholder="64"></div>
+          <div><label for="opt-infer-kv-protected-window">--kv-protected-window</label><input type="number" id="opt-infer-kv-protected-window" oninput="updateCmdPreview()" placeholder="32"></div></div>
+          <div class="row"><div><label for="opt-infer-kv-num-sinks">--kv-num-sinks</label><input type="number" id="opt-infer-kv-num-sinks" oninput="updateCmdPreview()" placeholder="4"></div>
+          <div><label for="opt-infer-kv-window">--kv-window</label><input type="number" id="opt-infer-kv-window" oninput="updateCmdPreview()" placeholder="512"></div></div>
+          <div><label for="opt-infer-causal-batch">--batch-size</label><input type="number" id="opt-infer-causal-batch" oninput="updateCmdPreview()" value="8"></div>
+          <div class="checkbox-wrap"><input type="checkbox" id="opt-infer-benchmark-generation" onchange="updateCmdPreview()"><label for="opt-infer-benchmark-generation">--benchmark-generation</label></div>
+        </div>
+      </div>
+      <div id="opt-web-server" class="cmd-opt-group" style="display:none">
+        <div class="row"><div><label for="opt-web-port">--server-port</label><input type="number" id="opt-web-port" oninput="updateCmdPreview()" value="8501"></div>
+        <div><label for="opt-web-address">--server-address</label><input type="text" id="opt-web-address" oninput="updateCmdPreview()" value="localhost"></div></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-web-headless" onchange="updateCmdPreview()"><label for="opt-web-headless">--server-headless</label></div>
+        <div class="checkbox-wrap"><input type="checkbox" id="opt-web-development" onchange="updateCmdPreview()"><label for="opt-web-development">--development-mode</label></div>
       </div>
     </details>
     <p id="full-cmd-display" class="info" style="margin-top:8px;"></p>
@@ -1050,6 +1097,14 @@ const UI = {
   taskFields: { en:'Task-specific settings', es:'Configuracion segun tarea' },
   gpuFields: { en:'GPU thermal safeguards', es:'Protecciones termicas GPU' },
   sbertConfig: { en:'SBERT Configuration', es:'Configuracion SBERT' },
+  inferenceConfig: { en:'Inference Configuration', es:'Configuración de Inferencia' },
+  addOverride: { en:'+ Add per-mixer override', es:'+ Añadir anulación por mezclador' },
+  mixerKey: { en:'Mixer', es:'Mezclador' },
+  cachingEnabled: { en:'Cache enabled', es:'Caché activada' },
+  removeOverride: { en:'Remove override', es:'Eliminar anulación' },
+  invalidJsonMessage: { en:'Enter a valid JSON object.', es:'Ingresa un objeto JSON válido.' },
+  invalidNumberListMessage: { en:'Enter one valid number per line.', es:'Ingresa un número válido por línea.' },
+  inferenceCompressionRequiresKv: { en:'inference.kv_cache.compression.method != none requires inference.kv_cache.enabled=true.', es:'inference.kv_cache.compression.method != none requiere inference.kv_cache.enabled=true.' },
   galoreSettings: { en:'GaLore (Low-Rank Gradient Projection)', es:'GaLore (Proyeccion de Gradientes de Bajo Rango)' },
   includeKey: { en:'Include key', es:'Incluir clave' },
   optimizerRequiredForMlm: { en:'optimizer is required when task is mlm.', es:'optimizer es obligatorio cuando task es mlm.' },
@@ -1354,8 +1409,16 @@ function assignControlValue(element, value) {
     element.checked = value;
     return;
   }
+  if (value === null || value === undefined) {
+    element.value = '';
+    return;
+  }
   if (Array.isArray(value)) {
     element.value = JSON.stringify(value);
+    return;
+  }
+  if (typeof value === 'object') {
+    element.value = JSON.stringify(value, null, 2);
     return;
   }
   element.value = value;
@@ -1408,11 +1471,42 @@ function validateBuilder() {
   });
 
   document.querySelectorAll('input[type="number"]').forEach((element) => {
+    // Command-tab controls are not part of the generated YAML schema.
+    if (!element.hasAttribute('data-field')) return;
     if (element.value.trim() === '') {
+      const dotted = element.getAttribute('data-field');
+      const included = !dotted || isFieldIncluded(dotted);
       if (requiredFields.includes(element.id)) addError(element, t('fieldRequiredMessage'));
+      else if (included && element.getAttribute('data-nullable') !== 'true') addError(element, t('invalidNumberMessage'));
       return;
     }
     if (Number.isNaN(element.valueAsNumber)) addError(element, t('invalidNumberMessage'));
+  });
+
+  document.querySelectorAll('textarea[data-json-object="true"]').forEach((element) => {
+    const dotted = element.getAttribute('data-field');
+    if (dotted && !isFieldIncluded(dotted)) return;
+    const raw = element.value.trim();
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not-object');
+    } catch (error) {
+      addError(element, t('invalidJsonMessage'));
+    }
+  });
+
+  document.querySelectorAll('textarea[data-array-item-type="integer"], textarea[data-array-item-type="number"]').forEach((element) => {
+    const dotted = element.getAttribute('data-field');
+    if (dotted && !isFieldIncluded(dotted)) return;
+    const isInteger = element.getAttribute('data-array-item-type') === 'integer';
+    const lines = element.value.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.some(line => {
+      const n = Number(line);
+      return !Number.isFinite(n) || (isInteger && !Number.isInteger(n));
+    })) {
+      addError(element, t('invalidNumberListMessage'));
+    }
   });
 
   document.querySelectorAll('[id*="betas_"]').forEach((element) => {
@@ -1593,6 +1687,18 @@ function validateBuilder() {
           }
         }
       }
+    }
+  }
+
+  // Rule: inference.kv_cache.compression.method != none requires
+  // inference.kv_cache.enabled=true (schema/_conditional_rules.yaml). The
+  // window >= protected_window comparison is enforced in Python.
+  {
+    const compEl = document.getElementById(createId('inference.kv_cache.compression.method'));
+    const kvEl = document.getElementById(createId('inference.kv_cache.enabled'));
+    if (compEl && isFieldIncluded('inference.kv_cache.compression.method') && compEl.value !== 'none') {
+      const kvOn = kvEl && isFieldIncluded('inference.kv_cache.enabled') && kvEl.checked;
+      if (!kvOn) addError(kvEl || compEl, t('inferenceCompressionRequiresKv'));
     }
   }
 
@@ -1801,54 +1907,121 @@ function refreshIncludeStyles() {
   });
 }
 
+// ====== SCHEMA TYPE HELPERS ======
+// JSON-Schema modules use nullable unions (e.g. [integer, "null"]) and
+// free-form objects (additionalProperties: true). The renderer dispatches on
+// the effective (non-null) type and keeps nullability as field metadata.
+function escAttr(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/'/g, '&#39;');
+}
+
+function effectiveType(fieldSchema) {
+  const type = fieldSchema && fieldSchema.type;
+  if (Array.isArray(type)) return type.find(v => v !== 'null') || 'string';
+  return type;
+}
+
+function isNullableField(fieldSchema) {
+  return !!(fieldSchema && Array.isArray(fieldSchema.type) && fieldSchema.type.includes('null'));
+}
+
+function isFreeFormObject(fieldSchema) {
+  return !!(fieldSchema && effectiveType(fieldSchema) === 'object'
+    && !(fieldSchema.properties && Object.keys(fieldSchema.properties).length));
+}
+
+function firstNonNullExample(fieldSchema) {
+  const examples = (fieldSchema && fieldSchema.examples) || [];
+  return examples.find(v => v !== null && v !== undefined);
+}
+
+function defaultValueFor(fieldSchema, kind) {
+  if (fieldSchema && fieldSchema.default !== undefined && fieldSchema.default !== null) {
+    return fieldSchema.default;
+  }
+  if (isNullableField(fieldSchema)) return kind === 'array' ? [] : '';
+  const example = firstNonNullExample(fieldSchema);
+  if (example !== undefined) return example;
+  if (kind === 'boolean') return false;
+  if (kind === 'array') return [];
+  if (kind === 'integer' || kind === 'number') return 0;
+  return '';
+}
+
+function placeholderFor(fieldSchema) {
+  const example = firstNonNullExample(fieldSchema);
+  if (example === undefined || (example !== null && typeof example === 'object')) return '';
+  return String(example);
+}
+
+function arrayItemType(fieldSchema) {
+  return effectiveType((fieldSchema && fieldSchema.items) || {});
+}
+
 // ====== FIELD RENDERERS ======
 function renderField(name, fieldSchema, prefix) {
-  const type = fieldSchema.type;
+  const type = effectiveType(fieldSchema);
+  const dotted = prefix ? prefix + '.' + name : name;
+  const fieldId = createId(dotted);
   const title = getTitle(fieldSchema, name);
-  const desc = getDesc(fieldSchema);
-  const fieldId = createId(prefix ? prefix + '.' + name : name);
-  const examples = fieldSchema.examples || [];
   const isRequired = Boolean(fieldSchema.__required);
   const requiredAttr = isRequired ? 'required aria-required="true"' : '';
+  const nullableAttr = isNullableField(fieldSchema) ? ' data-nullable="true"' : '';
+  const fieldAttr = ` data-field="${escAttr(dotted)}"`;
+  const placeholder = placeholderFor(fieldSchema);
+  const placeholderAttr = placeholder ? ` placeholder="${escAttr(placeholder)}"` : '';
 
   let html = `<div class="section">`;
 
   if (type === 'boolean') {
-    const def = fieldSchema.default !== undefined ? fieldSchema.default
-      : (examples[0] !== undefined ? examples[0] : false);
+    const def = defaultValueFor(fieldSchema, 'boolean');
     html += `<div class="checkbox-wrap">
-      <input type="checkbox" id="${fieldId}" ${def ? 'checked' : ''}>
+      <input type="checkbox" id="${fieldId}" ${def ? 'checked' : ''}${fieldAttr}>
       <label for="${fieldId}" style="margin:0">${title}</label>
     </div>`;
-  } else if (type === 'integer') {
-    const def = fieldSchema.default !== undefined ? fieldSchema.default
-      : (examples.length > 0 ? examples[0] : 0);
+  } else if (type === 'integer' || type === 'number') {
+    const isInteger = type === 'integer';
+    const def = defaultValueFor(fieldSchema, type);
     const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
     const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
-    html += `<input type="number" id="${fieldId}" value="${def}" step="1" ${min} ${max} ${requiredAttr}>`;
-  } else if (type === 'number') {
-    const def = fieldSchema.default !== undefined ? fieldSchema.default
-      : (examples.length > 0 ? examples[0] : 0);
-    const min = fieldSchema.minimum !== undefined ? `min="${fieldSchema.minimum}"` : '';
-    const max = fieldSchema.maximum !== undefined ? `max="${fieldSchema.maximum}"` : '';
-    html += `<input type="number" id="${fieldId}" value="${def}" step="any" ${min} ${max} ${requiredAttr}>`;
+    if (Array.isArray(fieldSchema.enum)) {
+      html += `<select id="${fieldId}"${nullableAttr}${fieldAttr} ${requiredAttr}>`;
+      if (isNullableField(fieldSchema)) {
+        html += `<option value="" ${def === '' ? 'selected' : ''}>(null)</option>`;
+      }
+      fieldSchema.enum.forEach(v => {
+        html += `<option value="${v}" ${v === def ? 'selected' : ''}>${v}</option>`;
+      });
+      html += `</select>`;
+    } else {
+      const defStr = (def === '' || def === null || def === undefined) ? '' : String(def);
+      html += `<input type="number" id="${fieldId}" value="${escAttr(defStr)}" step="${isInteger ? '1' : 'any'}" ${min} ${max}${placeholderAttr}${nullableAttr}${fieldAttr} ${requiredAttr}>`;
+    }
   } else if (type === 'string') {
     const enm = fieldSchema.enum;
-    const def = fieldSchema.default !== undefined ? fieldSchema.default
-      : (examples.length > 0 ? examples[0] : '');
+    const def = defaultValueFor(fieldSchema, 'string');
     if (enm) {
-      html += `<select id="${fieldId}" ${requiredAttr}>`;
+      html += `<select id="${fieldId}"${nullableAttr}${fieldAttr} ${requiredAttr}>`;
+      if (isNullableField(fieldSchema)) {
+        html += `<option value="" ${def === '' ? 'selected' : ''}>(null)</option>`;
+      }
       enm.forEach(v => {
         html += `<option value="${v}" ${v === def ? 'selected' : ''}>${v}</option>`;
       });
       html += `</select>`;
     } else {
-      html += `<input type="text" id="${fieldId}" value="${def}" ${requiredAttr}>`;
+      html += `<input type="text" id="${fieldId}" value="${escAttr(def === null ? '' : def)}"${placeholderAttr}${nullableAttr}${fieldAttr} ${requiredAttr}>`;
     }
   } else if (type === 'array') {
     const itemsSchema = fieldSchema.items || {};
     const enm = itemsSchema.enum;
-    const def = examples.length > 0 ? examples[0] : [];
+    const itemType = arrayItemType(fieldSchema);
+    const def = defaultValueFor(fieldSchema, 'array');
     if (enm && name === 'layer_pattern') {
       html += `<div class="list-builder" data-field="${fieldId}">`;
       html += `<div style="display:flex;gap:4px;margin-bottom:6px">`;
@@ -1858,23 +2031,36 @@ function renderField(name, fieldSchema, prefix) {
       html += `<button type="button" class="btn btn-sm" onclick="listBuilderAdd('${fieldId}')">+ Add</button>`;
       html += `</div>`;
       html += `<div id="${fieldId}_list" class="list-builder-list"></div>`;
-      html += `<input type="hidden" id="${fieldId}" value='${JSON.stringify(def)}'>`;
+      html += `<input type="hidden" id="${fieldId}" value="${escAttr(JSON.stringify(def))}"${fieldAttr}>`;
       html += `</div>`;
     } else if (enm) {
+      const selected = Array.isArray(def) ? def : [];
       html += `<div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${t('selectItems')}:</div>`;
       html += `<div id="${fieldId}_container" style="display:flex;flex-wrap:wrap;gap:4px">`;
       enm.forEach(v => {
-        const checked = def.includes(v);
+        const checked = selected.includes(v);
         html += `<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;margin:2px 0;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer">
           <input type="checkbox" class="array-cb" data-field="${fieldId}" value="${v}" ${checked ? 'checked' : ''}>${v}
         </label>`;
       });
       html += `</div>`;
+    } else if (itemType === 'object') {
+      html += `<div class="object-list-builder" data-field="${fieldId}">`;
+      html += `<div id="${fieldId}_rows" class="object-list-rows"></div>`;
+      html += `<div><button type="button" class="btn btn-sm" onclick="objectListAdd('${fieldId}')">${t('addOverride')}</button></div>`;
+      html += `<input type="hidden" id="${fieldId}" value="${escAttr(JSON.stringify(def))}"${fieldAttr}>`;
+      html += `</div>`;
     } else {
       const defStr = Array.isArray(def) ? def.join('\n') : '';
-      html += `<textarea id="${fieldId}" rows="4" ${requiredAttr}>${defStr}</textarea>`;
+      html += `<textarea id="${fieldId}" rows="4"${placeholderAttr}${fieldAttr} data-array-item-type="${escAttr(itemType || 'string')}" ${requiredAttr}>${escHtml(defStr)}</textarea>`;
       html += `<div class="info">One per line</div>`;
     }
+  } else if (type === 'object') {
+    const def = defaultValueFor(fieldSchema, 'object');
+    const defStr = (def && typeof def === 'object' && !Array.isArray(def))
+      ? JSON.stringify(def, null, 2) : '';
+    html += `<textarea id="${fieldId}" rows="4" data-json-object="true"${placeholderAttr}${fieldAttr} ${requiredAttr}>${escHtml(defStr)}</textarea>`;
+    html += `<div class="info">JSON object</div>`;
   }
   html += `</div>`;
   return html;
@@ -1890,10 +2076,10 @@ function renderObject(name, objSchema, prefix, level, skip) {
     const propTitle = getTitle(propSchema, propName);
     const propDesc = getDesc(propSchema);
     const isReq = required.includes(propName);
-    const propType = propSchema.type;
+    const propType = effectiveType(propSchema);
     propSchema.__required = isReq;
 
-    if (propType === 'object') {
+    if (propType === 'object' && !isFreeFormObject(propSchema)) {
       html += createFieldGroup(propTitle, isReq, propDesc, renderObject(propName, propSchema, pp, level+1));
     } else {
       const dotted = pp + '.' + propName;
@@ -1909,7 +2095,8 @@ function renderObject(name, objSchema, prefix, level, skip) {
 // ====== VALUE READERS ======
 function readFieldValue(name, fieldSchema, prefix) {
   const fieldId = createId(prefix ? prefix + '.' + name : name);
-  const type = fieldSchema.type;
+  const type = effectiveType(fieldSchema);
+  const nullable = isNullableField(fieldSchema);
   const el = document.getElementById(fieldId);
 
   if (!el) {
@@ -1928,15 +2115,33 @@ function readFieldValue(name, fieldSchema, prefix) {
   }
   if (el.type === 'checkbox') return el.checked;
   if (el.type === 'number') {
+    if (el.value.trim() === '') return nullable ? null : NaN;
     const v = parseFloat(el.value);
     return type === 'integer' ? Math.round(v) : v;
   }
-  if (el.tagName === 'SELECT') return el.value;
-  if (el.tagName === 'TEXTAREA') {
-    const lines = el.value.split('\n').map(l => l.trim()).filter(l => l);
-    if (type === 'array') return lines;
+  if (el.tagName === 'SELECT') {
+    if (nullable && el.value === '') return null;
+    if (type === 'integer' && el.value !== '') return parseInt(el.value, 10);
+    if (type === 'number' && el.value !== '') return parseFloat(el.value);
     return el.value;
   }
+  if (el.tagName === 'TEXTAREA') {
+    if (type === 'array') {
+      const lines = el.value.split('\n').map(l => l.trim()).filter(l => l);
+      const itemType = arrayItemType(fieldSchema);
+      if (itemType === 'integer') return lines.map(l => parseInt(l, 10));
+      if (itemType === 'number') return lines.map(l => parseFloat(l));
+      return lines;
+    }
+    if (type === 'object') {
+      const raw = el.value.trim();
+      if (!raw) return {};
+      try { return JSON.parse(raw); } catch(e) { return raw; }
+    }
+    if (nullable && el.value.trim() === '') return null;
+    return el.value;
+  }
+  if (nullable && String(el.value).trim() === '') return null;
   return el.value;
 }
 
@@ -1949,7 +2154,7 @@ function readObjectValue(name, objSchema, prefix, skip) {
     const dotted = pp + '.' + propName;
     // Skip props whose include/exclude checkbox is unchecked (optional & excluded).
     if (!isFieldIncluded(dotted)) continue;
-    if (propSchema.type === 'object') {
+    if (effectiveType(propSchema) === 'object' && !isFreeFormObject(propSchema)) {
       const sub = readObjectValue(propName, propSchema, pp);
       // Only emit the object if it has at least one included property.
       if (Object.keys(sub).length > 0) result[propName] = sub;
@@ -2051,8 +2256,29 @@ function buildAll() {
   modelSection.innerHTML = html;
   initListBuilders();
 
-  // === Training section ===
+  // === Training + inference sections ===
   buildTrainingSection();
+  buildInferenceSection();
+  initObjectListBuilders();
+  refreshConditionalSections();
+  updateYamlOutput();
+  updateCmdPreview();
+}
+
+// Runtime-only inference block (schema/_inference.yaml): generation sampling
+// + opt-in KV cache. It never affects training, so it lives in its own section
+// after the training parameters and is emitted only when at least one leaf is
+// included.
+function buildInferenceSection() {
+  const inferenceSchema = SCHEMA && SCHEMA.properties ? SCHEMA.properties.inference : null;
+  const section = document.getElementById('inference-section');
+  if (!inferenceSchema || !section) return;
+  const title = getTitle(inferenceSchema, t('inferenceConfig'));
+  const desc = getDesc(inferenceSchema);
+  let html = `<h2>${title}</h2>`;
+  if (desc) html += `<div class="desc">${desc}</div>`;
+  html += renderObject('inference', inferenceSchema, '', 0);
+  section.innerHTML = html;
 }
 
 function buildTrainingSection() {
@@ -2277,6 +2503,96 @@ function isListBuilder(fieldId) {
   return el && el.type === 'hidden' && document.querySelector(`.list-builder[data-field="${fieldId}"]`);
 }
 
+// ====== OBJECT LIST BUILDER (inference.kv_cache.per_mixer) ======
+function getMixerOptions() {
+  try {
+    const dims = SCHEMA.properties.model.properties.dims;
+    return (dims.properties.layer_pattern.items.enum || []).slice();
+  } catch (e) {
+    return [];
+  }
+}
+
+function objectListItems(fieldId) {
+  const hidden = document.getElementById(fieldId);
+  if (!hidden) return [];
+  try {
+    const parsed = JSON.parse(hidden.value || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function objectListRender(fieldId) {
+  const hidden = document.getElementById(fieldId);
+  const rows = document.getElementById(fieldId + '_rows');
+  if (!hidden || !rows) return;
+  const items = objectListItems(fieldId);
+  const mixers = getMixerOptions();
+  rows.innerHTML = items.map((item, i) => {
+    const mixer = item && item.mixer !== undefined ? item.mixer : '';
+    const enabled = !item || item.enabled === undefined ? true : !!item.enabled;
+    return `<div class="object-list-row">
+      <div style="flex:2;min-width:150px">
+        <label for="${fieldId}_mixer_${i}" style="font-size:11px">${t('mixerKey')}</label>
+        <select id="${fieldId}_mixer_${i}" onchange="objectListUpdate('${fieldId}',${i},'mixer',this.value)">
+          <option value="" ${mixer === '' ? 'selected' : ''}>—</option>
+          ${mixers.map(m => `<option value="${escAttr(m)}" ${m === mixer ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="checkbox-wrap" style="margin:0 0 4px">
+        <input type="checkbox" id="${fieldId}_enabled_${i}" ${enabled ? 'checked' : ''} onchange="objectListUpdate('${fieldId}',${i},'enabled',this.checked)">
+        <label for="${fieldId}_enabled_${i}" style="margin:0;font-size:11px">${t('cachingEnabled')}</label>
+      </div>
+      <button type="button" class="btn btn-sm" style="color:var(--danger);margin-bottom:2px" aria-label="${escAttr(t('removeOverride'))}" title="${escAttr(t('removeOverride'))}" onclick="objectListRemove('${fieldId}',${i})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function objectListAdd(fieldId) {
+  const hidden = document.getElementById(fieldId);
+  if (!hidden) return;
+  const items = objectListItems(fieldId);
+  const mixers = getMixerOptions();
+  const defaultMixer = mixers.includes('standard_attn') ? 'standard_attn' : (mixers[0] || '');
+  items.push({ mixer: defaultMixer, enabled: true });
+  hidden.value = JSON.stringify(items);
+  objectListRender(fieldId);
+  scheduleBuilderRefresh();
+}
+
+function objectListUpdate(fieldId, index, key, value) {
+  const hidden = document.getElementById(fieldId);
+  if (!hidden) return;
+  const items = objectListItems(fieldId);
+  if (!items[index]) return;
+  items[index][key] = value;
+  hidden.value = JSON.stringify(items);
+  scheduleBuilderRefresh();
+}
+
+function objectListRemove(fieldId, index) {
+  const hidden = document.getElementById(fieldId);
+  if (!hidden) return;
+  const items = objectListItems(fieldId);
+  items.splice(index, 1);
+  hidden.value = JSON.stringify(items);
+  objectListRender(fieldId);
+  scheduleBuilderRefresh();
+}
+
+function initObjectListBuilders() {
+  document.querySelectorAll('.object-list-builder').forEach(el => {
+    objectListRender(el.dataset.field);
+  });
+}
+
+function isObjectListBuilder(fieldId) {
+  const el = document.getElementById(fieldId);
+  return el && el.type === 'hidden' && document.querySelector(`.object-list-builder[data-field="${fieldId}"]`);
+}
+
 // ====== BUILD CONFIG ======
 function buildConfig() {
   if (!SCHEMA) return {};
@@ -2372,7 +2688,8 @@ function buildConfig() {
   // emitted) and at least one property is included.
   [['image', 'image-section'],
    ['vision_dataset', 'vision-dataset-section'],
-   ['text_dataset', 'text-dataset-section']].forEach(([name, sectionId]) => {
+   ['text_dataset', 'text-dataset-section'],
+   ['inference', 'inference-section']].forEach(([name, sectionId]) => {
     const blockSchema = SCHEMA.properties[name];
     if (!blockSchema) return;
     const section = document.getElementById(sectionId);
@@ -2517,16 +2834,32 @@ function updateCmdPreview() {
     return;
   }
   const outputPath = document.getElementById('output-path').value || './config_generated.yaml';
+  const isWeb = selectedCmd === 'web-server';
 
   // Show/hide command-specific optional groups
   document.querySelectorAll('.cmd-opt-group').forEach(g => g.style.display = 'none');
   const optGroup = document.getElementById('opt-' + selectedCmd);
   if (optGroup) optGroup.style.display = 'block';
+  const outputWrap = document.getElementById('output-path-wrap');
+  if (outputWrap) outputWrap.style.display = isWeb ? 'none' : 'block';
+  const deviceWrap = document.getElementById('opt-device-wrap');
+  if (deviceWrap) deviceWrap.style.display = isWeb ? 'none' : 'block';
+
+  const info = document.getElementById('cmd-info');
+  if (info) {
+    const infoText = {
+      train: 'Runs schema-validated training from the generated YAML (YAML is the source of truth; --device is the runtime override).',
+      deploy: 'Converts a checkpoint to deployment artifacts, or exports transformers/gguf. --yaml is required for export formats; --config (JSON) applies to standard/quantized.',
+      infer: 'Runs a deployed encoder (mlm), autoregressive generation (causal_lm), or a trained SBERT model (sbert).',
+      'web-server': 'Launches the Streamlit YAML builder. No config or device flag is needed.'
+    };
+    info.textContent = infoText[selectedCmd] || '';
+  }
 
   // Build optional flags
   let extraFlags = [];
   const deviceEl = document.getElementById('opt-device');
-  if (deviceEl && deviceEl.value) extraFlags.push(deviceEl.value);
+  if (!isWeb && deviceEl && deviceEl.value) extraFlags.push(deviceEl.value);
 
   if (selectedCmd === 'train') {
     const lc = document.getElementById('opt-list-configs');
@@ -2543,6 +2876,8 @@ function updateCmdPreview() {
     if (fmt && fmt.value) extraFlags.push(fmt.value);
     const yml = document.getElementById('opt-deploy-yaml');
     if (yml) addFlag(extraFlags, '--yaml', yml.value);
+    const cfg = document.getElementById('opt-deploy-config');
+    if (cfg) addFlag(extraFlags, '--config', cfg.value);
     const val = document.getElementById('opt-deploy-validate');
     if (val && val.checked) extraFlags.push('--validate');
     const chk = document.getElementById('opt-deploy-check');
@@ -2551,10 +2886,21 @@ function updateCmdPreview() {
   if (selectedCmd === 'infer') {
     const mdl = document.getElementById('opt-infer-model');
     if (mdl) addFlag(extraFlags, '--model', mdl.value);
-    const task = document.getElementById('opt-infer-task');
-    const sbert = task && task.value === '--task sbert';
+    const taskEl = document.getElementById('opt-infer-task');
+    const task = taskEl ? taskEl.value : '';
+    const sbert = task === '--task sbert';
+    const causal = task === '--task causal_lm';
+    if (sbert) extraFlags.push('--task sbert');
+    if (causal) extraFlags.push('--task causal_lm');
+
+    // --config is shared by all infer tasks. For causal_lm the generated
+    // training config is the natural fallback (it carries the inference block).
+    const cfgEl = document.getElementById('opt-infer-config');
+    let cfgVal = cfgEl ? cfgEl.value.trim() : '';
+    if (!cfgVal && causal) cfgVal = outputPath;
+    if (cfgVal) addFlag(extraFlags, '--config', cfgVal);
+
     if (sbert) {
-      extraFlags.push('--task sbert');
       const mode = document.getElementById('opt-infer-mode');
       if (mode && mode.value) extraFlags.push(mode.value);
       const s1 = document.getElementById('opt-infer-sentence1');
@@ -2569,12 +2915,45 @@ function updateCmdPreview() {
       if (topK && topK.value) addFlag(extraFlags, '--top-k', topK.value, { quote: false });
       const sfile = document.getElementById('opt-infer-sentences-file');
       if (sfile) addFlag(extraFlags, '--sentences-file', sfile.value);
-      const nClusters = document.getElementById('opt-infer-n-clusters');
-      if (nClusters && nClusters.value) addFlag(extraFlags, '--n-clusters', nClusters.value, { quote: false });
+      const ifile = document.getElementById('opt-infer-input-file');
+      if (ifile) addFlag(extraFlags, '--input-file', ifile.value);
       const ofile = document.getElementById('opt-infer-output-file');
       if (ofile) addFlag(extraFlags, '--output-file', ofile.value);
+      const nClusters = document.getElementById('opt-infer-n-clusters');
+      if (nClusters && nClusters.value) addFlag(extraFlags, '--n-clusters', nClusters.value, { quote: false });
       const bs = document.getElementById('opt-infer-sbert-batch');
       if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
+    } else if (causal) {
+      const prompt = document.getElementById('opt-infer-prompt');
+      if (prompt) addFlag(extraFlags, '--prompt', prompt.value);
+      const maxNew = document.getElementById('opt-infer-max-new-tokens');
+      if (maxNew && maxNew.value) addFlag(extraFlags, '--max-new-tokens', maxNew.value, { quote: false });
+      const temp = document.getElementById('opt-infer-temperature');
+      if (temp && temp.value) addFlag(extraFlags, '--temperature', temp.value, { quote: false });
+      const topK = document.getElementById('opt-infer-causal-top-k');
+      if (topK && topK.value) addFlag(extraFlags, '--top-k', topK.value, { quote: false });
+      const topP = document.getElementById('opt-infer-top-p');
+      if (topP && topP.value) addFlag(extraFlags, '--top-p', topP.value, { quote: false });
+      const greedy = document.getElementById('opt-infer-greedy');
+      if (greedy && greedy.checked) extraFlags.push('--greedy');
+      const kvCache = document.getElementById('opt-infer-kv-cache');
+      if (kvCache && kvCache.value) extraFlags.push(kvCache.value);
+      const kvQuant = document.getElementById('opt-infer-kv-quant');
+      if (kvQuant && kvQuant.value) extraFlags.push(kvQuant.value);
+      const kvGroup = document.getElementById('opt-infer-kv-group-size');
+      if (kvGroup && kvGroup.value) addFlag(extraFlags, '--kv-group-size', kvGroup.value, { quote: false });
+      const kvProtected = document.getElementById('opt-infer-kv-protected-window');
+      if (kvProtected && kvProtected.value) addFlag(extraFlags, '--kv-protected-window', kvProtected.value, { quote: false });
+      const kvCompress = document.getElementById('opt-infer-kv-compress');
+      if (kvCompress && kvCompress.value) extraFlags.push(kvCompress.value);
+      const kvSinks = document.getElementById('opt-infer-kv-num-sinks');
+      if (kvSinks && kvSinks.value) addFlag(extraFlags, '--kv-num-sinks', kvSinks.value, { quote: false });
+      const kvWindow = document.getElementById('opt-infer-kv-window');
+      if (kvWindow && kvWindow.value) addFlag(extraFlags, '--kv-window', kvWindow.value, { quote: false });
+      const bs = document.getElementById('opt-infer-causal-batch');
+      if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
+      const benchGen = document.getElementById('opt-infer-benchmark-generation');
+      if (benchGen && benchGen.checked) extraFlags.push('--benchmark-generation');
     } else {
       const txt = document.getElementById('opt-infer-text');
       if (txt) addFlag(extraFlags, '--text', txt.value);
@@ -2584,9 +2963,21 @@ function updateCmdPreview() {
       if (oup) addFlag(extraFlags, '--output', oup.value);
       const bs = document.getElementById('opt-infer-batch');
       if (bs && bs.value) addFlag(extraFlags, '--batch-size', bs.value, { quote: false });
+      const fp16 = document.getElementById('opt-infer-fp16');
+      if (fp16 && fp16.checked) extraFlags.push('--fp16');
       const bm = document.getElementById('opt-infer-benchmark');
       if (bm && bm.checked) extraFlags.push('--benchmark');
     }
+  }
+  if (selectedCmd === 'web-server') {
+    const port = document.getElementById('opt-web-port');
+    if (port && port.value) addFlag(extraFlags, '--server-port', port.value, { quote: false });
+    const addr = document.getElementById('opt-web-address');
+    if (addr) addFlag(extraFlags, '--server-address', addr.value);
+    const headless = document.getElementById('opt-web-headless');
+    if (headless && headless.checked) extraFlags.push('--server-headless');
+    const dev = document.getElementById('opt-web-development');
+    if (dev && dev.checked) extraFlags.push('--development-mode');
   }
 
   let cmd = 'frankenstein-transformer ' + selectedCmd;
@@ -2601,11 +2992,15 @@ function updateCmdPreview() {
 
 function updateInferTaskExtra() {
   const taskEl = document.getElementById('opt-infer-task');
-  const sbert = taskEl && taskEl.value === '--task sbert';
+  const task = taskEl ? taskEl.value : '';
+  const sbert = task === '--task sbert';
+  const causal = task === '--task causal_lm';
   const mlmExtra = document.getElementById('opt-infer-mlm-extra');
   const sbertExtra = document.getElementById('opt-infer-sbert-extra');
-  if (mlmExtra) mlmExtra.style.display = sbert ? 'none' : 'block';
+  const causalExtra = document.getElementById('opt-infer-causal-extra');
+  if (mlmExtra) mlmExtra.style.display = (!sbert && !causal) ? 'block' : 'none';
   if (sbertExtra) sbertExtra.style.display = sbert ? 'block' : 'none';
+  if (causalExtra) causalExtra.style.display = causal ? 'block' : 'none';
   updateCmdPreview();
 }
 
@@ -2774,7 +3169,7 @@ function scheduleBuilderRefresh() {
 }
 
 function initBuilderLiveRefresh() {
-  ['model-section', 'training-section'].forEach(id => {
+  ['model-section', 'training-section', 'inference-section'].forEach(id => {
     const container = document.getElementById(id);
     if (!container) return;
     container.addEventListener('input', scheduleBuilderRefresh);
@@ -3024,9 +3419,11 @@ const EXAMPLE_FILES_TOP = [
 const EXAMPLE_FILES_SUB = [
   'activation_mish_pre_adamw.yaml','activation_raf_adamw.yaml','activation_swiglu_adamw.yaml','bitnet_decoder.yaml',
   'block_attn_res_adamw.yaml','causal_lm_decoder.yaml','decoder_gated_mixed_adamw.yaml','decoder_gpt_like.yaml',
-  'decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml','es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml',
+  'decoder_llama_like.yaml','decoder_retnet_mamba_like.yaml','decoder_swa_causal_lm.yaml','kv_cache_generate.yaml',
+  'es_arch_all_gated_muon.yaml','es_arch_bigbird_sparsek_lamb.yaml',
   'es_arch_bitnet_factorized_mars_adamw.yaml','es_arch_cca_adamw.yaml','es_arch_ccgqa_adamw.yaml','es_arch_falcon1_adamw.yaml',
-  'es_arch_falcon1a_adamw.yaml','es_arch_falcon3a_adamw.yaml','es_arch_gated_deltanet2_lion.yaml',
+  'es_arch_falcon1a_adamw.yaml','es_arch_falcon3a_adamw.yaml','es_arch_fasa_sparge_adamw.yaml','es_arch_swa_adamw.yaml',
+  'es_arch_gated_deltanet2_lion.yaml',
   'es_arch_gla_deltanet_lion.yaml','es_arch_gma_adamw.yaml','es_arch_gqa_adamw.yaml','es_arch_gqla_adamw.yaml',
   'es_arch_gta_adamw.yaml','es_arch_hgrn2_fox_gated_softmax_adamw.yaml','es_arch_hybrid_turbo_muon.yaml','es_arch_iha_adamw.yaml',
   'es_arch_kda_adamw.yaml','es_arch_mhc_adamw.yaml','es_arch_mini_cautious_adamw.yaml','es_arch_mla_adamw.yaml',
@@ -3042,9 +3439,10 @@ const EXAMPLE_FILES_SUB = [
   'pe_alibi.yaml','pe_bam_ssmax.yaml','pe_bam.yaml','pe_hope.yaml',
   'pe_learned_absolute.yaml','pe_mixed_use_pe.yaml','pe_nope.yaml','pe_pape_efficient.yaml',
   'pe_pape_ri.yaml','pe_pape.yaml','pe_rope.yaml','pe_sinusoidal_absolute.yaml',
-  'pe_sinusoidal_rotary.yaml','prms_norm_adamw.yaml','rms_norm_adamw.yaml','vit_classification_adamw.yaml',
-  'vit_gma_mnist.yaml','vit_patch_prediction_adamw.yaml','vit_segmentation_eomt_adamw.yaml','vit_segmentation_pixel_adamw.yaml',
-  'vit_ssog_mnist.yaml'
+  'pe_sinusoidal_rotary.yaml','prms_norm_adamw.yaml','rms_norm_adamw.yaml',
+  'tokenizer_hf_repo_custom_model.yaml','tokenizer_train_from_dataset.yaml',
+  'vit_classification_adamw.yaml','vit_gma_mnist.yaml','vit_patch_prediction_adamw.yaml',
+  'vit_segmentation_eomt_adamw.yaml','vit_segmentation_pixel_adamw.yaml','vit_ssog_mnist.yaml'
 ];
 
 function populateRepoExamples() {
@@ -3137,7 +3535,11 @@ function applyYamlConfig(config) {
   // patch_prediction, classification, segmentation) populate their rendered
   // controls too.
   if (config.training) {
-    for (const [key, val] of Object.entries(flattenKeys(config.training))) {
+    const trainingFlat = flattenKeys(
+      config.training,
+      new Set(['sbert.optimizer.optimizer_kwargs'])
+    );
+    for (const [key, val] of Object.entries(trainingFlat)) {
       if (key === 'optimizer' || key.startsWith('optimizer.')) continue;
       applyFieldValue('training.' + key, val);
     }
@@ -3165,10 +3567,10 @@ function applyYamlConfig(config) {
     }
   }
 
-  // Tokenizer / image / dataset blocks — flattened into the same dotted id
-  // space the renderer emits (tokenizer.name_or_path, image.image_size.height,
-  // vision_dataset.rescale..., text_dataset...).
-  ['tokenizer', 'image', 'vision_dataset', 'text_dataset'].forEach(block => {
+  // Tokenizer / image / dataset / inference blocks — flattened into the same
+  // dotted id space the renderer emits (tokenizer.name_or_path,
+  // image.image_size.height, vision_dataset.rescale..., inference.kv_cache...).
+  ['tokenizer', 'image', 'vision_dataset', 'text_dataset', 'inference'].forEach(block => {
     if (config[block] && typeof config[block] === 'object' && !Array.isArray(config[block])) {
       for (const [key, val] of Object.entries(flattenKeys(config[block]))) {
         applyFieldValue(block + '.' + key, val);
@@ -3212,16 +3614,22 @@ function unflattenDottedKeys(obj) {
 // Flatten nested objects into dotted keys matching the rendered form ids
 // ({ dims: { layer_pattern: [...] } } -> { 'dims.layer_pattern': [...] }).
 // Used by applyPreset/applyYamlConfig to populate nested blocks (training
-// sub-objects, tokenizer, image, datasets) through the same id-building path.
-function flattenKeys(obj) {
+// sub-objects, tokenizer, image, datasets, inference) through the same
+// id-building path. `stopPaths` keeps free-form object leaves intact so they
+// populate a single JSON textarea instead of being expanded into missing ids.
+function flattenKeys(obj, stopPaths) {
   const out = {};
   if (!obj || typeof obj !== 'object') return out;
+  const stops = stopPaths || new Set();
   const walk = (prefix, o) => {
     for (const [k, v] of Object.entries(o)) {
-      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-        walk(prefix ? prefix + '.' + k : k, v);
+      const path = prefix ? prefix + '.' + k : k;
+      if (stops.has(path)) {
+        out[path] = v;
+      } else if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+        walk(path, v);
       } else {
-        out[prefix ? prefix + '.' + k : k] = v;
+        out[path] = v;
       }
     }
   };
@@ -3240,11 +3648,18 @@ function applyFieldValue(dotted, val) {
     if (isListBuilder(id)) {
       el.value = JSON.stringify(val);
       listBuilderRender(id);
+    } else if (isObjectListBuilder(id)) {
+      el.value = JSON.stringify(val);
+      objectListRender(id);
+    } else if (el.tagName === 'TEXTAREA') {
+      el.value = val.join('\n');
     } else {
       document.querySelectorAll(`.array-cb[data-field="${id}"]`).forEach(cb => {
         cb.checked = val.includes(cb.value);
       });
     }
+  } else if (val !== null && typeof val === 'object') {
+    el.value = JSON.stringify(val, null, 2);
   } else if (typeof val === 'boolean') {
     el.checked = val;
   } else {
@@ -3380,6 +3795,11 @@ function saveAllFormValues() {
     const hidden = document.getElementById(lb.dataset.field);
     if (hidden) store[hidden.id] = hidden.value;
   });
+  // object-list builder hidden fields (inference.kv_cache.per_mixer)
+  document.querySelectorAll('.object-list-builder').forEach(lb => {
+    const hidden = document.getElementById(lb.dataset.field);
+    if (hidden) store[hidden.id] = hidden.value;
+  });
   return store;
 }
 
@@ -3420,6 +3840,13 @@ function restoreAllFormValues(saved, context) {
       if (hidden && saved[hidden.id] !== undefined) {
         hidden.value = saved[hidden.id];
         listBuilderRender(hidden.id);
+      }
+    });
+    document.querySelectorAll('.object-list-builder').forEach(lb => {
+      const hidden = document.getElementById(lb.dataset.field);
+      if (hidden && saved[hidden.id] !== undefined) {
+        hidden.value = saved[hidden.id];
+        objectListRender(hidden.id);
       }
     });
   }
