@@ -1,4 +1,4 @@
-\begin{thebibliography}{116}
+\begin{thebibliography}{120}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -161,6 +161,15 @@ Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn,
   Scale}, 2021.
 \newblock URL \url{http://arxiv.org/abs/2010.11929}.
 
+\bibitem[Duanmu et~al.(2024)Duanmu, Yuan, Li, Duan, Zhang, and
+  Lin]{skvq_duanmu_2024}
+Haojie Duanmu, Zhihang Yuan, Xiuhong Li, Jiangfei Duan, Xingcheng Zhang, and
+  Dahua Lin.
+\newblock {SKVQ}: Sliding-window {KV} cache quantization for coding {LLMs},
+  2024.
+\newblock URL \url{https://arxiv.org/abs/2405.06219}.
+\newblock arXiv:2405.06219.
+
 \bibitem[Dubey et~al.(2021)Dubey, Singh, and Chaudhuri]{dubey2021activations}
 Shiv~Ram Dubey, Satish~Kumar Singh, and Bidyut~Baran Chaudhuri.
 \newblock Activation functions in deep learning: A comprehensive survey and
@@ -182,6 +191,16 @@ Stefan Elfwing, Eiji Uchibe, and Kenji Doya.
   approximation in reinforcement learning.
 \newblock \emph{Neural Networks}, 106:\penalty0 300--312, 2018.
 \newblock \doi{10.1016/j.neunet.2018.07.012}.
+
+\bibitem[Elhoushi et~al.(2024)Elhoushi, Shrivastava, Liskovich, Hosmer, Wasti,
+  Lai, Mahmoud, Acun, Agarwal, Roman, et~al.]{layerskip_elhoushi_2024}
+Mostafa Elhoushi, Akshat Shrivastava, Diana Liskovich, Basil Hosmer, Bram
+  Wasti, Liangzhen Lai, Anas Mahmoud, Bilge Acun, Saurabh Agarwal, Ahmed Roman,
+  et~al.
+\newblock {LayerSkip}: Enabling early exit inference and self-speculative
+  decoding, 2024.
+\newblock URL \url{https://arxiv.org/abs/2404.16710}.
+\newblock arXiv:2404.16710.
 
 \bibitem[Fang et~al.(2023)Fang, Lee, Moosavi, and Gurevych]{fang2023raft}
 Aiming Fang, Suhyune Lee, Nafise~Sadat Moosavi, and Iryna Gurevych.
@@ -281,6 +300,15 @@ Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'a}r, and Ross
 Dan Hendrycks and Kevin Gimpel.
 \newblock Gaussian error linear units ({GELU}).
 \newblock In \emph{arXiv preprint arXiv:1606.08415}, 2016.
+
+\bibitem[Hooper et~al.(2024)Hooper, Kim, Mohammadzadeh, Mahoney, Shao, Keutzer,
+  and Gholami]{kvquant_hooper_2024}
+Coleman Hooper, Sehoon Kim, Hiva Mohammadzadeh, Michael~W. Mahoney,
+  Yakun~Sophia Shao, Kurt Keutzer, and Amir Gholami.
+\newblock {KVQuant}: Towards 10 million context length {LLM} inference with
+  {KV} cache quantization, 2024.
+\newblock URL \url{https://arxiv.org/abs/2401.18079}.
+\newblock arXiv:2401.18079.
 
 \bibitem[Howard et~al.(2019)Howard, Sandler, Chu, Chen, Chen, Tan, Wang, Zhu,
   Pang, Vasudevan, Le, and Adam]{howard2019hardswish}
@@ -420,6 +448,15 @@ Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng
 Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
 \newblock Multi-head low-rank attention, 2026.
 \newblock URL \url{https://arxiv.org/abs/2603.02188}.
+
+\bibitem[Liu et~al.(2024)Liu, Yuan, Jin, Zhong, Xu, Braverman, Chen, and
+  Hu]{kivi_liu_2024}
+Zirui Liu, Jiayi Yuan, Hongye Jin, Shaochen Zhong, Zhaozhuo Xu, Vladimir
+  Braverman, Beidi Chen, and Xia Hu.
+\newblock {KIVI}: A tuning-free asymmetric 2bit quantization for {KV} cache,
+  2024.
+\newblock URL \url{https://arxiv.org/abs/2402.02750}.
+\newblock arXiv:2402.02750.
 
 \bibitem[Loshchilov and Hutter(2017)]{loshchilov_decoupled_2017}
 Ilya Loshchilov and Frank Hutter.
