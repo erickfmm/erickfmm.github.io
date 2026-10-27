@@ -1195,6 +1195,26 @@ id="toc-sec:kv-validation">Validación</a></li>
 id="toc-relación-con-trabajo-previo">Relación con Trabajo
 Previo</a></li>
 </ul></li>
+<li><a href="#sec:annex-fixed-numerics"
+id="toc-sec:annex-fixed-numerics">Softmax y Cross-Entropy Numéricamente
+Corregidos</a>
+<ul>
+<li><a href="#los-dos-defectos-de-punto-flotante"
+id="toc-los-dos-defectos-de-punto-flotante">Los Dos Defectos de Punto
+Flotante</a></li>
+<li><a href="#sec:fixed-formulations"
+id="toc-sec:fixed-formulations">Formulaciones Sin Cancelación</a></li>
+<li><a href="#sec:fixed-implementation"
+id="toc-sec:fixed-implementation">Implementación en el Toolkit</a>
+<ul>
+<li><a href="#paso-backward" id="toc-paso-backward">Paso
+Backward</a></li>
+<li><a href="#superficie-de-integración"
+id="toc-superficie-de-integración">Superficie de Integración</a></li>
+</ul></li>
+<li><a href="#sec:fixed-validation" id="toc-sec:fixed-validation">Costo,
+Alcance y Validación</a></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introducción">Introducción</h1>
@@ -2153,7 +2173,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>120</span> urlstyle</p>
+<p><span>121</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2173,6 +2193,9 @@ normalization, 2016. URL
 <code>https://arxiv.org/abs/1607.06450</code>.</p>
 <p>Jonathan T. Barron. Continuously differentiable exponential linear
 units. <em>arXiv preprint arXiv:1704.07483</em>, 2017.</p>
+<p>Jonathan T. Barron, Dan Gnanapragasam, and Michael Tschannen. A fix
+for softmax and cross-entropy, 2026. URL
+<code>https://arxiv.org/abs/2610.31642</code>. arXiv:2610.31642.</p>
 <p>Mina Basirat and Peter M. Roth. The quest for a better
 <span>ReLU</span>: <span>ELiSH</span> and <span>HardELiSH</span>
 activation functions. <em>arXiv preprint arXiv:1905.10144</em>,
@@ -3550,6 +3573,24 @@ defecto: 1.0.</td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">numerics.fixed_softmax</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">Softmax/log-softmax sin cancelación
+(arXiv:2610.31642). Por defecto: <code>false</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">numerics.fixed_cross_entropy</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">CE de objetivo duro con gradiente de suma
+cero por construcción (arXiv:2610.31642). Por defecto:
+<code>false</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">ffn.hidden_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
@@ -3557,35 +3598,35 @@ defecto: 1.0.</td>
 <span class="math inline">\(2\times\)</span>
 <code>hidden_size</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffn.activation</td>
 <td style="text-align: left;">enum</td>
 <td style="text-align: left;">No linealidad FFN (43 valores). Por
 defecto: <code>silu</code>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffn.activation_config</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Parámetros para activaciones
 aprendibles/paramétricas.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">classification_head.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Activar la cabeza de clasificación NLP.
 Por defecto: <code>false</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">classification_head.num_labels</td>
 <td style="text-align: left;">int o null</td>
 <td style="text-align: left;">Número de clases.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">classification_head.pooling_mode</td>
 <td style="text-align: left;">enum (cls, gap)</td>
 <td style="text-align: left;">Pooling de la cabeza de clasificación. Por
@@ -3597,7 +3638,8 @@ defecto: <code>cls</code>.</td>
 <p>Los campos se agrupan bajo sub-objetos jerárquicos
 (<code>dims</code>, <code>norm</code>, <code>embedding</code>,
 <code>attention</code>, <code>moe</code>, <code>bitnet</code>,
-<code>mixture_of_depths</code>, <code>ssmax</code>, <code>ffn</code>,
+<code>mixture_of_depths</code>, <code>ssmax</code>,
+<code>numerics</code>, <code>ffn</code>,
 <code>classification_head</code>, <code>mhc</code>,
 <code>residuals</code>); cada fila de sub-encabezado marca el prefijo
 vigente para las filas que le siguen. No hay claves de características
@@ -13963,5 +14005,362 @@ atención; la expulsión de ventana con sinks es el defecto correcto para
 contextos de streaming o ilimitados. Para las capas recurrentes el
 estado ya es de tamaño constante, así que la expulsión carece de sentido
 y la cuantización está deshabilitada por diseño.</p>
+<h1 id="sec:annex-fixed-numerics">Softmax y Cross-Entropy Numéricamente
+Corregidos</h1>
+<p>Las implementaciones estándar de softmax, log-softmax y cross-entropy
+restan el logit máximo antes de exponenciar, lo que evita el
+desbordamiento pero deja dos defectos de punto flotante <span
+class="citation" data-cites="barron_fixed_softmax_ce_2026"></span>. El
+primero, el <em>Colapso de Softmax</em>, redondea a cero el gradiente
+del objetivo (o del argmax) cuando los logits se vuelven suficientemente
+confiados, rompiendo la propiedad de suma cero del gradiente y
+produciendo los picos de pérdida “Slingshot” observados con
+optimizadores adaptativos. El segundo, la <em>Cancelación de
+Softmax</em>, degrada los gradientes de objetivo blando (destilación)
+cuando los logits del estudiante y del profesor casi coinciden. Este
+anexo documenta la implementación opcional de la primera corrección en
+el toolkit — softmax, log-softmax y cross-entropy de objetivo duro sin
+cancelación —, su paso backward personalizado, su superficie de
+integración y su validación. La cross-entropy de objetivo blando queda
+fuera de alcance porque el toolkit no expone un objetivo de destilación;
+la ruta de embeddings de frases delega sus pérdidas en
+<code>sentence-transformers</code>.</p>
+<h2 id="los-dos-defectos-de-punto-flotante">Los Dos Defectos de Punto
+Flotante</h2>
+<p>Para logits <span class="math inline">\(z \in \mathbb{R}^{K}\)</span>
+y clase objetivo <span class="math inline">\(t\)</span>, los cálculos
+estabilizados estándar son <span class="math display">\[\tilde{z}_k =
+z_k - z_{\max}, \qquad
+\operatorname{logsoftmax}(z)_k = \tilde{z}_k - \log \sum_j
+e^{\tilde{z}_j}, \qquad
+q_k = \frac{e^{\tilde{z}_k}}{\sum_j e^{\tilde{z}_j}},
+\label{eq:standard-softmax}\]</span> y la cross-entropy es <span
+class="math inline">\(L(z,t) = -\operatorname{logsoftmax}(z)_t\)</span>,
+cuyo gradiente exacto es <span class="math inline">\(g = q - p\)</span>
+para una distribución objetivo <span
+class="math inline">\(p\)</span>.</p>
+<h4 id="colapso-de-softmax.">Colapso de Softmax.</h4>
+<p>Defínase el margen de logits <span class="math display">\[m = z_t -
+\log \sum_{j \neq t} e^{z_j}.
+\label{eq:margin}\]</span> Cuando el objetivo es también el logit
+máximo, <span class="math inline">\(\tilde{z}_t = 0\)</span> y el
+denominador pasa a ser <span class="math inline">\(1 + e^{-m}\)</span>.
+Los números en punto flotante son mucho más densos cerca de cero que
+cerca de uno: en fp32, los valores cerca de <span
+class="math inline">\(0\)</span> se resuelven hasta <span
+class="math inline">\(\sim\!10^{-38}\)</span>, mientras que los términos
+sumados a <span class="math inline">\(1.0\)</span> se pierden por debajo
+del redondeo unitario <span class="math inline">\(u = 2^{-p}\)</span>.
+El denominador se redondea por tanto a exactamente <span
+class="math inline">\(1.0\)</span> cuando <span
+class="math inline">\(m\)</span> supera el <em>acantilado de
+precisión</em> <span class="math display">\[c_d = -\ln u = p \ln 2 ,
+\qquad
+c_{16} \approx 5.5, \quad c_{32} \approx 16.6, \quad c_{64} \approx
+36.7,
+\label{eq:cliff}\]</span> para bf16 (<span class="math inline">\(p =
+8\)</span>), fp32 (<span class="math inline">\(p = 24\)</span>) y fp64
+(<span class="math inline">\(p = 53\)</span>). Pasado el acantilado, la
+pérdida forward se vuelve <span class="math inline">\(\log(1) =
+0\)</span> y el gradiente objetivo <span class="math inline">\(q_t -
+1\)</span> pasa a ser exactamente <span
+class="math inline">\(0\)</span>, mientras que los gradientes no
+objetivo <span class="math inline">\(q_j = e^{z_j - z_t}/(1 +
+e^{-m})\)</span> siguen siendo positivos hasta el subdesbordamiento del
+exponente (<span class="math inline">\(m \approx 88\)</span> en fp32).
+El gradiente deja de sumar cero, <span class="math display">\[\sum_k g_k
+\approx \sum_{j \neq t} q_j &gt; 0 ,
+\label{eq:broken-zero-sum}\]</span> lo que sesga cada actualización de
+parámetros e interactúa mal con la normalización por coordenada de Adam:
+cuando el gradiente objetivo perdido reaparece más tarde, la estimación
+del segundo momento ya ha decaído y la actualización produce un
+pico.</p>
+<h4 id="cancelación-de-softmax.">Cancelación de Softmax.</h4>
+<p>Para objetivos blandos <span class="math inline">\(p =
+\operatorname{softmax}(z^{T})\)</span>, el gradiente <span
+class="math inline">\(q - p\)</span> es la diferencia de dos vectores de
+probabilidad casi iguales. Calculados por separado, se pierde la pequeña
+diferencia que porta la señal y queda un residuo distinto de cero
+incluso cuando <span class="math inline">\(z^{S} = z^{T}\)</span>. La
+corrección del artículo calcula la diferencia directamente en espacio
+logarítmico con <code>expm1</code>/<code>log1p</code>; este toolkit no
+tiene pérdida de destilación y por tanto no la implementa.</p>
+<h2 id="sec:fixed-formulations">Formulaciones Sin Cancelación</h2>
+<p>Ambas correcciones excluyen la entrada argmax del log-sum-exp y la
+reintroducen mediante un softplus estable. Sean <span
+class="math inline">\(a = \arg\max_k z_k\)</span>, <span
+class="math inline">\(z_{\max} = z_a\)</span> y <span
+class="math display">\[s = \operatorname{softplus}\!\left(-m\right) =
+\log\!\left(1 + e^{-m}\right)
+    = \log \sum_{j \neq a} e^{z_j - z_{\max}} ,
+\qquad m = z_{\max} - \log \sum_{j \neq a} e^{z_j}.
+\label{eq:softplus-margin}\]</span> Entonces <span
+class="math display">\[\operatorname{logsoftmax}(z)_k = z_k - z_{\max} -
+s,
+\qquad
+q_k = \exp\!\left(z_k - z_{\max} - s\right),
+\label{eq:fixed-values}\]</span> con la entrada argmax evaluada
+exactamente como <span class="math inline">\(-s\)</span> y <span
+class="math inline">\(\exp(-s)\)</span> respectivamente. Dado que <span
+class="math inline">\(s\)</span> se calcula como <span
+class="math inline">\(\log(1 + e^{-m})\)</span> (equivalentemente <span
+class="math inline">\(\log\!\operatorname{1p}(e^{-m})\)</span>), el
+diminuto término <span class="math inline">\(e^{-m}\)</span> sobrevive
+mucho más allá del acantilado estándar, hasta el subdesbordamiento del
+exponente.</p>
+<p>El complemento de la probabilidad máxima es la cantidad crítica para
+el paso backward. En lugar de formar <span class="math inline">\(1 -
+q_{\max}\)</span> (que se cancela en el dtype de salida), la
+implementación usa la identidad <span class="math display">\[1 -
+q_{\max} = -\operatorname{expm1}(-s),
+\label{eq:one-minus-qmax}\]</span> que es exacta para <span
+class="math inline">\(s\)</span> arbitrariamente pequeño.</p>
+<h4 id="cross-entropy-de-objetivo-duro.">Cross-entropy de objetivo
+duro.</h4>
+<p>Usando el logit objetivo como referencia, la pérdida es <span
+class="math display">\[L(z,t) =
+\operatorname{softplus}\!\left(\operatorname{logsumexp}_{j \neq
+t}\left(z_j - z_t\right)\right)
+       = \log\!\left(1 + \sum_{j \neq t} e^{z_j - z_t}\right),
+\label{eq:fixed-ce}\]</span> algebraicamente idéntica a <span
+class="math inline">\(\log(1 + e^{-m})\)</span> pero sin sumar nunca el
+término pequeño a uno. Escribir <span class="math inline">\(z_t\)</span>
+mediante las diferencias <span class="math inline">\(z_j - z_t\)</span>
+hace que la diferenciación automática devuelva <span
+class="math display">\[g_t = -\frac{e^{-m}}{1 + e^{-m}}, \qquad
+g_j = \frac{e^{z_j - z_t}}{1 + e^{-m}} \quad (j \neq t),
+\label{eq:fixed-gradients}\]</span> de modo que el gradiente objetivo se
+obtiene como menos la suma de los gradientes no objetivo y <span
+class="math inline">\(\sum_k g_k = 0\)</span> se cumple por
+construcción, con cualquier margen. La magnitud <span
+class="math inline">\(e^{-m}/(1+e^{-m})\)</span> se preserva hasta el
+subdesbordamiento del exponente — precisamente la componente que la
+implementación estándar redondea a cero.</p>
+<h4 id="jacobianos-de-softmax-y-log-softmax.">Jacobianos de softmax y
+log-softmax.</h4>
+<p>Para un softmax aislado, los valores forward de la Ecuación <a
+href="#eq:fixed-values" data-reference-type="ref"
+data-reference="eq:fixed-values">[eq:fixed-values]</a> aún pueden
+redondear a uno en el dtype de salida (es inevitable para la
+probabilidad almacenada), pero el jacobiano no debe colapsar. Dado un
+gradiente aguas arriba <span class="math inline">\(g\)</span>, el
+producto vector–jacobiano del softmax es <span
+class="math display">\[\frac{\partial L}{\partial z} = q \odot \left(g -
+\langle g, q\rangle\right),
+\label{eq:softmax-vjp}\]</span> cuya entrada argmax se reescribe como
+<span class="math display">\[\left.\frac{\partial L}{\partial
+z_a}\right|_{\text{fixed}}
+= q_{\max}\left(g_{\max}\,(1 - q_{\max}) - \sum_{j \neq a} g_j
+q_j\right),
+\label{eq:argmax-vjp}\]</span> con <span class="math inline">\(1 -
+q_{\max}\)</span> tomado de la Ecuación <a href="#eq:one-minus-qmax"
+data-reference-type="ref"
+data-reference="eq:one-minus-qmax">[eq:one-minus-qmax]</a>. La entrada
+verdadera del jacobiano <span class="math inline">\(q_{\max}(1 -
+q_{\max}) \approx e^{-m}\)</span> sobrevive así al acantilado. Para
+log-softmax (<span class="math inline">\(\partial
+\operatorname{logsoftmax}_k/\partial z_j = \delta_{kj} - q_j\)</span>)
+la entrada argmax se reescribe igualmente como <span
+class="math display">\[\left.\frac{\partial L}{\partial
+z_a}\right|_{\text{fixed}}
+= -\sum_{j \neq a} g_j + (1 - q_{\max}) \sum_k g_k .
+\label{eq:logsoftmax-vjp}\]</span></p>
+<p>La Tabla <a href="#tab:collapse-regimes" data-reference-type="ref"
+data-reference="tab:collapse-regimes">[tab:collapse-regimes]</a>
+contrasta ambos regímenes. Los valores son las cantidades exactas de las
+Ecuaciones <a href="#eq:fixed-gradients" data-reference-type="ref"
+data-reference="eq:fixed-gradients">[eq:fixed-gradients]</a>–<a
+href="#eq:argmax-vjp" data-reference-type="ref"
+data-reference="eq:argmax-vjp">[eq:argmax-vjp]</a>; la columna estándar
+es lo que produce la Ecuación <a href="#eq:standard-softmax"
+data-reference-type="ref"
+data-reference="eq:standard-softmax">[eq:standard-softmax]</a> una vez
+que <span class="math inline">\(m &gt; c_d\)</span>.</p>
+<div class="tabular">
+<p><span>L<span>3.9cm</span>L<span>4.5cm</span>L<span>4.5cm</span></span>
+<strong>Cantidad</strong> &amp; <strong>Estándar</strong> &amp;
+<strong>Corregido</strong><br />
+<span class="math inline">\(q_{\max}\)</span> &amp; <span
+class="math inline">\(1.0\)</span> (redondeado) &amp; <span
+class="math inline">\(e^{-s}\)</span> (valores; puede redondear)<br />
+<span class="math inline">\(1 - q_{\max}\)</span> &amp; <span
+class="math inline">\(0.0\)</span> (redondeado) &amp; <span
+class="math inline">\(-\operatorname{expm1}(-s)\)</span><br />
+Pérdida CE &amp; <span class="math inline">\(\log(1)=0\)</span> &amp;
+<span
+class="math inline">\(\operatorname{softplus}(s)&gt;0\)</span><br />
+<span class="math inline">\(g_t\)</span> &amp; <span
+class="math inline">\(0.0\)</span> &amp; <span
+class="math inline">\(-e^{-m}/(1+e^{-m})\)</span><br />
+<span class="math inline">\(\sum_k g_k\)</span> &amp; <span
+class="math inline">\(\sum_{j \neq t} q_j &gt; 0\)</span> &amp; <span
+class="math inline">\(0\)</span> (por construcción)<br />
+<span class="math inline">\(\partial q_{\max}/\partial z_{\max}\)</span>
+&amp; <span class="math inline">\(0.0\)</span> &amp; <span
+class="math inline">\(q_{\max}(1-q_{\max})\)</span><br />
+</p>
+</div>
+<h2 id="sec:fixed-implementation">Implementación en el Toolkit</h2>
+<p>Las correcciones viven en y se exponen como dos casillas booleanas
+bajo el grupo de esquema <code>model.numerics</code>, ambas con valor
+por defecto <code>false</code>:</p>
+<pre><code>model:
+  numerics:
+    fixed_softmax: true          # todo softmax / log-softmax explícito
+    fixed_cross_entropy: true    # pérdidas de tarea con objetivo duro</code></pre>
+<p>Ninguna bandera añade parámetros, buffers ni entradas al
+<em>state-dict</em>, por lo que los checkpoints, el conteo de parámetros
+y la exportación (PyTorch, Transformers, GGUF) no se ven afectados; las
+banderas viajan con la configuración del modelo. Cuando están
+desactivadas, las rutas de código se reducen a las llamadas originales
+de <code>torch</code> con una única consulta de atributo por softmax, de
+modo que el comportamiento y el rendimiento por defecto no cambian. Las
+pérdidas corregidas aceptan la misma semántica de
+<code>ignore_index</code> y de reducción que
+<code>torch.nn.functional.cross_entropy</code> y calculan en el dtype de
+entrada (sin promoción implícita), lo que mantiene la corrección
+efectiva tanto en bf16 como en fp32/fp64.</p>
+<h3 id="paso-backward">Paso Backward</h3>
+<p>El grafo de autograd de PyTorch para la Ecuación <a
+href="#eq:fixed-values" data-reference-type="ref"
+data-reference="eq:fixed-values">[eq:fixed-values]</a> sigue conteniendo
+la resta que produce <span class="math inline">\(1 - q_{\max}\)</span>,
+y evaluarla allí reintroduce la cancelación. Por ello la implementación
+define las dos funciones softmax como objetos
+<code>torch.autograd.Function</code> cuyo <code>forward</code> calcula
+la Ecuación <a href="#eq:fixed-values" data-reference-type="ref"
+data-reference="eq:fixed-values">[eq:fixed-values]</a> y cuyo
+<code>backward</code> usa las Ecuaciones <a href="#eq:softmax-vjp"
+data-reference-type="ref"
+data-reference="eq:softmax-vjp">[eq:softmax-vjp]</a>–<a
+href="#eq:logsoftmax-vjp" data-reference-type="ref"
+data-reference="eq:logsoftmax-vjp">[eq:logsoftmax-vjp]</a>. La
+cross-entropy no necesita backward personalizado: el grafo de la
+Ecuación <a href="#eq:fixed-ce" data-reference-type="ref"
+data-reference="eq:fixed-ce">[eq:fixed-ce]</a> ya produce la Ecuación <a
+href="#eq:fixed-gradients" data-reference-type="ref"
+data-reference="eq:fixed-gradients">[eq:fixed-gradients]</a>
+exactamente, porque <span class="math inline">\(z_t\)</span> entra en
+cada logit desplazado con coeficiente <span
+class="math inline">\(-1\)</span> y la fila objetivo queda excluida del
+log-sum-exp.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>logits <span class="math inline">\(z \in \mathbb{R}^{K}\)</span> a lo
+largo de un eje de normalización, gradiente aguas arriba <span
+class="math inline">\(g\)</span> <span class="math inline">\(a \gets
+\arg\max_k z_k\)</span>, <span class="math inline">\(z_{\max} \gets
+z_a\)</span> <span class="math inline">\(\ell \gets
+\operatorname{logsumexp}\{z_k - z_{\max} : k \neq a\}\)</span> <span
+class="math inline">\(s \gets \operatorname{softplus}(\ell)\)</span>
+<span class="math inline">\(c \gets -\operatorname{expm1}(-s)\)</span>
+<span class="math inline">\(q \gets \exp(z - z_{\max} - s)\)</span>
+<strong>backward:</strong> <span class="math inline">\(\tau \gets \sum_k
+g_k q_k\)</span>, <span class="math inline">\(\sigma \gets \sum_{k \neq
+a} g_k q_k\)</span> <span class="math inline">\(\nabla z \gets q \odot
+(g - \tau)\)</span> <span class="math inline">\(\nabla z_a \gets
+q_a\left(g_a\,c - \sigma\right)\)</span> <strong>return</strong> <span
+class="math inline">\(q\)</span>; <strong>return</strong> <span
+class="math inline">\(\nabla z\)</span></p>
+</div>
+</div>
+<h3 id="superficie-de-integración">Superficie de Integración</h3>
+<p>Un único interruptor debe llegar a cada lugar donde el toolkit
+materializa probabilidades o logits. <code>HybridLayer</code> adjunta la
+bandera resuelta a cada mixer como <code>use_fixed_softmax</code>; la
+fábrica de residuales hace lo mismo para los residuales de atención en
+profundidad; los hooks de la caché KV reciben un argumento explícito
+<code>use_fixed_softmax</code>. Un helper de despacho selecciona
+entonces la implementación en cada punto de llamada. La Tabla <a
+href="#tab:fixed-coverage" data-reference-type="ref"
+data-reference="tab:fixed-coverage">[tab:fixed-coverage]</a> enumera las
+superficies cubiertas.</p>
+<div class="tabular">
+<p><span>L<span>4.1cm</span>L<span>8.8cm</span></span>
+<strong>Superficie</strong> &amp; <strong>Puntos
+cubiertos</strong><br />
+Mixers de atención &amp; <code>standard</code>, <code>titan</code>,
+<code>gqa</code>, <code>ode</code>; familia latente (<code>mla</code>,
+<code>gqla</code>, <code>mlra</code>, <code>tucker</code>,
+<code>iha</code>, <code>gta</code>, <code>mtla</code>, <code>cca</code>,
+<code>ccgqa</code>, <code>gma</code>); con compuerta
+(<code>gated_softmax</code>, <code>fox</code>); dispersos
+(<code>fasa</code>, <code>sparge</code>, <code>msa</code>,
+<code>nsa</code>, <code>bigbird</code>, <code>longformer</code>,
+<code>sparse_transformer</code>, <code>sparsek</code>, <code>swa</code>,
+<code>sparda</code>); sustituto denso de los mixers sin
+entrenamiento<br />
+Routers &amp; softmax top-<span class="math inline">\(k\)</span> de MoE
+y Mixture-of-Depths<br />
+Residuales &amp; softmax en profundidad de Full y Block AttnRes<br />
+Caché KV &amp; normalizador de recomputación/fallback en
+<code>src/model/cache/hooks.py</code><br />
+Decodificación &amp; filtrado de núcleo top-<span
+class="math inline">\(p\)</span> y distribución de muestreo final<br />
+Despliegue &amp; lectura de probabilidades de
+<code>inference.predict</code><br />
+Pérdidas de entrenamiento &amp; <code>mlm</code>,
+<code>causal_lm</code>, <code>classification</code>,
+<code>segmentation</code> (CE y softmax de Dice),
+<code>text_classification</code>, <code>patch_prediction</code><br />
+</p>
+</div>
+<p>El lado de las pérdidas se despacha mediante un único helper del
+trainer, de modo que todas las tareas comparten la misma semántica:</p>
+<pre><code>def _task_cross_entropy(self, logits, targets, **kwargs):
+    if self._use_fixed_cross_entropy():
+        return fixed_cross_entropy(
+            logits, targets, ignore_index=kwargs.get(&quot;ignore_index&quot;, -100))
+    return F.cross_entropy(logits, targets, **kwargs)</code></pre>
+<h2 id="sec:fixed-validation">Costo, Alcance y Validación</h2>
+<h4 id="costo.">Costo.</h4>
+<p>Las rutas corregidas tienen la misma complejidad asintótica que las
+estándar y tocan cada fila con un número constante de operaciones
+elementales adicionales (un log-sum-exp enmascarado y un softplus; un
+<code>expm1</code> en el backward). No hay multiplicaciones de matrices,
+ni memoria adicional de orden <span class="math inline">\(K\)</span> más
+allá de temporales, ni parámetros. Con logits ordinarios, los valores
+corregidos y estándar coinciden dentro de la tolerancia de punto
+flotante; solo cambia el régimen sub-redondeo que la ruta estándar
+colapsa.</p>
+<h4 id="alcance.">Alcance.</h4>
+<p>Las banderas apuntan a pérdidas de clasificación con objetivo duro.
+La cross-entropy de objetivo blando (destilación de conocimiento,
+regularización KL) necesitaría la construcción de diferencias con
+<code>expm1</code>/<code>log1p</code> del artículo, que este toolkit no
+implementa porque no tiene ruta de destilación. Los núcleos LSE internos
+del mixer SSOG y el normalizador de atención sigmoide (que no es un
+softmax) se dejan intactos deliberadamente.</p>
+<h4 id="validación.">Validación.</h4>
+<p>El repositorio incluye , que verifica (i) la paridad forward con
+<code>torch</code> para softmax, log-softmax y cross-entropy en
+fp32/fp64, incluidas entradas enmascaradas (<span
+class="math inline">\(-\infty\)</span>) y de una sola clave; (ii) las
+regresiones del acantilado de la Tabla <a href="#tab:collapse-regimes"
+data-reference-type="ref"
+data-reference="tab:collapse-regimes">[tab:collapse-regimes]</a> con
+márgenes <span class="math inline">\(25 &gt; c_{32}\)</span> y <span
+class="math inline">\(40 &gt; c_{64}\)</span> — los gradientes estándar
+del objetivo/argmax son exactamente cero y los corregidos no, con
+gradiente de suma cero en el caso corregido; (iii) la semántica de
+<code>ignore_index</code>, reducción y despacho; (iv) la paridad forward
+del modelo completo (corregido frente a estándar es matemáticamente
+idéntico) y pasadas backward finitas; (v) la paridad prefill<span
+class="math inline">\(+\)</span>decode de la caché KV con la bandera
+activada; y (vi) el despacho del trainer. El arnés combinatorio de
+extremo a extremo entrena además modelos MLM y causal-LM reales con
+<code>fixed_softmax</code>, <code>fixed_cross_entropy</code>, ambos
+juntos y la interacción con SSMax y BitNet, todo en CPU. Un preset listo
+para ejecutar es .</p>
+<h4 id="cuándo-activarlo.">Cuándo activarlo.</h4>
+<p>La corrección importa cuando los márgenes de logits pueden crecer
+mucho durante el entrenamiento: conjuntos algorítmicos pequeños que
+exhiben <em>grokking</em>, entrenamientos largos con decaimiento de
+pesos y optimizadores adaptativos, y cualquier régimen en el que la
+pérdida se vuelva extremadamente confiada. En el entrenamiento ordinario
+a gran escala la ruta estándar suele ser indistinguible; la corregida es
+una candidata segura por defecto porque es matemáticamente idéntica en
+la pasada forward y está estrictamente mejor condicionada en la
+backward.</p>
 </body>
 </html>
