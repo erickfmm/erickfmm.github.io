@@ -1,4 +1,4 @@
-\begin{thebibliography}{121}
+\begin{thebibliography}{122}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -403,6 +403,14 @@ Timon Klein, Jonas Kusch, Sebastian Sager, Stefan Schnake, and Steffen
 \newblock Tucker attention: A generalization of approximate attention
   mechanisms, 2026.
 \newblock URL \url{https://arxiv.org/abs/2603.30033}.
+
+\bibitem[Lagzian et~al.(2026)Lagzian, Halvachi, Zhang, Lin, and
+  Liu]{lagzian_afmuon_2026}
+Arash Lagzian, Paniz Halvachi, Junming Zhang, Zhouhan Lin, and Dianbo Liu.
+\newblock {AF-Muon}: An {AdamW}-free muon optimizer for tied-embedding models,
+  2026.
+\newblock URL \url{https://arxiv.org/abs/2610.01395}.
+\newblock Version Number: 1.
 
 \bibitem[Lai et~al.(2026)Lai, Xu, Yang, Chen, Xu, Zeng, Li, Sun, Zhu, Zhang,
   Hu, Li, Gao, Li, Zhu, Zhou, and Zhao]{lai_minimax_2026}

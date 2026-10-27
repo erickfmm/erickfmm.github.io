@@ -206,7 +206,7 @@ hinders reproducibility. We propose Frankenstein Transformer, a
 configuration-driven CLI toolkit (<code>frankenstein-transformer</code>)
 that unifies model definition, training, deployment, and inference
 behind one strict YAML schema. The toolkit covers forty-three sequence
-mixers across eight families and twenty-three optimizer families with
+mixers across eight families and twenty-four optimizer families with
 per-parameter-group hyperparameter control, and supports encoder,
 decoder, and Vision Transformer model classes for masked language
 modeling, causal language modeling, sentence embeddings, and image
@@ -1225,7 +1225,7 @@ provides:</p>
 <ol>
 <li><p><strong>Schema-first design</strong>: a strict YAML contract
 supporting forty-three sequence mixers across eight families and
-twenty-three optimizer families, enforced before training
+twenty-four optimizer families, enforced before training
 begins.</p></li>
 <li><p><strong>Architecture-agnostic training</strong>: one pipeline for
 dense baselines, recurrent and retentive blocks, sparse patterns, gated
@@ -1517,7 +1517,7 @@ href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">13</a>.</p>
 <h4 id="optimizer-selection.">Optimizer selection.</h4>
 <p><code>training.optimizer.optimizer_class</code> selects one of
-twenty-three optimizer families, summarized in Section <a
+twenty-four optimizer families, summarized in Section <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> and detailed in
 Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -1741,24 +1741,25 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-three optimizer families in seven
+groups. The system supports twenty-four optimizer families in seven
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
 APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
-geometry-oriented methods (Muon, Turbo-Muon); and adaptivity-tunable
-optimizers (Anon). Algorithms, pseudocode, and memory and complexity
-comparisons are collected in Appendix <a href="#sec:annex-optimizers"
-data-reference-type="ref"
+geometry-oriented methods (Muon, Turbo-Muon, AF-Muon); and
+adaptivity-tunable optimizers (Anon). Algorithms, pseudocode, and memory
+and complexity comparisons are collected in Appendix <a
+href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
 <figure id="fig:optimizer-routing">
 
 <figcaption>Optimizer selection in practice: the class determines the
 update rule, while the schema controls how hyperparameters apply across
-embeddings, normalization layers, attention blocks, and the remaining
-parameters.</figcaption>
+the ten canonical parameter blocks (embeddings, positional encodings,
+attention, feed-forward, normalization, heads, mHC, routers, residuals,
+and the remaining parameters).</figcaption>
 </figure>
 <h1 id="sec:quantization">Quantization and Deployment</h1>
 <p>The deploy stage converts a trained checkpoint into a compact
@@ -1933,7 +1934,7 @@ href="#sec:annex-mhc" data-reference-type="ref"
 data-reference="sec:annex-mhc">21</a>).</p>
 <h2 id="optimizer-landscape-fragmentation">Optimizer Landscape
 Fragmentation</h2>
-<p>The support for twenty-three optimizer families across seven
+<p>The support for twenty-four optimizer families across seven
 categories demonstrates comprehensiveness but also highlights the
 fragmented state of optimization research. Users face significant
 decision complexity when choosing among variance-reduction methods
@@ -1943,7 +1944,7 @@ hyperparameter system, while powerful, requires understanding of which
 parameters are relevant for each optimizer class.</p>
 <p>The implementation quality varies across optimizers: classical
 methods (AdamW, SGD with momentum) are highly optimized in PyTorch,
-while newer methods (Muon, Turbo-Muon, SOAP) may require custom
+while newer methods (Muon, Turbo-Muon, AF-Muon, SOAP) may require custom
 implementations that affect numerical stability and performance
 characteristics.</p>
 <h2 id="deployment-and-production-considerations">Deployment and
@@ -1993,7 +1994,7 @@ embedding.</p>
 <li><p><strong>Schema-First Design</strong>: A strict YAML-based
 configuration contract with validation and prefixed hyperparameter
 routing enabling reproducible experiments across forty-three sequence
-mixers and twenty-three optimizer families.</p></li>
+mixers and twenty-four optimizer families.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
 Implementation spanning dense baselines, recurrent and retentive blocks,
 sparse attention, gated mechanisms, latent compression, conditional
@@ -2007,8 +2008,8 @@ reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious), memory-efficient and
 low-rank methods (Adafactor, GaLore, Lion, APOLLO, APOLLO-Mini,
 Q-APOLLO), large-batch and schedule simplification (LAMB, Schedule-Free
 AdamW, Prodigy), curvature-aware (Sophia), second-order (Shampoo, SOAP),
-geometry-oriented (Muon, Turbo-Muon), and adaptivity-tunable (Anon)
-optimizers.</p></li>
+geometry-oriented (Muon, Turbo-Muon, AF-Muon), and adaptivity-tunable
+(Anon) optimizers.</p></li>
 <li><p><strong>End-to-End Workflows</strong>: Integrated deployment
 pipeline supporting ternary weight packing and INT8 activation
 quantization; SBERT-inspired training and inference for semantic
@@ -2077,7 +2078,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>121</span> urlstyle</p>
+<p><span>122</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2292,6 +2293,10 @@ Neural Information Processing Systems (NeurIPS)</em>, 2017.</p>
 Steffen Schotthöfer. Tucker attention: A generalization of approximate
 attention mechanisms, 2026. URL
 <code>https://arxiv.org/abs/2603.30033</code>.</p>
+<p>Arash Lagzian, Paniz Halvachi, Junming Zhang, Zhouhan Lin, and Dianbo
+Liu. : An <span>AdamW</span>-free muon optimizer for tied-embedding
+models, 2026. URL <code>https://arxiv.org/abs/2610.01395</code>. Version
+Number: 1.</p>
 <p>Xunhao Lai, Weiqi Xu, Yufeng Yang, Qiaorui Chen, Yang Xu, Lunbin
 Zeng, Xiaolong Li, Haohai Sun, Haichao Zhu, Vito Zhang, Jinkai Hu,
 Jiayao Li, Rui Gao, Zekun Li, Songquan Zhu, Jingkai Zhou, and Pengyu
@@ -5002,6 +5007,14 @@ class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
 momentum, wd, NS steps <span class="math inline">\(k\)</span> &amp;
 <span class="citation"
 data-cites="boissin_turbo-muon_2025"></span><br />
+AF-Muon &amp; AdamW-free tied table &amp; 1 (<span
+class="math inline">\(m\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k + V d\, I)\)</span> &amp;
+lr, momentum, wd, cap <span class="math inline">\(c\)</span>, table
+scale <span class="math inline">\(s\)</span>, <span
+class="math inline">\(\rho_{out}/\rho_{hid}\)</span>, NS steps <span
+class="math inline">\(k\)</span> &amp; <span class="citation"
+data-cites="lagzian_afmuon_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -6756,6 +6769,105 @@ four).</p></li>
 <li><p>Retains orthogonalized update geometry at lower iteration
 cost.</p></li>
 </ul>
+<h4 id="af-muon-adamw-free-tied-embedding-muon.">AF-Muon (AdamW-Free
+Tied-Embedding Muon).</h4>
+<figure id="fig:opt-af-muon">
+
+<figcaption>Step flow of AF-Muon: Muon’s spectral update for hidden
+matrices, a support-aware finite-cap clipped-row LMO for the tied
+vocabulary table, and RMS-normalized updates for one-dimensional
+auxiliary parameters, all with a single first-moment
+buffer.</figcaption>
+</figure>
+<p>AF-Muon is an <strong>AdamW-free extension of Muon</strong> that
+removes the auxiliary AdamW fallback of the Hybrid Muon recipe by giving
+every parameter class its own norm-constrained geometry. Hidden matrices
+keep the spectral update with a Nesterov signal; the vocabulary table,
+which simultaneously receives sparse input-lookup and dense
+output-softmax gradients, is updated row by row with a <em>support-aware
+finite-cap linear minimization oracle</em>; one-dimensional auxiliary
+tensors receive an RMS-normalized update. No parameter class carries
+second-moment state, so a single first-moment buffer per parameter
+replaces the AdamW state of the hybrid recipe, which the authors report
+as roughly 20% less optimizer-state memory at matched training.</p>
+<p>For the tied table <span class="math inline">\(W \in \mathbb{R}^{V
+\times d}\)</span> with momentum row <span
+class="math inline">\(b_i\)</span>, the oracle solves the row problem
+<span class="math display">\[\begin{aligned}
+u_i &amp;= \operatorname{sign}(b_i) \odot \min\left(c\,\mathbf{1},\
+\tau_i\,|b_i|\right), \\
+\|u_i\|_2^2 &amp;= \min\left(d,\
+c^2\,\bigl|\operatorname{supp}(b_i)\bigr|\right),
+\end{aligned}\]</span> where the per-row scale <span
+class="math inline">\(\tau_i\)</span> is obtained by bisection in FP32
+over complete-row chunks. Rows whose support cannot fill the row-<span
+class="math inline">\(\ell_2\)</span> radius saturate every useful
+coordinate at the cap <span class="math inline">\(c\)</span>, so sparse
+lookup rows are handled without inflating absent coordinates. The cap
+interpolates between two known endpoints: <span class="math inline">\(c
+= 1\)</span> recovers the SCION-style Sign update and <span
+class="math inline">\(c \geq \sqrt{d}\)</span> reduces to a row-RMS
+update. The tied step size is <span class="math inline">\(\eta_{tie} =
+\eta_M (\rho_{out}/\rho_{hid})\, s / d\)</span>; the paper’s main
+setting is <span class="math inline">\(c = 3\)</span> and <span
+class="math inline">\(s = 0.5\)</span> with <span
+class="math inline">\(\rho_{out}/\rho_{hid} = 60\)</span>, and its
+diagnostics report the finite cap active on under 0.3% of coordinates
+while affecting most rows.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Initial parameters <span class="math inline">\(\theta\)</span>,
+matrix LR <span class="math inline">\(\eta_M\)</span>, vector LR <span
+class="math inline">\(\eta_{vec}\)</span>, momentum <span
+class="math inline">\(\mu\)</span>, matrix weight decay <span
+class="math inline">\(\lambda_M\)</span>, tied scale <span
+class="math inline">\(s\)</span>, cap <span
+class="math inline">\(c\)</span>, radii <span
+class="math inline">\(\rho_{out}, \rho_{hid}\)</span>, Newton-Schulz
+iters <span class="math inline">\(K\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(M_t
+\gets \mu M_{t-1} + (1-\mu) G_t\)</span> <span class="math inline">\(Z_t
+\gets (1-\mu) G_t + \mu M_t\)</span> <span class="math inline">\(O_t
+\gets \mathrm{NS}_K(Z_t)\sqrt{\max(1, m/n)}\)</span> <span
+class="math inline">\(W_t \gets (1 - \eta_M \lambda_M) W_{t-1} - \eta_M
+O_t\)</span> <span class="math inline">\(B_t \gets \mu B_{t-1} +
+G_t\)</span> <span class="math inline">\(\eta_{tie,t} \gets \eta_M
+(\rho_{out}/\rho_{hid}) s / d\)</span> <span class="math inline">\(u_i
+\gets L_c\bigl(\mathrm{row}_i(B_t)\bigr)\)</span> <span
+class="math inline">\(W_t \gets W_{t-1} - \eta_{tie,t} U\)</span> <span
+class="math inline">\(B_t \gets \mu B_{t-1} + G_t\)</span> <span
+class="math inline">\(O_t \gets B_t / \max(\mathrm{RMS}(B_t),
+\epsilon)\)</span> <span class="math inline">\(W_t \gets W_{t-1} -
+\eta_{vec} O_t\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="cons.-23">Cons.</h4>
+<ul>
+<li><p>Every parameter must be assigned an explicit role (matrix, tied
+table, or vector); an untied output head or an extra embedding table is
+not a tied-table block.</p></li>
+<li><p>The tied-table oracle requires a per-row bisection with
+complete-row chunking; the paper reports roughly 1% median step-time
+overhead at matched training.</p></li>
+<li><p>The tied-table claim is established for tied-vocabulary models;
+frontier-scale pretraining and universal endpoint superiority are not
+claimed.</p></li>
+</ul>
+<h4 id="pros.-23">Pros.</h4>
+<ul>
+<li><p>AdamW-free: one first-moment buffer per parameter and no
+second-moment state, reported as roughly 20% less optimizer-state memory
+than Hybrid Muon.</p></li>
+<li><p>The finite cap preserves within-row magnitudes while bounding
+coordinate concentration, and recovers Sign (<span
+class="math inline">\(c=1\)</span>) and row-RMS (<span
+class="math inline">\(c \geq \sqrt{d}\)</span>) as limit cases.</p></li>
+<li><p>Improves mean validation loss and perplexity over both Hybrid
+Muon and a SCION-style Sign endpoint across nine tied-token settings
+spanning text, image-token, protein, MoE, and encoder-decoder
+models.</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Group</strong> &amp; <strong>Methods</strong> &amp;
@@ -6778,9 +6890,11 @@ structured scaling.<br />
 Curvature-aware &amp; Shampoo, SOAP, Sophia &amp; better conditioning
 &amp; Prefer when richer geometry is worth implementation and compute
 overhead.<br />
-Geometry-oriented &amp; Muon, Turbo-Muon &amp; orthogonalized update
-structure &amp; Specialized options for matrix geometry and
-representation shaping.<br />
+Geometry-oriented &amp; Muon, Turbo-Muon, AF-Muon &amp; orthogonalized
+update structure &amp; Specialized options for matrix geometry and
+representation shaping; AF-Muon assigns the tied vocabulary table a
+capped-row table geometry and one-dimensional parameters an RMS update,
+with no AdamW auxiliary state.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Dense, Recurrent, and Memory-Augmented
