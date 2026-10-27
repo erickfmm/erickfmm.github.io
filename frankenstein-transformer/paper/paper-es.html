@@ -208,7 +208,7 @@ conjunto de herramientas CLI basado en configuración
 (<code>frankenstein-transformer</code>) que unifica la definición, el
 entrenamiento, el despliegue y la inferencia de modelos tras un único
 esquema YAML estricto. El conjunto de herramientas cubre cuarenta y tres
-mezcladores de secuencia en ocho familias y veintitrés familias de
+mezcladores de secuencia en ocho familias y veinticuatro familias de
 optimizadores con control por grupo de parámetros, y soporta clases de
 modelo encoder, decoder y Vision Transformer para masked language
 modeling, modelado causal de lenguaje, embeddings de oraciones y tareas
@@ -1252,7 +1252,7 @@ documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
 estricto que soporta cuarenta y tres mezcladores de secuencia en ocho
-familias y veintitrés familias de optimizadores, validado antes de
+familias y veinticuatro familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
 único pipeline para líneas base densas, bloques recurrentes y
@@ -1565,7 +1565,7 @@ href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">13</a>.</p>
 <h4 id="selección-de-optimizador.">Selección de optimizador.</h4>
 <p><code>training.optimizer.optimizer_class</code> selecciona una de
-veintitrés familias de optimizadores, resumidas en la Sección <a
+veinticuatro familias de optimizadores, resumidas en la Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> y detalladas en el
 Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -1811,7 +1811,7 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veintitrés familias de optimizadores en siete
+sistema soporta veinticuatro familias de optimizadores en siete
 categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
 momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
@@ -1819,17 +1819,19 @@ GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
 sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
-Turbo-Muon); y optimizadores de adaptividad ajustable (Anon). Los
-algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
-se recopilan en el Apéndice <a href="#sec:annex-optimizers"
+Turbo-Muon, AF-Muon); y optimizadores de adaptividad ajustable (Anon).
+Los algoritmos, el pseudocódigo y las comparaciones de memoria y
+complejidad se recopilan en el Apéndice <a href="#sec:annex-optimizers"
 data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
 <figure id="fig:optimizer-routing">
 
 <figcaption>Selección de optimizador en la práctica: la clase determina
 la regla de actualización, mientras que el esquema controla cómo se
-aplican los hiperparámetros en embeddings, capas de normalización,
-bloques de atención y el resto de parámetros.</figcaption>
+aplican los hiperparámetros en los diez bloques canónicos de parámetros
+(embeddings, encodings posicionales, atención, feed-forward,
+normalización, heads, mHC, routers, residuales y el resto de
+parámetros).</figcaption>
 </figure>
 <h1 id="sec:quantization">Cuantización y Despliegue</h1>
 <p>La etapa de despliegue convierte un checkpoint entrenado en un
@@ -2016,7 +2018,7 @@ href="#sec:annex-mhc" data-reference-type="ref"
 data-reference="sec:annex-mhc">21</a>).</p>
 <h2 id="fragmentación-del-panorama-de-optimizadores">Fragmentación del
 Panorama de Optimizadores</h2>
-<p>El soporte para veintitrés familias de optimizadores en siete
+<p>El soporte para veinticuatro familias de optimizadores en siete
 categorías demuestra exhaustividad pero también resalta el estado
 fragmentado de la investigación en optimización. Los usuarios enfrentan
 una complejidad significativa de decisión al elegir entre métodos de
@@ -2027,8 +2029,8 @@ requiere comprender qué parámetros son relevantes para cada clase de
 optimizador.</p>
 <p>La calidad de implementación varía entre optimizadores: los métodos
 clásicos (AdamW, SGD con momento) están altamente optimizados en
-PyTorch, mientras que los métodos más nuevos (Muon, Turbo-Muon, SOAP)
-pueden requerir implementaciones personalizadas que afectan la
+PyTorch, mientras que los métodos más nuevos (Muon, Turbo-Muon, AF-Muon,
+SOAP) pueden requerir implementaciones personalizadas que afectan la
 estabilidad numérica y las características de rendimiento.</p>
 <h2 id="consideraciones-de-despliegue-y-producción">Consideraciones de
 Despliegue y Producción</h2>
@@ -2081,7 +2083,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y tres mezcladores de secuencia y veintitrés familias de
+cuarenta y tres mezcladores de secuencia y veinticuatro familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -2096,8 +2098,8 @@ reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious), métodos
 eficientes en memoria y de bajo rango (Adafactor, GaLore, Lion, APOLLO,
 APOLLO-Mini, Q-APOLLO), lotes grandes y simplificación de programación
 (LAMB, Schedule-Free AdamW, Prodigy), conscientes de curvatura (Sophia),
-segundo orden (Shampoo, SOAP), orientados a geometría (Muon, Turbo-Muon)
-y adaptividad ajustable (Anon).</p></li>
+segundo orden (Shampoo, SOAP), orientados a geometría (Muon, Turbo-Muon,
+AF-Muon) y adaptividad ajustable (Anon).</p></li>
 <li><p><strong>Flujos de Trabajo de Extremo a Extremo</strong>: Pipeline
 de despliegue integrado que soporta empaquetado ternario de pesos y
 cuantización de activaciones INT8; entrenamiento e inferencia inspirados
@@ -2173,7 +2175,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>121</span> urlstyle</p>
+<p><span>122</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2388,6 +2390,10 @@ Neural Information Processing Systems (NeurIPS)</em>, 2017.</p>
 Steffen Schotthöfer. Tucker attention: A generalization of approximate
 attention mechanisms, 2026. URL
 <code>https://arxiv.org/abs/2603.30033</code>.</p>
+<p>Arash Lagzian, Paniz Halvachi, Junming Zhang, Zhouhan Lin, and Dianbo
+Liu. : An <span>AdamW</span>-free muon optimizer for tied-embedding
+models, 2026. URL <code>https://arxiv.org/abs/2610.01395</code>. Version
+Number: 1.</p>
 <p>Xunhao Lai, Weiqi Xu, Yufeng Yang, Qiaorui Chen, Yang Xu, Lunbin
 Zeng, Xiaolong Li, Haohai Sun, Haichao Zhu, Vito Zhang, Jinkai Hu,
 Jiayao Li, Rui Gao, Zekun Li, Songquan Zhu, Jingkai Zhou, and Pengyu
@@ -5145,6 +5151,14 @@ class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
 momentum, wd, pasos NS <span class="math inline">\(k\)</span> &amp;
 <span class="citation"
 data-cites="boissin_turbo-muon_2025"></span><br />
+AF-Muon &amp; Tabla atada sin AdamW &amp; 1 (<span
+class="math inline">\(m\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k + V d\, I)\)</span> &amp;
+lr, momentum, wd, tope <span class="math inline">\(c\)</span>, escala de
+tabla <span class="math inline">\(s\)</span>, <span
+class="math inline">\(\rho_{out}/\rho_{hid}\)</span>, pasos NS <span
+class="math inline">\(k\)</span> &amp; <span class="citation"
+data-cites="lagzian_afmuon_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Adaptativo de bajo rango &amp; 2 bajo rango + proy &amp;
@@ -6976,6 +6990,111 @@ de cinco a cuatro).</p></li>
 <li><p>Conserva la geometría de actualización ortogonalizada con menor
 costo de iteraciones.</p></li>
 </ul>
+<h4 id="af-muon-muon-sin-adamw-para-vocabulario-atado.">AF-Muon (Muon
+sin AdamW para Vocabulario Atado).</h4>
+<figure id="fig:opt-af-muon">
+
+<figcaption>Flujo por paso de AF-Muon: actualización espectral de Muon
+para matrices ocultas, LMO por fila con tope finito y conciencia de
+soporte para la tabla de vocabulario atada, y actualizaciones
+normalizadas por RMS para parámetros auxiliares unidimensionales, todo
+con un único búfer de primer momento.</figcaption>
+</figure>
+<p>AF-Muon es una <strong>extensión de Muon sin AdamW</strong> que
+elimina el respaldo auxiliar de AdamW de la receta Hybrid Muon asignando
+a cada clase de parámetro su propia geometría con restricción de norma.
+Las matrices ocultas conservan la actualización espectral con señal de
+Nesterov; la tabla de vocabulario, que recibe simultáneamente gradientes
+dispersos de búsqueda en la entrada y gradientes densos del softmax de
+salida, se actualiza fila por fila con un <em>oráculo de minimización
+lineal con tope finito y conciencia de soporte</em>; los tensores
+auxiliares unidimensionales reciben una actualización normalizada por
+RMS. Ninguna clase de parámetro mantiene estado de segundo momento, de
+modo que un único búfer de primer momento por parámetro reemplaza el
+estado de AdamW de la receta híbrida, lo que los autores reportan como
+aproximadamente un 20% menos de memoria de estado del optimizador en
+entrenamiento equiparado.</p>
+<p>Para la tabla atada <span class="math inline">\(W \in \mathbb{R}^{V
+\times d}\)</span> con fila de momento <span
+class="math inline">\(b_i\)</span>, el oráculo resuelve el problema por
+fila <span class="math display">\[\begin{aligned}
+u_i &amp;= \operatorname{sign}(b_i) \odot \min\left(c\,\mathbf{1},\
+\tau_i\,|b_i|\right), \\
+\|u_i\|_2^2 &amp;= \min\left(d,\
+c^2\,\bigl|\operatorname{supp}(b_i)\bigr|\right),
+\end{aligned}\]</span> donde la escala por fila <span
+class="math inline">\(\tau_i\)</span> se obtiene por bisección en FP32
+sobre fragmentos de filas completas. Las filas cuyo soporte no puede
+llenar el radio <span class="math inline">\(\ell_2\)</span> de fila
+saturan cada coordenada útil en el tope <span
+class="math inline">\(c\)</span>, de modo que las filas dispersas de
+búsqueda se manejan sin inflar las coordenadas ausentes. El tope
+interpola entre dos extremos conocidos: <span class="math inline">\(c =
+1\)</span> recupera la actualización Sign estilo SCION y <span
+class="math inline">\(c \geq \sqrt{d}\)</span> se reduce a una
+actualización row-RMS. El tamaño de paso de la tabla es <span
+class="math inline">\(\eta_{tie} = \eta_M (\rho_{out}/\rho_{hid})\, s /
+d\)</span>; la configuración principal del artículo es <span
+class="math inline">\(c = 3\)</span> y <span class="math inline">\(s =
+0.5\)</span> con <span class="math inline">\(\rho_{out}/\rho_{hid} =
+60\)</span>, y sus diagnósticos reportan el tope finito activo en menos
+del 0.3% de las coordenadas aunque afecta a la mayoría de las filas.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>, LR
+de matrices <span class="math inline">\(\eta_M\)</span>, LR de vectores
+<span class="math inline">\(\eta_{vec}\)</span>, momento <span
+class="math inline">\(\mu\)</span>, weight decay de matrices <span
+class="math inline">\(\lambda_M\)</span>, escala de tabla <span
+class="math inline">\(s\)</span>, tope <span
+class="math inline">\(c\)</span>, radios <span
+class="math inline">\(\rho_{out}, \rho_{hid}\)</span>, iteraciones
+Newton-Schulz <span class="math inline">\(K\)</span> Parámetros
+actualizados <span class="math inline">\(\theta_T\)</span> <span
+class="math inline">\(M_t \gets \mu M_{t-1} + (1-\mu) G_t\)</span> <span
+class="math inline">\(Z_t \gets (1-\mu) G_t + \mu M_t\)</span> <span
+class="math inline">\(O_t \gets \mathrm{NS}_K(Z_t)\sqrt{\max(1,
+m/n)}\)</span> <span class="math inline">\(W_t \gets (1 - \eta_M
+\lambda_M) W_{t-1} - \eta_M O_t\)</span> <span class="math inline">\(B_t
+\gets \mu B_{t-1} + G_t\)</span> <span
+class="math inline">\(\eta_{tie,t} \gets \eta_M (\rho_{out}/\rho_{hid})
+s / d\)</span> <span class="math inline">\(u_i \gets
+L_c\bigl(\mathrm{fila}_i(B_t)\bigr)\)</span> <span
+class="math inline">\(W_t \gets W_{t-1} - \eta_{tie,t} U\)</span> <span
+class="math inline">\(B_t \gets \mu B_{t-1} + G_t\)</span> <span
+class="math inline">\(O_t \gets B_t / \max(\mathrm{RMS}(B_t),
+\epsilon)\)</span> <span class="math inline">\(W_t \gets W_{t-1} -
+\eta_{vec} O_t\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="contras.-23">Contras.</h4>
+<ul>
+<li><p>Cada parámetro debe recibir un rol explícito (matriz, tabla atada
+o vector); un head de salida no atado o una tabla de embeddings
+adicional no son bloques de tabla atada.</p></li>
+<li><p>El oráculo de la tabla requiere bisección por fila con
+fragmentación de filas completas; el artículo reporta aproximadamente un
+1% de sobrecarga mediana por paso en entrenamiento equiparado.</p></li>
+<li><p>La afirmación sobre la tabla atada se establece para modelos con
+vocabulario atado; no se reclama preentrenamiento a escala frontera ni
+superioridad universal de los extremos.</p></li>
+</ul>
+<h4 id="ventajas.-23">Ventajas.</h4>
+<ul>
+<li><p>Sin AdamW: un búfer de primer momento por parámetro y sin estado
+de segundo momento, reportado como aproximadamente un 20% menos de
+memoria de estado del optimizador que Hybrid Muon.</p></li>
+<li><p>El tope finito preserva las magnitudes intra-fila mientras acota
+la concentración de coordenadas, y recupera Sign (<span
+class="math inline">\(c=1\)</span>) y row-RMS (<span
+class="math inline">\(c \geq \sqrt{d}\)</span>) como casos
+límite.</p></li>
+<li><p>Mejora la pérdida de validación y la perplejidad medias frente a
+Hybrid Muon y a un extremo Sign estilo SCION en nueve configuraciones de
+vocabulario atado que abarcan texto, tokens de imagen, proteínas, MoE y
+modelos encoder-decoder.</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Grupo</strong> &amp; <strong>Métodos</strong> &amp;
@@ -7001,9 +7120,12 @@ cuantizado.<br />
 Consciente de curvatura &amp; Shampoo, SOAP, Sophia &amp; mejor
 condicionamiento &amp; Preferir cuando una geometría más rica justifica
 la sobrecarga de implementación y cómputo.<br />
-Orientado a geometría &amp; Muon, Turbo-Muon &amp; estructura de
-actualización ortogonalizada &amp; Opciones especializadas para
-geometría matricial y modelado de representaciones.<br />
+Orientado a geometría &amp; Muon, Turbo-Muon, AF-Muon &amp; estructura
+de actualización ortogonalizada &amp; Opciones especializadas para
+geometría matricial y modelado de representaciones; AF-Muon asigna a la
+tabla de vocabulario atada una geometría de tabla con tope por fila y a
+los parámetros unidimensionales una actualización RMS, sin estado
+auxiliar de AdamW.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Transformadores Densos, Recurrentes y
