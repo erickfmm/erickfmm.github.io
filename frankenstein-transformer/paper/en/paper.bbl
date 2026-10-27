@@ -1,4 +1,4 @@
-\begin{thebibliography}{120}
+\begin{thebibliography}{121}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -39,6 +39,13 @@ Jimmy~Lei Ba, Jamie~Ryan Kiros, and Geoffrey~E. Hinton.
 Jonathan~T. Barron.
 \newblock Continuously differentiable exponential linear units.
 \newblock \emph{arXiv preprint arXiv:1704.07483}, 2017.
+
+\bibitem[Barron et~al.(2026)Barron, Gnanapragasam, and
+  Tschannen]{barron_fixed_softmax_ce_2026}
+Jonathan~T. Barron, Dan Gnanapragasam, and Michael Tschannen.
+\newblock A fix for softmax and cross-entropy, 2026.
+\newblock URL \url{https://arxiv.org/abs/2610.31642}.
+\newblock arXiv:2610.31642.
 
 \bibitem[Basirat and Roth(2019)]{basirat2019elish}
 Mina Basirat and Peter~M. Roth.

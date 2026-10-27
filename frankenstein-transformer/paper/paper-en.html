@@ -1171,6 +1171,26 @@ id="toc-sec:kv-validation">Validation</a></li>
 <li><a href="#relation-to-prior-work-1"
 id="toc-relation-to-prior-work-1">Relation to Prior Work</a></li>
 </ul></li>
+<li><a href="#sec:annex-fixed-numerics"
+id="toc-sec:annex-fixed-numerics">Numerically Fixed Softmax and
+Cross-Entropy</a>
+<ul>
+<li><a href="#the-two-floating-point-defects"
+id="toc-the-two-floating-point-defects">The Two Floating-Point
+Defects</a></li>
+<li><a href="#sec:fixed-formulations"
+id="toc-sec:fixed-formulations">Cancellation-Free Formulations</a></li>
+<li><a href="#sec:fixed-implementation"
+id="toc-sec:fixed-implementation">Implementation in the Toolkit</a>
+<ul>
+<li><a href="#backward-pass" id="toc-backward-pass">Backward
+Pass</a></li>
+<li><a href="#integration-surface"
+id="toc-integration-surface">Integration Surface</a></li>
+</ul></li>
+<li><a href="#sec:fixed-validation" id="toc-sec:fixed-validation">Cost,
+Scope and Validation</a></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introduction">Introduction</h1>
@@ -2057,7 +2077,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>120</span> urlstyle</p>
+<p><span>121</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2077,6 +2097,9 @@ normalization, 2016. URL
 <code>https://arxiv.org/abs/1607.06450</code>.</p>
 <p>Jonathan T. Barron. Continuously differentiable exponential linear
 units. <em>arXiv preprint arXiv:1704.07483</em>, 2017.</p>
+<p>Jonathan T. Barron, Dan Gnanapragasam, and Michael Tschannen. A fix
+for softmax and cross-entropy, 2026. URL
+<code>https://arxiv.org/abs/2610.31642</code>. arXiv:2610.31642.</p>
 <p>Mina Basirat and Peter M. Roth. The quest for a better
 <span>ReLU</span>: <span>ELiSH</span> and <span>HardELiSH</span>
 activation functions. <em>arXiv preprint arXiv:1905.10144</em>,
@@ -3432,41 +3455,58 @@ Default: 0.0.</td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">numerics.fixed_softmax</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">Cancellation-free softmax/log-softmax
+(arXiv:2610.31642). Default: <code>false</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">numerics.fixed_cross_entropy</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">Hard-target CE with zero-sum gradient by
+construction (arXiv:2610.31642). Default: <code>false</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">ffn.hidden_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Intermediate FFN dimension. Default: <span
 class="math inline">\(2\times\)</span> <code>hidden_size</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffn.activation</td>
 <td style="text-align: left;">enum</td>
 <td style="text-align: left;">FFN non-linearity (43 values). Default:
 <code>silu</code>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffn.activation_config</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Parameters for learnable/parametric
 activations.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">classification_head.enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable the NLP sequence-classification
 head. Default: <code>false</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">classification_head.num_labels</td>
 <td style="text-align: left;">int or null</td>
 <td style="text-align: left;">Number of classes.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">classification_head.pooling_mode</td>
 <td style="text-align: left;">enum (cls, gap)</td>
 <td style="text-align: left;">Pooling for the classification head.
@@ -3478,10 +3518,11 @@ Default: <code>cls</code>.</td>
 <p>Fields are grouped under hierarchical sub-objects (<code>dims</code>,
 <code>norm</code>, <code>embedding</code>, <code>attention</code>,
 <code>moe</code>, <code>bitnet</code>, <code>mixture_of_depths</code>,
-<code>ssmax</code>, <code>ffn</code>, <code>classification_head</code>,
-<code>mhc</code>, <code>residuals</code>); each sub-header row marks the
-prefix in effect for the rows that follow it. There are no flat feature
-keys at <code>model.*</code>.</p>
+<code>ssmax</code>, <code>numerics</code>, <code>ffn</code>,
+<code>classification_head</code>, <code>mhc</code>,
+<code>residuals</code>); each sub-header row marks the prefix in effect
+for the rows that follow it. There are no flat feature keys at
+<code>model.*</code>.</p>
 <h3 id="tab:layer-pattern">Layer Pattern Enumeration</h3>
 <p>The <code>model.dims.layer_pattern</code> array accepts the following
 43 mixer codes. Each element defines one physical layer in the model
@@ -13496,5 +13537,343 @@ attention-sink span; window-with-sinks eviction is the right default for
 streaming or unbounded contexts. For recurrent layers the state is
 already constant-size, so eviction is meaningless and quantization is
 disabled by design.</p>
+<h1 id="sec:annex-fixed-numerics">Numerically Fixed Softmax and
+Cross-Entropy</h1>
+<p>Standard implementations of softmax, log-softmax and cross-entropy
+subtract the maximum logit before exponentiating, which prevents
+overflow but leaves two floating-point defects <span class="citation"
+data-cites="barron_fixed_softmax_ce_2026"></span>. The first,
+<em>Softmax Collapse</em>, rounds the target (or argmax) gradient to
+zero once the logits become sufficiently confident, breaking the
+zero-sum property of the gradient and producing the “Slingshot” loss
+spikes observed with adaptive optimizers. The second, <em>Softmax
+Cancellation</em>, degrades soft-target (distillation) gradients when
+student and teacher logits nearly coincide. This annex documents the
+toolkit’s opt-in implementation of the first fix — cancellation-free
+softmax, log-softmax and hard-target cross-entropy — its custom backward
+pass, its integration surface and its validation. Soft-target
+cross-entropy is out of scope because the toolkit exposes no
+distillation objective; the sentence-embedding path delegates its losses
+to <code>sentence-transformers</code>.</p>
+<h2 id="the-two-floating-point-defects">The Two Floating-Point
+Defects</h2>
+<p>For logits <span class="math inline">\(z \in \mathbb{R}^{K}\)</span>
+and target class <span class="math inline">\(t\)</span>, the standard
+stabilised computations are <span class="math display">\[\tilde{z}_k =
+z_k - z_{\max}, \qquad
+\operatorname{logsoftmax}(z)_k = \tilde{z}_k - \log \sum_j
+e^{\tilde{z}_j}, \qquad
+q_k = \frac{e^{\tilde{z}_k}}{\sum_j e^{\tilde{z}_j}},
+\label{eq:standard-softmax}\]</span> and the cross-entropy is <span
+class="math inline">\(L(z,t) = -\operatorname{logsoftmax}(z)_t\)</span>,
+whose exact gradient is <span class="math inline">\(g = q - p\)</span>
+for a target distribution <span class="math inline">\(p\)</span>.</p>
+<h4 id="softmax-collapse.">Softmax Collapse.</h4>
+<p>Define the logit margin <span class="math display">\[m = z_t - \log
+\sum_{j \neq t} e^{z_j}.
+\label{eq:margin}\]</span> When the target is also the maximum logit,
+<span class="math inline">\(\tilde{z}_t = 0\)</span> and the denominator
+becomes <span class="math inline">\(1 + e^{-m}\)</span>. Floating-point
+numbers are much denser near zero than near one: in fp32, values near
+<span class="math inline">\(0\)</span> resolve down to <span
+class="math inline">\(\sim\!10^{-38}\)</span>, while terms added to
+<span class="math inline">\(1.0\)</span> are lost below the unit
+roundoff <span class="math inline">\(u = 2^{-p}\)</span>. The
+denominator therefore rounds to exactly <span
+class="math inline">\(1.0\)</span> once <span
+class="math inline">\(m\)</span> exceeds the <em>precision cliff</em>
+<span class="math display">\[c_d = -\ln u = p \ln 2 ,
+\qquad
+c_{16} \approx 5.5, \quad c_{32} \approx 16.6, \quad c_{64} \approx
+36.7,
+\label{eq:cliff}\]</span> for bf16 (<span class="math inline">\(p =
+8\)</span>), fp32 (<span class="math inline">\(p = 24\)</span>) and fp64
+(<span class="math inline">\(p = 53\)</span>). Past the cliff, the
+forward loss becomes <span class="math inline">\(\log(1) = 0\)</span>
+and the target gradient <span class="math inline">\(q_t - 1\)</span>
+becomes exactly <span class="math inline">\(0\)</span>, while the
+non-target gradients <span class="math inline">\(q_j = e^{z_j - z_t}/(1
++ e^{-m})\)</span> remain positive down to exponent underflow (<span
+class="math inline">\(m \approx 88\)</span> in fp32). The gradient no
+longer sums to zero, <span class="math display">\[\sum_k g_k \approx
+\sum_{j \neq t} q_j &gt; 0 ,
+\label{eq:broken-zero-sum}\]</span> which biases every parameter update
+and interacts badly with Adam’s per-coordinate normalisation: when the
+missing target gradient later reappears, the second-moment estimate has
+decayed and the update spikes.</p>
+<h4 id="softmax-cancellation.">Softmax Cancellation.</h4>
+<p>For soft targets <span class="math inline">\(p =
+\operatorname{softmax}(z^{T})\)</span>, the gradient <span
+class="math inline">\(q - p\)</span> is the difference of two nearly
+equal probability vectors. Computing them separately loses the small
+difference that carries the signal and leaves a non-zero residual even
+when <span class="math inline">\(z^{S} = z^{T}\)</span>. The paper’s fix
+computes the difference directly in log space with
+<code>expm1</code>/<code>log1p</code>; this toolkit has no distillation
+loss and therefore does not implement it.</p>
+<h2 id="sec:fixed-formulations">Cancellation-Free Formulations</h2>
+<p>Both fixes exclude the argmax entry from the log-sum-exp and
+reintroduce it through a stable softplus. Let <span
+class="math inline">\(a = \arg\max_k z_k\)</span>, <span
+class="math inline">\(z_{\max} = z_a\)</span>, and <span
+class="math display">\[s = \operatorname{softplus}\!\left(-m\right) =
+\log\!\left(1 + e^{-m}\right)
+    = \log \sum_{j \neq a} e^{z_j - z_{\max}} ,
+\qquad m = z_{\max} - \log \sum_{j \neq a} e^{z_j}.
+\label{eq:softplus-margin}\]</span> Then <span
+class="math display">\[\operatorname{logsoftmax}(z)_k = z_k - z_{\max} -
+s,
+\qquad
+q_k = \exp\!\left(z_k - z_{\max} - s\right),
+\label{eq:fixed-values}\]</span> with the argmax entry evaluated as
+exactly <span class="math inline">\(-s\)</span> and <span
+class="math inline">\(\exp(-s)\)</span> respectively. Because <span
+class="math inline">\(s\)</span> is computed as <span
+class="math inline">\(\log(1 + e^{-m})\)</span> (equivalently <span
+class="math inline">\(\log\!\operatorname{1p}(e^{-m})\)</span>), the
+tiny <span class="math inline">\(e^{-m}\)</span> term survives far
+beyond the standard cliff, down to exponent underflow.</p>
+<p>The complement of the maximum probability is the load-bearing
+quantity for the backward pass. Rather than forming <span
+class="math inline">\(1 - q_{\max}\)</span> (which cancels in the output
+dtype), the implementation uses the identity <span
+class="math display">\[1 - q_{\max} = -\operatorname{expm1}(-s),
+\label{eq:one-minus-qmax}\]</span> which is accurate for arbitrarily
+small <span class="math inline">\(s\)</span>.</p>
+<h4 id="hard-target-cross-entropy.">Hard-target cross-entropy.</h4>
+<p>Using the target logit as the reference, the loss is <span
+class="math display">\[L(z,t) =
+\operatorname{softplus}\!\left(\operatorname{logsumexp}_{j \neq
+t}\left(z_j - z_t\right)\right)
+       = \log\!\left(1 + \sum_{j \neq t} e^{z_j - z_t}\right),
+\label{eq:fixed-ce}\]</span> which is algebraically identical to <span
+class="math inline">\(\log(1 + e^{-m})\)</span> but never adds the small
+term to one. Writing <span class="math inline">\(z_t\)</span> through
+the differences <span class="math inline">\(z_j - z_t\)</span> makes
+automatic differentiation return <span class="math display">\[g_t =
+-\frac{e^{-m}}{1 + e^{-m}}, \qquad
+g_j = \frac{e^{z_j - z_t}}{1 + e^{-m}} \quad (j \neq t),
+\label{eq:fixed-gradients}\]</span> so the target gradient is obtained
+as minus the sum of the non-target gradients and <span
+class="math inline">\(\sum_k g_k = 0\)</span> holds by construction, at
+any margin. The magnitude <span
+class="math inline">\(e^{-m}/(1+e^{-m})\)</span> is preserved down to
+exponent underflow — precisely the component the standard implementation
+rounds to zero.</p>
+<h4 id="softmax-and-log-softmax-jacobians.">Softmax and log-softmax
+Jacobians.</h4>
+<p>For a standalone softmax the forward values of Equation <a
+href="#eq:fixed-values" data-reference-type="ref"
+data-reference="eq:fixed-values">[eq:fixed-values]</a> may still round
+to one in the output dtype (that is unavoidable for the stored
+probability), but the Jacobian must not collapse. Given an upstream
+gradient <span class="math inline">\(g\)</span>, the softmax
+vector–Jacobian product is <span class="math display">\[\frac{\partial
+L}{\partial z} = q \odot \left(g - \langle g, q\rangle\right),
+\label{eq:softmax-vjp}\]</span> whose argmax entry is rewritten as <span
+class="math display">\[\left.\frac{\partial L}{\partial
+z_a}\right|_{\text{fixed}}
+= q_{\max}\left(g_{\max}\,(1 - q_{\max}) - \sum_{j \neq a} g_j
+q_j\right),
+\label{eq:argmax-vjp}\]</span> with <span class="math inline">\(1 -
+q_{\max}\)</span> taken from Equation <a href="#eq:one-minus-qmax"
+data-reference-type="ref"
+data-reference="eq:one-minus-qmax">[eq:one-minus-qmax]</a>. The true
+Jacobian entry <span class="math inline">\(q_{\max}(1 - q_{\max})
+\approx e^{-m}\)</span> thus survives the cliff. For log-softmax (<span
+class="math inline">\(\partial \operatorname{logsoftmax}_k/\partial z_j
+= \delta_{kj} - q_j\)</span>) the argmax entry is likewise rewritten as
+<span class="math display">\[\left.\frac{\partial L}{\partial
+z_a}\right|_{\text{fixed}}
+= -\sum_{j \neq a} g_j + (1 - q_{\max}) \sum_k g_k .
+\label{eq:logsoftmax-vjp}\]</span></p>
+<p>Table <a href="#tab:collapse-regimes" data-reference-type="ref"
+data-reference="tab:collapse-regimes">[tab:collapse-regimes]</a>
+contrasts the two regimes. The values are the exact quantities of
+Equations <a href="#eq:fixed-gradients" data-reference-type="ref"
+data-reference="eq:fixed-gradients">[eq:fixed-gradients]</a>–<a
+href="#eq:argmax-vjp" data-reference-type="ref"
+data-reference="eq:argmax-vjp">[eq:argmax-vjp]</a>; the standard column
+is what Equation <a href="#eq:standard-softmax"
+data-reference-type="ref"
+data-reference="eq:standard-softmax">[eq:standard-softmax]</a> produces
+once <span class="math inline">\(m &gt; c_d\)</span>.</p>
+<div class="tabular">
+<p><span>L<span>3.9cm</span>L<span>4.5cm</span>L<span>4.5cm</span></span>
+<strong>Quantity</strong> &amp; <strong>Standard</strong> &amp;
+<strong>Fixed</strong><br />
+<span class="math inline">\(q_{\max}\)</span> &amp; <span
+class="math inline">\(1.0\)</span> (rounded) &amp; <span
+class="math inline">\(e^{-s}\)</span> (values; may round)<br />
+<span class="math inline">\(1 - q_{\max}\)</span> &amp; <span
+class="math inline">\(0.0\)</span> (rounded) &amp; <span
+class="math inline">\(-\operatorname{expm1}(-s)\)</span><br />
+CE loss &amp; <span class="math inline">\(\log(1)=0\)</span> &amp; <span
+class="math inline">\(\operatorname{softplus}(s)&gt;0\)</span><br />
+<span class="math inline">\(g_t\)</span> &amp; <span
+class="math inline">\(0.0\)</span> &amp; <span
+class="math inline">\(-e^{-m}/(1+e^{-m})\)</span><br />
+<span class="math inline">\(\sum_k g_k\)</span> &amp; <span
+class="math inline">\(\sum_{j \neq t} q_j &gt; 0\)</span> &amp; <span
+class="math inline">\(0\)</span> (by construction)<br />
+<span class="math inline">\(\partial q_{\max}/\partial z_{\max}\)</span>
+&amp; <span class="math inline">\(0.0\)</span> &amp; <span
+class="math inline">\(q_{\max}(1-q_{\max})\)</span><br />
+</p>
+</div>
+<h2 id="sec:fixed-implementation">Implementation in the Toolkit</h2>
+<p>The fixes live in and are exposed as two boolean checkboxes under the
+<code>model.numerics</code> schema group, both defaulting to
+<code>false</code>:</p>
+<pre><code>model:
+  numerics:
+    fixed_softmax: true          # every explicit softmax / log-softmax
+    fixed_cross_entropy: true    # hard-target task losses</code></pre>
+<p>Neither flag adds parameters, buffers or state-dict entries, so
+checkpoints, parameter counting and export (PyTorch, Transformers, GGUF)
+are unaffected; the flags travel with the model configuration. When
+disabled, the code paths reduce to the original <code>torch</code> calls
+with a single attribute lookup per softmax, so the default behaviour and
+performance are unchanged. The fixed losses accept the same
+<code>ignore_index</code> and reduction semantics as
+<code>torch.nn.functional.cross_entropy</code> and compute in the input
+dtype (no implicit upcast), which keeps the fix effective in bf16 as
+well as fp32/fp64.</p>
+<h3 id="backward-pass">Backward Pass</h3>
+<p>PyTorch’s autograd graph for Equation <a href="#eq:fixed-values"
+data-reference-type="ref"
+data-reference="eq:fixed-values">[eq:fixed-values]</a> still contains
+the subtraction that produces <span class="math inline">\(1 -
+q_{\max}\)</span>, and evaluating it there re-introduces the
+cancellation. The implementation therefore defines the two softmax
+functions as <code>torch.autograd.Function</code> objects whose
+<code>forward</code> computes Equation <a href="#eq:fixed-values"
+data-reference-type="ref"
+data-reference="eq:fixed-values">[eq:fixed-values]</a> and whose
+<code>backward</code> uses Equations <a href="#eq:softmax-vjp"
+data-reference-type="ref"
+data-reference="eq:softmax-vjp">[eq:softmax-vjp]</a>–<a
+href="#eq:logsoftmax-vjp" data-reference-type="ref"
+data-reference="eq:logsoftmax-vjp">[eq:logsoftmax-vjp]</a>. The
+cross-entropy needs no custom backward: the graph of Equation <a
+href="#eq:fixed-ce" data-reference-type="ref"
+data-reference="eq:fixed-ce">[eq:fixed-ce]</a> already yields
+Equation <a href="#eq:fixed-gradients" data-reference-type="ref"
+data-reference="eq:fixed-gradients">[eq:fixed-gradients]</a> exactly,
+because <span class="math inline">\(z_t\)</span> enters every shifted
+logit with coefficient <span class="math inline">\(-1\)</span> and the
+target row is excluded from the log-sum-exp.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>logits <span class="math inline">\(z \in \mathbb{R}^{K}\)</span>
+along a normalisation axis, upstream gradient <span
+class="math inline">\(g\)</span> <span class="math inline">\(a \gets
+\arg\max_k z_k\)</span>, <span class="math inline">\(z_{\max} \gets
+z_a\)</span> <span class="math inline">\(\ell \gets
+\operatorname{logsumexp}\{z_k - z_{\max} : k \neq a\}\)</span> <span
+class="math inline">\(s \gets \operatorname{softplus}(\ell)\)</span>
+<span class="math inline">\(c \gets -\operatorname{expm1}(-s)\)</span>
+<span class="math inline">\(q \gets \exp(z - z_{\max} - s)\)</span>
+<strong>backward:</strong> <span class="math inline">\(\tau \gets \sum_k
+g_k q_k\)</span>, <span class="math inline">\(\sigma \gets \sum_{k \neq
+a} g_k q_k\)</span> <span class="math inline">\(\nabla z \gets q \odot
+(g - \tau)\)</span> <span class="math inline">\(\nabla z_a \gets
+q_a\left(g_a\,c - \sigma\right)\)</span> <strong>return</strong> <span
+class="math inline">\(q\)</span>; <strong>return</strong> <span
+class="math inline">\(\nabla z\)</span></p>
+</div>
+</div>
+<h3 id="integration-surface">Integration Surface</h3>
+<p>A single switch must reach every place where the toolkit materialises
+probabilities or logits. <code>HybridLayer</code> attaches the resolved
+flag to each mixer as <code>use_fixed_softmax</code>; the residual
+factory does the same for the depth-wise attention residuals; the
+KV-cache hooks take an explicit <code>use_fixed_softmax</code> argument.
+A dispatch helper then selects the implementation per call site.
+Table <a href="#tab:fixed-coverage" data-reference-type="ref"
+data-reference="tab:fixed-coverage">[tab:fixed-coverage]</a> lists the
+covered surfaces.</p>
+<div class="tabular">
+<p><span>L<span>4.1cm</span>L<span>8.8cm</span></span>
+<strong>Surface</strong> &amp; <strong>Covered sites</strong><br />
+Attention mixers &amp; <code>standard</code>, <code>titan</code>,
+<code>gqa</code>, <code>ode</code>; latent family (<code>mla</code>,
+<code>gqla</code>, <code>mlra</code>, <code>tucker</code>,
+<code>iha</code>, <code>gta</code>, <code>mtla</code>, <code>cca</code>,
+<code>ccgqa</code>, <code>gma</code>); gated
+(<code>gated_softmax</code>, <code>fox</code>); sparse
+(<code>fasa</code>, <code>sparge</code>, <code>msa</code>,
+<code>nsa</code>, <code>bigbird</code>, <code>longformer</code>,
+<code>sparse_transformer</code>, <code>sparsek</code>, <code>swa</code>,
+<code>sparda</code>); dense surrogate of training-free mixers<br />
+Routers &amp; MoE and Mixture-of-Depths top-<span
+class="math inline">\(k\)</span> softmax<br />
+Residuals &amp; Full and Block AttnRes depth-wise softmax<br />
+KV cache &amp; recompute/fallback normaliser in
+<code>src/model/cache/hooks.py</code><br />
+Decoding &amp; top-<span class="math inline">\(p\)</span> nucleus
+filtering and final sampling distribution<br />
+Deployment &amp; <code>inference.predict</code> probability
+readout<br />
+Training losses &amp; <code>mlm</code>, <code>causal_lm</code>,
+<code>classification</code>, <code>segmentation</code> (CE and Dice
+softmax), <code>text_classification</code>,
+<code>patch_prediction</code><br />
+</p>
+</div>
+<p>The loss side is dispatched by a single trainer helper, so every task
+shares the same semantics:</p>
+<pre><code>def _task_cross_entropy(self, logits, targets, **kwargs):
+    if self._use_fixed_cross_entropy():
+        return fixed_cross_entropy(
+            logits, targets, ignore_index=kwargs.get(&quot;ignore_index&quot;, -100))
+    return F.cross_entropy(logits, targets, **kwargs)</code></pre>
+<h2 id="sec:fixed-validation">Cost, Scope and Validation</h2>
+<h4 id="cost.">Cost.</h4>
+<p>The fixed paths have the same asymptotic complexity as the standard
+ones and touch each row with a constant number of extra element-wise
+operations (one masked log-sum-exp and one softplus; one
+<code>expm1</code> in the backward). There are no matrix
+multiplications, no additional memory of order <span
+class="math inline">\(K\)</span> beyond temporaries, and no parameters.
+On ordinary logits the fixed and standard values agree to within
+floating-point tolerance; only the sub-roundoff regime that the standard
+path collapses changes.</p>
+<h4 id="scope.">Scope.</h4>
+<p>The flags target hard-target classification-style losses. Soft-target
+cross-entropy (knowledge distillation, KL regularisation) would need the
+paper’s <code>expm1</code>/<code>log1p</code> difference construction,
+which this toolkit does not implement because it has no distillation
+path. The SSOG mixer’s internal LSE kernels, and the sigmoid attention
+normaliser (which is not a softmax), are intentionally left
+unchanged.</p>
+<h4 id="validation.">Validation.</h4>
+<p>The repository ships , which asserts (i) forward parity with
+<code>torch</code> for softmax, log-softmax and cross-entropy in
+fp32/fp64, including masked (<span
+class="math inline">\(-\infty\)</span>) and single-key inputs; (ii) the
+cliff regressions of Table <a href="#tab:collapse-regimes"
+data-reference-type="ref"
+data-reference="tab:collapse-regimes">[tab:collapse-regimes]</a> at
+margins <span class="math inline">\(25 &gt; c_{32}\)</span> and <span
+class="math inline">\(40 &gt; c_{64}\)</span> — the standard
+target/argmax gradients are exactly zero and the fixed ones are not,
+with a zero-sum gradient in the fixed case; (iii)
+<code>ignore_index</code>, reduction and dispatch semantics; (iv)
+full-model forward parity (fixed versus standard is mathematically
+identical) and finite backward passes; (v) KV-cache prefill<span
+class="math inline">\(+\)</span>decode parity with the flag enabled; and
+(vi) trainer dispatch. The combinatoric end-to-end harness additionally
+trains real MLM and causal-LM models with <code>fixed_softmax</code>,
+<code>fixed_cross_entropy</code>, both together, and the interplay with
+SSMax and BitNet, all on CPU. A ready-to-run preset is .</p>
+<h4 id="when-to-enable.">When to enable.</h4>
+<p>The fix matters when logit margins can grow large during training:
+small algorithmic datasets that exhibit grokking, long training with
+weight decay and adaptive optimizers, and any regime where the loss
+becomes extremely confident. In ordinary large-scale training the
+standard path is usually indistinguishable; the fixed path is a safe
+default candidate because it is mathematically identical in the forward
+pass and strictly better conditioned in the backward pass.</p>
 </body>
 </html>
