@@ -14736,15 +14736,23 @@ audio:
   asr_decoder_dim: 320
   asr_decoder_layers: 1
   asr_decoder_dropout: 0.1
-audio_dataset:
-  dataset_name: astroza/chilean-jokes-festival-de-vina
-  split: train
-  audio_column: audio
-  text_column: text
   spec_augment: {enabled: true, freq_mask_width: 27,
                  time_masks: 10, time_mask_ratio: 0.05}
+audio_dataset:
+  dataset_name: astroza/chilean-jokes-festival-de-vina
+  split: test
+  audio_column: audio
+  text_column: text
 training:
-  task: asr</code></pre>
+  task: asr
+  asr: {loss: ctc}       # optional override of audio.asr_loss</code></pre>
+<p>SpecAugment is part of the acoustic frontend
+(“<code>audio.spec_augment</code>”), so it is applied to the feature map
+before subsampling and is active only in training mode. The optional
+<code>training.asr.loss</code> block overrides
+<code>audio.asr_loss</code> for presets that want to switch between CTC
+and RNN-T without editing the architecture block; the two must agree
+because the transducer head is built from the model-side knob.</p>
 <h2 id="sec:annex-18-eeg">Generic 1-D Signals: EEG and Beyond</h2>
 <p>The frontend is not tied to speech. With
 <code>audio.feature: raw</code>, the mel filterbank and SpecAugment are
