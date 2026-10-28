@@ -207,18 +207,19 @@ dificulta la reproducibilidad. Proponemos Frankenstein Transformer, un
 conjunto de herramientas CLI basado en configuración
 (<code>frankenstein-transformer</code>) que unifica la definición, el
 entrenamiento, el despliegue y la inferencia de modelos tras un único
-esquema YAML estricto. El conjunto de herramientas cubre cuarenta y tres
-mezcladores de secuencia en ocho familias y veinticuatro familias de
-optimizadores con control por grupo de parámetros, y soporta clases de
-modelo encoder, decoder y Vision Transformer para masked language
-modeling, modelado causal de lenguaje, embeddings de oraciones y tareas
-de imagen. El aporte de este software es un contrato de experimentación
-validado: las configuraciones inválidas fallan antes de entrenar, cada
-arquitectura y optimizador comparte una interfaz operativa, y el mismo
-documento gestiona entrenamiento, despliegue cuantizado, exportación y
-un constructor web generado desde el esquema. Describimos la taxonomía,
-el enrutamiento de optimizadores, las rutas de despliegue y la
-integración, y remitimos el detalle matemático y de implementación a los
+esquema YAML estricto. El conjunto de herramientas cubre cuarenta y
+cinco mezcladores de secuencia en nueve familias y veinticuatro familias
+de optimizadores con control por grupo de parámetros, y soporta clases
+de modelo encoder, decoder, Vision Transformer y audio para masked
+language modeling, modelado causal de lenguaje, embeddings de oraciones,
+tareas de imagen, reconocimiento de voz y clasificación de audio. El
+aporte de este software es un contrato de experimentación validado: las
+configuraciones inválidas fallan antes de entrenar, cada arquitectura y
+optimizador comparte una interfaz operativa, y el mismo documento
+gestiona entrenamiento, despliegue cuantizado, exportación y un
+constructor web generado desde el esquema. Describimos la taxonomía, el
+enrutamiento de optimizadores, las rutas de despliegue y la integración,
+y remitimos el detalle matemático y de implementación a los
 apéndices.</p>
 </div>
 </header>
@@ -1215,6 +1216,74 @@ id="toc-superficie-de-integración">Superficie de Integración</a></li>
 <li><a href="#sec:fixed-validation" id="toc-sec:fixed-validation">Costo,
 Alcance y Validación</a></li>
 </ul></li>
+<li><a href="#sec:annex-17" id="toc-sec:annex-17">Conformer: Atención
+Aumentada con Convolución</a>
+<ul>
+<li><a href="#resumen-ejecutivo-1" id="toc-resumen-ejecutivo-1">Resumen
+Ejecutivo</a></li>
+<li><a href="#conformer-atención-aumentada-con-convolución"
+id="toc-conformer-atención-aumentada-con-convolución">Conformer:
+Atención Aumentada con Convolución</a>
+<ul>
+<li><a href="#formulación-matemática-20"
+id="toc-formulación-matemática-20">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-19"
+id="toc-pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</a></li>
+<li><a href="#mapeo-de-implementación-y-desviaciones"
+id="toc-mapeo-de-implementación-y-desviaciones">Mapeo de Implementación
+y Desviaciones</a></li>
+</ul></li>
+<li><a href="#ablaciones-publicadas"
+id="toc-ablaciones-publicadas">Ablaciones Publicadas</a></li>
+<li><a href="#reutilización-de-la-infraestructura-existente-1"
+id="toc-reutilización-de-la-infraestructura-existente-1">Reutilización
+de la Infraestructura Existente</a></li>
+<li><a href="#cuándo-usarlo" id="toc-cuándo-usarlo">Cuándo
+Usarlo</a></li>
+</ul></li>
+<li><a href="#sec:annex-18" id="toc-sec:annex-18">Audio: Reconocimiento
+de Voz y Clasificación de Audio</a>
+<ul>
+<li><a href="#resumen-ejecutivo-2" id="toc-resumen-ejecutivo-2">Resumen
+Ejecutivo</a></li>
+<li><a href="#la-clase-de-modelo-frankenstein_audio"
+id="toc-la-clase-de-modelo-frankenstein_audio">La Clase de Modelo
+<code>frankenstein_audio</code></a>
+<ul>
+<li><a href="#frontend-de-audio" id="toc-frontend-de-audio">Frontend de
+Audio</a></li>
+<li><a href="#submuestreo-convolucional"
+id="toc-submuestreo-convolucional">Submuestreo Convolucional</a></li>
+<li><a href="#modo-encoder-forzado-y-la-pila-hybridlayer"
+id="toc-modo-encoder-forzado-y-la-pila-hybridlayer">Modo Encoder Forzado
+y la Pila HybridLayer</a></li>
+</ul></li>
+<li><a href="#reconocimiento-automático-de-voz"
+id="toc-reconocimiento-automático-de-voz">Reconocimiento Automático de
+Voz</a>
+<ul>
+<li><a href="#ctc" id="toc-ctc">CTC</a></li>
+<li><a href="#rnn-transducer"
+id="toc-rnn-transducer">RNN-Transducer</a></li>
+<li><a href="#decodificación-y-tasa-de-error"
+id="toc-decodificación-y-tasa-de-error">Decodificación y Tasa de
+Error</a></li>
+</ul></li>
+<li><a href="#clasificación-de-audio"
+id="toc-clasificación-de-audio">Clasificación de Audio</a></li>
+<li><a href="#specaugment" id="toc-specaugment">SpecAugment</a></li>
+<li><a href="#tamaños-de-referencia"
+id="toc-tamaños-de-referencia">Tamaños de Referencia</a></li>
+<li><a href="#configuraciones-de-ejemplo"
+id="toc-configuraciones-de-ejemplo">Configuraciones de Ejemplo</a></li>
+<li><a href="#sec:annex-18-eeg" id="toc-sec:annex-18-eeg">Señales 1-D
+Genéricas: EEG y Más Allá</a></li>
+<li><a href="#pseudocódigo-en-pytorch-1"
+id="toc-pseudocódigo-en-pytorch-1">Pseudocódigo en PyTorch</a></li>
+<li><a href="#desviaciones-y-notas-de-implementación"
+id="toc-desviaciones-y-notas-de-implementación">Desviaciones y Notas de
+Implementación</a></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introducción">Introducción</h1>
@@ -1251,7 +1320,7 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cuarenta y tres mezcladores de secuencia en ocho
+estricto que soporta cuarenta y cinco mezcladores de secuencia en nueve
 familias y veinticuatro familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
@@ -1658,9 +1727,9 @@ data-reference-type="ref" data-reference="sec:annex-mhc">21</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
-<p>El sistema implementa cuarenta y cuatro mezcladores de secuencia
-organizados en ocho categorías funcionales que reflejan cómo cada método
-equilibra expresividad, costo computacional y memoria.</p>
+<p>El sistema implementa cuarenta y cinco mezcladores de secuencia
+organizados en nueve categorías funcionales que reflejan cómo cada
+método equilibra expresividad, costo computacional y memoria.</p>
 <ol>
 <li><p><strong>Líneas base densas</strong> (3): atención softmax
 estándar, atención sigmoide y Grouped-Query Attention (GQA) ofrecen
@@ -1692,19 +1761,26 @@ data-cites="zhang_falcon_2026"></span>.</p></li>
 <li><p><strong>Campo geométrico</strong> (1): SSOG aplica un prior
 geométrico estructurado sobre la matriz de atención <span
 class="citation" data-cites="pisoni_ssog_2026"></span>.</p></li>
+<li><p><strong>Aumentados con convolución</strong> (1): el bloque
+Conformer <span class="citation" data-cites="Gulati2020"></span> fusiona
+atención multi-cabeza con un módulo de convolución depthwise entre dos
+capas feed-forward Macaron, aportando a cada capa una rama local junto
+al campo receptivo global (Anexo <a href="#sec:annex-17"
+data-reference-type="ref"
+data-reference="sec:annex-17">29</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy">
 
-<figcaption>Taxonomía de los cuarenta y tres mezcladores de secuencia en
-ocho categorías funcionales. Las líneas base densas ofrecen enrutamiento
-global completo a costo cuadrático; los métodos recurrentes comprimen el
-estado para inferencia en tiempo constante; las variantes dispersas
-restringen el patrón de atención; los mecanismos con compuerta modulan
-retención y olvido; los métodos latentes comprimen las representaciones
-clave–valor; la memoria condicional añade búsquedas de lectura/escritura
-en tiempo de prueba; los métodos de peso rápido formulan la transición
-de estado como una regla de aprendizaje en línea; los métodos
-geométricos codifican priors estructurados.</figcaption>
+<figcaption>Taxonomía de los cuarenta y cinco mezcladores de secuencia
+en nueve categorías funcionales. Las líneas base densas ofrecen
+enrutamiento global completo a costo cuadrático; los métodos recurrentes
+comprimen el estado para inferencia en tiempo constante; las variantes
+dispersas restringen el patrón de atención; los mecanismos con compuerta
+modulan retención y olvido; los métodos latentes comprimen las
+representaciones clave–valor; la memoria condicional añade búsquedas de
+lectura/escritura en tiempo de prueba; los métodos de peso rápido
+formulan la transición de estado como una regla de aprendizaje en línea;
+los métodos geométricos codifican priors estructurados.</figcaption>
 </figure>
 <h2 id="familias-densa-y-recurrente">Familias Densa y Recurrente</h2>
 <p>Las líneas base densas—softmax estándar <span class="citation"
@@ -1984,7 +2060,7 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las cuarenta y tres arquitecturas de mezclador implementadas abarcan
+<p>Las cuarenta y cinco arquitecturas de mezclador implementadas abarcan
 las principales direcciones de investigación en modelado de secuencias,
 pero ciertos vacíos permanecen. El sistema carece de arquitecturas
 híbridas recientes como Griffin <span class="citation"
@@ -2083,7 +2159,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y tres mezcladores de secuencia y veinticuatro familias de
+cuarenta y cinco mezcladores de secuencia y veinticuatro familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -2175,7 +2251,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>122</span> urlstyle</p>
+<p><span>128</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2183,7 +2259,7 @@ Sherry Moore, Derek G. Murray, Benoit Steiner, Paul Tucker, Vijay
 Vasudevan, Pete Warden, Martin Wicke, Yuan Yu, and Xiaoqiang Zheng. : A
 system for large-scale machine learning. In <em>12th USENIX Symposium on
 Operating Systems Design and Implementation (OSDI)</em>, pages 265–283,
-2016.</p>
+2016. URL <code>https://arxiv.org/abs/1605.08695</code>.</p>
 <p>Joshua Ainslie, James Lee-Thorp, Michiel de Jong, Yury Zemlyansky,
 Federico Lebrón, and Sumit Sanghai. Gqa: Training generalized
 multi-query transformer models from multi-head checkpoints, 2023. URL
@@ -2194,14 +2270,15 @@ adam, 2026. URL <code>https://arxiv.org/abs/2605.02317</code>.</p>
 normalization, 2016. URL
 <code>https://arxiv.org/abs/1607.06450</code>.</p>
 <p>Jonathan T. Barron. Continuously differentiable exponential linear
-units. <em>arXiv preprint arXiv:1704.07483</em>, 2017.</p>
+units. <em>arXiv preprint arXiv:1704.07483</em>, 2017. URL
+<code>https://arxiv.org/abs/1704.07483</code>.</p>
 <p>Jonathan T. Barron, Dan Gnanapragasam, and Michael Tschannen. A fix
 for softmax and cross-entropy, 2026. URL
 <code>https://arxiv.org/abs/2610.31642</code>. arXiv:2610.31642.</p>
 <p>Mina Basirat and Peter M. Roth. The quest for a better
 <span>ReLU</span>: <span>ELiSH</span> and <span>HardELiSH</span>
-activation functions. <em>arXiv preprint arXiv:1905.10144</em>,
-2019.</p>
+activation functions. <em>arXiv preprint arXiv:1905.10144</em>, 2019.
+URL <code>https://arxiv.org/abs/1905.10144</code>.</p>
 <p>Ali Behrouz, Peilin Zhong, and Vahab Mirrokni. Titans: Learning to
 memorize at test time, 2025. URL
 <code>https://arxiv.org/abs/2501.00663</code>. Version Number: 1.</p>
@@ -2243,11 +2320,18 @@ long sequences with sparse transformers, 2019. URL
 <p>Djork-Arn<span>é</span> Clevert, Thomas Unterthiner, and Sepp
 Hochreiter. Fast and accurate deep network learning by exponential
 linear units (<span>ELUs</span>). <em>arXiv preprint
-arXiv:1511.07289</em>, 2016.</p>
+arXiv:1511.07289</em>, 2016. URL
+<code>https://arxiv.org/abs/1511.07289</code>.</p>
 <p>Chang Dai, Hongyu Shan, Mingyang Song, and Di Liang. : Hyperbolic
 rotary positional encoding for stable long-range dependency modeling in
 large language models, 2025. URL
 <code>http://arxiv.org/abs/2509.05218</code>.</p>
+<p>Zihang Dai, Zhilin Yang, Yiming Yang, Jaime Carbonell, Quoc V. Le,
+and Ruslan Salakhutdinov. Transformer-<span>XL</span>: Attentive
+language models beyond a fixed-length context. In <em>Proceedings of the
+57th Annual Meeting of the Association for Computational Linguistics
+(ACL)</em>, pages 2978–2988, 2019. doi: 10.18653/v1/P19-1285. URL
+<code>https://arxiv.org/abs/1906.08237</code>.</p>
 <p>Aaron Defazio, Xingyu Alice Yang, Harsh Mehta, Konstantin Mishchenko,
 Ahmed Khaled, and Ashok Cutkosky. The road less scheduled, 2024. URL
 <code>https://arxiv.org/abs/2405.15682</code>. Version Number: 4.</p>
@@ -2269,7 +2353,8 @@ quantization for coding <span>LLMs</span>, 2024. URL
 <p>Shiv Ram Dubey, Satish Kumar Singh, and Bidyut Baran Chaudhuri.
 Activation functions in deep learning: A comprehensive survey and
 benchmark. <em>Neurocomputing</em>, 453: 1–24, 2021. doi:
-10.1016/j.neucom.2021.03.063.</p>
+10.1016/j.neucom.2021.03.063. URL
+<code>https://arxiv.org/abs/2109.14545</code>.</p>
 <p>Sai Surya Duvvuri, Chanakya Ekbote, Rachit Bansal, Rishabh Tiwari,
 Devvrit Khatri, David Brandfonbrener, Paul Liang, Inderjit Dhillon, and
 Manzil Zaheer. Interleaved head attention, 2026. URL
@@ -2277,7 +2362,8 @@ Manzil Zaheer. Interleaved head attention, 2026. URL
 <p>Stefan Elfwing, Eiji Uchibe, and Kenji Doya. Sigmoid-weighted linear
 units for neural network function approximation in reinforcement
 learning. <em>Neural Networks</em>, 106: 300–312, 2018. doi:
-10.1016/j.neunet.2018.07.012.</p>
+10.1016/j.neunet.2018.07.012. URL
+<code>https://arxiv.org/abs/1702.03118</code>.</p>
 <p>Mostafa Elhoushi, Akshat Shrivastava, Diana Liskovich, Basil Hosmer,
 Bram Wasti, Liangzhen Lai, Anas Mahmoud, Bilge Acun, Saurabh Agarwal,
 Ahmed Roman, et al. : Enabling early exit inference and self-speculative
@@ -2286,7 +2372,8 @@ arXiv:2404.16710.</p>
 <p>Aiming Fang, Suhyune Lee, Nafise Sadat Moosavi, and Iryna Gurevych.
 Transformers with learnable activation functions. In <em>Findings of the
 Association for Computational Linguistics: EACL 2023</em>, pages
-1736–1746, 2023. doi: 10.48550/arXiv.2208.14111.</p>
+1736–1746, 2023. doi: 10.48550/arXiv.2208.14111. URL
+<code>https://arxiv.org/abs/2208.14111</code>.</p>
 <p>Tomas Figliola, Nicholas Alonso, Rishi Iyer, Quentin Anthony, and
 Beren Millidge. Compressed convolutional attention: Efficient attention
 in a compressed latent space, 2025. URL
@@ -2297,25 +2384,41 @@ inference, 2026. URL <code>https://arxiv.org/abs/2606.04511</code>.</p>
 <p>Xavier Glorot, Antoine Bordes, and Yoshua Bengio. Deep sparse
 rectifier neural networks. <em>Proceedings of the 14th International
 Conference on Artificial Intelligence and Statistics (AISTATS)</em>,
-pages 315–323, 2011.</p>
+pages 315–323, 2011. URL
+<code>https://proceedings.mlr.press/v15/glorot11a.html</code>.</p>
 <p>Luke B. Godfrey and Michael S. Gashler. A continuum among
 logarithmic, linear, and exponential functions, and its potential to
 improve generalization in neural networks. In <em>Proceedings of the
 International Conference on Knowledge Discovery and Information
-Retrieval (KDIR)</em>, 2015.</p>
+Retrieval (KDIR)</em>, 2015. URL
+<code>https://arxiv.org/abs/1602.01321</code>.</p>
 <p>Ian J. Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville,
 and Yoshua Bengio. Maxout networks. In <em>Proceedings of the 30th
 International Conference on Machine Learning (ICML)</em>, pages
-1319–1327, 2013.</p>
+1319–1327, 2013. URL <code>https://arxiv.org/abs/1302.4389</code>.</p>
 <p>Nils Graef, Filip Makraduli, Andrew Wasielewski, and Matthew Clapp. :
 Fast normalization for transformers, 2026. URL
 <code>http://arxiv.org/abs/2407.09577</code>.</p>
+<p>Alex Graves. Sequence transduction with recurrent neural networks,
+2012. URL <code>https://arxiv.org/abs/1211.3711</code>.</p>
+<p>Alex Graves, Santiago Fern<span>á</span>ndez, Faustino Gomez, and
+J<span>ü</span>rgen Schmidhuber. Connectionist temporal classification:
+Labelling unsegmented sequence data with recurrent neural networks. In
+<em>Proceedings of the 23rd International Conference on Machine Learning
+(ICML)</em>, pages 369–376, 2006. doi: 10.1145/1143844.1143891. URL
+<code>https://doi.org/10.1145/1143844.1143891</code>.</p>
 <p>Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with
 selective state spaces, 2023. URL
 <code>https://arxiv.org/abs/2312.00752</code>. Version Number: 2.</p>
 <p>Albert Gu, AI21 Labs, et al. Jamba: A hybrid transformer-mamba
 language model, 2024. URL
 <code>https://arxiv.org/abs/2403.19887</code>.</p>
+<p>Anmol Gulati, James Qin, Chung-Cheng Chiu, Niki Parmar, Yu Zhang,
+Jiahui Yu, Wei Han, Shibo Wang, Zhengdong Zhang, Yonghui Wu, and Ruoming
+Pang. Conformer: Convolution-augmented transformer for speech
+recognition. In <em>Proc. Interspeech</em>, pages 5036–5040, 2020. doi:
+10.21437/Interspeech.2020-3015. URL
+<code>https://arxiv.org/abs/2005.08100</code>.</p>
 <p>Vineet Gupta, Tomer Koren, and Yoram Singer. Shampoo: Preconditioned
 stochastic tensor optimization, 2018. URL
 <code>https://arxiv.org/abs/1802.09568</code>. Version Number: 2.</p>
@@ -2326,7 +2429,7 @@ Decoupling erase and write in linear attention, 2026. URL
 into rectifiers: Surpassing human-level performance on
 <span>ImageNet</span> classification. In <em>Proceedings of the IEEE
 International Conference on Computer Vision (ICCV)</em>, pages
-1026–1034, 2015.</p>
+1026–1034, 2015. URL <code>https://arxiv.org/abs/1502.01852</code>.</p>
 <p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual
 learning for image recognition. In <em>2016 <span>IEEE</span> Conference
 on Computer Vision and Pattern Recognition (<span>CVPR</span>)</em>,
@@ -2336,8 +2439,8 @@ pages 770–778. <span>IEEE</span>, 2016. doi: 10.1109/CVPR.2016.90. URL
 Doll<span>á</span>r, and Ross Girshick. , 2022. URL
 <code>http://arxiv.org/abs/2111.06377</code>.</p>
 <p>Dan Hendrycks and Kevin Gimpel. Gaussian error linear units
-(<span>GELU</span>). In <em>arXiv preprint arXiv:1606.08415</em>,
-2016.</p>
+(<span>GELU</span>). In <em>arXiv preprint arXiv:1606.08415</em>, 2016.
+URL <code>https://arxiv.org/abs/1606.08415</code>.</p>
 <p>Coleman Hooper, Sehoon Kim, Hiva Mohammadzadeh, Michael W. Mahoney,
 Yakun Sophia Shao, Kurt Keutzer, and Amir Gholami. : Towards 10 million
 context length <span>LLM</span> inference with <span>KV</span> cache
@@ -2347,11 +2450,13 @@ arXiv:2401.18079.</p>
 Mingxing Tan, Weijun Wang, Yukun Zhu, Ruoming Pang, Vijay Vasudevan,
 Quoc V. Le, and Hartwig Adam. Searching for <span>MobileNetV3</span>. In
 <em>Proceedings of the IEEE/CVF International Conference on Computer
-Vision (ICCV)</em>, pages 1314–1325, 2019.</p>
+Vision (ICCV)</em>, pages 1314–1325, 2019. URL
+<code>https://arxiv.org/abs/1905.02244</code>.</p>
 <p>Andrew G. Howard, Menglong Zhu, Bo Chen, Dmitry Kalenichenko, Weijun
 Wang, Tobias Weyand, Marco Andreetto, and Hartwig Adam. : Efficient
 convolutional neural networks for mobile vision applications. In
-<em>arXiv preprint arXiv:1704.04861</em>, 2017.</p>
+<em>arXiv preprint arXiv:1704.04861</em>, 2017. URL
+<code>https://arxiv.org/abs/1704.04861</code>.</p>
 <p>Yongchao Huang and Hassan Raza. Gaussian mixture attention:
 Linear-time sequence mixing via probabilistic latent routing, 2026. URL
 <code>https://arxiv.org/abs/2606.18283</code>.</p>
@@ -2385,7 +2490,8 @@ expressive, efficient attention architecture, 2025. URL
 <code>https://arxiv.org/abs/2510.26692</code>.</p>
 <p>G<span>ü</span>nter Klambauer, Thomas Unterthiner, Andreas Mayr, and
 Sepp Hochreiter. Self-normalizing neural networks. In <em>Advances in
-Neural Information Processing Systems (NeurIPS)</em>, 2017.</p>
+Neural Information Processing Systems (NeurIPS)</em>, 2017. URL
+<code>https://arxiv.org/abs/1706.02515</code>.</p>
 <p>Timon Klein, Jonas Kusch, Sebastian Sager, Stefan Schnake, and
 Steffen Schotthöfer. Tucker attention: A generalization of approximate
 attention mechanisms, 2026. URL
@@ -2401,7 +2507,8 @@ Zhao. Minimax sparse attention, 2026. URL
 <code>https://arxiv.org/abs/2606.13392</code>.</p>
 <p>Johannes Lederer. Activation functions in artificial neural networks:
 A systematic overview. <em>arXiv preprint arXiv:2101.09957</em>, 2021.
-doi: 10.48550/arXiv.2101.09957.</p>
+doi: 10.48550/arXiv.2101.09957. URL
+<code>https://arxiv.org/abs/2101.09957</code>.</p>
 <p>Mike Lewis, Shruti Bhosale, Tim Dettmers, Douwe Kiela, and Luke
 Zettlemoyer. Base layers: Simplifying training of large, sparse models,
 2021. URL <code>https://arxiv.org/abs/2103.16716</code>.</p>
@@ -2432,10 +2539,15 @@ Version Number: 3.</p>
 <p>Tianyu Lou, Zheyu Chen, Tao Yu, et al. Efficient sparse attention for
 long-range transformers, 2024. URL
 <code>https://arxiv.org/abs/2406.16747</code>.</p>
+<p>Yiping Lu, Zhuohan Li, Di He, Zhiqing Sun, Bin Dong, Tao Qin, Liwei
+Wang, and Tie-Yan Liu. Understanding and improving transformer from a
+multi-particle dynamic system point of view, 2019. URL
+<code>https://arxiv.org/abs/1906.02762</code>.</p>
 <p>Andrew L. Maas, Awni Y. Hannun, and Andrew Y. Ng. Rectifier
 nonlinearities improve neural network acoustic models. In <em>Proc. ICML
 Workshop on Deep Learning for Audio, Speech and Language
-Processing</em>, 2013.</p>
+Processing</em>, 2013. URL
+<code>https://ai.stanford.edu/ amaas/papers/relu_hybrid_icml2013_final.pdf</code>.</p>
 <p>Sushant Mehta, Raj Dandekar, Rajat Dandekar, and Sreedath Panat.
 Latent multi-head attention for small language models, 2025. URL
 <code>https://arxiv.org/abs/2506.09342</code>.</p>
@@ -2446,13 +2558,15 @@ large language model decoding, 2026. URL
 adaptive parameter-free learner, 2023. URL
 <code>https://arxiv.org/abs/2306.06101</code>. Version Number: 4.</p>
 <p>Diganta Misra. Mish: A self regularized non-monotonic activation
-function. <em>arXiv preprint arXiv:1908.08681</em>, 2019.</p>
+function. <em>arXiv preprint arXiv:1908.08681</em>, 2019. URL
+<code>https://arxiv.org/abs/1908.08681</code>.</p>
 <p>Niklas Muennighoff et al. Matryoshka representation learning, 2022.
 URL <code>https://arxiv.org/abs/2205.13147</code>.</p>
 <p>Vinod Nair and Geoffrey E. Hinton. Rectified linear units improve
 restricted <span>Boltzmann</span> machines. In <em>Proceedings of the
 27th International Conference on Machine Learning (ICML)</em>, pages
-807–814, 2010.</p>
+807–814, 2010. URL
+<code>https://www.cs.toronto.edu/ fritz/absps/reluICML.pdf</code>.</p>
 <p>Christoffer Koo <span>Ø</span>hrstr<span>ø</span>m, Rafael I.
 Cabral Muchacho, Yifei Dong, Filippos Moumtzidellis, Ronja
 G<span>ü</span>ldenring, Florian T. Pokorny, and Lazaros Nalpantidis.
@@ -2461,28 +2575,35 @@ general, 2026. URL <code>http://arxiv.org/abs/2602.01418</code>.</p>
 <p>Matteo Pagliardini, Pierre Ablin, and David Grangier. The
 <span>AdEMAMix</span> optimizer: Better, faster, older, 2024. URL
 <code>https://arxiv.org/abs/2409.03137</code>. Version Number: 2.</p>
+<p>Daniel S. Park, William Chan, Yu Zhang, Chung-Cheng Chiu, Barret
+Zoph, Ekin D. Cubuk, and Quoc V. Le. Spec<span>A</span>ugment: A simple
+data augmentation method for automatic speech recognition. In <em>Proc.
+Interspeech</em>, pages 2613–2617, 2019. doi:
+10.21437/Interspeech.2019-2680. URL
+<code>https://arxiv.org/abs/1904.08779</code>.</p>
 <p>Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury,
 Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca
 Antiga, Alban Desmaison, Andreas K<span>ö</span>pf, Edward Yang, Zach
 DeVito, Martin Raison, Alykhan Tejani, Sasank Chilamkurthy, Benoit
 Steiner, Lu Fang, Junjie Bai, and Soumith Chintala. : An imperative
 style, high-performance deep learning library. In <em>Advances in Neural
-Information Processing Systems 32 (NeurIPS)</em>, pages 8024–8035,
-2019.</p>
+Information Processing Systems 32 (NeurIPS)</em>, pages 8024–8035, 2019.
+URL <code>https://arxiv.org/abs/1912.01703</code>.</p>
 <p>Fabian Pedregosa, Ga<span>ë</span>l Varoquaux, Alexandre Gramfort,
 Vincent Michel, Bertrand Thirion, Olivier Grisel, Mathieu Blondel, Peter
 Prettenhofer, Ron Weiss, Vincent Dubourg, Jake Vanderplas, Alexandre
 Passos, David Cournapeau, Matthieu Brucher, Matthieu Perrot, and
 <span>É</span>douard Duchesnay. Scikit-learn: Machine learning in
 <span>Python</span>. <em>Journal of Machine Learning Research</em>, 12:
-2825–2830, 2011.</p>
+2825–2830, 2011. URL <code>https://arxiv.org/abs/1201.0490</code>.</p>
 <p>Raphael Pisoni. A few gaussians is all you need: Ssog-attention that
 steers instead of scores, 2026. URL
 <code>https://www.pisoni.ai/posts/ssog/</code>. Reference
 implementation: <code>https://github.com/4rtemi5/ssog</code>.</p>
 <p>Boris T. Polyak. Some methods of speeding up the convergence of
 iteration methods. <em>USSR Computational Mathematics and Mathematical
-Physics</em>, 4 (5): 1–17, 1964. doi: 10.1016/0041-5553(64)90137-5.</p>
+Physics</em>, 4 (5): 1–17, 1964. doi: 10.1016/0041-5553(64)90137-5. URL
+<code>https://doi.org/10.1016/0041-5553(64)90137-5</code>.</p>
 <p>Ofir Press, Noah A. Smith, and Mike Lewis. Train short, test long:
 Attention with linear biases enables input length extrapolation, 2022.
 URL <code>http://arxiv.org/abs/2108.12409</code>.</p>
@@ -2491,8 +2612,8 @@ expansion, 2024. URL <code>https://arxiv.org/abs/2404.07904</code>.</p>
 <p>Yuxiang Qiu, Qwen Team, et al. Gated attention for large language
 models, 2025. URL <code>https://arxiv.org/abs/2505.06708</code>.</p>
 <p>Prajit Ramachandran, Barret Zoph, and Quoc V. Le. Searching for
-activation functions. In <em>arXiv preprint arXiv:1710.05941</em>,
-2017.</p>
+activation functions. In <em>arXiv preprint arXiv:1710.05941</em>, 2017.
+URL <code>https://arxiv.org/abs/1710.05941</code>.</p>
 <p>Jason Ramapuram, Federico Danieli, Eeshan Dhekane, Floris Weers, Dan
 Busbridge, Pierre Ablin, Tatiana Likhomanenko, Jagrit Digani, Zijin Gu,
 Amitis Shidani, and Russ Webb. Theory, analysis, and best practices for
@@ -2503,12 +2624,14 @@ embeddings using siamese <span>BERT</span>-networks, 2019. URL
 <code>http://arxiv.org/abs/1908.10084</code>.</p>
 <p>Susmita Roy, Souvik Manna, Subhash Bagui, et al. : Non-parametric
 linearly scaled hyperbolic tangent activation function for neural
-networks. <em>arXiv preprint arXiv:1811.05870</em>, 2019.</p>
+networks. <em>arXiv preprint arXiv:1811.05870</em>, 2019. URL
+<code>https://arxiv.org/abs/1811.05870</code>.</p>
 <p>Hema Hariharan Samson. Lightweight transformer architectures for edge
 devices in real-time applications, 2026. URL
 <code>http://arxiv.org/abs/2601.03290</code>.</p>
 <p>Noam Shazeer. variants improve transformer. <em>arXiv preprint
-arXiv:2002.05202</em>, 2020.</p>
+arXiv:2002.05202</em>, 2020. URL
+<code>https://arxiv.org/abs/2002.05202</code>.</p>
 <p>Noam Shazeer and Mitchell Stern. Adafactor: Adaptive learning rates
 with sublinear memory cost, 2018. URL
 <code>https://arxiv.org/abs/1804.04235</code>. Version Number: 1.</p>
@@ -2544,7 +2667,8 @@ class="math inline">\(\beta_2\)</span> with the optimal rate, 2024. URL
 Chaib-draa. Parametric exponential linear unit for deep convolutional
 neural networks. In <em>Proceedings of the 16th IEEE International
 Conference on Machine Learning and Applications (ICMLA)</em>, pages
-207–214, 2017. doi: 10.1109/ICMLA.2017.0-133.</p>
+207–214, 2017. doi: 10.1109/ICMLA.2017.0-133. URL
+<code>https://arxiv.org/abs/1605.09332</code>.</p>
 <p>Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion
 Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. Attention is
 all you need, 2017. URL <code>https://arxiv.org/abs/1706.03762</code>.
@@ -2567,7 +2691,7 @@ Gugger, Mariama Drame, Quentin Lhoest, and Alexander M. Rush.
 Transformers: State-of-the-art natural language processing. In
 <em>Proceedings of the 2020 Conference on Empirical Methods in Natural
 Language Processing: System Demonstrations (EMNLP)</em>, pages 38–45,
-2020.</p>
+2020. URL <code>https://arxiv.org/abs/1910.03771</code>.</p>
 <p>Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
 Efficient streaming language models with attention sinks. In
 <em>International Conference on Learning Representations (ICLR)</em>,
@@ -4711,7 +4835,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-43 mezcladores de secuencia en ocho familias, 23 optimizadores, 6
+45 mezcladores de secuencia en nueve familias, 23 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -4752,6 +4876,13 @@ d)\)</span> &amp; <span class="math inline">\(\mathcal{O}(n)\)</span>
 caché &amp; Compresión KV ajustable; reducción de caché <span
 class="math inline">\(G\times\)</span> mediante cabezas compartidas
 &amp; <span class="citation" data-cites="ainslie_gqa_2023"></span><br />
+conformer_attn &amp; Aumentado conv. &amp; <span
+class="math inline">\(\mathcal{O}(n^2 d + n K d)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> (recómputo completo) &amp;
+FFN Macaron alrededor de MHSA sinusoidal relativa y un módulo conv
+depthwise (<span class="math inline">\(K=32\)</span>); contexto local y
+global en un solo bloque &amp; <span class="citation"
+data-cites="Gulati2020"></span><br />
 </p>
 <p><br />
 retnet_attn &amp; Recurrente &amp; <span
@@ -5526,6 +5657,13 @@ Convolución de Embedding &amp; Conv1d depthwise aplicada sobre el flujo
 de embeddings antes del primer bloque transformer; proporciona filtrado
 ligero de contexto local; controlado por
 <code>embedding_conv_kernel</code> &amp; (interno)<br />
+Frontend de audio &amp; Tramas log-mel/espectrograma/raw a través de dos
+etapas Conv2d con stride 2 y una proyección lineal (reducción de tramas
+<span class="math inline">\(4\times\)</span>); lado de entrada de
+<code>frankenstein_audio</code>; controlado por el bloque
+<code>audio.*</code> (Anexo <a href="#sec:annex-18"
+data-reference-type="ref" data-reference="sec:annex-18">30</a>) &amp;
+<span class="citation" data-cites="Gulati2020"></span><br />
 </p>
 </div>
 <h1 id="sec:annex-optimizers">Familias de Optimizadores</h1>
@@ -14484,5 +14622,778 @@ a gran escala la ruta estándar suele ser indistinguible; la corregida es
 una candidata segura por defecto porque es matemáticamente idéntica en
 la pasada forward y está estrictamente mejor condicionada en la
 backward.</p>
+<h1 id="sec:annex-17">Conformer: Atención Aumentada con Convolución</h1>
+<h2 id="resumen-ejecutivo-1">Resumen Ejecutivo</h2>
+<p>El bloque Conformer <span class="citation"
+data-cites="Gulati2020"></span> es el mezclador de secuencia aumentado
+con convolución del conjunto de herramientas, expuesto como
+<code>conformer_attn</code>. Conserva el campo receptivo global de la
+atención de producto punto escalada y añade una rama de convolución
+depthwise que modela estructura local de banda estrecha—el sesgo
+inductivo que necesita el reconocimiento de voz y que la atención pura
+no aporta. El bloque intercala atención multi-cabeza (MHSA) con
+codificación posicional sinusoidal relativa entre dos capas feed-forward
+de medio paso estilo Macaron <span class="citation"
+data-cites="Lu2019"></span>, e inserta el módulo de convolución entre la
+atención y la segunda FFN. En la receta de referencia alcanza <span
+class="math inline">\(1.9\%\)</span>/<span
+class="math inline">\(3.9\%\)</span> WER en LibriSpeech
+<em>test-clean</em>/<em>test-other</em> sin modelo de lenguaje externo
+(Conformer-L, 118.8M parámetros), y es el mezclador recomendado para la
+clase de modelo de audio del Anexo <a href="#sec:annex-18"
+data-reference-type="ref" data-reference="sec:annex-18">30</a>. El
+conjunto de herramientas ejecuta ambas capas feed-forward a paso
+completo (la variante “full-step” de la Tabla 5 del paper) y deja que la
+capa exterior posea la segunda; la Tabla <a
+href="#tab:conformer-mapping" data-reference-type="ref"
+data-reference="tab:conformer-mapping">[tab:conformer-mapping]</a> lista
+las desviaciones.</p>
+<p>El mezclador está disponible en todas las clases de modelo: encoder
+de texto, decoder causal (donde el padding depthwise se desplaza para
+seguir siendo seguro en streaming), Vision Transformer y
+<code>frankenstein_audio</code>. Como el bloque vive dentro de
+<code>HybridLayer</code>, compone con los 45 mezcladores, las 6 normas,
+las 4 estrategias de residual, MoE, Mixture-of-Depths, mHC, AttnRes,
+BitNet y las 23 familias de optimizadores.</p>
+<h2 id="conformer-atención-aumentada-con-convolución">Conformer:
+Atención Aumentada con Convolución</h2>
+<figure id="fig:mixer-conformer">
+
+<figcaption>Flujo de datos del bloque Conformer: una capa feed-forward
+de medio paso Macaron, atención multi-cabeza con codificación posicional
+sinusoidal relativa, el módulo de convolución (pointwise <span
+class="math inline">\(\to\)</span> GLU <span
+class="math inline">\(\to\)</span> depthwise <span
+class="math inline">\(\to\)</span> BatchNorm <span
+class="math inline">\(\to\)</span> Swish <span
+class="math inline">\(\to\)</span> pointwise) y la segunda capa
+feed-forward seguida de la LayerNorm final. En este conjunto de
+herramientas la FFN compartida de <code>HybridLayer</code> ocupa la
+ranura <span class="math inline">\(\mathrm{FFN}_2\)</span> con un paso
+residual completo (anotación punteada).</figcaption>
+</figure>
+<h3 id="formulación-matemática-20">Formulación Matemática</h3>
+<p>Para una entrada de bloque <span class="math inline">\(x \in
+\mathbb{R}^{B \times n \times d}\)</span>, el bloque de referencia de la
+Fig. 1 de <span class="citation" data-cites="Gulati2020"></span> es
+<span class="math display">\[\begin{aligned}
+\tilde{x} &amp;= x +
+\tfrac{1}{2}\,\mathrm{FFN}_1\big(\mathrm{LN}(x)\big),
+\label{eq:conformer-ffn1}\\
+x&#39; &amp;= \tilde{x} + \mathrm{MHSA}\big(\mathrm{LN}(\tilde{x})\big),
+\label{eq:conformer-mhsa}\\
+x&#39;&#39; &amp;= x&#39; + \mathrm{Conv}\big(\mathrm{LN}(x&#39;)\big),
+\label{eq:conformer-conv}\\
+y &amp;= \mathrm{LN}\Big(x&#39;&#39; +
+\tfrac{1}{2}\,\mathrm{FFN}_2\big(x&#39;&#39;\big)\Big).
+\label{eq:conformer-ffn2}
+\end{aligned}\]</span> Los dos términos feed-forward llevan el
+coeficiente de <em>medio paso</em> de Macaron: cada uno aporta la mitad
+de una actualización residual completa, uno antes y otro después del par
+atención–convolución.</p>
+<h4 id="módulo-feed-forward.">Módulo feed-forward.</h4>
+<p>Con ancho oculto <span class="math inline">\(d_{ff}\)</span>, <span
+class="math display">\[\mathrm{FFN}(x) =
+W_2\,\mathrm{Dropout}\big(\mathrm{Swish}(W_1\,\mathrm{LN}(x) + b_1)\big)
++ b_2,
+\qquad
+\mathrm{Swish}(a) = a\,\sigma(a),
+\label{eq:conformer-ffn}\]</span> donde <span class="math inline">\(W_1
+\in \mathbb{R}^{d_{ff} \times d}\)</span>, <span
+class="math inline">\(W_2 \in \mathbb{R}^{d \times d_{ff}}\)</span> y
+<span class="math inline">\(\sigma\)</span> es la sigmoide logística. El
+paper usa <span class="math inline">\(d_{ff} = 4d\)</span>.</p>
+<h4
+id="atención-multi-cabeza-con-codificación-posicional-relativa.">Atención
+multi-cabeza con codificación posicional relativa.</h4>
+<p>Las consultas, claves y valores son proyecciones lineales de la
+entrada normalizada del bloque, <span class="math inline">\(Q =
+\mathrm{LN}(\tilde{x})W_Q\)</span>, <span class="math inline">\(K =
+\mathrm{LN}(\tilde{x})W_K\)</span>, <span class="math inline">\(V =
+\mathrm{LN}(\tilde{x})W_V\)</span>, divididas en <span
+class="math inline">\(H\)</span> cabezas de ancho <span
+class="math inline">\(d_h = d/H\)</span>. Siguiendo el esquema relativo
+de Transformer-XL <span class="citation" data-cites="Dai2019"></span>,
+la puntuación de la consulta <span class="math inline">\(i\)</span>
+contra la clave <span class="math inline">\(j\)</span> suma una función
+sinusoidal del <em>desplazamiento</em> <span
+class="math inline">\(i-j\)</span> en lugar de una posición absoluta:
+<span class="math display">\[e_{ij} = q_i^{\top} k_j + (q_i + v)^{\top}
+R_{i-j},
+\qquad
+A_{ij} = \operatorname{softmax}_j\!\Big(\frac{e_{ij}}{\sqrt{d_h}}\Big),
+\qquad
+O = A V W_O,
+\label{eq:conformer-relpe}\]</span> con <span
+class="math inline">\(v\)</span> un vector de sesgo aprendido y, para
+<span class="math inline">\(m = 0, \dots, d_h/2 - 1\)</span>, <span
+class="math display">\[R_{\delta,\,2m} =
+\sin\!\big(\delta\,/\,10000^{2m/d_h}\big),
+\qquad
+R_{\delta,\,2m+1} = \cos\!\big(\delta\,/\,10000^{2m/d_h}\big).
+\label{eq:conformer-sinusoid}\]</span> Como la codificación depende solo
+de <span class="math inline">\(\delta = i-j\)</span>, el bloque
+generaliza entre longitudes de utterance. El conjunto de herramientas
+canaliza la información posicional por la maquinaria de todo el modelo
+que usan los demás mezcladores: <code>model.positional_encoding</code>
+(RoPE por defecto) se aplica a <span class="math inline">\(Q/K\)</span>,
+y <code>conformer_attn_use_pe</code> (<code>true</code> por defecto)
+permite que una capa lo omita. El esquema sinusoidal relativo del paper
+se aproxima mejor con <code>sinusoidal_rotary</code> (frecuencias
+sinusoidales aplicadas como rotación sobre <span
+class="math inline">\(Q/K\)</span>, relativo por construcción);
+<code>alibi</code>/<code>bam</code> aportan un sesgo de distancia en
+lugar de una rotación. No se implementa un módulo sinusoidal relativo
+dedicado estilo Transformer-XL. En modo decoder la matriz de
+puntuaciones recibe la máscara causal habitual antes del softmax, y se
+usa la ruta de softmax fijo del Anexo <a
+href="#sec:fixed-implementation" data-reference-type="ref"
+data-reference="sec:fixed-implementation">28.3</a> cuando
+<code>numerics.fixed_softmax</code> está habilitado.</p>
+<h4 id="módulo-de-convolución.">Módulo de convolución.</h4>
+<p>El módulo aplica una convolución depthwise con compuerta sobre el eje
+temporal: <span class="math display">\[\begin{aligned}
+h &amp;= \mathrm{LN}(x&#39;), \\
+[u,\, g] &amp;= \mathrm{Conv1d}_{d \to 2d}(h), \qquad
+\tilde{h} = u \odot \sigma(g), \label{eq:conformer-glu}\\
+z_t &amp;= \sum_{k=0}^{K-1} w_k\, \tilde{h}_{t + k - \lfloor K/2
+\rfloor}, \label{eq:conformer-depthwise}\\
+c &amp;= \mathrm{Dropout}\Big(\mathrm{Conv1d}_{d \to
+d}\big(\mathrm{Swish}(\mathrm{BN}(z))\big)\Big),
+\label{eq:conformer-conv-out}
+\end{aligned}\]</span> donde <span class="math inline">\(\odot\)</span>
+es el producto elemento a elemento (una GLU que reduce los <span
+class="math inline">\(2d\)</span> canales a <span
+class="math inline">\(d\)</span>), <span class="math inline">\(w \in
+\mathbb{R}^{K}\)</span> es el kernel depthwise y <span
+class="math inline">\(\mathrm{BN}\)</span> normaliza cada canal sobre
+los ejes de batch y tiempo, <span
+class="math display">\[\mathrm{BN}(z)_{b,t,c} =
+\gamma_c\,\frac{z_{b,t,c} - \mu_c}{\sqrt{\sigma_c^2 + \epsilon}} +
+\beta_c .
+\label{eq:conformer-bn}\]</span> En modo decoder la suma de la
+Ecuación <a href="#eq:conformer-depthwise" data-reference-type="ref"
+data-reference="eq:conformer-depthwise">[eq:conformer-depthwise]</a> se
+desplaza a <span class="math inline">\(z_t = \sum_{k=0}^{K-1} w_k
+\tilde{h}_{t-K+1+k}\)</span>, de modo que ninguna trama futura entra en
+la convolución; los modos encoder y ViT conservan el padding simétrico
+“same” del paper.</p>
+<h3 id="pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</h3>
+<div class="algorithm">
+<div class="algorithmic">
+<p>entrada de bloque <span class="math inline">\(x \in \mathbb{R}^{B
+\times n \times d}\)</span>, kernel <span
+class="math inline">\(K=32\)</span>, cabezas <span
+class="math inline">\(H\)</span>, bandera Macaron, modo delta de bloque
+<span class="math inline">\(\Delta\)</span> tal que <span
+class="math inline">\(x + \Delta\)</span> entra en la <span
+class="math inline">\(\mathrm{norm}_2 + \mathrm{FFN}_2\)</span> exterior
+<span class="math inline">\(\tilde{x} \gets x +
+\mathrm{FFN}_1(\mathrm{LN}(x))\)</span> <span class="math inline">\(Q,
+K_{proj}, V \gets \mathrm{LN}(\tilde{x})W_Q,\
+\mathrm{LN}(\tilde{x})W_K,\ \mathrm{LN}(\tilde{x})W_V\)</span> <span
+class="math inline">\(e_{ij} \gets q_i^{\top}k_j + (q_i +
+v)^{\top}R_{i-j}\)</span> <span class="math inline">\(e_{ij} \gets
+-\infty\)</span> para <span class="math inline">\(j &gt; i\)</span>
+<span class="math inline">\(x&#39; \gets \tilde{x} +
+\mathrm{softmax}(e/\sqrt{d_h})\,V\,W_O\)</span> <span
+class="math inline">\(h \gets \mathrm{LN}(x&#39;)\)</span> <span
+class="math inline">\([u, g] \gets \mathrm{Conv1d}_{d \to
+2d}(h)\)</span>; <span class="math inline">\(\tilde{h} \gets u \odot
+\sigma(g)\)</span> <span class="math inline">\(z \gets
+\mathrm{DepthwiseConv1d}_{K}(\tilde{h})\)</span> <span
+class="math inline">\(c \gets \mathrm{Dropout}(\mathrm{Conv1d}_{d \to
+d}(\mathrm{Swish}(\mathrm{BN}(z))))\)</span> <span
+class="math inline">\(x&#39;&#39; \gets x&#39; + c\)</span> <span
+class="math inline">\(x&#39;&#39;\)</span></p>
+</div>
+</div>
+<h3 id="mapeo-de-implementación-y-desviaciones">Mapeo de Implementación
+y Desviaciones</h3>
+<p>La Tabla <a href="#tab:conformer-mapping" data-reference-type="ref"
+data-reference="tab:conformer-mapping">[tab:conformer-mapping]</a> mapea
+el bloque del paper sobre el conjunto de herramientas. Las desviaciones
+sustantivas son los dos escalados residuales y la segunda capa
+feed-forward: el paper conserva ambos coeficientes <span
+class="math inline">\(\tfrac12\)</span> de Macaron y envuelve la <span
+class="math inline">\(\mathrm{FFN}_2\)</span> en el bloque, mientras que
+<code>conformer_attn</code> usa pasos completos y devuelve el estado
+tras el módulo de convolución, dejando que el <code>HybridLayer</code>
+exterior aplique su <span class="math inline">\(\mathrm{norm}_2 +
+\mathrm{FFN}\)</span> compartida (también a paso completo). La
+descomposición es deliberada: mantiene disponibles para la segunda FFN
+el enrutamiento MoE, Mixture-of-Depths, los flujos mHC/Hyperloop,
+AttnRes, la fusión FlashNorm, las proyecciones BitNet y el enrutamiento
+de optimizadores por grupo de parámetros, nada de lo cual sobreviviría a
+una FFN privada dentro del mezclador.</p>
+<div class="tabularx">
+<p><span>0.95</span><span>L<span>3.6cm</span>L<span>4.4cm</span>X</span>
+<strong>Componente del paper</strong> &amp; <strong>Implementación en el
+toolkit</strong> &amp; <strong>Notas</strong><br />
+<span class="math inline">\(\tfrac{1}{2}\mathrm{FFN}_1\)</span>
+(pre-norm) &amp; FFN privada dentro de <code>ConformerAttention</code>;
+Swish; residual a paso completo &amp;
+<code>conformer.macaron: true</code> (por defecto); el coeficiente <span
+class="math inline">\(\tfrac12\)</span> del paper se omite;
+deshabilitarla deja solo atención <span class="math inline">\(+\)</span>
+convolución<br />
+MHSA, PE sinusoidal relativa &amp; proyecciones propias <span
+class="math inline">\(q/k/v/out\)</span>; PE de todo el modelo vía
+<code>conformer_attn_use_pe</code> (<code>true</code> por defecto) &amp;
+la sinusoidal relativa del paper <span
+class="math inline">\(\approx\)</span> <code>sinusoidal_rotary</code>;
+sin módulo Transformer-XL dedicado (RoPE es el valor por defecto del
+modelo)<br />
+Módulo de convolución &amp; LN <span class="math inline">\(\to\)</span>
+pointwise <span class="math inline">\(\to\)</span> GLU <span
+class="math inline">\(\to\)</span> depthwise <span
+class="math inline">\(\to\)</span> BN <span
+class="math inline">\(\to\)</span> Swish <span
+class="math inline">\(\to\)</span> pointwise <span
+class="math inline">\(\to\)</span> dropout &amp;
+<code>conformer.kernel_size</code> (32),
+<code>conformer.conv_norm</code>
+(<code>batch</code>/<code>group</code>/<code>layer</code>)<br />
+<span class="math inline">\(\tfrac{1}{2}\mathrm{FFN}_2\)</span> a medio
+paso &amp; <span class="math inline">\(\mathrm{norm}_2 +
+\mathrm{FFN}\)</span> de <code>HybridLayer</code>, paso completo &amp;
+justificado por la Tabla 5 de <span class="citation"
+data-cites="Gulati2020"></span>: <span
+class="math inline">\(1.9/4.4\)</span> vs. <span
+class="math inline">\(1.9/4.5\)</span> WER dev (ambos coeficientes
+omitidos)<br />
+LayerNorm final &amp; norma final de <code>HybridLayer</code> &amp;
+idéntica a la de cualquier otro mezclador<br />
+Submuestreo convolucional <span class="math inline">\(4\times\)</span>
+&amp; frontend de <code>frankenstein_audio</code> &amp; Anexo <a
+href="#sec:annex-18" data-reference-type="ref"
+data-reference="sec:annex-18">30</a>; texto y ViT usan sus propios
+embeddings<br />
+Dropout (<span class="math inline">\(p=0.1\)</span>) &amp;
+<code>model.dims.dropout</code> &amp; global, por bloque<br />
+</p>
+</div>
+<h4 id="por-qué-la-ffn-a-paso-completo-es-segura.">Por qué la FFN a paso
+completo es segura.</h4>
+<p>Omitir el <span class="math inline">\(\tfrac12\)</span> de Macaron
+cambia la escala residual de cada rama, no la forma expresiva del
+bloque: la variante de paso completo es exactamente la que <span
+class="citation" data-cites="Gulati2020"></span> ablacionan en su
+Tabla 5, donde mueve el WER dev-clean/dev-other de <span
+class="math inline">\(1.9/4.4\)</span> (medio paso) a <span
+class="math inline">\(1.9/4.5\)</span> (paso completo), es decir, una
+décima. El conjunto de herramientas usa pasos completos en ambas capas
+feed-forward; la primera permanece privada en el mezclador y la segunda
+es la compartida, lo que preserva la composabilidad descrita arriba.</p>
+<h2 id="ablaciones-publicadas">Ablaciones Publicadas</h2>
+<p>La Tabla <a href="#tab:conformer-ablations" data-reference-type="ref"
+data-reference="tab:conformer-ablations">[tab:conformer-ablations]</a>
+resume las ablaciones que motivan la configuración por defecto. Los
+valores son los reportados por <span class="citation"
+data-cites="Gulati2020"></span>; el orden cualitativo es lo que
+codifican los valores por defecto.</p>
+<div class="tabularx">
+<p><span>0.95</span><span>L<span>3.7cm</span>L<span>4.0cm</span>X</span>
+<strong>Ablación</strong> &amp; <strong>Configuraciones
+comparadas</strong> &amp; <strong>Resultado reportado</strong><br />
+Módulo de convolución (Tabla 3) &amp; presente vs. eliminado &amp; la
+mayor degradación individual del bloque al eliminarlo; la rama local es
+portante, no decorativa<br />
+Par FFN Macaron (Tabla 3) &amp; <span
+class="math inline">\(\tfrac{1}{2}\mathrm{FFN}_1 +
+\tfrac{1}{2}\mathrm{FFN}_2\)</span> vs. una FFN &amp; eliminar el par
+cuesta aproximadamente <span class="math inline">\(0.2\)</span>
+dev-clean / <span class="math inline">\(0.5\)</span> dev-other WER<br />
+Medio vs. paso completo (Tabla 5) &amp; residuales <span
+class="math inline">\(\tfrac{1}{2}\)</span> vs. completos &amp; <span
+class="math inline">\(1.9/4.4\)</span> vs. <span
+class="math inline">\(1.9/4.5\)</span> WER dev: como máximo <span
+class="math inline">\(0.1\)</span> punto<br />
+Tamaño de kernel (Tabla 7) &amp; <span class="math inline">\(K \in \{3,
+7, 17, 32, 65\}\)</span> &amp; <span class="math inline">\(K =
+32\)</span> es el mejor; kernels pequeños subajustan el contexto local,
+<span class="math inline">\(K = 65\)</span> añade costo sin
+ganancia<br />
+Ubicación de la convolución &amp; tras MHSA, antes de <span
+class="math inline">\(\mathrm{FFN}_2\)</span> &amp; se conserva el orden
+de referencia; mover la rama no lo mejora<br />
+</p>
+</div>
+<h2 id="reutilización-de-la-infraestructura-existente-1">Reutilización
+de la Infraestructura Existente</h2>
+<p>Como <code>ConformerAttention</code> devuelve un delta y hereda el
+constructor <code>mixer(config, pos_encoder=...)</code>, toda la pila se
+reutiliza sin casos especiales:</p>
+<ul>
+<li><p><strong>Clases de modelo:</strong> encoder de texto
+(<code>mlm</code>/<code>sbert</code>/<code>text_classification</code>),
+decoder causal (<code>causal_lm</code>), Vision Transformer
+(<code>patch_prediction</code>/<code>classification</code>/<code>segmentation</code>)
+y <code>frankenstein_audio</code> (<code>asr</code>,
+<code>audio_classification</code>).</p></li>
+<li><p><strong>Normalización:</strong> las 6 variantes, incluida
+pRMSNorm y la fusión FlashNorm en <span
+class="math inline">\(\mathrm{norm}_1\)</span>/<span
+class="math inline">\(\mathrm{norm}_2\)</span>; el módulo de convolución
+conserva su BatchNorm salvo que <code>conformer.conv_norm</code>
+seleccione group o layer normalization.</p></li>
+<li><p><strong>Enrutamiento y residuales:</strong> MoE,
+Mixture-of-Depths, mHC, Hyperloop, AttnRes y las proyecciones ternarias
+BitNet (la FFN privada y las proyecciones de la convolución son
+compatibles con BitLinear).</p></li>
+<li><p><strong>Optimizadores:</strong> las 23 familias con prefijos por
+grupo; los parámetros del mezclador, incluido el kernel depthwise y las
+normas de la convolución, se enrutan al grupo
+<code>attention</code>.</p></li>
+<li><p><strong>Caché KV:</strong> <code>conformer_attn</code> se
+registra como <em>no</em> cacheable (<code>supported=False</code>),
+porque el estado de la convolución depthwise y las estadísticas de
+BatchNorm deberían acarrearse entre pasos. <code>generate()</code> cae a
+la ruta de recómputo completo, que es exacta.</p></li>
+</ul>
+<h2 id="cuándo-usarlo">Cuándo Usarlo</h2>
+<ul>
+<li><p><strong>Voz:</strong> mezclador por defecto para <code>asr</code>
+y <code>audio_classification</code>; con tramas de 40 ms tras el
+submuestreo <span class="math inline">\(4\times\)</span>, el kernel de
+32 abarca <span class="math inline">\(\sim\)</span>1.28 s de contexto,
+aproximadamente el ancho de una secuencia de fonos.</p></li>
+<li><p><strong>Texto y visión:</strong> sustituto sólido de
+<code>standard_attn</code> cuando los datos tienen estructura local
+(modelos a nivel de carácter, código, OCR, secuencias de parches);
+cuesta una convolución depthwise y dos normas extra por capa frente a un
+bloque de atención plano.</p></li>
+<li><p><strong>Decodificación en streaming:</strong> usable en
+<code>mode: decoder</code> con padding convolucional causal, pero sin la
+caché incremental del Anexo <a href="#sec:annex-kv-cache"
+data-reference-type="ref" data-reference="sec:annex-kv-cache">27</a>; la
+recurrencia depthwise es la pieza que falta.</p></li>
+</ul>
+<h1 id="sec:annex-18">Audio: Reconocimiento de Voz y Clasificación de
+Audio</h1>
+<h2 id="resumen-ejecutivo-2">Resumen Ejecutivo</h2>
+<p><code>frankenstein_audio</code> es la cuarta clase de modelo del
+conjunto de herramientas. Posee un frontend de audio—bancos de filtros
+log-mel o un espectrograma crudo, SpecAugment opcional <span
+class="citation" data-cites="Park2019"></span> y dos convoluciones con
+stride 2 que reducen la tasa de tramas <span
+class="math inline">\(4\times\)</span>—y luego ejecuta la misma pila de
+<code>HybridLayer</code> que el encoder de texto sobre la secuencia de
+tramas resultante. Como la pila es agnóstica de modalidad, todos los
+mezcladores de secuencia (incluido el Conformer del Anexo <a
+href="#sec:annex-17" data-reference-type="ref"
+data-reference="sec:annex-17">29</a>), normas, estrategias de residual,
+codificaciones posicionales, optimizadores y bloques de enrutamiento
+están disponibles sin cambios. La clase soporta dos tareas:
+<strong>reconocimiento automático de voz</strong> (<code>asr</code>, con
+pérdida CTC <span class="citation" data-cites="Graves2006ctc"></span> o
+RNN-Transducer <span class="citation" data-cites="Graves2012"></span>) y
+<strong>clasificación de audio</strong>
+(<code>audio_classification</code>, entropía cruzada a nivel de clip).
+El mismo frontend, con <code>audio.feature: raw</code>, acepta señales
+de sensores multicanales unidimensionales como EEG, EMG o acelerómetro
+para clasificación.</p>
+<p>La receta de referencia es el frontend Conformer de <span
+class="citation" data-cites="Gulati2020"></span>: bancos de filtros
+log-mel de 80 canales con ventana de 25 ms y salto de 10 ms, dos
+convoluciones <span class="math inline">\(3\times3\)</span> con stride
+2, una proyección lineal al ancho del modelo y SpecAugment con ancho de
+frecuencia <span class="math inline">\(F=27\)</span>, diez máscaras
+temporales y una razón máxima de máscara temporal <span
+class="math inline">\(p_S = 0.05\)</span>. Los tres tamaños de
+referencia (S/M/L) se reproducen en la Tabla <a href="#tab:audio-sizes"
+data-reference-type="ref"
+data-reference="tab:audio-sizes">[tab:audio-sizes]</a>.</p>
+<h2 id="la-clase-de-modelo-frankenstein_audio">La Clase de Modelo
+<code>frankenstein_audio</code></h2>
+<figure id="fig:audio-frontend">
+
+<figcaption>Flujo de datos del frontend de audio: waveform <span
+class="math inline">\(\to\)</span> enmarcado 25 ms/10 ms <span
+class="math inline">\(\to\)</span> log-mel de 80 bins (o espectrograma,
+o tramas multicanal crudas) <span class="math inline">\(\to\)</span>
+SpecAugment (solo entrenamiento) <span
+class="math inline">\(\to\)</span> dos etapas Conv2d con stride 2 (<span
+class="math inline">\(4\times\)</span>) <span
+class="math inline">\(\to\)</span> proyección lineal <span
+class="math inline">\(\to\)</span> pila <code>HybridLayer</code> <span
+class="math inline">\(\to\)</span> cabeza CTC, RNN-T o de
+clasificación.</figcaption>
+</figure>
+<h3 id="frontend-de-audio">Frontend de Audio</h3>
+<p>El módulo frontend convierte un lote de formas de onda <span
+class="math inline">\(w \in \mathbb{R}^{B \times T}\)</span> (o un lote
+de clips multicanal <span class="math inline">\(w \in \mathbb{R}^{B
+\times C \times T}\)</span> en modo <code>raw</code>) en un mapa de
+características:</p>
+<ol>
+<li><p><strong>Enmarcado:</strong> la forma de onda se corta en ventanas
+solapadas de <code>window_ms</code> <span
+class="math inline">\(=25\)</span> ms cada <code>stride_ms</code> <span
+class="math inline">\(=10\)</span> ms, con ventana de Hann, a
+<code>sample_rate</code> <span class="math inline">\(=16000\)</span> Hz.
+A la tasa de referencia esto produce tramas de 400 muestras con salto de
+160, es decir, 100 tramas por segundo.</p></li>
+<li><p><strong>Representación espectral</strong>
+(<code>audio.feature</code>):</p>
+<ul>
+<li><p><code>logmel</code> (por defecto): banco de filtros mel de <span
+class="math inline">\(80\)</span> bins (Ecuación <a href="#eq:audio-mel"
+data-reference-type="ref"
+data-reference="eq:audio-mel">[eq:audio-mel]</a>) seguido de compresión
+logarítmica;</p></li>
+<li><p><code>spectrogram</code>: <span
+class="math inline">\(\log|\mathrm{STFT}(w)|^2\)</span> sin proyección
+mel;</p></li>
+<li><p><code>raw</code>: sin transformada espectral; el clip se entrega
+como mapa <span class="math inline">\(C \times T\)</span> (Sección <a
+href="#sec:annex-18-eeg" data-reference-type="ref"
+data-reference="sec:annex-18-eeg">30.8</a>).</p></li>
+</ul></li>
+<li><p><strong>SpecAugment</strong> <span class="citation"
+data-cites="Park2019"></span>: se enmascaran <span
+class="math inline">\(F\)</span> canales de frecuencia por clip y hasta
+<code>time_masks</code> bandas temporales de ancho máximo <span
+class="math inline">\(p_S \cdot T\)</span>, ambas con relleno de ceros
+(solo entrenamiento).</p></li>
+</ol>
+<p>El banco de filtros mel es <span class="math display">\[M_k(f) =
+\max\Big(0,\ \min\Big(\tfrac{f-f_{k-1}}{f_k-f_{k-1}},\
+\tfrac{f_{k+1}-f}{f_{k+1}-f_k}\Big)\Big),
+\label{eq:audio-filterbank}\]</span> para <span class="math inline">\(K
+= 80\)</span> filtros triangulares espaciados en la escala mel, <span
+class="math inline">\(\mathrm{mel}(f) = 2595 \log_{10}(1 +
+f/700)\)</span>, y la característica log-mel es <span
+class="math display">\[x_k = \log\Big(\sum_{f} M_k(f)\,|X(f)|^2 +
+\epsilon\Big).
+\label{eq:audio-mel}\]</span> Cuando <code>torchaudio</code> es
+importable, el frontend usa
+<code>torchaudio.transforms.MelSpectrogram</code> para la Ecuación <a
+href="#eq:audio-mel" data-reference-type="ref"
+data-reference="eq:audio-mel">[eq:audio-mel]</a>; en caso contrario
+recurre a una implementación en PyTorch puro construida sobre
+<code>torch.stft</code> y una matriz de filtros en caché. Ambas rutas
+son numéricamente equivalentes salvo la convención del banco de filtros
+(espaciado mel HTK vs. Slaney), y la ruta en PyTorch puro es la que
+mantiene la CI solo-CPU libre del extra opcional <code>audio</code>.</p>
+<h3 id="submuestreo-convolucional">Submuestreo Convolucional</h3>
+<p>Dos etapas convolucionales reducen la tasa de tramas <span
+class="math inline">\(4\times\)</span> (10 ms <span
+class="math inline">\(\to\)</span> 40 ms), que es lo que convierte un
+utterance de 30 segundos en una secuencia de <span
+class="math inline">\(\sim\)</span>750 tokens en lugar de 3000: <span
+class="math display">\[F =
+\mathrm{Dropout}\Big(W_p\,\mathrm{Conv2d}_{3\times3,\,s=2}\big(\mathrm{Conv2d}_{3\times3,\,s=2}(X)\big)\Big),
+\qquad W_p \in \mathbb{R}^{d \times d_c},
+\label{eq:audio-subsampling}\]</span> donde <span
+class="math inline">\(X\)</span> es el mapa de características <span
+class="math inline">\(\texttt{n\_\allowbreak mels} \times
+T&#39;\)</span> con <code>conv_channels</code> canales tras la primera
+etapa, y <span class="math inline">\(W_p\)</span> proyecta los canales
+aplanados al ancho del modelo <span class="math inline">\(d\)</span>.
+Ambas etapas son fijas, con kernels <span
+class="math inline">\(3\times3\)</span> y stride 2;
+<code>audio.conv_channels</code> (32) fija el ancho de canales de la
+primera etapa y <code>audio.n_fft</code> (400) el tamaño de la STFT.</p>
+<h3 id="modo-encoder-forzado-y-la-pila-hybridlayer">Modo Encoder Forzado
+y la Pila HybridLayer</h3>
+<p><code>frankenstein_audio</code> fuerza <code>mode: encoder</code>,
+exactamente como <code>frankenstein_vit</code>: las tareas de audio son
+bidireccionales (un encoder CTC o transducer debe ver tramas pasadas y
+futuras), y el padding convolucional del Conformer es simétrico en modo
+encoder. La clase refleja el patrón envoltorio del ViT—frontend, pila de
+<code>HybridLayer</code>, cabeza de tarea—y su bucle de capas conserva
+los mismos hooks, de modo que AttnRes, mHC, Hyperloop, profundidad en
+bucle, MoE, Mixture-of-Depths y BitNet funcionan sin código específico
+de audio. Las cabezas de tarea se construyen tras la normalización
+final:</p>
+<ul>
+<li><p><strong>CTC:</strong> <span
+class="math inline">\(\mathrm{Linear}(d, V+1)\)</span> sobre la
+secuencia de tramas, donde la clase extra es el blank.</p></li>
+<li><p><strong>RNN-T:</strong> una red de predicción LSTM de una capa
+sobre las etiquetas no-blank previas
+(<code>audio.asr_decoder_dim</code>, <code>asr_decoder_layers</code>,
+<code>asr_decoder_dropout</code>), y una red conjunta <span
+class="math inline">\(z_{t,u} = \tanh(W_e h_t + W_p h_u + b)\)</span>,
+<span class="math inline">\(\mathrm{logits}_{t,u} = W_o
+z_{t,u}\)</span>.</p></li>
+<li><p><strong>Clasificación:</strong> un vector agrupado (global
+average pooling, o un token <code>[CLS]</code> aprendido antepuesto a la
+secuencia de tramas, según <code>pooling_mode</code>) proyectado a
+<code>num_classes</code> logits.</p></li>
+</ul>
+<h2 id="reconocimiento-automático-de-voz">Reconocimiento Automático de
+Voz</h2>
+<h3 id="ctc">CTC</h3>
+<p>La clasificación temporal conexionista <span class="citation"
+data-cites="Graves2006ctc"></span> marginaliza sobre todas las
+alineaciones a nivel de trama que colapsan a la secuencia objetivo <span
+class="math inline">\(y\)</span> bajo el mapa muchos-a-uno <span
+class="math inline">\(\mathcal{B}\)</span> (fusionar repeticiones,
+borrar blanks): <span class="math display">\[\mathcal{L}_{\text{CTC}} =
+-\log \sum_{\pi \in \mathcal{B}^{-1}(y)} \prod_{t=1}^{T} p(\pi_t \mid
+x),
+\label{eq:audio-ctc}\]</span> calculada con la implementación
+<code>ctc_loss</code> de <code>torch.nn.functional</code> en espacio
+logarítmico con <code>zero_infinity=False</code>, para que las
+alineaciones imposibles no envenenen el gradiente.</p>
+<h3 id="rnn-transducer">RNN-Transducer</h3>
+<p>La pérdida RNN-T <span class="citation"
+data-cites="Graves2012"></span> suma sobre alineaciones de
+<em>etiqueta-y-blank</em> en la retícula <span class="math inline">\(T
+\times (U+1)\)</span>. Con <span
+class="math inline">\(\alpha_{t,u}\)</span> la log-probabilidad del
+prefijo <span class="math inline">\(y_{1:u}\)</span> tras <span
+class="math inline">\(t\)</span> tramas de encoder, la recursión forward
+es <span class="math display">\[\alpha_{t,u} =
+\operatorname{logsumexp}\Big(
+\underbrace{\alpha_{t-1,u} + \log p(\varnothing \mid t-1,
+u)}_{\text{avanzar tiempo}},
+\;
+\underbrace{\alpha_{t,u-1} + \log p(y_u \mid t, u-1)}_{\text{emitir
+etiqueta}}
+\Big),
+\label{eq:audio-rnnt}\]</span> con <span
+class="math inline">\(\alpha_{0,0} = 0\)</span> y <span
+class="math inline">\(-\infty\)</span> en el resto, <span
+class="math inline">\(p(\cdot \mid t,u) =
+\operatorname{softmax}(\mathrm{logits}_{t,u})\)</span>, y <span
+class="math display">\[\mathcal{L}_{\text{RNN-T}} = -\alpha_{T,U}.
+\label{eq:audio-rnnt-loss}\]</span> La implementación es compatible con
+autograd en PyTorch puro (programación dinámica en dominio logarítmico
+sobre la retícula, con el gradiente obtenido por la recursión backward
+estándar), y toma la ruta rápida
+<code>torchaudio.functional.rnnt_loss</code> cuando la dependencia
+opcional está instalada. La retícula es <span class="math inline">\(O(T
+\cdot U)\)</span> en memoria, por lo que el predictor se mantiene
+superficial (<code>audio.asr_decoder_layers</code>, por defecto 1) y
+estrecho (<code>audio.asr_decoder_dim</code>, 320 por defecto). La
+pérdida se selecciona con <code>audio.asr_loss</code> (<code>ctc</code>
+por defecto).</p>
+<h3 id="decodificación-y-tasa-de-error">Decodificación y Tasa de
+Error</h3>
+<p>La decodificación CTC voraz toma el argmax por trama, colapsa
+repeticiones y elimina blanks. La decodificación RNN-T voraz alterna una
+emisión de etiqueta con un avance de trama hasta que el blank puntúa más
+alto que la siguiente etiqueta. Ambas se evalúan con la tasa de error de
+caracteres <span class="math display">\[\mathrm{CER} = \frac{S + D +
+I}{N},
+\label{eq:audio-cer}\]</span> donde <span
+class="math inline">\(S\)</span>, <span
+class="math inline">\(D\)</span>, <span class="math inline">\(I\)</span>
+son las sustituciones, deleciones e inserciones del alineamiento de
+Levenshtein contra la transcripción de referencia y <span
+class="math inline">\(N\)</span> es la longitud de referencia.</p>
+<h2 id="clasificación-de-audio">Clasificación de Audio</h2>
+<p>La clasificación reutiliza las convenciones de pooling y cabeza del
+Vision Transformer (Anexo <a href="#sec:annex-vision"
+data-reference-type="ref" data-reference="sec:annex-vision">23</a>):
+<code>pooling_mode: cls</code> antepone un token aprendido y lee la
+posición 0, <code>pooling_mode: gap</code> (el valor por defecto)
+promedia las salidas de las tramas. La cabeza es un <span
+class="math inline">\(\mathrm{Linear}(d, K)\)</span> inicializado en
+cero, entrenado con entropía cruzada y el mismo control de suavizado de
+etiquetas que las tareas de visión. SpecAugment se aplica al mapa de
+características antes del submuestreo, de modo que aumenta la entrada,
+nunca la secuencia de tokens.</p>
+<h2 id="specaugment">SpecAugment</h2>
+<p>Siguiendo a <span class="citation" data-cites="Park2019"></span> en
+su configuración “LibriSpeech basic”, los dos tipos de máscara se
+aplican de forma independiente por clip: <span
+class="math display">\[\Delta f \sim \mathcal{U}[0, F], \quad f_0 \sim
+\mathcal{U}[0, \nu - \Delta f],
+\qquad
+\Delta t \sim \mathcal{U}[0, p_S \cdot T], \quad t_0 \sim \mathcal{U}[0,
+T - \Delta t],
+\label{eq:audio-specaugment}\]</span> con <span class="math inline">\(F
+= 27\)</span>, <code>time_masks</code> <span class="math inline">\(=
+10\)</span> y <span class="math inline">\(p_S = 0.05\)</span>, cada
+máscara poniendo a cero un rectángulo <span class="math inline">\(\Delta
+f \times \Delta t\)</span>. La <em>deformación temporal</em> (time
+warping), la tercera transformación de SpecAugment, no está
+implementada: requiere una deformación del eje temporal por muestra que
+interactúa mal con el bucketing de longitud fija del dataset. El
+enmascaramiento de frecuencia y de tiempo concentran la mayor parte del
+beneficio de regularización en las propias ablaciones del paper, y ambos
+se desactivan en evaluación.</p>
+<h2 id="tamaños-de-referencia">Tamaños de Referencia</h2>
+<div class="tabular">
+<p><span>L<span>2.3cm</span>cccccc</span> <strong>Variante</strong>
+&amp; <strong>Capas</strong> &amp; <strong><span
+class="math inline">\(d\)</span></strong> &amp; <strong>Cabezas</strong>
+&amp; <strong>Kernel</strong> &amp; <strong>Paráms.</strong> &amp;
+<strong>RNN-T <span
+class="math inline">\(d_{dec}\)</span></strong><br />
+Conformer-S &amp; 16 &amp; 144 &amp; 4 &amp; 32 &amp; 10.3M &amp;
+320<br />
+Conformer-M &amp; 17 &amp; 256 &amp; 4 &amp; 32 &amp; 30.7M &amp;
+640<br />
+Conformer-L &amp; 17 &amp; 512 &amp; 8 &amp; 32 &amp; 118.8M &amp;
+640<br />
+</p>
+</div>
+<h2 id="configuraciones-de-ejemplo">Configuraciones de Ejemplo</h2>
+<p>Los ejemplos de ASR usan
+<code>astroza/chilean-jokes-festival-de-vina</code> (audio en español a
+16 kHz con transcripciones, 50 filas), un dataset lo bastante pequeño
+para ejecutarse de extremo a extremo en CPU como prueba de humo. El
+ejemplo de clasificación recurre al <code>DummyAudioDataset</code>
+sintético cuando no hay dataset accesible.</p>
+<pre><code>model_class: frankenstein_audio
+model:
+  dims: {hidden_size: 144, num_layers: 16, num_heads: 4}
+  dims.layer_pattern: [conformer_attn, ...]   # 16 entradas
+  attention.conformer: {kernel_size: 32, macaron: true, conv_norm: batch}
+audio:
+  feature: logmel
+  sample_rate: 16000
+  n_mels: 80
+  window_ms: 25
+  stride_ms: 10
+  n_fft: 400
+  conv_channels: 32
+  asr_loss: ctc          # o transducer
+  asr_decoder_dim: 320
+  asr_decoder_layers: 1
+  asr_decoder_dropout: 0.1
+audio_dataset:
+  dataset_name: astroza/chilean-jokes-festival-de-vina
+  split: train
+  audio_column: audio
+  text_column: text
+  spec_augment: {enabled: true, freq_mask_width: 27,
+                 time_masks: 10, time_mask_ratio: 0.05}
+training:
+  task: asr</code></pre>
+<h2 id="sec:annex-18-eeg">Señales 1-D Genéricas: EEG y Más Allá</h2>
+<p>El frontend no está atado a la voz. Con
+<code>audio.feature: raw</code>, el banco de filtros mel y SpecAugment
+se omiten y el clip se trata como un mapa multicanal <span
+class="math inline">\(C \times T\)</span>, con
+<code>audio.in_channels: C</code>. Las dos convoluciones con stride 2
+actúan entonces como un banco de filtros aprendido sobre el tiempo (y,
+como efecto secundario, sobre el eje de canales), la proyección lineal
+produce tokens de ancho <span class="math inline">\(d\)</span>, y la
+pila de <code>HybridLayer</code> ve una secuencia de tramas exactamente
+como en voz. Esto hace usable la clase, al menos para
+<strong>clasificación</strong>, en:</p>
+<ul>
+<li><p><strong>EEG:</strong> <span class="math inline">\(C\)</span>
+electrodos <span class="math inline">\(\times\)</span> <span
+class="math inline">\(T\)</span> muestras por época, etiquetadas con un
+estado cognitivo, fase de sueño o patología; los electrodos juegan el
+papel de los canales mel.</p></li>
+<li><p><strong>EMG / ECG / EDA:</strong> uno o pocos canales,
+etiquetados con gesto, actividad o clase de anomalía.</p></li>
+<li><p><strong>Acelerómetro / IMU:</strong> <span
+class="math inline">\(C \in \{3, 6, 9\}\)</span> ejes, etiquetados con
+actividad o estado del dispositivo.</p></li>
+<li><p><strong>Sensores industriales y ambientales:</strong> trazas de
+vibración, presión o emisión acústica, etiquetadas por ventana.</p></li>
+</ul>
+<h4 id="qué-se-conserva.">Qué se conserva.</h4>
+<p>Todo lo que está aguas abajo del frontend: los 45 mezcladores
+(Conformer es un buen valor por defecto porque su rama de convolución
+coincide con la morfología local de las bioseñales), las 6 normas,
+AttnRes/mHC/MoE/MoD, los 23 optimizadores, la receta de encoder
+congelado de <code>text_classification</code> y las rutas de checkpoint
+y despliegue. El bucketing por longitud, las máscaras de padding y la
+evaluación tipo CER son del lado del dataset y no dependen de la
+modalidad.</p>
+<h4 id="limitaciones.">Limitaciones.</h4>
+<p>El modo raw es una comodidad, no un reemplazo de un frontend de
+dominio:</p>
+<ol>
+<li><p><strong>Submuestreo del eje de canales.</strong> Las dos etapas
+<code>Conv2d</code> con stride 2 son fijas y reducen a la mitad ambos
+ejes espaciales, así que un montaje con menos de cuatro canales pierde
+su eje de canales por completo; mantenga <span class="math inline">\(C
+\geq 4\)</span> (o proyecte el montaje a un mapa más ancho
+primero).</p></li>
+<li><p><strong>Sin geometría del montaje.</strong> Las posiciones de los
+electrodos, los montajes referenciales vs. bipolares y las correlaciones
+inter-canal no se codifican; la convolución ve los canales como una pila
+sin orden, a diferencia de los modelos específicos de EEG con priors
+topográficos o de grafo.</p></li>
+<li><p><strong>Sin prior espectral.</strong> <code>logmel</code> y
+<code>spectrogram</code> asumen límites de banda y espaciado mel que no
+aplican por debajo de 20 Hz ni por encima de 8 kHz; el modo raw evita el
+desajuste pero también pierde el sesgo inductivo alineado a la
+banda.</p></li>
+<li><p><strong>Solo clasificación.</strong> CTC y RNN-T requieren una
+secuencia objetivo a nivel de token. El etiquetado secuencia-a-secuencia
+de ventanas de sensores (p. ej. secuencias de fases de sueño) queda
+fuera de alcance; use clasificación por ventana y un decodificador
+posterior.</p></li>
+<li><p><strong>Estadísticas y normalización.</strong> La BatchNorm del
+módulo de convolución usa estadísticas por lote; en EEG la escala de
+amplitud varía por sujeto y sesión, por lo que se recomienda normalizar
+por canal en el dataset en lugar de confiar en el frontend.</p></li>
+<li><p><strong>Supuestos de tasa de muestreo.</strong>
+<code>sample_rate</code> se usa para convertir
+<code>window_ms</code>/<code>stride_ms</code> en muestras; para señales
+crudas ajústelo a la tasa real de adquisición y elija la ventana en
+milisegundos en consecuencia.</p></li>
+</ol>
+<h2 id="pseudocódigo-en-pytorch-1">Pseudocódigo en PyTorch</h2>
+<div class="algorithmic">
+<p><strong>Entrada:</strong> formas de onda <span
+class="math inline">\(w\)</span>, longitudes <span
+class="math inline">\(\ell\)</span>, transcripciones <span
+class="math inline">\(y\)</span> (ASR) o etiquetas <span
+class="math inline">\(c\)</span> (clasificación) <span
+class="math inline">\(F \gets \texttt{frontend}(w)\)</span> <span
+class="math inline">\(F \gets \texttt{spec\_\allowbreak
+augment}(F)\)</span> <span class="math inline">\(F \gets
+\texttt{conv2d}_{3\times3, s=2}(F)\)</span>; <span
+class="math inline">\(F \gets \texttt{conv2d}_{3\times3,
+s=2}(F)\)</span> <span class="math inline">\(x \gets
+\texttt{dropout}(\texttt{linear}(F))\)</span> <span
+class="math inline">\(x \gets x + \texttt{pos\_\allowbreak
+encoder}(x)\)</span> <span class="math inline">\(x \gets
+\texttt{layer}(x)\)</span> <span class="math inline">\(x \gets
+\texttt{final\_\allowbreak norm}(x)\)</span> <span
+class="math inline">\(\mathrm{logits} \gets \texttt{ctc\_\allowbreak
+head}(x)\)</span>; <span class="math inline">\(\mathcal{L} \gets
+\texttt{ctc\_\allowbreak loss}(\log\mathrm{softmax}(\mathrm{logits}), y,
+\ell/4)\)</span> <span class="math inline">\(h^{pred} \gets
+\texttt{predictor}(y)\)</span>; <span
+class="math inline">\(\mathrm{logits}_{t,u} \gets \texttt{joint}(x_t,
+h^{pred}_u)\)</span> <span class="math inline">\(\mathcal{L} \gets
+\texttt{rnnt\_\allowbreak loss}(\mathrm{logits}, y, \ell/4)\)</span>
+<span class="math inline">\(\mathrm{logits} \gets
+\texttt{class\_\allowbreak head}(\texttt{pool}(x))\)</span>; <span
+class="math inline">\(\mathcal{L} \gets \mathrm{CE}(\mathrm{logits},
+c)\)</span></p>
+</div>
+<h2 id="desviaciones-y-notas-de-implementación">Desviaciones y Notas de
+Implementación</h2>
+<ul>
+<li><p><strong>torchaudio opcional.</strong> El frontend prefiere
+<code>torchaudio.transforms</code> pero nunca lo requiere; la
+alternativa en PyTorch puro mantiene la CI solo-CPU y el extra
+<code>cpu</code> libres de torchaudio (decisión D7 de la guía de
+arquitectura).</p></li>
+<li><p><strong>Deformación temporal.</strong> No implementada (la
+Ecuación <a href="#eq:audio-specaugment" data-reference-type="ref"
+data-reference="eq:audio-specaugment">[eq:audio-specaugment]</a> cubre
+solo enmascaramiento de frecuencia y tiempo); es la transformación que
+el paper usa menos.</p></li>
+<li><p><strong>Predictor superficial.</strong> La red de predicción
+RNN-T es una sola capa LSTM por defecto
+(<code>audio.asr_decoder_layers</code>), cambiando el predictor más
+profundo del paper por una retícula <span class="math inline">\(O(T
+\cdot U)\)</span> que cabe en memoria con los tamaños de lote de
+referencia.</p></li>
+<li><p><strong>Exportación.</strong> Las exportaciones a HuggingFace y
+GGUF rechazan explícitamente los artefactos de audio, como hacen con
+SBERT: no existe un mapeo upstream
+<code>FrankensteinForAudioClassification</code>.
+<code>deploy –format standard|quantized</code> funciona sin
+cambios.</p></li>
+<li><p><strong>Caché.</strong> No hay caché de encoder incremental para
+audio; ASR consume un utterance completo por forward.</p></li>
+</ul>
 </body>
 </html>
