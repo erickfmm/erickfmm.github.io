@@ -74,7 +74,7 @@ var FTParamEstimator = (function () {
 
   // ---- Per-mixer parameter counts (exact, bias-free unless noted) ----
   // All use H = hidden, hd = head_dim, nH = num_heads.
-  function mixerParams(t, m, H, nH, nKv) {
+  function mixerParams(t, m, H, nH, nKv, fH, normType, useBitnet) {
     var hd = H / nH;
     var kv = hd * nKv;               // KV projection width (num_kv_heads*head_dim)
     var q = H * H, o = H * H;        // default Q and O projections
@@ -95,6 +95,33 @@ var FTParamEstimator = (function () {
         return 4 * H * H;            // Q,K,V,O (bias=False everywhere)
       case 'gated_softmax_attn':
         return 5 * H * H;            // + gate_proj
+      // ---- Conformer (arXiv:2005.08100) ----
+      // Repository integration: the mixer owns only the macaron FFN1, the
+      // MHSA and the convolution module; the outer HybridLayer FFN plays the
+      // role of FFN2 and stays in the `ffn` bucket.
+      //   q/k/v/out          BitLinear/nn.Linear, bias=False (2H² + 2·H·kv)
+      //   ff_in/ff_out       H→fH→H, nn.Linear biases; BitLinear bias=False
+      //   norm_ffn1/attn/conv get_norm(config) each (always allocated,
+      //                      even with macaron=False)
+      //   conv.pointwise_in  Conv1d(H→2H, k=1) → 2H² + 2H
+      //   conv.depthwise     Conv1d(H→H, k, groups=H, bias=False) → H·k
+      //   conv.norm          BatchNorm1d/GroupNorm/LayerNorm → 2H
+      //   conv.pointwise_out Conv1d(H→H, k=1) → H² + H
+      case 'conformer_attn': {
+        var cfK = toNum(pick(m, 'attention.conformer.kernel_size', 'conformer_kernel_size', 32), 32);
+        var cfMacaron = toBool(pick(m, 'attention.conformer.macaron', 'conformer_macaron', true), true);
+        var cfP = 2 * H * H + 2 * (H * kv);
+        if (cfMacaron) {
+          cfP += H * fH + (useBitnet ? 0 : fH);
+          cfP += fH * H + (useBitnet ? 0 : H);
+        }
+        cfP += 3 * normParams(normType, H);
+        cfP += 2 * H * H + 2 * H;     // pointwise_in
+        cfP += H * cfK;              // depthwise (bias=False)
+        cfP += 2 * H;                // conv norm (batch/group/layer)
+        cfP += H * H + H;            // pointwise_out
+        return cfP;
+      }
       case 'gqa_attn':
         return H * H + 2 * (H * kv) + H * H;
       // ---- Recurrent / retentive ----
@@ -309,7 +336,9 @@ var FTParamEstimator = (function () {
     }
     var m = config.model || {};
     var isVit = config.model_class === 'frankenstein_vit';
+    var isAudio = config.model_class === 'frankenstein_audio';
     var isDecoder = config.model_class === 'frankenstein_text_decoder';
+    var aud = config.audio || {};
 
     // dims — defaults mirror FrankensteinModelConfig dataclass defaults.
     var V = toNum(pick(m, 'dims.vocab_size', 'vocab_size', 50000), 50000);
@@ -340,6 +369,7 @@ var FTParamEstimator = (function () {
     var fD = toNum(pick(m, 'embedding.factorized.dim', 'factorized_embedding_dim', 128), 128);
     var conv = toBool(pick(m, 'embedding.conv.enabled', 'use_embedding_conv', true), true);
     var cK = toNum(pick(m, 'embedding.conv.kernel', 'embedding_conv_kernel', 3), 3);
+    var bitnetOn = toBool(pick(m, 'bitnet.enabled', 'use_bitnet', true), true);
 
     var expanded = [];
     for (var i = 0; i < nL; i++) expanded.push(pat[i % pat.length] || 'standard_attn');
@@ -353,6 +383,27 @@ var FTParamEstimator = (function () {
     var imgW = toNum(getDeep(img, 'image_size.width') !== undefined ? getDeep(img, 'image_size.width') : img.image_width, 224);
     if (isVit) {
       emb = patch * patch * inCh * H + H; // Conv2d patch embedding (+bias)
+    } else if (isAudio) {
+      // AudioFrontend (src/model/frankenstein_audio.py): log-mel / log-power
+      // spectrogram features or a raw multichannel 1-D signal, then two
+      // stride-2 convolutions (4× time reduction) and a Linear projection.
+      var aFeat = String(aud.feature || 'logmel').toLowerCase();
+      var aCh = toNum(aud.conv_channels, 32);
+      if (aFeat === 'raw') {
+        var aIn = toNum(aud.in_channels, 1);
+        emb = (aCh * aIn * 3 + aCh)        // Conv1d(in→C, k=3, s=2, p=1) + bias
+            + (aCh * aCh * 3 + aCh)        // Conv1d(C→C, k=3, s=2, p=1) + bias
+            + (aCh * H + H);               // Linear(C→H) + bias
+      } else {
+        var aNfft = toNum(aud.n_fft, 400);
+        var aFreq = aFeat === 'spectrogram' ? Math.floor(aNfft / 2) + 1
+                                            : toNum(aud.n_mels, 80);
+        // Two stride-2 Conv2d(k=3, p=1): f' = (f + 1) // 2, twice.
+        var aFreq2 = Math.floor((Math.floor((aFreq + 1) / 2) + 1) / 2);
+        emb = (aCh * 1 * 9 + aCh)         // Conv2d(1→C, k=3, s=2, p=1) + bias
+            + (aCh * aCh * 9 + aCh)       // Conv2d(C→C, k=3, s=2, p=1) + bias
+            + (aCh * aFreq2 * H + H);     // Linear(C·F'→H) + bias
+      }
     } else if (fact) {
       emb = V * fD;
       if (conv) emb += cK * fD * fD + fD; // depthwise Conv1d
@@ -366,7 +417,7 @@ var FTParamEstimator = (function () {
     var ffnPer = ffnBodyParams(H, fH, fA);
     var pAttn = 0, pFfn = 0, pNorm = 0, pMhc = 0, pRouter = 0;
     for (var li = 0; li < nL; li++) {
-      pAttn += mixerParams(expanded[li], m, H, nH, nKv);
+      pAttn += mixerParams(expanded[li], m, H, nH, nKv, fH, normType, bitnetOn);
       pFfn += moe ? nE * ffnPer : ffnPer;
       pNorm += normPer * 2;              // norm1 + norm2 (flash: 0 each)
       if (mhcEnabled && !hyperloop) pMhc += 2 * mhcBlockParams(H, mhcN); // attn + ffn blocks
@@ -390,6 +441,7 @@ var FTParamEstimator = (function () {
       if (toBool(img.cls_token, true) && String(img.pooling_mode || 'cls') === 'cls') pPos += H; // cls token
       pPos += H; // mask token (always allocated)
     }
+    if (isAudio && String(aud.pooling_mode || 'cls') === 'cls') pPos += H; // learned [CLS] token
     var ssmax = toBool(pick(m, 'ssmax.enabled', 'use_ssmax', false), false);
     if (ssmax) pPos += nH;               // per-head Scalable Softmax scale
 
@@ -413,6 +465,26 @@ var FTParamEstimator = (function () {
       while (scale > 1) {
         head += (H * H * 2 * 2 + H) + (H * 3 * 3 + H); // ConvTranspose + depthwise Conv
         scale = Math.floor(scale / 2);
+      }
+    } else if (isAudio) {
+      // FrankensteinAudio heads: CTC / vocabulary projection over the frames
+      // (BitLinear → bias=False under BitNet), the always-built
+      // audio_classification_head (nn.Linear), and — when the ASR loss is
+      // `transducer` — the RNN-Transducer prediction + joint networks.
+      var asrCfg = (config.training || {}).asr || {};
+      var aLossSrc = asrCfg.loss !== undefined ? asrCfg.loss
+                    : (aud.asr_loss !== undefined ? aud.asr_loss : 'ctc');
+      var aLoss = String(aLossSrc).toLowerCase();
+      var aNcls = toNum(aud.num_classes, 1000);
+      head = H * V + (bitnetOn ? 0 : V);            // CTC / vocab projection
+      head += H * aNcls + aNcls;                    // audio_classification_head
+      if (aLoss === 'transducer') {
+        var aHd = toNum(aud.asr_decoder_dim, 320);
+        var aNl = toNum(aud.asr_decoder_layers, 1);
+        head += V * aHd;                            // target-label embedding
+        head += aNl * (8 * aHd * aHd + 8 * aHd);     // LSTM: ih+hh weights, ih+hh biases
+        head += (H + aHd) * H + H;                  // joint_in (H+Hd → H) + bias
+        head += H * V + V;                          // joint_out (H → V) + bias
       }
     } else {
       head = H * V + V;                  // LM/MLM head (bias=True, untied)
