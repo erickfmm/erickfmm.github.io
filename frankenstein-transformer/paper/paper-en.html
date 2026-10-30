@@ -1815,14 +1815,14 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-four optimizer families in seven
+groups. The system supports twenty-five optimizer families in seven
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
 APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
-geometry-oriented methods (Muon, Turbo-Muon, AF-Muon); and
+geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon); and
 adaptivity-tunable optimizers (Anon). Algorithms, pseudocode, and memory
 and complexity comparisons are collected in Appendix <a
 href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2152,7 +2152,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>128</span> urlstyle</p>
+<p><span>129</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2539,6 +2539,9 @@ with sublinear memory cost, 2018. URL
 <p>Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
 On the convergence analysis of muon, 2025. URL
 <code>https://arxiv.org/abs/2505.23737</code>. Version Number: 1.</p>
+<p>Chongjie Si, Debing Zhang, and Wei Shen. : Adaptive <span>Muon</span>
+optimizer, 2025. URL <code>https://arxiv.org/abs/2507.11005</code>.
+Version Number: 3.</p>
 <p>Rafael Soares et al. Griffin: Mixing gated linear recurrences with
 local attention for efficient sequence modeling, 2024. URL
 <code>https://arxiv.org/abs/2402.19427</code>.</p>
@@ -4701,7 +4704,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 45 sequence mixers
-across nine families, 23 optimizers, 6 normalization variants, 43
+across nine families, 25 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -4978,7 +4981,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 23 supported optimizers with their memory footprint, per-step
+all 25 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5144,6 +5147,12 @@ scale <span class="math inline">\(s\)</span>, <span
 class="math inline">\(\rho_{out}/\rho_{hid}\)</span>, NS steps <span
 class="math inline">\(k\)</span> &amp; <span class="citation"
 data-cites="lagzian_afmuon_2026"></span><br />
+AdaMuon &amp; Orthogonality + adaptive &amp; 2 (<span
+class="math inline">\(m\)</span>, <span
+class="math inline">\(v\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
+momentum, eps, wd, NS steps <span class="math inline">\(k\)</span> &amp;
+<span class="citation" data-cites="si_adamuon_2025"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -7004,6 +7013,105 @@ Muon and a SCION-style Sign endpoint across nine tied-token settings
 spanning text, image-token, protein, MoE, and encoder-decoder
 models.</p></li>
 </ul>
+<h4 id="adamuon-adaptive-muon.">AdaMuon (Adaptive Muon).</h4>
+<p>AdaMuon is an <strong>adaptive extension of Muon</strong> that keeps
+the spectral (polar) update while adding coordinate-wise variance
+normalization. Muon orthogonalizes the momentum matrix into a
+direction-only update, which removes anisotropic scaling but assigns the
+same magnitude to every coordinate; AdaMuon addresses the resulting
+mismatch between noisy and informative coordinates by tracking the
+element-wise variance of the <em>orthogonalized</em> direction rather
+than of the raw gradient or of the momentum. Because the polar factor is
+globally scale-invariant, the sign transform applied before
+orthogonalization preserves the update direction while stabilizing its
+element-wise magnitudes; the paper proves that <span
+class="math inline">\(\operatorname{sign}\)</span> is the unique
+element-wise map that is scale-free, sign-consistent, odd and bounded
+(Theorem 1). The second-moment estimate therefore sees a stable signal,
+and its variance-normalized version is rescaled to an RMS of <span
+class="math inline">\(0.2\)</span>, matching Adam’s empirical update
+scale so that existing learning-rate schedules are reused without
+tuning.</p>
+<p>For a weight <span class="math inline">\(W_t \in \mathbb{R}^{n \times
+m}\)</span>, momentum buffer <span class="math inline">\(M_t\)</span>,
+momentum <span class="math inline">\(\beta\)</span>, Newton–Schulz steps
+<span class="math inline">\(T\)</span> and small constant <span
+class="math inline">\(\varepsilon\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \beta M_{t-1} + G_t, \\
+O_t &amp;= \operatorname{NewtonSchulz}\bigl(\operatorname{sign}(M_t),
+T\bigr), \\
+V_t &amp;= \beta V_{t-1} + (1-\beta)\, O_t \odot O_t, \\
+\widehat{O}_t &amp;= O_t \oslash \bigl(\sqrt{V_t} + \varepsilon
+\mathbf{1}\bigr), \\
+\gamma_t &amp;= \frac{0.2\sqrt{mn}}{\|\widehat{O}_t\|_F}, \\
+W_{t+1} &amp;= W_t - \eta\bigl(\gamma_t \widehat{O}_t + \lambda
+W_t\bigr).
+\end{aligned}\]</span> The Newton–Schulz map uses <span
+class="math inline">\(X_0 =
+\operatorname{sign}(M_t)/\|\operatorname{sign}(M_t)\|_F\)</span> and the
+cubic iteration <span class="math inline">\(X_k = aX_{k-1} +
+b(X_{k-1}X_{k-1}^{\mathsf T})X_{k-1} + c(X_{k-1}X_{k-1}^{\mathsf
+T})^2X_{k-1}\)</span> with <span class="math inline">\((a,b,c) =
+(3.4445, -4.7750, 2.0315)\)</span> and <span class="math inline">\(T =
+5\)</span>. No bias correction is applied to either moment: a constant
+factor in <span class="math inline">\(V_t\)</span> is cancelled exactly
+by <span class="math inline">\(\gamma_t \propto \sqrt{c}\)</span>, and a
+constant factor in <span class="math inline">\(M_t\)</span> is removed
+by the polar map, <span class="math inline">\(\operatorname{polar}(cM) =
+\operatorname{polar}(M)\)</span>.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Initial weights <span class="math inline">\(W_0 \in \mathbb{R}^{n
+\times m}\)</span>, learning rate <span
+class="math inline">\(\eta\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span>, momentum <span
+class="math inline">\(\beta\)</span>, Newton–Schulz steps <span
+class="math inline">\(T\)</span>, small constant <span
+class="math inline">\(\varepsilon\)</span> Updated weights <span
+class="math inline">\(W_T\)</span> <span class="math inline">\(M_0 \gets
+\mathbf{0}\)</span>, <span class="math inline">\(V_0 \gets
+\mathbf{0}\)</span> <span class="math inline">\(G_t \gets
+\nabla_{W_t}\mathcal{L}(W_t)\)</span> <span class="math inline">\(M_t
+\gets \beta M_{t-1} + G_t\)</span> <span class="math inline">\(O_t \gets
+\operatorname{NewtonSchulz}(\operatorname{sign}(M_t), T)\)</span> <span
+class="math inline">\(V_t \gets \beta V_{t-1} + (1-\beta)\, O_t \odot
+O_t\)</span> <span class="math inline">\(\widehat{O}_t \gets O_t \oslash
+(\sqrt{V_t} + \varepsilon\mathbf{1})\)</span> <span
+class="math inline">\(\gamma_t \gets
+0.2\sqrt{mn}/\|\widehat{O}_t\|_F\)</span> <span
+class="math inline">\(W_{t+1} \gets W_t - \eta(\gamma_t \widehat{O}_t +
+\lambda W_t)\)</span> <span class="math inline">\(W_T\)</span></p>
+</div>
+</div>
+<h4 id="cons.-24">Cons.</h4>
+<ul>
+<li><p>One additional second-moment buffer per matrix parameter (two
+buffers versus Muon’s single first-moment buffer), plus per-step
+element-wise EMA, square-root and normalization work on the
+update.</p></li>
+<li><p>The update is defined for two-dimensional parameters;
+one-dimensional parameters (biases, norm scales) require an auxiliary
+optimizer in the paper’s recipe.</p></li>
+<li><p>The RMS target (<span class="math inline">\(0.2\)</span>) is a
+fixed constant rather than a learned quantity, so the method assumes
+Adam-like update scales when reusing existing schedules.</p></li>
+</ul>
+<h4 id="pros.-24">Pros.</h4>
+<ul>
+<li><p>No new hyperparameters: the second-moment EMA reuses Muon’s
+momentum coefficient <span class="math inline">\(\beta\)</span>, and the
+paper reports low sensitivity across <span class="math inline">\(\beta
+\in [0.8, 0.99]\)</span>.</p></li>
+<li><p>The sign transform makes the variance estimate stable enough to
+normalize, and the RMS alignment cancels any constant bias in <span
+class="math inline">\(V_t\)</span>, so no bias correction is needed for
+either moment.</p></li>
+<li><p>RMS alignment matches Adam’s update scale, allowing direct reuse
+of learning-rate schedules; the authors report up to roughly 40%
+training-efficiency gains over AdamW and consistent wins over Muon on
+GPT-2 (125M–1.5B) and Qwen2.5 (1.5B, 7B).</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Group</strong> &amp; <strong>Methods</strong> &amp;
@@ -7026,11 +7134,13 @@ structured scaling.<br />
 Curvature-aware &amp; Shampoo, SOAP, Sophia &amp; better conditioning
 &amp; Prefer when richer geometry is worth implementation and compute
 overhead.<br />
-Geometry-oriented &amp; Muon, Turbo-Muon, AF-Muon &amp; orthogonalized
-update structure &amp; Specialized options for matrix geometry and
-representation shaping; AF-Muon assigns the tied vocabulary table a
-capped-row table geometry and one-dimensional parameters an RMS update,
-with no AdamW auxiliary state.<br />
+Geometry-oriented &amp; Muon, Turbo-Muon, AF-Muon, AdaMuon &amp;
+orthogonalized update structure &amp; Specialized options for matrix
+geometry and representation shaping; AdaMuon adds an element-wise second
+moment on the orthogonalized direction with RMS-aligned updates; AF-Muon
+assigns the tied vocabulary table a capped-row table geometry and
+one-dimensional parameters an RMS update, with no AdamW auxiliary
+state.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Dense, Recurrent, and Memory-Augmented

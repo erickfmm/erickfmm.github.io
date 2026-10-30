@@ -1887,7 +1887,7 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veinticuatro familias de optimizadores en siete
+sistema soporta veinticinco familias de optimizadores en siete
 categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
 momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
@@ -1895,8 +1895,8 @@ GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
 sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
-Turbo-Muon, AF-Muon); y optimizadores de adaptividad ajustable (Anon).
-Los algoritmos, el pseudocódigo y las comparaciones de memoria y
+Turbo-Muon, AF-Muon, AdaMuon); y optimizadores de adaptividad ajustable
+(Anon). Los algoritmos, el pseudocódigo y las comparaciones de memoria y
 complejidad se recopilan en el Apéndice <a href="#sec:annex-optimizers"
 data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
@@ -2251,7 +2251,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>128</span> urlstyle</p>
+<p><span>129</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2638,6 +2638,9 @@ with sublinear memory cost, 2018. URL
 <p>Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
 On the convergence analysis of muon, 2025. URL
 <code>https://arxiv.org/abs/2505.23737</code>. Version Number: 1.</p>
+<p>Chongjie Si, Debing Zhang, and Wei Shen. : Adaptive <span>Muon</span>
+optimizer, 2025. URL <code>https://arxiv.org/abs/2507.11005</code>.
+Version Number: 3.</p>
 <p>Rafael Soares et al. Griffin: Mixing gated linear recurrences with
 local attention for efficient sequence modeling, 2024. URL
 <code>https://arxiv.org/abs/2402.19427</code>.</p>
@@ -4835,7 +4838,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-45 mezcladores de secuencia en nueve familias, 23 optimizadores, 6
+45 mezcladores de secuencia en nueve familias, 25 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5122,7 +5125,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 23 optimizadores soportados con su huella de memoria, costo
+los 25 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -5290,6 +5293,12 @@ tabla <span class="math inline">\(s\)</span>, <span
 class="math inline">\(\rho_{out}/\rho_{hid}\)</span>, pasos NS <span
 class="math inline">\(k\)</span> &amp; <span class="citation"
 data-cites="lagzian_afmuon_2026"></span><br />
+AdaMuon &amp; Ortogonalidad + adaptativo &amp; 2 (<span
+class="math inline">\(m\)</span>, <span
+class="math inline">\(v\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
+momentum, eps, wd, pasos NS <span class="math inline">\(k\)</span> &amp;
+<span class="citation" data-cites="si_adamuon_2025"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Adaptativo de bajo rango &amp; 2 bajo rango + proy &amp;
@@ -7233,6 +7242,111 @@ Hybrid Muon y a un extremo Sign estilo SCION en nueve configuraciones de
 vocabulario atado que abarcan texto, tokens de imagen, proteínas, MoE y
 modelos encoder-decoder.</p></li>
 </ul>
+<h4 id="adamuon-muon-adaptativo.">AdaMuon (Muon Adaptativo).</h4>
+<p>AdaMuon es una <strong>extensión adaptativa de Muon</strong> que
+conserva la actualización espectral (polar) y añade normalización de
+varianza por coordenada. Muon ortogonaliza la matriz de momentum en una
+actualización puramente direccional, lo que elimina el escalado
+anisotrópico pero asigna la misma magnitud a todas las coordenadas;
+AdaMuon aborda el desajuste resultante entre coordenadas ruidosas e
+informativas siguiendo la varianza por elemento de la dirección
+<em>ortogonalizada</em>, en lugar de la del gradiente crudo o la del
+momentum. Como el factor polar es globalmente invariante a escala, la
+transformación de signo aplicada antes de la ortogonalización preserva
+la dirección de la actualización mientras estabiliza sus magnitudes por
+elemento; el artículo demuestra que <span
+class="math inline">\(\operatorname{sign}\)</span> es la única
+aplicación elemental que es libre de escala, consistente con el signo,
+impar y acotada (Teorema 1). La estimación de segundo momento ve así una
+señal estable, y su versión normalizada por varianza se reescala a un
+RMS de <span class="math inline">\(0.2\)</span>, igualando la escala
+empírica de actualización de Adam para reutilizar sin ajuste los
+schedules de tasa de aprendizaje existentes.</p>
+<p>Para un peso <span class="math inline">\(W_t \in \mathbb{R}^{n \times
+m}\)</span>, búfer de momentum <span class="math inline">\(M_t\)</span>,
+momentum <span class="math inline">\(\beta\)</span>, pasos de
+Newton–Schulz <span class="math inline">\(T\)</span> y constante pequeña
+<span class="math inline">\(\varepsilon\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \beta M_{t-1} + G_t, \\
+O_t &amp;= \operatorname{NewtonSchulz}\bigl(\operatorname{sign}(M_t),
+T\bigr), \\
+V_t &amp;= \beta V_{t-1} + (1-\beta)\, O_t \odot O_t, \\
+\widehat{O}_t &amp;= O_t \oslash \bigl(\sqrt{V_t} + \varepsilon
+\mathbf{1}\bigr), \\
+\gamma_t &amp;= \frac{0.2\sqrt{mn}}{\|\widehat{O}_t\|_F}, \\
+W_{t+1} &amp;= W_t - \eta\bigl(\gamma_t \widehat{O}_t + \lambda
+W_t\bigr).
+\end{aligned}\]</span> El mapa de Newton–Schulz usa <span
+class="math inline">\(X_0 =
+\operatorname{sign}(M_t)/\|\operatorname{sign}(M_t)\|_F\)</span> y la
+iteración cúbica <span class="math inline">\(X_k = aX_{k-1} +
+b(X_{k-1}X_{k-1}^{\mathsf T})X_{k-1} + c(X_{k-1}X_{k-1}^{\mathsf
+T})^2X_{k-1}\)</span> con <span class="math inline">\((a,b,c) = (3.4445,
+-4.7750, 2.0315)\)</span> y <span class="math inline">\(T = 5\)</span>.
+No se aplica corrección de sesgo a ninguno de los momentos: un factor
+constante en <span class="math inline">\(V_t\)</span> se cancela
+exactamente con <span class="math inline">\(\gamma_t \propto
+\sqrt{c}\)</span>, y un factor constante en <span
+class="math inline">\(M_t\)</span> se elimina con el mapa polar, <span
+class="math inline">\(\operatorname{polar}(cM) =
+\operatorname{polar}(M)\)</span>.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Pesos iniciales <span class="math inline">\(W_0 \in \mathbb{R}^{n
+\times m}\)</span>, tasa de aprendizaje <span
+class="math inline">\(\eta\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span>, momentum <span
+class="math inline">\(\beta\)</span>, pasos de Newton–Schulz <span
+class="math inline">\(T\)</span>, constante pequeña <span
+class="math inline">\(\varepsilon\)</span> Pesos actualizados <span
+class="math inline">\(W_T\)</span> <span class="math inline">\(M_0 \gets
+\mathbf{0}\)</span>, <span class="math inline">\(V_0 \gets
+\mathbf{0}\)</span> <span class="math inline">\(G_t \gets
+\nabla_{W_t}\mathcal{L}(W_t)\)</span> <span class="math inline">\(M_t
+\gets \beta M_{t-1} + G_t\)</span> <span class="math inline">\(O_t \gets
+\operatorname{NewtonSchulz}(\operatorname{sign}(M_t), T)\)</span> <span
+class="math inline">\(V_t \gets \beta V_{t-1} + (1-\beta)\, O_t \odot
+O_t\)</span> <span class="math inline">\(\widehat{O}_t \gets O_t \oslash
+(\sqrt{V_t} + \varepsilon\mathbf{1})\)</span> <span
+class="math inline">\(\gamma_t \gets
+0.2\sqrt{mn}/\|\widehat{O}_t\|_F\)</span> <span
+class="math inline">\(W_{t+1} \gets W_t - \eta(\gamma_t \widehat{O}_t +
+\lambda W_t)\)</span> <span class="math inline">\(W_T\)</span></p>
+</div>
+</div>
+<h4 id="contras.-24">Contras.</h4>
+<ul>
+<li><p>Un búfer de segundo momento adicional por parámetro matricial
+(dos búferes frente al único búfer de primer momento de Muon), más
+trabajo por paso de EMA elemental, raíz cuadrada y normalización sobre
+la actualización.</p></li>
+<li><p>La actualización está definida para parámetros bidimensionales;
+los parámetros unidimensionales (sesgos, escalas de normalización)
+requieren un optimizador auxiliar en la receta del artículo.</p></li>
+<li><p>El objetivo RMS (<span class="math inline">\(0.2\)</span>) es una
+constante fija y no una cantidad aprendida, por lo que el método asume
+escalas de actualización tipo Adam al reutilizar schedules
+existentes.</p></li>
+</ul>
+<h4 id="ventajas.-24">Ventajas.</h4>
+<ul>
+<li><p>Sin hiperparámetros nuevos: la EMA de segundo momento reutiliza
+el coeficiente de momentum <span class="math inline">\(\beta\)</span> de
+Muon, y el artículo reporta baja sensibilidad para <span
+class="math inline">\(\beta \in [0.8, 0.99]\)</span>.</p></li>
+<li><p>La transformación de signo hace que la estimación de varianza sea
+lo bastante estable para normalizar, y la alineación RMS cancela
+cualquier sesgo constante en <span class="math inline">\(V_t\)</span>,
+por lo que no se necesita corrección de sesgo para ninguno de los dos
+momentos.</p></li>
+<li><p>La alineación RMS iguala la escala de actualización de Adam, lo
+que permite reutilizar directamente los schedules de tasa de
+aprendizaje; los autores reportan hasta aproximadamente un 40% de
+ganancia en eficiencia de entrenamiento frente a AdamW y mejoras
+consistentes frente a Muon en GPT-2 (125M–1.5B) y Qwen2.5 (1.5B,
+7B).</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Grupo</strong> &amp; <strong>Métodos</strong> &amp;
@@ -7258,12 +7372,14 @@ cuantizado.<br />
 Consciente de curvatura &amp; Shampoo, SOAP, Sophia &amp; mejor
 condicionamiento &amp; Preferir cuando una geometría más rica justifica
 la sobrecarga de implementación y cómputo.<br />
-Orientado a geometría &amp; Muon, Turbo-Muon, AF-Muon &amp; estructura
-de actualización ortogonalizada &amp; Opciones especializadas para
-geometría matricial y modelado de representaciones; AF-Muon asigna a la
-tabla de vocabulario atada una geometría de tabla con tope por fila y a
-los parámetros unidimensionales una actualización RMS, sin estado
-auxiliar de AdamW.<br />
+Orientado a geometría &amp; Muon, Turbo-Muon, AF-Muon, AdaMuon &amp;
+estructura de actualización ortogonalizada &amp; Opciones especializadas
+para geometría matricial y modelado de representaciones; AdaMuon añade
+un segundo momento por elemento sobre la dirección ortogonalizada con
+actualizaciones alineadas por RMS; AF-Muon asigna a la tabla de
+vocabulario atada una geometría de tabla con tope por fila y a los
+parámetros unidimensionales una actualización RMS, sin estado auxiliar
+de AdamW.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Transformadores Densos, Recurrentes y
