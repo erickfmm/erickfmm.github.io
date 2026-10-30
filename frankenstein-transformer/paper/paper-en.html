@@ -1638,9 +1638,16 @@ rotates rolling and best checkpoints. When
 <code>training.test_percentage</code> is positive, a deterministic
 fraction of the dataset is held out before training and the final
 weights are evaluated on it; the loss and task accuracy (character error
-rate for ASR) are written to <code>test_metrics.json</code>. The full
-pseudocode and the split formulation are deferred to Appendix <a
-href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+rate for ASR) are written to <code>test_metrics.json</code>. A single
+<code>training.seed</code> (default <span
+class="math inline">\(42\)</span>) controls the run’s randomness: it
+seeds the Python, NumPy, PyTorch and CUDA generators, model weight
+initialization, DataLoader shuffle generators and workers, and the
+held-out permutation, and it enables deterministic cuDNN, so repeated
+runs on the same hardware and software stack reproduce initialization,
+batch order and split. The full pseudocode and the split formulation are
+deferred to Appendix <a href="#sec:annex-norm-bitnet-mod"
+data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:normalization">Normalization Variants</h2>
 <p>Normalization is both a modeling choice and a schema compatibility
@@ -10820,8 +10827,8 @@ fraction of the task dataset before the first optimizer step. With <span
 class="math inline">\(n\)</span> dataset examples, held-out percentage
 <span class="math inline">\(\rho=\texttt{test\_\allowbreak
 percentage}/100\)</span>, and a permutation <span
-class="math inline">\(\pi\)</span> drawn once from a fixed seed, the
-partition is <span
+class="math inline">\(\pi\)</span> drawn once from the run seed
+<code>training.seed</code>, the partition is <span
 class="math display">\[n_{\text{test}}=\operatorname{clip}\!\left(\operatorname{round}(\rho
 n),\,1,\,n-1\right),\qquad
 \mathcal{D}_{\text{train}}=\{x_{\pi(i)}\}_{i=n_{\text{test}}+1}^{n},\qquad

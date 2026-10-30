@@ -1695,9 +1695,15 @@ mejor modelo. Cuando <code>training.test_percentage</code> es positivo,
 una fracción determinista del dataset se reserva antes del entrenamiento
 y los pesos finales se evalúan sobre ella; la pérdida y la precisión de
 la tarea (tasa de error de caracteres para ASR) se escriben en
-<code>test_metrics.json</code>. El pseudocódigo completo y la
-formulación de la partición se remiten al Apéndice <a
-href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+<code>test_metrics.json</code>. Una única <code>training.seed</code>
+(por defecto <span class="math inline">\(42\)</span>) controla la
+aleatoriedad de la ejecución: siembra los generadores de Python, NumPy,
+PyTorch y CUDA, la inicialización de pesos, el generador y los workers
+de mezcla de los DataLoader y la permutación reservada, y activa cuDNN
+determinista, de modo que ejecuciones repetidas con el mismo hardware y
+software reproducen inicialización, orden de lotes y partición. El
+pseudocódigo completo y la formulación de la partición se remiten al
+Apéndice <a href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:normalization">Variantes de Normalización</h2>
 <p>La normalización es a la vez una decisión de modelado y una cuestión
@@ -11222,8 +11228,8 @@ optimizador. Con <span class="math inline">\(n\)</span> ejemplos,
 porcentaje reservado <span
 class="math inline">\(\rho=\texttt{test\_\allowbreak
 percentage}/100\)</span> y una permutación <span
-class="math inline">\(\pi\)</span> sorteada una sola vez con semilla
-fija, la partición es <span
+class="math inline">\(\pi\)</span> sorteada una sola vez con la semilla
+de la ejecución <code>training.seed</code>, la partición es <span
 class="math display">\[n_{\text{test}}=\operatorname{clip}\!\left(\operatorname{round}(\rho
 n),\,1,\,n-1\right),\qquad
 \mathcal{D}_{\text{train}}=\{x_{\pi(i)}\}_{i=n_{\text{test}}+1}^{n},\qquad
