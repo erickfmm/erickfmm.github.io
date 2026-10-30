@@ -1,4 +1,4 @@
-\begin{thebibliography}{128}
+\begin{thebibliography}{129}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -724,6 +724,12 @@ Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
 \newblock On the convergence analysis of muon, 2025.
 \newblock URL \url{https://arxiv.org/abs/2505.23737}.
 \newblock Version Number: 1.
+
+\bibitem[Si et~al.(2025)Si, Zhang, and Shen]{si_adamuon_2025}
+Chongjie Si, Debing Zhang, and Wei Shen.
+\newblock {AdaMuon}: Adaptive {Muon} optimizer, 2025.
+\newblock URL \url{https://arxiv.org/abs/2507.11005}.
+\newblock Version Number: 3.
 
 \bibitem[Soares et~al.(2024)]{soares_griffin_2024}
 Rafael Soares et~al.
