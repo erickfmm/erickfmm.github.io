@@ -885,6 +885,9 @@ id="toc-embedding-convolution">Embedding Convolution</a></li>
 <li><a href="#training-step-stability-controls"
 id="toc-training-step-stability-controls">Training-Step Stability
 Controls</a></li>
+<li><a href="#held-out-test-split-and-end-of-training-evaluation"
+id="toc-held-out-test-split-and-end-of-training-evaluation">Held-Out
+Test Split and End-of-Training Evaluation</a></li>
 <li><a href="#sbert-inference-mode-router"
 id="toc-sbert-inference-mode-router">SBERT Inference Mode
 Router</a></li>
@@ -1631,8 +1634,13 @@ Runtime Semantics</h2>
 <p>The training step accumulates gradients over micro-batches, clips the
 global norm, checks for post-clip overflow, retries a bounded number of
 times on non-finite values, dispatches the configured scheduler, and
-rotates rolling and best checkpoints. The full pseudocode is deferred to
-Appendix <a href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+rotates rolling and best checkpoints. When
+<code>training.test_percentage</code> is positive, a deterministic
+fraction of the dataset is held out before training and the final
+weights are evaluated on it; the loss and task accuracy (character error
+rate for ASR) are written to <code>test_metrics.json</code>. The full
+pseudocode and the split formulation are deferred to Appendix <a
+href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <h2 id="sec:normalization">Normalization Variants</h2>
 <p>Normalization is both a modeling choice and a schema compatibility
@@ -4026,44 +4034,51 @@ prediction. Standard: 0.15.</td>
 of epochs.</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">test_percentage</td>
+<td style="text-align: left;">float [0,100]</td>
+<td style="text-align: left;">Fraction of the dataset held out from
+training and evaluated at the end; the result is written to
+<code>test_metrics.json</code>. Default: 0 (disabled).</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">dataset_batch_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Internal batch size for streaming
 dataset.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">num_workers</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Parallel workers for dataset streaming
 pipeline.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">cache_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Directory for caching processed
 datasets.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">local_parquet_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Path to local parquet files for offline
 streaming.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">prefer_local_cache</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Check local cache first before remote
 download.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">stream_local_parquet</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Stream from local parquet when
 <code>local_parquet_dir</code> is set.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">join_temp_data_context_window</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
@@ -4071,26 +4086,26 @@ download.</td>
 class="math inline">\(&gt;0\)</span>, joins cached token chunks into
 sequences of this length.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">join_temp_data_min_remainder_tokens</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Minimum content tokens in last partial
 joined window.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">use_amp</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable FP16 mixed precision.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gradient_accumulation_steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Accumulate gradients over N mini-batches
 before optimizer step.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">optimizer</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Optimizer configuration (see §<a
@@ -4098,7 +4113,7 @@ href="#subsec:optimizer-config" data-reference-type="ref"
 data-reference="subsec:optimizer-config">12.5</a>). Required when
 <code>task=mlm</code> or <code>task=causal_lm</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sbert</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">SBERT training configuration (see §<a
@@ -4106,192 +4121,192 @@ href="#subsec:sbert-config" data-reference-type="ref"
 data-reference="subsec:sbert-config">12.6</a>). Required when
 <code>task=sbert</code>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">scheduler_total_steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Total optimizer steps for LR
 schedule.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">scheduler_warmup_ratio</td>
 <td style="text-align: left;">float [0,1]</td>
 <td style="text-align: left;">Fraction of
 <code>scheduler_total_steps</code> for LR warmup.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">scheduler_type</td>
 <td style="text-align: left;">enum (cosine, constant,
 linear_warmup_then_constant)</td>
 <td style="text-align: left;">LR decay strategy.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">grad_clip_max_norm</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Maximum allowed gradient norm. 0 =
 disabled.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">inf_post_clip_threshold</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Threshold for flagging post-clip gradient
 explosions.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">max_nan_retries</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Maximum retries on NaN/Inf gradients
 before stopping.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">checkpoint_every_n_steps</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Save rolling checkpoint every N
 steps.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">max_rolling_checkpoints</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Maximum rolling checkpoints kept. Oldest
 deleted when exceeded.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">num_best_checkpoints</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Number of best checkpoints kept
 permanently (by validation loss).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">nan_check_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between NaN/Inf checks.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">log_gradient_stats</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Log per-layer gradient norms,
 min/max.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gradient_log_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between gradient stat logs.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">csv_log_path</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">File path for step-level training metrics
 in CSV format.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">csv_rotate_on_schema_change</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Rotate CSV file when schema changes.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gpu_metrics_backend</td>
 <td style="text-align: left;">enum (nvml, none)</td>
 <td style="text-align: left;">GPU telemetry backend.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">nvml_device_index</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">GPU index to monitor (0 = first GPU).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">enable_block_grad_norms</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Log gradient norms per block (embeddings,
 attention, FFN, etc.).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">telemetry_log_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between heavy telemetry logs.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gpu_temp_guard_enabled</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Strict GPU temperature monitoring.
 Requires <code>gpu_metrics_backend=nvml</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">switch_on_thermal</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Critical temp triggers GPU<span
 class="math inline">\(\to\)</span>CPU fallback, auto-resume on
 cooldown.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gpu_temp_pause_threshold_c</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Temperature (<span
 class="math inline">\(^\circ\)</span>C) to pause training.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gpu_temp_resume_threshold_c</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Temperature (<span
 class="math inline">\(^\circ\)</span>C) to resume training after
 pause.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gpu_temp_critical_threshold_c</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Informational logging marker for severe
 thermal events.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gpu_temp_poll_interval_seconds</td>
 <td style="text-align: left;">float</td>
 <td style="text-align: left;">Seconds between temp checks during
 cooldown wait.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">use_galore</td>
 <td style="text-align: left;">bool</td>
 <td style="text-align: left;">Enable Gradient Low-Rank Projection for
 memory-efficient training.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">galore_rank</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Low-rank projection dimension for
 GaLore.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">galore_update_interval</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Steps between projection matrix
 recomputation.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">galore_scale</td>
 <td style="text-align: left;">float <span class="math inline">\(\ge
 0\)</span></td>
 <td style="text-align: left;">Scaling factor for projected
 gradients.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">galore_max_dim</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Maximum tensor dimension for GaLore
 projection.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">hf_output_dir</td>
 <td style="text-align: left;">string</td>
 <td style="text-align: left;">Directory for saving final model via
@@ -10798,6 +10813,33 @@ update best checkpoints up to <code>num_best_checkpoints</code> emit CSV
 <code>telemetry_log_interval</code></p>
 </div>
 </div>
+<h2 id="held-out-test-split-and-end-of-training-evaluation">Held-Out
+Test Split and End-of-Training Evaluation</h2>
+<p><code>training.test_percentage</code> reserves a deterministic
+fraction of the task dataset before the first optimizer step. With <span
+class="math inline">\(n\)</span> dataset examples, held-out percentage
+<span class="math inline">\(\rho=\texttt{test\_\allowbreak
+percentage}/100\)</span>, and a permutation <span
+class="math inline">\(\pi\)</span> drawn once from a fixed seed, the
+partition is <span
+class="math display">\[n_{\text{test}}=\operatorname{clip}\!\left(\operatorname{round}(\rho
+n),\,1,\,n-1\right),\qquad
+\mathcal{D}_{\text{train}}=\{x_{\pi(i)}\}_{i=n_{\text{test}}+1}^{n},\qquad
+\mathcal{D}_{\text{test}}=\{x_{\pi(i)}\}_{i=1}^{n_{\text{test}}}
+,\]</span> so the same configuration always reserves the same examples
+regardless of DataLoader shuffling. After the last epoch the final
+weights are evaluated once with the task objective under
+<code>no_grad</code>, and the sample-weighted loss and accuracy <span
+class="math display">\[\hat{L}=\frac{1}{n_{\text{test}}}\sum_{x\in\mathcal{D}_{\text{test}}}\ell(f_\theta;x),\qquad
+\widehat{\text{acc}}=\frac{1}{n_{\text{test}}}\sum_{x\in\mathcal{D}_{\text{test}}}a(f_\theta;x)\]</span>
+are written to <code>test_metrics.json</code> next to the CSV log. The
+split covers masked and causal language modeling, text classification,
+the three vision tasks, ASR (where the accuracy slot carries the
+character error rate, labelled <code>metric: cer</code>), and audio
+classification. SBERT keeps its own validation partition through
+<code>training.sbert.max_eval_samples</code> and is unaffected. Setting
+the field to zero disables the split and restores the historical
+all-data behavior.</p>
 <h2 id="sbert-inference-mode-router">SBERT Inference Mode Router</h2>
 <p>The SBERT inference dispatcher selects among similarity scoring,
 corpus search, clustering, and persistent encoding modes over a single
