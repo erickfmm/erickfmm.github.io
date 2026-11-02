@@ -796,6 +796,55 @@ pre {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ===== Experiment results modal ===== */
+.exp-cta-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:6px 0 14px; }
+.exp-cta-row .exp-hint { font-size:12px; color:var(--text-muted); }
+.btn-exp {
+  display:inline-flex; align-items:center; gap:7px; font-weight:700;
+  border:1px solid rgba(88,166,255,.55);
+  background:linear-gradient(135deg, rgba(88,166,255,.16), rgba(247,120,186,.12));
+}
+.btn-exp:hover { border-color:var(--accent); background:linear-gradient(135deg, rgba(88,166,255,.26), rgba(247,120,186,.18)); }
+.exp-modal-backdrop {
+  position:fixed; inset:0; z-index:300; display:none; align-items:center; justify-content:center;
+  padding:24px; background:rgba(1,4,9,.72); backdrop-filter:blur(6px);
+}
+.exp-modal-backdrop.open { display:flex; }
+.exp-modal {
+  position:relative; width:min(760px,100%); max-height:88vh; overflow:auto;
+  background:var(--surface); color:var(--text); border:1px solid var(--border);
+  border-radius:16px; box-shadow:0 30px 80px rgba(1,4,9,.65); padding:34px 34px 26px;
+  animation:expPop .22s ease-out;
+}
+@keyframes expPop { from { transform:translateY(10px) scale(.985); opacity:0 } to { transform:none; opacity:1 } }
+.exp-modal:before {
+  content:""; position:absolute; inset:0 0 auto 0; height:4px; border-radius:16px 16px 0 0;
+  background:linear-gradient(90deg,#58a6ff,#d2a8ff,#f778ba,#3fb950);
+}
+.exp-modal .exp-badge {
+  display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:800;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--accent);
+  background:rgba(88,166,255,.12); border:1px solid rgba(88,166,255,.35);
+  padding:4px 10px; border-radius:999px;
+}
+.exp-modal h2 { margin:14px 0 10px; font-size:clamp(22px,3.4vw,30px); line-height:1.15; letter-spacing:-.02em; }
+.exp-modal .exp-lede { color:var(--text-muted); font-size:14.5px; margin:0 0 18px; }
+.exp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:18px 0; }
+.exp-stat { background:var(--surface-2); border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; }
+.exp-stat b { display:block; font-size:20px; letter-spacing:-.02em; }
+.exp-stat span { font-size:11.5px; color:var(--text-muted); }
+.exp-modal .exp-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; align-items:center; }
+.exp-modal .exp-actions .btn { font-size:13px; }
+.exp-modal .exp-later { background:none; border:0; color:var(--text-muted); font-size:12.5px; cursor:pointer; text-decoration:underline; }
+.exp-modal .exp-later:hover { color:var(--text); }
+.exp-close {
+  position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:8px;
+  border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+  font-size:16px; line-height:1; cursor:pointer;
+}
+.exp-close:hover { color:var(--text); border-color:var(--accent); }
+@media (max-width:640px) { .exp-modal { padding:26px 20px 20px; } }
 </style>
 </head>
 <body>
@@ -811,6 +860,8 @@ pre {
     <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
     View on GitHub
   </a>
+
+  <a href="charts/index.html" class="btn btn-exp btn-sm" id="exp-side-btn" style="margin-top:10px"></a>
 
   <button type="button" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-pressed="false" aria-label="Toggle light/dark theme">
     <span class="tt-track" aria-hidden="true"><span class="tt-thumb" id="tt-thumb"></span></span>
@@ -847,6 +898,11 @@ pre {
     </ol>
   </nav>
   <h1>🤖 Frankestein Transformer — Config Builder</h1>
+  <div class="exp-cta-row">
+    <button type="button" class="btn btn-exp btn-sm" id="exp-open-btn" onclick="openExperimentModal()"></button>
+    <a href="charts/index.html" class="btn btn-sm" id="exp-direct-link"></a>
+    <span class="exp-hint" id="exp-cta-hint"></span>
+  </div>
   <p id="lang-status" class="info" style="margin-bottom: 12px;"></p>
   <div id="app-feedback" class="status-banner" data-tone="info" aria-live="polite" aria-atomic="true"></div>
 
@@ -1051,6 +1107,22 @@ const paperCache = { en: null, es: null };
 const UI = {
   required: { en:'Required', es:'Obligatorio' },
   langTitle: { en:'🌐 Language', es:'🌐 Idioma' },
+  expNavBtn: { en:'📊 Experiment results', es:'📊 Resultados del experimento' },
+  expNavHint: { en:'868 configurations, charts and a chart maker', es:'868 configuraciones, gráficos y un constructor' },
+  expModalBadge: { en:'Experiment 2 · first round', es:'Experimento 2 · primera tanda' },
+  expModalTitle: { en:'Results of the first round of experiments', es:'Resultados de la primera tanda de experimentos' },
+  expModalLede: {
+    en:'868 hybrid attention-mixer combinations were trained, evaluated and deployed. Explore the full report with 56 figures, crossed analysis and an interactive chart maker.',
+    es:'868 combinaciones híbridas de mezcladores de atención fueron entrenadas, evaluadas y desplegadas. Explora el informe completo con 56 figuras, análisis cruzado y un constructor de gráficos interactivo.'
+  },
+  expStatConfigs: { en:'configurations', es:'configuraciones' },
+  expStatPairs: { en:'hybrid pairs', es:'pares híbridos' },
+  expStatSteps: { en:'training steps', es:'pasos de entrenamiento' },
+  expStatTop5: { en:'mean top-5 hit rate', es:'top-5 medio' },
+  expModalCta: { en:'View charts & analysis →', es:'Ver gráficos y análisis →' },
+  expModalMaker: { en:'Open the chart maker', es:'Abrir el constructor de gráficos' },
+  expModalLater: { en:'Maybe later', es:'Quizá después' },
+  expModalClose: { en:'Close', es:'Cerrar' },
   cmdTitle: { en:'⚡ Command', es:'⚡ Comando' },
   loadExampleTitle: { en:'📁 Load Example', es:'📁 Cargar Ejemplo' },
   modelConfig: { en:'Model Configuration', es:'Configuración del Modelo' },
@@ -4249,6 +4321,22 @@ function applyStaticI18n() {
     if (restore) restore.textContent = t('restoreBtn');
     if (discard) discard.textContent = t('startFreshBtn');
   }
+  // Experiment 2 modal + call-to-action buttons
+  const expIds = {
+    'exp-side-btn': 'expNavBtn', 'exp-open-btn': 'expNavBtn',
+    'exp-direct-link': 'expModalMaker', 'exp-cta-hint': 'expNavHint',
+    'exp-modal-badge': 'expModalBadge', 'exp-modal-title': 'expModalTitle',
+    'exp-modal-lede': 'expModalLede', 'exp-stat-1': 'expStatConfigs',
+    'exp-stat-2': 'expStatPairs', 'exp-stat-3': 'expStatSteps',
+    'exp-stat-4': 'expStatTop5', 'exp-modal-cta': 'expModalCta',
+    'exp-modal-maker': 'expModalMaker', 'exp-modal-later': 'expModalLater'
+  };
+  for (const [id, key] of Object.entries(expIds)) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = t(key);
+  }
+  const closeBtn = document.getElementById('exp-modal-close');
+  if (closeBtn) closeBtn.setAttribute('aria-label', t('expModalClose'));
 }
 
 function showRestorePrompt() {
@@ -4445,7 +4533,66 @@ function buildPaperToc() {
     sidebarToc.innerHTML = html;
   }
 }
+
+// ====== EXPERIMENT 2 RESULTS MODAL ======
+const EXP_MODAL_KEY = 'ft-exp2-modal-seen';
+function openExperimentModal() {
+  const el = document.getElementById('exp-modal');
+  if (!el) return;
+  el.classList.add('open');
+  el.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  const cta = document.getElementById('exp-modal-cta');
+  if (cta) cta.focus();
+}
+function closeExperimentModal(persist) {
+  const el = document.getElementById('exp-modal');
+  if (!el) return;
+  el.classList.remove('open');
+  el.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (persist) { try { localStorage.setItem(EXP_MODAL_KEY, '1'); } catch (e) {} }
+}
+function maybeShowExperimentModal() {
+  try {
+    if (localStorage.getItem(EXP_MODAL_KEY)) return;
+  } catch (e) {}
+  openExperimentModal();
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closeExperimentModal(true);
+});
+document.addEventListener('DOMContentLoaded', function () {
+  const backdrop = document.getElementById('exp-modal');
+  if (backdrop) {
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === backdrop) closeExperimentModal(true);
+    });
+    setTimeout(maybeShowExperimentModal, 700);
+  }
+  applyStaticI18n();
+});
 </script>
+
+<div class="exp-modal-backdrop" id="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title" aria-hidden="true">
+  <div class="exp-modal">
+    <button type="button" class="exp-close" onclick="closeExperimentModal(true)" id="exp-modal-close" aria-label="Close">✕</button>
+    <span class="exp-badge" id="exp-modal-badge">Experiment 2 · first round</span>
+    <h2 id="exp-modal-title">Results of the first round of experiments</h2>
+    <p class="exp-lede" id="exp-modal-lede"></p>
+    <div class="exp-stats">
+      <div class="exp-stat"><b>868</b><span id="exp-stat-1">configurations</span></div>
+      <div class="exp-stat"><b>703</b><span id="exp-stat-2">hybrid pairs</span></div>
+      <div class="exp-stat"><b>2.66 M</b><span id="exp-stat-3">training steps</span></div>
+      <div class="exp-stat"><b>13.3 %</b><span id="exp-stat-4">mean top-5 hit rate</span></div>
+    </div>
+    <div class="exp-actions">
+      <a class="btn btn-primary" id="exp-modal-cta" href="charts/index.html">View charts &amp; analysis →</a>
+      <a class="btn" id="exp-modal-maker" href="charts/chartmaker.html">Open the chart maker</a>
+      <button type="button" class="exp-later" onclick="closeExperimentModal(true)" id="exp-modal-later">Maybe later</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

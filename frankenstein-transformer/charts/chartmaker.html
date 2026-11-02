@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart maker · Frankenstein Transformer</title>
+<meta name="description" content="Tableau-style chart maker for the Frankenstein Transformer experiment data: 868 configurations, 6,520 inference records, 5,271 pipeline stages and 86k learning-curve epochs.">
+<link rel="icon" href="../../favicon.ico">
+
+<style>
+:root{
+  --bg:#0d1117;--bg-elev:#11161d;--surface:#161b22;--surface-2:#1c232c;
+  --border:#30363d;--border-soft:#21262d;--text:#d6deea;--muted:#8b949e;
+  --accent:#58a6ff;--accent-2:#79c0ff;--success:#3fb950;--warning:#d2991d;--danger:#f85149;
+  --pink:#f778ba;--violet:#d2a8ff;--cyan:#39c5cf;--orange:#ffa657;
+  --radius:12px;--radius-sm:8px;--mono:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --shadow:0 10px 30px rgba(1,4,9,.45);
+  --blue-soft:rgba(88,166,255,.13);--green-soft:rgba(63,185,80,.13);
+}
+html[data-theme="light"]{
+  --bg:#f6f8fa;--bg-elev:#fff;--surface:#fff;--surface-2:#eef1f4;--border:#d0d7de;
+  --border-soft:#e3e8ee;--text:#1f2328;--muted:#59636e;--accent:#0969da;--accent-2:#0550ae;
+  --success:#1a7f37;--warning:#9a6700;--danger:#cf222e;--pink:#bf3989;--violet:#8250df;
+  --cyan:#1b7c83;--orange:#bc4c00;--shadow:0 8px 24px rgba(140,149,159,.2);
+  --blue-soft:rgba(9,105,218,.1);--green-soft:rgba(26,127,55,.1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:
+    radial-gradient(900px 420px at 12% -12%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 62%),
+    radial-gradient(700px 380px at 96% 0%,color-mix(in srgb,var(--violet) 8%,transparent),transparent 58%),
+    var(--bg);
+  color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);
+  border:1px solid var(--border-soft);border-radius:5px;padding:.08em .35em}
+.t-en,.t-es{display:inline}
+html[data-lang="en"] .t-es{display:none!important}
+html[data-lang="es"] .t-en{display:none!important}
+div.t-en,div.t-es{display:block}
+html[data-lang="en"] div.t-es{display:none!important}
+html[data-lang="es"] div.t-en{display:none!important}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- top bar (same as the report page) ---------- */
+.topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:12px;
+  padding:8px 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.topbar .brand{font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px;
+  font-size:14px;color:var(--text);text-decoration:none;white-space:nowrap}
+.topbar .brand span.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 12px var(--accent)}
+.topbar .brand:hover{text-decoration:none}
+.topbar nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+.topbar nav::-webkit-scrollbar{display:none}
+.topbar nav a{font-size:12px;color:var(--muted);padding:5px 8px;border-radius:6px;white-space:nowrap}
+.topbar nav a:hover{color:var(--text);background:var(--surface-2);text-decoration:none}
+.tools{display:flex;gap:6px}
+.tbtn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;
+  padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn.on{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:700}
+
+/* ---------- page head ---------- */
+.cm-head{max-width:1440px;margin:0 auto;padding:30px 22px 20px;display:flex;gap:28px;
+  align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.cm-head-main{max-width:760px}
+.eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.cm-head h1{font-size:clamp(28px,4vw,44px);line-height:1.05;margin:8px 0 10px;letter-spacing:-.03em}
+.cm-lede{font-size:14.6px;color:var(--muted);margin:0;max-width:700px}
+.cm-lede .t-en,.cm-lede .t-es{display:inline}
+.cm-ds{display:flex;flex-direction:column;gap:5px;min-width:290px}
+.cm-ds label{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.cm-ds select{width:100%;font-size:13.5px;padding:9px 10px}
+.cm-ds-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cm-ds-meta b{color:var(--text)}
+
+/* ---------- generic controls ---------- */
+select,input[type=text],input[type=search],input[type=number]{
+  background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:7px;
+  padding:6px 8px;font-family:inherit;font-size:12.6px;outline:none;min-width:0}
+select:hover,input:hover{border-color:color-mix(in srgb,var(--border) 55%,var(--accent))}
+input::placeholder{color:var(--muted);opacity:.8}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:8px;
+  border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12.6px;
+  font-weight:600;cursor:pointer;font-family:inherit;transition:.14s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:disabled:hover{border-color:var(--border);color:var(--text)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#08111d}
+.btn-primary:hover{background:var(--accent-2);border-color:var(--accent-2);color:#08111d}
+html[data-theme="light"] .btn-primary{color:#fff}
+.btn-ghost{background:transparent}
+.btn-sm{padding:5px 9px;font-size:11.6px;border-radius:6px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:12.4px;color:var(--text);
+  cursor:pointer;user-select:none;padding:6px 2px}
+.chk input{accent-color:var(--accent);width:14px;height:14px;margin:0}
+.chk.is-off{opacity:.45;cursor:not-allowed}
+
+/* ---------- cards & layout ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow)}
+.cm-main{max-width:1440px;margin:0 auto;padding:0 22px 70px;display:flex;flex-direction:column;gap:13px}
+.cm-toolbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;padding:12px 14px}
+.cm-toolbar .grow{flex:1 1 240px;min-width:190px;display:flex;flex-direction:column;gap:4px}
+.cm-toolbar label.cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.cm-toolbar-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+.cm-types{display:flex;flex-wrap:wrap;gap:5px;padding:10px 12px;align-items:center}
+.cm-types-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin-right:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:7px;
+  border:1px solid var(--border);background:var(--bg-elev);color:var(--text);font-size:12px;
+  font-family:inherit;cursor:pointer;transition:.13s;line-height:1.35}
+.chip .ico{font-size:13px;color:var(--muted);width:14px;text-align:center}
+.chip:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.chip:hover:not(:disabled) .ico{color:var(--accent)}
+.chip.is-active{background:var(--accent);border-color:var(--accent);color:#08111d;font-weight:700}
+.chip.is-active .ico{color:#08111d}
+html[data-theme="light"] .chip.is-active{color:#fff}
+.chip.is-disabled{opacity:.34;cursor:not-allowed;filter:saturate(.5)}
+.chip:disabled{opacity:.34;cursor:not-allowed;filter:saturate(.5)}
+
+.cm-body{display:grid;grid-template-columns:296px minmax(0,1fr);gap:13px;align-items:start}
+.cm-col{display:flex;flex-direction:column;gap:13px;min-width:0}
+
+/* ---------- fields panel ---------- */
+.cm-fields{position:sticky;top:58px;max-height:calc(100vh - 74px);overflow:auto;
+  padding:13px 12px 12px;scrollbar-width:thin}
+.cm-fields h2{font-size:13px;margin:0 0 8px;letter-spacing:.02em;display:flex;
+  justify-content:space-between;align-items:baseline;gap:8px}
+.cm-fields h2 .count{font-size:11px;color:var(--muted);font-weight:500}
+.cm-search{width:100%;margin-bottom:10px}
+.field-group{margin-top:11px}
+.field-group-title{display:flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 5px;padding:0 2px}
+.field-group-title .n{font-weight:500;letter-spacing:0}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.dot.cat{background:var(--accent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 60%,transparent)}
+.dot.num{background:var(--success);box-shadow:0 0 7px color-mix(in srgb,var(--success) 50%,transparent)}
+.field{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:6px;
+  font-size:12.4px;cursor:grab;border:1px solid transparent;user-select:none;
+  transition:background .1s,border-color .1s}
+.field:hover{background:var(--surface-2);border-color:var(--border-soft)}
+.field:active{cursor:grabbing}
+.field .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.field .tag{font-size:9.5px;letter-spacing:.05em;color:var(--muted);border:1px solid var(--border-soft);
+  border-radius:4px;padding:0 3px;line-height:1.45}
+.field.is-used{background:var(--blue-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.field.is-used .lbl{font-weight:600}
+.field.is-used .tag{display:none}
+.field.is-used::after{content:"✓";color:var(--accent);font-size:11px;font-weight:800}
+.field.is-num.is-used{background:var(--green-soft);border-color:color-mix(in srgb,var(--success) 38%,transparent)}
+.field.is-num.is-used::after{color:var(--success)}
+.field-hint{font-size:11.4px;color:var(--muted);padding:4px 6px}
+.cm-fields-foot{font-size:10.8px;color:var(--muted);border-top:1px solid var(--border-soft);
+  margin-top:11px;padding-top:8px;line-height:1.5}
+
+/* ---------- shelves ---------- */
+.cm-shelves{padding:12px 13px 13px}
+.cm-shelves h2{font-size:13px;margin:0 0 8px}
+.shelf-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.shelf{border:1px dashed var(--border);border-radius:var(--radius-sm);padding:7px 8px;
+  background:color-mix(in srgb,var(--bg-elev) 55%,transparent);min-height:62px;
+  transition:border-color .12s,background .12s}
+.shelf.is-mini{min-height:48px}
+.shelf.is-over{border-color:var(--accent);background:var(--blue-soft);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
+.shelf-head{display:flex;align-items:center;justify-content:space-between;gap:6px;
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin-bottom:4px}
+.shelf-head .n{font-weight:500;letter-spacing:0;font-size:10px}
+.pills{display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:24px}
+.shelf-hint{font-size:11px;color:var(--muted);font-style:italic}
+.pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 5px 3px 7px;
+  border-radius:6px;font-size:11.8px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+  background:var(--blue-soft);cursor:grab;user-select:none;position:relative}
+.pill.is-num{border-color:color-mix(in srgb,var(--success) 42%,transparent);background:var(--green-soft)}
+.pill:active{cursor:grabbing}
+.pill .plbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+.pill .px{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;
+  line-height:1;padding:0 2px;font-family:inherit;border-radius:3px}
+.pill .px:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
+.pill.is-focused{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ---------- options ---------- */
+.cm-opts{margin-top:9px;padding-top:9px;border-top:1px solid var(--border-soft);
+  display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end}
+.opt{display:flex;flex-direction:column;gap:3px}
+.opt>label,.opt>span.lab{font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);font-weight:700}
+.opt select,.opt input[type=number]{padding:4px 6px;font-size:12px}
+.opt .bins-wrap{display:flex;align-items:center;gap:6px}
+.opt input[type=range]{width:92px;accent-color:var(--accent)}
+.opt .bins-val{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
+.opt-checks{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ---------- chart ---------- */
+.cm-chart-card{padding:11px 12px 9px;overflow:hidden}
+.cm-chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:3px}
+.cm-hint{font-size:12px;color:var(--muted);margin:0;line-height:1.45;flex:1;min-height:17px}
+.cm-chart-tools{display:flex;gap:5px;flex-shrink:0}
+.cm-chart-wrap{position:relative;width:100%}
+.cm-chart{width:100%;height:480px}
+.cm-chart-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  font-size:11.4px;color:var(--muted);border-top:1px solid var(--border-soft);
+  padding-top:6px;margin-top:2px;min-height:20px}
+.cm-chart-foot .warn{color:var(--warning)}
+.cm-chart-foot .err{color:var(--danger)}
+.cm-note b{color:var(--text);font-variant-numeric:tabular-nums}
+.cm-empty,.cm-loading{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;gap:9px;padding:28px;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);border-radius:var(--radius-sm)}
+.cm-empty-icon{font-size:34px;color:var(--muted);opacity:.7;line-height:1}
+.cm-empty p{margin:0;font-size:13px;color:var(--muted);max-width:460px}
+.cm-empty strong{color:var(--text)}
+.cm-loading p{margin:0;font-size:12.6px;color:var(--muted);max-width:440px}
+.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--border);
+  border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- saved ---------- */
+.cm-saved{padding:12px 13px 14px}
+.cm-saved-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.cm-saved-head h2{font-size:13px;margin:0}
+.cm-saved-head .sub{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
+.saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:9px}
+.saved-card{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 8px 7px;cursor:pointer;transition:border-color .12s,transform .12s;min-width:0}
+.saved-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.saved-head{display:flex;align-items:flex-start;gap:6px}
+.saved-title{font-size:12px;font-weight:700;flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.saved-actions{display:flex;gap:2px}
+.mini-btn{border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;
+  font-size:13px;line-height:1;padding:2px 4px;border-radius:4px;font-family:inherit}
+.mini-btn:hover{color:var(--accent);background:var(--surface-2);border-color:var(--border-soft)}
+.mini-btn.danger:hover{color:var(--danger)}
+.saved-thumb{height:128px;margin:4px 0 3px;border-radius:5px;overflow:hidden;
+  background:color-mix(in srgb,var(--surface) 60%,transparent)}
+.saved-thumb .ph{display:flex;align-items:center;justify-content:center;height:100%;
+  font-size:11px;color:var(--muted);text-align:center;padding:10px;line-height:1.4}
+.saved-desc{font-size:10.6px;color:var(--muted);margin:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.saved-empty{font-size:12px;color:var(--muted);margin:0;padding:8px 2px 4px}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,18px);z-index:200;
+  max-width:min(540px,calc(100vw - 32px));padding:9px 15px;border-radius:8px;
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  font-size:12.4px;box-shadow:var(--shadow);opacity:0;pointer-events:none;
+  transition:opacity .18s,transform .18s;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.warn{border-color:color-mix(in srgb,var(--warning) 55%,var(--border))}
+.toast.error{border-color:color-mix(in srgb,var(--danger) 55%,var(--border));color:var(--text)}
+.toast.ok{border-color:color-mix(in srgb,var(--success) 55%,var(--border))}
+
+footer{padding:0 24px 44px;color:var(--muted);font-size:11.8px;text-align:center;
+  max-width:900px;margin:0 auto}
+footer .t-en,footer .t-es{display:block}
+
+/* ---------- responsive ---------- */
+@media(max-width:860px){
+  .cm-body{grid-template-columns:1fr}
+  .cm-fields{position:static;max-height:320px}
+  .field-group{margin-top:9px}
+}
+@media(max-width:900px){
+  .cm-head{padding:22px 16px 16px;gap:16px;align-items:flex-start}
+  .cm-ds{min-width:0;width:100%}
+  .cm-main{padding:0 16px 54px}
+  .cm-chart{height:400px}
+  .topbar nav{display:none}
+  .topbar{padding:8px 12px;gap:8px}
+  .cm-types-label{display:none}
+  .shelf-grid{grid-template-columns:1fr}
+  .cm-toolbar{padding:10px 11px}
+  .cm-toolbar-actions{width:100%}
+  .cm-toolbar-actions .btn{flex:1 1 auto;justify-content:center}
+  footer{padding:0 16px 36px}
+}
+@media(max-width:560px){
+  .cm-chart{height:340px}
+  .cm-head h1{font-size:26px}
+  .saved-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation-duration:.01ms!important}
+}
+</style>
+
+<script>
+/* Theme/lang before first paint — same storage keys as the report page. */
+(function(){
+  try{
+    var root=document.documentElement;
+    var theme=localStorage.getItem('ft-theme')||
+      ((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
+    var lang=localStorage.getItem('ft-lang')||'en';
+    root.setAttribute('data-theme',theme);
+    root.setAttribute('data-lang',lang);
+    root.setAttribute('lang',lang);
+  }catch(e){}
+})();
+</script>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="../index.html"><span class="dot"></span>Frankenstein<span style="color:var(--muted);font-weight:500">/ charts</span></a>
+  <nav>
+    <a href="index.html"><span class="t-en">Report</span><span class="t-es">Informe</span></a>
+    <a href="#my-charts"><span class="t-en">My charts</span><span class="t-es">Mis gráficos</span></a>
+    <a href="#chart-panel"><span class="t-en">Chart</span><span class="t-es">Gráfico</span></a>
+    <a href="../index.html"><span class="t-en">Project home</span><span class="t-es">Inicio del proyecto</span></a>
+  </nav>
+  <div class="tools">
+    <button class="tbtn" data-lang-btn="en" title="English">EN</button>
+    <button class="tbtn" data-lang-btn="es" title="Español">ES</button>
+    <button class="tbtn" data-theme-btn="dark" title="Dark theme / Tema oscuro">◐</button>
+    <button class="tbtn" data-theme-btn="light" title="Light theme / Tema claro">☀</button>
+  </div>
+</div>
+
+<header class="cm-head">
+  <div class="cm-head-main">
+    <div class="eyebrow"><span class="t-en">Experiment 2 · interactive</span><span class="t-es">Experimento 2 · interactivo</span></div>
+    <h1><span class="t-en">Chart maker</span><span class="t-es">Constructor de gráficos</span></h1>
+    <p class="cm-lede">
+      <span class="t-en">A Tableau-style explorer for the experiment data. Drop typed fields onto Columns, Rows, Color and Size, pick a chart, and share the result.</span>
+      <span class="t-es">Un explorador estilo Tableau para los datos del experimento. Suelta campos tipados en Columnas, Filas, Color y Tamaño, elige un gráfico y compártelo.</span>
+    </p>
+  </div>
+  <div class="cm-ds">
+    <label for="cm-dataset"><span class="t-en">Dataset</span><span class="t-es">Conjunto de datos</span></label>
+    <select id="cm-dataset" aria-label="Dataset" data-aria-en="Dataset" data-aria-es="Conjunto de datos"></select>
+    <div class="cm-ds-meta" id="cm-ds-meta"></div>
+  </div>
+</header>
+
+<main class="cm-main">
+
+  <section class="card cm-toolbar" aria-label="Chart actions" data-aria-en="Chart actions" data-aria-es="Acciones del gráfico">
+    <div class="grow">
+      <label class="cap" for="cm-title"><span class="t-en">Chart title</span><span class="t-es">Título del gráfico</span></label>
+      <input id="cm-title" type="text" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="cm-toolbar-actions">
+      <button id="cm-save" class="btn btn-primary" data-tip-en="Save this configuration in “My charts” (localStorage)" data-tip-es="Guarda esta configuración en «Mis gráficos» (localStorage)">
+        <span aria-hidden="true">＋</span><span class="t-en">Save chart</span><span class="t-es">Guardar gráfico</span>
+      </button>
+      <button id="cm-link" class="btn" data-tip-en="Copy a shareable link with the current configuration" data-tip-es="Copia un enlace compartible con la configuración actual">
+        <span aria-hidden="true">🔗</span><span class="t-en">Copy link</span><span class="t-es">Copiar enlace</span>
+      </button>
+      <button id="cm-png" class="btn" data-tip-en="Download the chart as a PNG image" data-tip-es="Descarga el gráfico como imagen PNG">PNG</button>
+      <button id="cm-csv" class="btn" data-tip-en="Download the aggregated table behind the chart (CSV, UTF-8 with BOM)" data-tip-es="Descarga la tabla agregada detrás del gráfico (CSV, UTF-8 con BOM)">CSV</button>
+      <button id="cm-reset" class="btn btn-ghost" data-tip-en="Reset to the sensible default for this dataset" data-tip-es="Restablece la configuración sugerida para este conjunto">
+        <span class="t-en">Reset</span><span class="t-es">Restablecer</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="card cm-types" id="cm-types" aria-label="Chart type" data-aria-en="Chart type" data-aria-es="Tipo de gráfico">
+    <span class="cm-types-label"><span class="t-en">Chart</span><span class="t-es">Gráfico</span></span>
+  </section>
+
+  <div class="cm-body">
+    <aside class="card cm-fields" aria-label="Available fields" data-aria-en="Available fields" data-aria-es="Campos disponibles">
+      <h2><span class="t-en">Fields</span><span class="t-es">Campos</span><span class="count" id="cm-field-count"></span></h2>
+      <input id="cm-search" class="cm-search" type="search" autocomplete="off" data-ph-en="Search field…" data-ph-es="Buscar campo…">
+      <div id="cm-field-list"></div>
+      <div class="cm-fields-foot">
+        <span class="t-en">Blue = dimensions (category), green = measures (number). Click to place or remove; drag to choose the shelf.</span>
+        <span class="t-es">Azul = dimensiones (categoría), verde = medidas (número). Haz click para colocar o quitar; arrastra para elegir la estantería.</span>
+      </div>
+    </aside>
+
+    <div class="cm-col">
+      <section class="card cm-shelves" aria-label="Shelves" data-aria-en="Shelves" data-aria-es="Estanterías">
+        <h2><span class="t-en">Shelves</span><span class="t-es">Estanterías</span></h2>
+        <div class="shelf-grid">
+          <div class="shelf" data-shelf="columnas">
+            <div class="shelf-head"><span><span class="t-en">Columns</span><span class="t-es">Columnas</span></span><span class="n" data-count="columnas">0 / 2</span></div>
+            <div class="pills" data-pills="columnas"></div>
+          </div>
+          <div class="shelf" data-shelf="filas">
+            <div class="shelf-head"><span><span class="t-en">Rows</span><span class="t-es">Filas</span></span><span class="n" data-count="filas">0 / 2</span></div>
+            <div class="pills" data-pills="filas"></div>
+          </div>
+          <div class="shelf is-mini" data-shelf="color">
+            <div class="shelf-head"><span><span class="t-en">Color</span><span class="t-es">Color</span></span><span class="n" data-count="color">0 / 1</span></div>
+            <div class="pills" data-pills="color"></div>
+          </div>
+          <div class="shelf is-mini" data-shelf="tamano">
+            <div class="shelf-head"><span><span class="t-en">Size</span><span class="t-es">Tamaño</span></span><span class="n" data-count="tamano">0 / 1</span></div>
+            <div class="pills" data-pills="tamano"></div>
+          </div>
+        </div>
+
+        <div class="cm-opts">
+          <div class="opt" id="opt-agg">
+            <span class="lab"><span class="t-en">Value</span><span class="t-es">Valor</span></span>
+            <select id="cm-agg" aria-label="Aggregation" data-aria-en="Aggregation" data-aria-es="Agregación"></select>
+          </div>
+          <div class="opt">
+            <span class="lab"><span class="t-en">Sort</span><span class="t-es">Ordenar</span></span>
+            <select id="cm-sort" aria-label="Sort" data-aria-en="Sort" data-aria-es="Ordenar"></select>
+          </div>
+          <div class="opt">
+            <span class="lab">Top N</span>
+            <select id="cm-topn" aria-label="Top N"></select>
+          </div>
+          <div class="opt" id="opt-bins">
+            <span class="lab"><span class="t-en">Bins</span><span class="t-es">Intervalos</span></span>
+            <span class="bins-wrap">
+              <input id="cm-bins" type="range" min="5" max="50" step="1" value="20">
+              <span class="bins-val" id="cm-bins-val">20</span>
+            </span>
+          </div>
+          <div class="opt-checks">
+            <label class="chk" id="opt-log" data-tip-en="Logarithmic value axis (only if every value is > 0)" data-tip-es="Eje de valores logarítmico (solo si todos los valores son > 0)">
+              <input id="cm-log" type="checkbox"> <span class="t-en">log axis</span><span class="t-es">eje log</span>
+            </label>
+            <label class="chk" id="opt-labels" data-tip-en="Show the numeric value on every mark" data-tip-es="Muestra el valor numérico sobre cada marca">
+              <input id="cm-labels" type="checkbox"> <span class="t-en">labels</span><span class="t-es">etiquetas</span>
+            </label>
+            <label class="chk" id="opt-points" data-tip-en="Overlay the raw values (jitter) to show the distribution" data-tip-es="Superpone los valores crudos (jitter) para ver la distribución">
+              <input id="cm-points" type="checkbox"> <span class="t-en">jitter points</span><span class="t-es">puntos jitter</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card cm-chart-card" id="chart-panel" aria-label="Chart" data-aria-en="Chart" data-aria-es="Gráfico">
+        <div class="cm-chart-head">
+          <p class="cm-hint" id="cm-hint"></p>
+          <div class="cm-chart-tools">
+            <button id="cm-png2" class="btn btn-sm" data-tip-en="Download PNG" data-tip-es="Descargar PNG">PNG</button>
+            <button id="cm-csv2" class="btn btn-sm" data-tip-en="Download aggregated CSV" data-tip-es="Descargar CSV agregado">CSV</button>
+          </div>
+        </div>
+        <div class="cm-chart-wrap">
+          <div id="cm-chart" class="cm-chart" role="img" aria-label="Chart" data-aria-en="Chart" data-aria-es="Gráfico"></div>
+          <div id="cm-empty" class="cm-empty" hidden>
+            <div class="cm-empty-icon" aria-hidden="true">▥</div>
+            <p id="cm-empty-msg"></p>
+            <button id="cm-empty-reset" class="btn btn-sm"><span class="t-en">Load the default view</span><span class="t-es">Cargar la vista por defecto</span></button>
+          </div>
+          <div id="cm-loading" class="cm-loading" hidden>
+            <span class="spin" aria-hidden="true"></span>
+            <p id="cm-loading-msg"></p>
+          </div>
+        </div>
+        <div class="cm-chart-foot">
+          <span class="cm-note" id="cm-note"></span>
+          <span class="warn" id="cm-note-warn"></span>
+        </div>
+      </section>
+
+      <section class="card cm-saved" id="my-charts" aria-label="Saved charts" data-aria-en="Saved charts" data-aria-es="Gráficos guardados">
+        <div class="cm-saved-head">
+          <h2><span class="t-en">My charts</span><span class="t-es">Mis gráficos</span><span class="sub"><span class="t-en">saved in this browser</span><span class="t-es">guardados en este navegador</span></span></h2>
+          <button id="cm-clear" class="btn btn-sm btn-ghost" data-tip-en="Remove every saved chart from this browser" data-tip-es="Elimina todos los gráficos guardados de este navegador">
+            <span class="t-en">Clear all</span><span class="t-es">Borrar todo</span>
+          </button>
+        </div>
+        <p class="saved-empty" id="cm-saved-empty"></p>
+        <div class="saved-grid" id="cm-saved-grid"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="t-en">Frankenstein Transformer · Experiment 2 · everything runs locally in your browser. No data leaves this page.</span>
+  <span class="t-es">Frankenstein Transformer · Experimento 2 · todo se ejecuta localmente en tu navegador. Ningún dato sale de esta página.</span>
+</footer>
+
+<div id="cm-toast" class="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:20px">This chart maker needs JavaScript. / Este constructor necesita JavaScript.</p></noscript>
+
+<script src="vendor/echarts.min.js"></script>
+<script src="ft-chartmaker.js"></script>
+</body>
+</html>
