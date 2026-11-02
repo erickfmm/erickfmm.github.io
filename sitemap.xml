@@ -4,6 +4,20 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
+  <!-- Experimentos: Frankenstein Transformer -->
+  <url>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/chartmaker.html</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- Página principal -->
   <url>
     <loc>https://erickfmm.github.io/</loc>
