@@ -1830,16 +1830,16 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-five optimizer families in seven
+groups. The system supports twenty-six optimizer families in seven
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
 APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
-geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon); and
-adaptivity-tunable optimizers (Anon). Algorithms, pseudocode, and memory
-and complexity comparisons are collected in Appendix <a
+geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3);
+and adaptivity-tunable optimizers (Anon). Algorithms, pseudocode, and
+memory and complexity comparisons are collected in Appendix <a
 href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
 <figure id="fig:optimizer-routing">
@@ -2167,7 +2167,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>129</span> urlstyle</p>
+<p><span>131</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2180,6 +2180,15 @@ Operating Systems Design and Implementation (OSDI)</em>, pages 265–283,
 Federico Lebrón, and Sumit Sanghai. Gqa: Training generalized
 multi-query transformer models from multi-head checkpoints, 2023. URL
 <code>https://arxiv.org/abs/2305.13245</code>.</p>
+<p>Noah Amsel, David Persson, Christopher Musco, and Robert M. Gower.
+The polar express: Optimal matrix sign methods and their application to
+the muon algorithm. In <em>The Fourteenth International Conference on
+Learning Representations (ICLR)</em>, 2026<span>a</span>. URL
+<code>https://openreview.net/forum?id=yRtgZ1K8hO</code>.</p>
+<p>Noah Amsel, Jack Zhang, Kwangjun Ahn, Ali Naeimi, Austin Feng, Berlin
+Chen, Tri Dao, and John Langford. Dion3: Full-stack orthogonal updates,
+2026<span>b</span>. URL
+<code>https://arxiv.org/abs/2608.11612</code>.</p>
 <p>Anonymous authors. Anon: Extrapolating adaptivity beyond sgd and
 adam, 2026. URL <code>https://arxiv.org/abs/2605.02317</code>.</p>
 <p>Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E. Hinton. Layer
@@ -5003,7 +5012,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 25 supported optimizers with their memory footprint, per-step
+all 26 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5175,6 +5184,15 @@ class="math inline">\(v\)</span>) &amp; <span
 class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
 momentum, eps, wd, NS steps <span class="math inline">\(k\)</span> &amp;
 <span class="citation" data-cites="si_adamuon_2025"></span><br />
+Dion3 &amp; Orthogonality (fractional) &amp; 1 (<span
+class="math inline">\(m\)</span>); + <span
+class="math inline">\(v\)</span> rows if NorMuon &amp; <span
+class="math inline">\(\mathcal{O}(r^2(m+r))\)</span>, <span
+class="math inline">\(r=\lceil f n\rceil\)</span> &amp; lr, momentum,
+wd, fraction <span class="math inline">\(f\)</span>, NS steps <span
+class="math inline">\(k\)</span>, <span
+class="math inline">\(\beta_2\)</span> (NorMuon) &amp; <span
+class="citation" data-cites="amsel_dion3_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -7134,6 +7152,132 @@ of learning-rate schedules; the authors report up to roughly 40%
 training-efficiency gains over AdamW and consistent wins over Muon on
 GPT-2 (125M–1.5B) and Qwen2.5 (1.5B, 7B).</p></li>
 </ul>
+<h4 id="dion3-fractional-gram-newton-schulz-orthogonalization.">Dion3
+(Fractional Gram-Newton-Schulz Orthogonalization).</h4>
+<p>Dion3 <span class="citation" data-cites="amsel_dion3_2026"></span> is
+a <strong>revision of Muon</strong> that reduces the cost of the
+orthogonalization step at the algorithmic level. It replaces standard
+Newton–Schulz with <em>Gram Newton–Schulz</em>, a mathematically
+equivalent iteration that runs on the small symmetric Gram matrix <span
+class="math inline">\(XX^{\mathsf T}\)</span>, and it orthogonalizes
+only a fraction <span class="math inline">\(f \in (0,1]\)</span> of the
+momentum rows at each step, updating only those rows of the weight
+matrix. <em>Error feedback</em> decays only the selected rows of the
+momentum buffer, so rows that were not selected keep accumulating and
+are eventually chosen. At <span class="math inline">\(f = 1\)</span> the
+update reduces to Muon in exact arithmetic (or to NorMuon with the
+optional row-wise normalization). For a weight <span
+class="math inline">\(W \in \mathbb{R}^{n \times m}\)</span> (operating
+on the smaller dimension, <span class="math inline">\(n \le m\)</span>),
+fraction <span class="math inline">\(f\)</span>, <span
+class="math inline">\(k = \lceil f n \rceil\)</span>, momentum <span
+class="math inline">\(\mu\)</span>, learning rate <span
+class="math inline">\(\eta\)</span> and weight decay <span
+class="math inline">\(\lambda\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= M_{t-1} + G_t \quad\text{(momentum accumulation; damping
+deferred)} \\
+S_t &amp;= \operatorname{topk}_{i}\bigl(\lVert M_{t,i,:}\rVert_1,\
+k\bigr) \quad\text{(select the } k \text{ largest rows)} \\
+O_t &amp;= \operatorname{GramNS}\bigl(M_t[S_t,:]\bigr)
+\quad\text{(orthogonalize the } k \times m \text{ submatrix)} \\
+W_t &amp;= (1 - \eta\lambda)\, W_{t-1}, \qquad W_t[S_t,:] \gets
+W_t[S_t,:] - \eta\, O_t \\
+M_t[S_t,:] &amp;\gets \mu\, M_t[S_t,:] \quad\text{(error feedback: decay
+only selected rows)}
+\end{aligned}\]</span> Gram Newton–Schulz normalizes <span
+class="math inline">\(X \gets M_t[S_t,:]/(\lVert M_t[S_t,:]\rVert_F +
+\epsilon)\)</span> with <span class="math inline">\(\epsilon =
+10^{-7}\)</span>, casts to <code>float16</code>, forms <span
+class="math inline">\(R_0 = X X^{\mathsf T}\)</span> and <span
+class="math inline">\(Q_0 = I\)</span>, and runs <span
+class="math inline">\(T\)</span> iterations <span
+class="math display">\[\begin{aligned}
+Z_t &amp;= b_t R_{t-1} + c_t R_{t-1}^2, &amp;
+Q_t &amp;= Q_{t-1} Z_t + a_t Q_{t-1}, \\
+(RZ)_t &amp;= R_{t-1} Z_t + a_t R_{t-1}, &amp;
+R_t &amp;= Z_t (RZ)_t + a_t (RZ)_t,
+\end{aligned}\]</span> returning <span class="math inline">\(Q_T
+X\)</span>. A <em>restart</em> after iteration 2 (<span
+class="math inline">\(X \gets Q_2 X\)</span>, <span
+class="math inline">\(R_2 \gets X X^{\mathsf T}\)</span>, <span
+class="math inline">\(Q_2 \gets I\)</span>) removes the spurious
+negative eigenvalues that half precision introduces in the Gram matrix;
+the coefficients <span class="math inline">\((a_t,b_t,c_t)\)</span> are
+the Polar Express five-step triples <span class="citation"
+data-cites="amsel_polar_express_2026"></span>. The cost falls from <span
+class="math inline">\(T(3\alpha+1)n^3\)</span> FLOPs for standard
+Newton–Schulz to <span class="math inline">\((4T+3\alpha-3)n^3\)</span>
+for Gram Newton–Schulz (<span class="math inline">\(\alpha =
+m/n\)</span>), and selecting <span class="math inline">\(k = \lceil f n
+\rceil\)</span> rows both shrinks the iteration and raises the aspect
+ratio by <span class="math inline">\(1/f\)</span>. The optional NorMuon
+flavor adds a row-wise second moment <span class="math inline">\(v_i
+\gets \beta_2 v_i +
+(1-\beta_2)\,\operatorname{mean}_j(O_{ij}^2)\)</span> for <span
+class="math inline">\(i \in S\)</span>, rescales <span
+class="math inline">\(\tilde O_{ij} =
+O_{ij}/(\sqrt{v_i}+\epsilon)\)</span>, and renormalizes <span
+class="math inline">\(\tilde O \gets \tilde O\,\lVert
+O\rVert_F/\lVert\tilde O\rVert_F\)</span> in <code>float32</code> before
+the update.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Matrices <span class="math inline">\(W\)</span>, learning rate <span
+class="math inline">\(\eta\)</span>, momentum <span
+class="math inline">\(\mu\)</span>, fraction <span
+class="math inline">\(f\)</span>, Gram Newton–Schulz steps <span
+class="math inline">\(T\)</span>, <span
+class="math inline">\(\epsilon\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span> Updated matrices <span
+class="math inline">\(W_T\)</span> <span class="math inline">\(M \gets M
++ G\)</span> <span class="math inline">\(S \gets\)</span> indices of the
+<span class="math inline">\(k = \lceil f n \rceil\)</span> rows of <span
+class="math inline">\(M\)</span> with largest <span
+class="math inline">\(\ell_1\)</span> norm <span class="math inline">\(O
+\gets \operatorname{GramNS}_T(M[S,:])\)</span> <span
+class="math inline">\(v_i \gets \beta_2 v_i +
+(1-\beta_2)\operatorname{mean}_j(O_{ij}^2)\)</span> for <span
+class="math inline">\(i \in S\)</span> <span
+class="math inline">\(\tilde O_{ij} \gets
+O_{ij}/(\sqrt{v_i}+\epsilon)\)</span>; <span
+class="math inline">\(\tilde O \gets \tilde O\,\lVert
+O\rVert_F/\lVert\tilde O\rVert_F\)</span> <span class="math inline">\(W
+\gets (1 - \eta\lambda) W\)</span> <span class="math inline">\(W[S,:]
+\gets W[S,:] - \eta\,\tilde O\)</span> <span
+class="math inline">\(M[S,:] \gets \mu\, M[S,:]\)</span> <span
+class="math inline">\(W_T\)</span></p>
+</div>
+</div>
+<h4 id="cons.-25">Cons.</h4>
+<ul>
+<li><p>Each step updates only a fraction of the rows, so the
+optimization trajectory differs from Muon; the paper reports the change
+is benign (Section 8.1 of the Dion3 report).</p></li>
+<li><p>Row selection and error feedback add top-<span
+class="math inline">\(k\)</span> bookkeeping and a row-wise momentum
+decay per step.</p></li>
+<li><p>The largest wall-clock gains in the paper come from symmetric
+GEMM kernels and megabatched communication, which are hardware- and
+cluster-specific; only the algorithmic reduction and the single
+first-moment buffer apply here.</p></li>
+</ul>
+<h4 id="pros.-25">Pros.</h4>
+<ul>
+<li><p>Gram Newton–Schulz is mathematically equivalent to Newton–Schulz
+and cuts orthogonalization FLOPs by about 55% at typical transformer
+aspect ratios with five iterations.</p></li>
+<li><p>Fractional row selection reduces the orthogonalized submatrix to
+<span class="math inline">\(k \times m\)</span> and raises its aspect
+ratio by <span class="math inline">\(1/f\)</span>, compounding the Gram
+savings; the paper reports up to <span
+class="math inline">\(6\times\)</span> faster optimizer steps at matched
+loss.</p></li>
+<li><p>At <span class="math inline">\(f = 1\)</span> the update reduces
+to Muon (or NorMuon), and a single momentum buffer per matrix parameter
+suffices; error feedback lets ignored rows participate
+eventually.</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Group</strong> &amp; <strong>Methods</strong> &amp;
@@ -7156,13 +7300,15 @@ structured scaling.<br />
 Curvature-aware &amp; Shampoo, SOAP, Sophia &amp; better conditioning
 &amp; Prefer when richer geometry is worth implementation and compute
 overhead.<br />
-Geometry-oriented &amp; Muon, Turbo-Muon, AF-Muon, AdaMuon &amp;
+Geometry-oriented &amp; Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3 &amp;
 orthogonalized update structure &amp; Specialized options for matrix
 geometry and representation shaping; AdaMuon adds an element-wise second
 moment on the orthogonalized direction with RMS-aligned updates; AF-Muon
 assigns the tied vocabulary table a capped-row table geometry and
-one-dimensional parameters an RMS update, with no AdamW auxiliary
-state.<br />
+one-dimensional parameters an RMS update, with no AdamW auxiliary state;
+Dion3 keeps the spectral update but orthogonalizes only a fraction of
+the momentum rows per step with Gram Newton–Schulz and error
+feedback.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Dense, Recurrent, and Memory-Augmented
