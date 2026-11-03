@@ -1902,7 +1902,7 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veinticinco familias de optimizadores en siete
+sistema soporta veintiséis familias de optimizadores en siete
 categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
 momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
@@ -1910,10 +1910,10 @@ GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
 sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
-Turbo-Muon, AF-Muon, AdaMuon); y optimizadores de adaptividad ajustable
-(Anon). Los algoritmos, el pseudocódigo y las comparaciones de memoria y
-complejidad se recopilan en el Apéndice <a href="#sec:annex-optimizers"
-data-reference-type="ref"
+Turbo-Muon, AF-Muon, AdaMuon, Dion3); y optimizadores de adaptividad
+ajustable (Anon). Los algoritmos, el pseudocódigo y las comparaciones de
+memoria y complejidad se recopilan en el Apéndice <a
+href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
 <figure id="fig:optimizer-routing">
 
@@ -2266,7 +2266,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>129</span> urlstyle</p>
+<p><span>131</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2279,6 +2279,15 @@ Operating Systems Design and Implementation (OSDI)</em>, pages 265–283,
 Federico Lebrón, and Sumit Sanghai. Gqa: Training generalized
 multi-query transformer models from multi-head checkpoints, 2023. URL
 <code>https://arxiv.org/abs/2305.13245</code>.</p>
+<p>Noah Amsel, David Persson, Christopher Musco, and Robert M. Gower.
+The polar express: Optimal matrix sign methods and their application to
+the muon algorithm. In <em>The Fourteenth International Conference on
+Learning Representations (ICLR)</em>, 2026<span>a</span>. URL
+<code>https://openreview.net/forum?id=yRtgZ1K8hO</code>.</p>
+<p>Noah Amsel, Jack Zhang, Kwangjun Ahn, Ali Naeimi, Austin Feng, Berlin
+Chen, Tri Dao, and John Langford. Dion3: Full-stack orthogonal updates,
+2026<span>b</span>. URL
+<code>https://arxiv.org/abs/2608.11612</code>.</p>
 <p>Anonymous authors. Anon: Extrapolating adaptivity beyond sgd and
 adam, 2026. URL <code>https://arxiv.org/abs/2605.02317</code>.</p>
 <p>Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E. Hinton. Layer
@@ -4860,7 +4869,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-45 mezcladores de secuencia en nueve familias, 25 optimizadores, 6
+45 mezcladores de secuencia en nueve familias, 26 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5147,7 +5156,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 25 optimizadores soportados con su huella de memoria, costo
+los 26 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -5321,6 +5330,15 @@ class="math inline">\(v\)</span>) &amp; <span
 class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
 momentum, eps, wd, pasos NS <span class="math inline">\(k\)</span> &amp;
 <span class="citation" data-cites="si_adamuon_2025"></span><br />
+Dion3 &amp; Ortogonalidad fraccional &amp; 1 (<span
+class="math inline">\(m\)</span>); + <span
+class="math inline">\(v\)</span> por filas con NorMuon &amp; <span
+class="math inline">\(\mathcal{O}(r^2(m+r))\)</span>, <span
+class="math inline">\(r=\lceil f n\rceil\)</span> &amp; lr, momentum,
+wd, fracción <span class="math inline">\(f\)</span>, pasos NS <span
+class="math inline">\(k\)</span>, <span
+class="math inline">\(\beta_2\)</span> (NorMuon) &amp; <span
+class="citation" data-cites="amsel_dion3_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Adaptativo de bajo rango &amp; 2 bajo rango + proy &amp;
@@ -7369,6 +7387,132 @@ ganancia en eficiencia de entrenamiento frente a AdamW y mejoras
 consistentes frente a Muon en GPT-2 (125M–1.5B) y Qwen2.5 (1.5B,
 7B).</p></li>
 </ul>
+<h4 id="dion3-ortogonalización-fraccional-con-gram-newton-schulz.">Dion3
+(Ortogonalización Fraccional con Gram-Newton-Schulz).</h4>
+<p>Dion3 <span class="citation" data-cites="amsel_dion3_2026"></span> es
+una <strong>revisión de Muon</strong> que reduce el costo del paso de
+ortogonalización a nivel algorítmico. Reemplaza Newton–Schulz estándar
+por <em>Gram Newton–Schulz</em>, una iteración matemáticamente
+equivalente que opera sobre la pequeña matriz de Gram simétrica <span
+class="math inline">\(XX^{\mathsf T}\)</span>, y ortogonaliza solo una
+fracción <span class="math inline">\(f \in (0,1]\)</span> de las filas
+del momentum en cada paso, actualizando únicamente esas filas de la
+matriz de pesos. El <em>error feedback</em> decae solo las filas
+seleccionadas del búfer de momentum, de modo que las filas no
+seleccionadas siguen acumulándose y terminan siendo elegidas. Con <span
+class="math inline">\(f = 1\)</span> la actualización se reduce a Muon
+en aritmética exacta (o a NorMuon con la normalización por filas
+opcional). Para un peso <span class="math inline">\(W \in \mathbb{R}^{n
+\times m}\)</span> (operando sobre la dimensión menor, <span
+class="math inline">\(n \le m\)</span>), fracción <span
+class="math inline">\(f\)</span>, <span class="math inline">\(k = \lceil
+f n \rceil\)</span>, momentum <span class="math inline">\(\mu\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span> y weight
+decay <span class="math inline">\(\lambda\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= M_{t-1} + G_t \quad\text{(acumulación de momentum;
+amortiguamiento diferido)} \\
+S_t &amp;= \operatorname{topk}_{i}\bigl(\lVert M_{t,i,:}\rVert_1,\
+k\bigr) \quad\text{(seleccionar las } k \text{ filas mayores)} \\
+O_t &amp;= \operatorname{GramNS}\bigl(M_t[S_t,:]\bigr)
+\quad\text{(ortogonalizar la submatriz } k \times m\text{)} \\
+W_t &amp;= (1 - \eta\lambda)\, W_{t-1}, \qquad W_t[S_t,:] \gets
+W_t[S_t,:] - \eta\, O_t \\
+M_t[S_t,:] &amp;\gets \mu\, M_t[S_t,:] \quad\text{(error feedback:
+decaer solo las filas seleccionadas)}
+\end{aligned}\]</span> Gram Newton–Schulz normaliza <span
+class="math inline">\(X \gets M_t[S_t,:]/(\lVert M_t[S_t,:]\rVert_F +
+\epsilon)\)</span> con <span class="math inline">\(\epsilon =
+10^{-7}\)</span>, convierte a <code>float16</code>, forma <span
+class="math inline">\(R_0 = X X^{\mathsf T}\)</span> y <span
+class="math inline">\(Q_0 = I\)</span>, y ejecuta <span
+class="math inline">\(T\)</span> iteraciones <span
+class="math display">\[\begin{aligned}
+Z_t &amp;= b_t R_{t-1} + c_t R_{t-1}^2, &amp;
+Q_t &amp;= Q_{t-1} Z_t + a_t Q_{t-1}, \\
+(RZ)_t &amp;= R_{t-1} Z_t + a_t R_{t-1}, &amp;
+R_t &amp;= Z_t (RZ)_t + a_t (RZ)_t,
+\end{aligned}\]</span> y devuelve <span class="math inline">\(Q_T
+X\)</span>. Un <em>reinicio</em> tras la iteración 2 (<span
+class="math inline">\(X \gets Q_2 X\)</span>, <span
+class="math inline">\(R_2 \gets X X^{\mathsf T}\)</span>, <span
+class="math inline">\(Q_2 \gets I\)</span>) elimina los autovalores
+negativos espurios que la media precisión introduce en la matriz de
+Gram; los coeficientes <span
+class="math inline">\((a_t,b_t,c_t)\)</span> son las ternas de cinco
+pasos de Polar Express <span class="citation"
+data-cites="amsel_polar_express_2026"></span>. El costo baja de <span
+class="math inline">\(T(3\alpha+1)n^3\)</span> FLOPs para Newton–Schulz
+estándar a <span class="math inline">\((4T+3\alpha-3)n^3\)</span> para
+Gram Newton–Schulz (<span class="math inline">\(\alpha = m/n\)</span>),
+y seleccionar <span class="math inline">\(k = \lceil f n \rceil\)</span>
+filas reduce la iteración y eleva la relación de aspecto en <span
+class="math inline">\(1/f\)</span>. La variante NorMuon opcional añade
+un segundo momento por fila <span class="math inline">\(v_i \gets
+\beta_2 v_i + (1-\beta_2)\,\operatorname{mean}_j(O_{ij}^2)\)</span> para
+<span class="math inline">\(i \in S\)</span>, reescala <span
+class="math inline">\(\tilde O_{ij} =
+O_{ij}/(\sqrt{v_i}+\epsilon)\)</span> y renormaliza <span
+class="math inline">\(\tilde O \gets \tilde O\,\lVert
+O\rVert_F/\lVert\tilde O\rVert_F\)</span> en <code>float32</code> antes
+de la actualización.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Matrices <span class="math inline">\(W\)</span>, tasa de aprendizaje
+<span class="math inline">\(\eta\)</span>, momentum <span
+class="math inline">\(\mu\)</span>, fracción <span
+class="math inline">\(f\)</span>, pasos de Gram Newton–Schulz <span
+class="math inline">\(T\)</span>, <span
+class="math inline">\(\epsilon\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span> Matrices actualizadas <span
+class="math inline">\(W_T\)</span> <span class="math inline">\(M \gets M
++ G\)</span> <span class="math inline">\(S \gets\)</span> índices de las
+<span class="math inline">\(k = \lceil f n \rceil\)</span> filas de
+<span class="math inline">\(M\)</span> con mayor norma <span
+class="math inline">\(\ell_1\)</span> <span class="math inline">\(O
+\gets \operatorname{GramNS}_T(M[S,:])\)</span> <span
+class="math inline">\(v_i \gets \beta_2 v_i +
+(1-\beta_2)\operatorname{mean}_j(O_{ij}^2)\)</span> para <span
+class="math inline">\(i \in S\)</span> <span
+class="math inline">\(\tilde O_{ij} \gets
+O_{ij}/(\sqrt{v_i}+\epsilon)\)</span>; <span
+class="math inline">\(\tilde O \gets \tilde O\,\lVert
+O\rVert_F/\lVert\tilde O\rVert_F\)</span> <span class="math inline">\(W
+\gets (1 - \eta\lambda) W\)</span> <span class="math inline">\(W[S,:]
+\gets W[S,:] - \eta\,\tilde O\)</span> <span
+class="math inline">\(M[S,:] \gets \mu\, M[S,:]\)</span> <span
+class="math inline">\(W_T\)</span></p>
+</div>
+</div>
+<h4 id="contras.-25">Contras.</h4>
+<ul>
+<li><p>Cada paso actualiza solo una fracción de las filas, por lo que la
+trayectoria de optimización difiere de Muon; el artículo reporta que el
+cambio es benigno (Sección 8.1 del reporte Dion3).</p></li>
+<li><p>La selección de filas y el error feedback añaden contabilidad
+top-<span class="math inline">\(k\)</span> y un decaimiento del momentum
+por filas en cada paso.</p></li>
+<li><p>Las mayores ganancias de tiempo de reloj del artículo provienen
+de kernels GEMM simétricos y comunicación megaagrupada, específicos de
+hardware y clúster; aquí solo aplican la reducción algorítmica y el
+único búfer de primer momento.</p></li>
+</ul>
+<h4 id="ventajas.-25">Ventajas.</h4>
+<ul>
+<li><p>Gram Newton–Schulz es matemáticamente equivalente a Newton–Schulz
+y reduce los FLOPs de ortogonalización en torno al 55% en relaciones de
+aspecto típicas de transformer con cinco iteraciones.</p></li>
+<li><p>La selección fraccional de filas reduce la submatriz
+ortogonalizada a <span class="math inline">\(k \times m\)</span> y eleva
+su relación de aspecto en <span class="math inline">\(1/f\)</span>,
+potenciando el ahorro de Gram; el artículo reporta pasos de optimizador
+hasta <span class="math inline">\(6\times\)</span> más rápidos con la
+misma pérdida.</p></li>
+<li><p>Con <span class="math inline">\(f = 1\)</span> la actualización
+se reduce a Muon (o NorMuon), y basta un único búfer de momentum por
+parámetro matricial; el error feedback permite que las filas ignoradas
+participen eventualmente.</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Grupo</strong> &amp; <strong>Métodos</strong> &amp;
@@ -7394,14 +7538,16 @@ cuantizado.<br />
 Consciente de curvatura &amp; Shampoo, SOAP, Sophia &amp; mejor
 condicionamiento &amp; Preferir cuando una geometría más rica justifica
 la sobrecarga de implementación y cómputo.<br />
-Orientado a geometría &amp; Muon, Turbo-Muon, AF-Muon, AdaMuon &amp;
-estructura de actualización ortogonalizada &amp; Opciones especializadas
-para geometría matricial y modelado de representaciones; AdaMuon añade
-un segundo momento por elemento sobre la dirección ortogonalizada con
-actualizaciones alineadas por RMS; AF-Muon asigna a la tabla de
-vocabulario atada una geometría de tabla con tope por fila y a los
-parámetros unidimensionales una actualización RMS, sin estado auxiliar
-de AdamW.<br />
+Orientado a geometría &amp; Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3
+&amp; estructura de actualización ortogonalizada &amp; Opciones
+especializadas para geometría matricial y modelado de representaciones;
+AdaMuon añade un segundo momento por elemento sobre la dirección
+ortogonalizada con actualizaciones alineadas por RMS; AF-Muon asigna a
+la tabla de vocabulario atada una geometría de tabla con tope por fila y
+a los parámetros unidimensionales una actualización RMS, sin estado
+auxiliar de AdamW; Dion3 conserva la actualización espectral pero
+ortogonaliza solo una fracción de las filas del momentum por paso con
+Gram Newton–Schulz y error feedback.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Transformadores Densos, Recurrentes y
