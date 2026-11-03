@@ -1,4 +1,4 @@
-\begin{thebibliography}{131}
+\begin{thebibliography}{135}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -41,6 +41,12 @@ Noah Amsel, Jack Zhang, Kwangjun Ahn, Ali Naeimi, Austin Feng, Berlin Chen, Tri
   Dao, and John Langford.
 \newblock Dion3: Full-stack orthogonal updates, 2026{\natexlab{b}}.
 \newblock URL \url{https://arxiv.org/abs/2608.11612}.
+
+\bibitem[Anson and Aitchison(2025)]{anson2025controlling}
+Ben Anson and Laurence Aitchison.
+\newblock Controlling changes to attention logits, 2025.
+\newblock URL \url{https://arxiv.org/abs/2511.21377}.
+\newblock QuacK: parameter-dependent query/key learning rates.
 
 \bibitem[authors(2026)]{anon2026anon}
 Anonymous authors.
@@ -337,6 +343,11 @@ Vineet Gupta, Tomer Koren, and Yoram Singer.
 \newblock URL \url{https://arxiv.org/abs/1802.09568}.
 \newblock Version Number: 2.
 
+\bibitem[Han et~al.(2026)Han, Zhao, Zhou, Li, and Sun]{han2026qknormed}
+Yizhou Han, Yao Zhao, Jun Zhou, Longfei Li, and Ruoyu Sun.
+\newblock {QK}-normed {MLA}: {QK} normalization without full key caching, 2026.
+\newblock URL \url{https://arxiv.org/abs/2606.16310}.
+
 \bibitem[Hatamizadeh et~al.(2026)Hatamizadeh, Choi, and
   Kautz]{hatamizadeh_gated_deltanet2_2026}
 Ali Hatamizadeh, Yejin Choi, and Jan Kautz.
@@ -371,6 +382,13 @@ Dan Hendrycks and Kevin Gimpel.
 \newblock Gaussian error linear units ({GELU}).
 \newblock In \emph{arXiv preprint arXiv:1606.08415}, 2016.
 \newblock URL \url{https://arxiv.org/abs/1606.08415}.
+
+\bibitem[Henry et~al.(2020)Henry, Dachapally, Pawar, and
+  Chen]{henry2020querykey}
+Alex Henry, Prudhvi~Raj Dachapally, Shubham Pawar, and Yuxuan Chen.
+\newblock Query-key normalization for transformers, 2020.
+\newblock URL \url{https://arxiv.org/abs/2010.04245}.
+\newblock Findings of EMNLP 2020.
 
 \bibitem[Hooper et~al.(2024)Hooper, Kim, Mohammadzadeh, Mahoney, Shao, Keutzer,
   and Gholami]{kvquant_hooper_2024}
@@ -436,6 +454,12 @@ Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip
   Isola, Aaron Maschinot, Ce~Liu, and Dilip Krishnan.
 \newblock Supervised contrastive learning, 2020.
 \newblock URL \url{https://arxiv.org/abs/2004.11362}.
+
+\bibitem[{Kimi Team}(2025)]{kimi2025k2}
+{Kimi Team}.
+\newblock Kimi {K2}: Open agentic intelligence, 2025.
+\newblock URL \url{https://arxiv.org/abs/2507.20534}.
+\newblock MuonClip optimizer and QK-Clip (Section 2.1, Algorithm 1).
 
 \bibitem[{Kimi Team} et~al.(2025){Kimi Team}, Zhang, Lin, Yao, Hu, Meng, Liu,
   Men, Yang, Li, Li, Lu, Liu, Chen, Xu, Yu, Wang, Fan, Zhong, Yuan, Zhang,
