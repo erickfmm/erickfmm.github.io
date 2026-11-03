@@ -1864,6 +1864,50 @@ function checkConflicts() {
   }
 }
 
+// ====== PAPER LINKS ======
+// Converts `arxiv:<id>` tokens in schema descriptions into clickable links to
+// the paper, and makes every external paper URL open in a new tab. Applied to
+// the output of marked.parse() via getDesc(), so all 13 description call sites
+// inherit it. DOM-safe: only text nodes are rewritten, existing anchors are kept.
+const ARXIV_TOKEN = /(?:^|[\s(])arxiv:(\d{4}\.\d{4,5}(?:v\d+)?)(?=$|[\s).;,:])/gi;
+
+function linkifyPapers(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  const walker = document.createNodeIterator(t.content, NodeFilter.SHOW_TEXT);
+  const targets = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.parentElement && node.parentElement.closest('a')) continue;
+    ARXIV_TOKEN.lastIndex = 0;
+    if (ARXIV_TOKEN.test(node.nodeValue)) targets.push(node);
+  }
+  for (const n of targets) {
+    const frag = document.createDocumentFragment();
+    let last = 0, m;
+    ARXIV_TOKEN.lastIndex = 0;
+    while ((m = ARXIV_TOKEN.exec(n.nodeValue))) {
+      const token = 'arxiv:' + m[1];
+      const start = m.index + m[0].length - token.length;
+      frag.appendChild(document.createTextNode(n.nodeValue.slice(last, start)));
+      const a = document.createElement('a');
+      a.href = 'https://arxiv.org/abs/' + m[1];
+      a.textContent = token;
+      frag.appendChild(a);
+      last = start + token.length;
+    }
+    frag.appendChild(document.createTextNode(n.nodeValue.slice(last)));
+    n.parentNode.replaceChild(frag, n);
+  }
+  t.content.querySelectorAll('a[href]').forEach(a => {
+    if (/^https?:/i.test(a.getAttribute('href') || '')) {
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+    }
+  });
+  return t.innerHTML;
+}
+
 // ====== SCHEMA HELPERS ======
 function getLoc(fieldSchema, key, fallback) {
   const locKey = lang === 'en' ? key : `${key}_es`;
@@ -1876,7 +1920,7 @@ function getTitle(fieldSchema, fallback) {
 
 function getDesc(fieldSchema) {
   const raw = getLoc(fieldSchema, 'description', '');
-  return raw ? marked.parse(raw) : '';
+  return raw ? linkifyPapers(marked.parse(raw)) : '';
 }
 
 // ====== RENDER HELPERS ======
