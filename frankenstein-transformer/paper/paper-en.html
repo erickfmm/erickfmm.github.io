@@ -8006,6 +8006,16 @@ class="math inline">\(\tau\)</span> of 0.66–0.69).</p></li>
 </ul>
 <h4 id="ea4llm-evolution-strategies-for-large-language-models.">EA4LLM
 (Evolution Strategies for Large Language Models).</h4>
+<figure id="fig:opt-ea4llm"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/ea4llm.svg" alt="image" /></span></p>
+
+<figcaption>Step flow of EA4LLM: each iteration evaluates <span
+class="math inline">\(N\)</span> Gaussian perturbations of the
+parameters on one minibatch shared by every member, scores them by the
+negated token-level log-likelihood, shapes the rewards into z-score or
+centered-rank weights, and replays the same seeded noise to accumulate
+the ES direction — no gradients and no per-parameter optimizer
+state.</figcaption>
+</figure>
 <p>EA4LLM <span class="citation" data-cites="liu_ea4llm_2025"></span> is
 a <strong>gradient-free alternative to Adam</strong> that removes
 backpropagation and optimizer state entirely, and it is the first method
@@ -16814,7 +16824,7 @@ the largest is <code>engram__conformer_attn</code> at
 which attaches a large key–value table to the attention block.</p>
 <p>The composition chart (Figure <a href="#fig:r2-params-composition"
 data-reference-type="ref"
-data-reference="fig:r2-params-composition">81</a>) is the most useful
+data-reference="fig:r2-params-composition">82</a>) is the most useful
 diagnostic of the section. The token embeddings and the output head are
 fixed costs of roughly 49k parameters each, so almost every difference
 between configurations is paid in the attention block and the FFN—the
@@ -17113,7 +17123,7 @@ the median clip ratio is 0.90.</figcaption>
 <h2 id="the-atimesb-atlas">The A<span
 class="math inline">\(\times\)</span>B Atlas</h2>
 <p>The atlas (Figure <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">89</a>) is
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">90</a>) is
 the centrepiece of the experiment: a matrix in which each cell is one
 hybrid pair, rows index the first mixer, columns index the second, and
 colour encodes the final loss. It is read in two directions. Column by
@@ -18136,7 +18146,7 @@ class="math inline">\(r = 1.00\)</span>), which is expected because the
 clip ratio is computed from the gradient norm, and neither correlates
 with quality.</p>
 <p>The correlation matrix of Figure <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">108</a> is
+data-reference-type="ref" data-reference="fig:r2-correlation">109</a> is
 computed over all 868 rows. Read that way, parameter count correlates
 with loss at <span class="math inline">\(-0.43\)</span> and with
 accuracy at <span class="math inline">\(+0.42\)</span>, apparently
