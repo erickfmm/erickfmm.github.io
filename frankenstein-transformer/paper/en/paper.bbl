@@ -1,4 +1,4 @@
-\begin{thebibliography}{138}
+\begin{thebibliography}{139}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -382,6 +382,13 @@ Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'a}r, and Ross
   Girshick.
 \newblock {Masked Autoencoders Are Scalable Vision Learners}, 2022.
 \newblock URL \url{http://arxiv.org/abs/2111.06377}.
+
+\bibitem[He et~al.(2025)He, Han, Zhou, Chen, Liu, Chen, and Wang]{he_root_2025}
+Wei He, Kai Han, Hang Zhou, Hanting Chen, Zhicheng Liu, Xinghao Chen, and Yunhe
+  Wang.
+\newblock Root: Robust orthogonalized optimizer for neural network training,
+  2025.
+\newblock URL \url{https://arxiv.org/abs/2511.20626}.
 
 \bibitem[Hendrycks and Gimpel(2016)]{hendrycks2016gelu}
 Dan Hendrycks and Kevin Gimpel.

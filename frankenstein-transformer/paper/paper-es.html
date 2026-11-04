@@ -1985,15 +1985,15 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veintiocho familias de optimizadores en ocho categorías:
-líneas base clásicas (SGD con momentum, AdamW, RAdam); momentum y
-reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious AdamW);
-métodos eficientes en memoria y de bajo rango (Adafactor, GaLore, Lion,
-APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y sin
-parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
+sistema soporta veintinueve familias de optimizadores en ocho
+categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
+momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
+AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
+GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
+sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
-Turbo-Muon, AF-Muon, AdaMuon, Dion3); optimizadores de adaptividad
+Turbo-Muon, AF-Muon, AdaMuon, Dion3, ROOT); optimizadores de adaptividad
 ajustable (Anon); y métodos evolutivos poblacionales (EvE, EA4LLM). Los
 algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
 se recopilan en el Apéndice <a href="#sec:annex-optimizers"
@@ -2734,7 +2734,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>138</span> urlstyle</p>
+<p><span>139</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2939,6 +2939,9 @@ pages 770–778. <span>IEEE</span>, 2016. doi: 10.1109/CVPR.2016.90. URL
 <p>Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr
 Doll<span>á</span>r, and Ross Girshick. , 2022. URL
 <code>http://arxiv.org/abs/2111.06377</code>.</p>
+<p>Wei He, Kai Han, Hang Zhou, Hanting Chen, Zhicheng Liu, Xinghao Chen,
+and Yunhe Wang. Root: Robust orthogonalized optimizer for neural network
+training, 2025. URL <code>https://arxiv.org/abs/2511.20626</code>.</p>
 <p>Dan Hendrycks and Kevin Gimpel. Gaussian error linear units
 (<span>GELU</span>). In <em>arXiv preprint arXiv:1606.08415</em>, 2016.
 URL <code>https://arxiv.org/abs/1606.08415</code>.</p>
@@ -5646,7 +5649,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 28 optimizadores soportados con su huella de memoria, costo
+los 29 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -5832,6 +5835,16 @@ wd, fracción <span class="math inline">\(f\)</span>, pasos NS <span
 class="math inline">\(k\)</span>, <span
 class="math inline">\(\beta_2\)</span> (NorMuon) &amp; <span
 class="citation" data-cites="amsel_dion3_2026"></span><br />
+ROOT &amp; Ortogonalidad (robusta) &amp; 1 (<span
+class="math inline">\(m\)</span>); + <span
+class="math inline">\(v\)</span> en el respaldo AdamW &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> + ordenamiento por
+cuantil &amp; lr, momentum, wd, pasos NS <span
+class="math inline">\(k\)</span>, cuantil <span
+class="math inline">\(p\)</span>; <span
+class="math inline">\(\beta\)</span>, eps para
+embeddings/pos/heads/vectores &amp; <span class="citation"
+data-cites="he_root_2025"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Adaptativo de bajo rango &amp; 2 bajo rango + proy &amp;
@@ -8059,6 +8072,213 @@ se reduce a Muon (o NorMuon), y basta un único búfer de momentum por
 parámetro matricial; el error feedback permite que las filas ignoradas
 participen eventualmente.</p></li>
 </ul>
+<h4 id="root-optimizador-ortogonalizado-robusto.">ROOT (Optimizador
+Ortogonalizado Robusto).</h4>
+<figure id="fig:opt-root"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/root.svg" alt="image" /></span></p>
+
+<figcaption>Flujo por paso de ROOT: acumulación de momentum, separación
+de atípicos por soft-threshold y ortogonalización Newton–Schulz
+calibrada por forma.</figcaption>
+</figure>
+<p>ROOT <span class="citation" data-cites="he_root_2025"></span> es una
+<strong>revisión orientada a la robustez de Muon</strong> que ataca dos
+fragilidades del esquema Newton–Schulz de coeficientes fijos. Primero,
+los coeficientes universales <span
+class="math inline">\((a,b,c)=(3.4445,-4.7750,2.0315)\)</span> están
+calibrados para una forma matricial “promedio” y pierden precisión
+justamente en capas cuadradas y casi cuadradas: el MSE de
+ortogonalización va de <span class="math inline">\(0.0499\)</span> en
+<span class="math inline">\(2048\times2048\)</span> a <span
+class="math inline">\(0.0003\)</span> en <span
+class="math inline">\(2048\times16384\)</span> en la Tabla 1 del
+artículo. ROOT los reemplaza por coeficientes por forma <span
+class="math inline">\(\{a^{(m,n)}, b^{(m,n)}, c^{(m,n)}\}\)</span>
+calibrados fuera de línea sobre distribuciones de valores singulares del
+momentum (calibración mixta 1:3 real-a-aleatorio), un esquema que los
+autores llaman <em>AdaNewton</em>. Segundo, las componentes de gradiente
+de cola pesada distorsionan la normalización de Frobenius que requiere
+Newton–Schulz y son amplificadas por la iteración polinómica; ROOT
+modela el momentum como <span class="math inline">\(M_t = B_t +
+O_t\)</span> y resuelve un problema proximal L1 cuya solución cerrada es
+el soft-thresholding. Solo se ortogonaliza la componente base robusta
+<span class="math inline">\(B_t\)</span>; la componente de atípicos
+dispersa <span class="math inline">\(O_t\)</span> se descarta. Para una
+matriz de pesos de capa oculta <span class="math inline">\(W \in
+\mathbb{R}^{m\times n}\)</span>, momentum <span
+class="math inline">\(\mu\)</span>, tasa de aprendizaje <span
+class="math inline">\(\eta\)</span>, percentil <span
+class="math inline">\(p\)</span> e iteraciones <span
+class="math inline">\(K\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \mu M_{t-1} + \nabla \mathcal{L}(\theta_{t-1})
+\quad\text{(momentum, Ec. 1)} \\
+\varepsilon_t &amp;= \operatorname{Quantile}(|M_t|, p)
+\quad\text{(umbral dinámico, } p=0.90 \text{ por defecto)} \\
+O_t &amp;= \mathcal{T}_{\varepsilon_t}[M_t], \quad
+\mathcal{T}_\varepsilon[x]_i =
+\operatorname{sign}(x_i)\max(|x_i|-\varepsilon, 0)
+\quad\text{(soft-threshold, Ecs. 7--10)} \\
+B_t &amp;= M_t - O_t \quad\text{(componente robusta recortada, Ec. 9)}
+\\
+X_0 &amp;= \frac{B_t}{\lVert B_t\rVert_F}, \qquad X_k = a^{(m,n)}X_{k-1}
++ b^{(m,n)}X_{k-1}(X_{k-1}^\top X_{k-1}) + c^{(m,n)}X_{k-1}(X_{k-1}^\top
+X_{k-1})^2 \\
+\theta_t &amp;= \theta_{t-1} - \eta X_K \quad\text{(actualización, }
+K=5\text{)}
+\end{aligned}\]</span></p>
+<div id="tab:root-coefficients">
+<table>
+<caption>Coeficientes AdaNewton de la Tabla 1 de <span class="citation"
+data-cites="he_root_2025"></span> (calibración mixta 1:3). Las formas
+fuera de la tabla usan los coeficientes fijos de Muon <span
+class="math inline">\((3.4445,-4.7750,2.0315)\)</span>.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span
+class="math inline">\(m\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(n\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(a^{(m,n)}\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(b^{(m,n)}\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(c^{(m,n)}\)</span></th>
+<th style="text-align: right;">MSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">3.3334</td>
+<td style="text-align: right;"><span
+class="math inline">\(-4.2591\)</span></td>
+<td style="text-align: right;">1.7791</td>
+<td style="text-align: right;">0.0352</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">3.3732</td>
+<td style="text-align: right;"><span
+class="math inline">\(-4.6134\)</span></td>
+<td style="text-align: right;">2.0576</td>
+<td style="text-align: right;">0.0470</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">3.3886</td>
+<td style="text-align: right;"><span
+class="math inline">\(-4.9026\)</span></td>
+<td style="text-align: right;">2.3105</td>
+<td style="text-align: right;">0.0587</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3072</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.9091</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.8108\)</span></td>
+<td style="text-align: right;">1.8600</td>
+<td style="text-align: right;">0.0024</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.7739</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.4911\)</span></td>
+<td style="text-align: right;">1.6992</td>
+<td style="text-align: right;">0.0010</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.5925</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.0010\)</span></td>
+<td style="text-align: right;">1.4138</td>
+<td style="text-align: right;">0.0003</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">16384</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.7045</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.2335\)</span></td>
+<td style="text-align: right;">1.5336</td>
+<td style="text-align: right;">0.0003</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span>, momentum
+<span class="math inline">\(\mu\)</span>, percentil <span
+class="math inline">\(p\)</span>, iteraciones Newton–Schulz <span
+class="math inline">\(K\)</span> Parámetros actualizados <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \mu M +
+G\)</span> <span class="math inline">\(\varepsilon \gets
+\operatorname{Quantile}(|M|, p)\)</span> <span class="math inline">\(O
+\gets \operatorname{sign}(M)\max(|M|-\varepsilon, 0)\)</span> <span
+class="math inline">\(B \gets M - O\)</span> <span
+class="math inline">\(X_0 \gets \frac{B}{\|B\|_F + \epsilon}\)</span>
+<span class="math inline">\(A_k \gets X_k X_k^\top\)</span> <span
+class="math inline">\(B_k \gets b^{(m,n)} A_k + c^{(m,n)} A_k^2\)</span>
+<span class="math inline">\(X_{k+1} \gets a^{(m,n)} X_k + B_k
+X_k\)</span> <span class="math inline">\(W \gets W - \eta X_K\)</span>
+<span class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P);
+\eta, \beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>Siguiendo la receta híbrida de Muon, solo las matrices 2-D de capas
+ocultas toman la ruta ROOT; las tablas de embeddings, los encodings
+posicionales aprendidos, los heads de salida y todo parámetro no
+matricial se entrenan con AdamW desacoplado usando la tasa de
+aprendizaje, el weight decay, <span class="math inline">\(\beta_1,
+\beta_2\)</span> y <span class="math inline">\(\epsilon\)</span> por
+grupo. Los experimentos LLM del artículo aplican un factor de escalado
+de RMS de actualización de <span class="math inline">\(0.2\)</span>
+siguiendo Moonlight; esta implementación deja que las tasas de
+aprendizaje por grupo absorban esa calibración, por lo que no se aplica
+ninguna constante de escala. Las formas ausentes de la Tabla <a
+href="#tab:root-coefficients" data-reference-type="ref"
+data-reference="tab:root-coefficients">7</a> usan los coeficientes fijos
+de Muon, y el cuantil dinámico cuesta un ordenamiento adicional de <span
+class="math inline">\(|M_t|\)</span> por matriz y por paso.</p>
+<h4 id="contras.-26">Contras.</h4>
+<ul>
+<li><p>El umbral por percentil requiere un ordenamiento <span
+class="math inline">\(O(N\log N)\)</span> de la matriz de momentum en
+cada paso, además de las multiplicaciones de Newton–Schulz.</p></li>
+<li><p>La tabla de coeficientes calibrados cubre solo siete formas;
+cualquier otra forma usa los coeficientes fijos de Muon.</p></li>
+<li><p>Los atípicos se descartan en lugar de encogerse, por lo que un
+gradiente extremadamente ruidoso también puede perder señal informativa;
+la ablación del artículo muestra que el compromiso lo gobierna el
+percentil (0.85 recorta demasiado, 0.99 demasiado poco).</p></li>
+</ul>
+<h4 id="ventajas.-26">Ventajas.</h4>
+<ul>
+<li><p>Precisión de ortogonalización invariante a la dimensión: los
+coeficientes calibrados por forma eliminan el precipicio de precisión
+que los coeficientes fijos muestran en capas cuadradas y casi
+cuadradas.</p></li>
+<li><p>Robustez frente a atípicos sin reajustar la receta de Muon; el
+artículo reporta menor pérdida y mejor promedio zero-shot que Muon y
+AdamW a escala 1B (60.12 vs 59.59 vs 59.05) y ganancias en
+ViT/CIFAR-10.</p></li>
+<li><p>El mismo único búfer de momentum por parámetro matricial que
+Muon, y los interruptores
+<code>softthresh</code>/<code>ada_newton</code> exponen directamente las
+ablaciones del artículo.</p></li>
+</ul>
 <h2 id="híbridos-evolutivos-y-poblacionales">Híbridos Evolutivos y
 Poblacionales</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -8225,7 +8445,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="contras.-26">Contras.</h4>
+<h4 id="contras.-27">Contras.</h4>
 <ul>
 <li><p>Quedan aproximadamente un punto de exactitud (MNIST) y 9–11% de
 pérdida relativa (ajuste fino LoRA) por detrás de Adam a presupuesto de
@@ -8248,7 +8468,7 @@ no está soportada y el bucle SBERT (<code>fit</code> de
 sentence-transformers) no puede alojarlo; la mutación polinomial es un
 costo puro a escala de red y está desactivada por defecto.</p></li>
 </ul>
-<h4 id="ventajas.-26">Ventajas.</h4>
+<h4 id="ventajas.-27">Ventajas.</h4>
 <ul>
 <li><p>Mejor-observado monótono por construcción en objetivos
 deterministas (selección voraz de aceptar solo si es estrictamente
@@ -8390,7 +8610,7 @@ class="math inline">\(\theta \gets \theta + \alpha g /
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-27">Contras.</h4>
+<h4 id="contras.-28">Contras.</h4>
 <ul>
 <li><p>Requiere <span class="math inline">\(N\)</span> evaluaciones
 forward por paso (30 en el artículo), por lo que la eficiencia de
@@ -8418,7 +8638,7 @@ independiente de <span class="math inline">\(\sigma\)</span> y de la
 escala del gradiente, <span class="math inline">\(\alpha\)</span> debe
 ajustarse por tarea en lugar de transferirse desde Adam.</p></li>
 </ul>
-<h4 id="ventajas.-27">Ventajas.</h4>
+<h4 id="ventajas.-28">Ventajas.</h4>
 <ul>
 <li><p>Estado del optimizador nulo: sin momentos y sin copias de
 población, por lo que el artículo mide 60,01 frente a 137,61 GB en 8B y
@@ -17025,7 +17245,7 @@ no atada conserva <span class="math inline">\(3.94\)</span>M, dejando
 contabilidad del paper, donde la cabeza se descarta solo para el
 despliegue.</p>
 <p>La Tabla <a href="#tab:eelbert-results-es" data-reference-type="ref"
-data-reference="tab:eelbert-results-es">15</a> resume los resultados de
+data-reference="tab:eelbert-results-es">16</a> resume los resultados de
 referencia reportados por <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results-es">
@@ -17227,7 +17447,7 @@ Nada de esta cadena necesita GPU.</figcaption>
 <h2 id="el-libro-de-etapas-de-la-ronda-2">El libro de etapas de la
 ronda 2</h2>
 <p>La Tabla <a href="#tab:stage-ledger" data-reference-type="ref"
-data-reference="tab:stage-ledger">16</a> reproduce el libro. El
+data-reference="tab:stage-ledger">17</a> reproduce el libro. El
 entrenamiento domina tanto el conteo de registros como el coste:
 1<span>,</span>039 intentos, de los cuales 868 tuvieron éxito y 171
 fallaron, con una mediana de 68 minutos y un P90 de 84 minutos por
@@ -17436,7 +17656,7 @@ con 415 904, impulsada por el banco de memoria <code>engram</code>, que
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">82</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">83</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -17481,10 +17701,10 @@ de evaluación, un token afortunado o desafortunado reescribe el ranking.
 Por eso se reportan ambas señales a lo largo del apéndice, y las tablas
 de inferencia deben leerse como control de fallos catastróficos y no
 como clasificación. La Tabla <a href="#tab:r2-top-loss"
-data-reference-type="ref" data-reference="tab:r2-top-loss">17</a> lista
+data-reference-type="ref" data-reference="tab:r2-top-loss">18</a> lista
 los diez mejores pares por pérdida final y la Tabla <a
 href="#tab:r2-top-acc" data-reference-type="ref"
-data-reference="tab:r2-top-acc">18</a> los diez mejores por precisión de
+data-reference="tab:r2-top-acc">19</a> los diez mejores por precisión de
 validación; las dos tablas no comparten ningún par.</p>
 <div id="tab:r2-top-loss">
 <table>
@@ -17740,7 +17960,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">90</a>) es
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">91</a>) es
 el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -17775,7 +17995,7 @@ entrenan.</figcaption>
 <h4 id="qué-segundo-mezclador-elegir.">Qué segundo mezclador
 elegir.</h4>
 <p>La Tabla <a href="#tab:r2-best-b" data-reference-type="ref"
-data-reference="tab:r2-best-b">19</a> ordena los segundos mezcladores
+data-reference="tab:r2-best-b">20</a> ordena los segundos mezcladores
 por pérdida final media en todos los pares que los contienen. La columna
 <em>Pares</em> es el tamaño de muestra detrás de cada media y debe
 leerse junto con ella: una media de un solo par (por ejemplo
@@ -18066,7 +18286,7 @@ validación.</figcaption>
 ronda: 23 optimizadores, el mismo esqueleto de 210k y un rango de
 pérdida final de solo 10,10–10,77 nats (Tabla <a
 href="#tab:r2-optimizers" data-reference-type="ref"
-data-reference="tab:r2-optimizers">21</a>). <code>q_apollo</code> gana
+data-reference="tab:r2-optimizers">22</a>). <code>q_apollo</code> gana
 con 10,098 y <code>galore_adamw</code> cierra la tabla con 10,772, pero
 una docena de optimizadores aterrizan exactamente en 10,404—la corrida
 es demasiado corta para que la elección del optimizador se separe del
@@ -18246,13 +18466,13 @@ pagan el sobrecoste visible.</figcaption>
 <h4 id="normalización-y-codificación-posicional.">Normalización y
 codificación posicional.</h4>
 <p>Entre las normalizaciones (Tabla <a href="#tab:r2-norms"
-data-reference-type="ref" data-reference="tab:r2-norms">22</a>),
+data-reference-type="ref" data-reference="tab:r2-norms">23</a>),
 <code>flash_norm</code> gana con claridad con 9,749 nats—medio nat por
 delante del segundo, un margen grande según los estándares de esta
 ronda—, mientras que <code>prms_norm</code> y <code>rms_norm</code>
 quedan atrás. En las codificaciones posicionales (Tabla <a
 href="#tab:r2-pe" data-reference-type="ref"
-data-reference="tab:r2-pe">23</a>), la familia PAPE
+data-reference="tab:r2-pe">24</a>), la familia PAPE
 (<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
 barre el podio y RoPE clásico queda a media tabla. Ambos resultados
 sirven de calibración: “moderno” no es automáticamente mejor en una
@@ -18409,7 +18629,7 @@ y RoPE clásico queda a media tabla a esta escala.</figcaption>
 </figure>
 <h4 id="conmutadores-estructurales.">Conmutadores estructurales.</h4>
 <p>Los conmutadores estructurales (Tabla <a href="#tab:r2-trans"
-data-reference-type="ref" data-reference="tab:r2-trans">24</a>) se
+data-reference-type="ref" data-reference="tab:r2-trans">25</a>) se
 separan más que los optimizadores—evidencia de que, a esta escala, la
 arquitectura es una palanca más fuerte que la regla de actualización.
 Las tres victorias son los embeddings factorizados (9,623), la FFN
@@ -18783,7 +19003,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">109</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">110</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span

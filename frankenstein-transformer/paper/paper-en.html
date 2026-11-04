@@ -1909,18 +1909,18 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-eight optimizer families in eight
+groups. The system supports twenty-nine optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
 APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
-geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3);
-adaptivity-tunable optimizers (Anon); and evolutionary population-based
-hybrids (EvE, EA4LLM). Algorithms, pseudocode, and memory and complexity
-comparisons are collected in Appendix <a href="#sec:annex-optimizers"
-data-reference-type="ref"
+geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3,
+ROOT); adaptivity-tunable optimizers (Anon); and evolutionary
+population-based hybrids (EvE, EA4LLM). Algorithms, pseudocode, and
+memory and complexity comparisons are collected in Appendix <a
+href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
@@ -2612,7 +2612,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>138</span> urlstyle</p>
+<p><span>139</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2817,6 +2817,9 @@ pages 770–778. <span>IEEE</span>, 2016. doi: 10.1109/CVPR.2016.90. URL
 <p>Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr
 Doll<span>á</span>r, and Ross Girshick. , 2022. URL
 <code>http://arxiv.org/abs/2111.06377</code>.</p>
+<p>Wei He, Kai Han, Hang Zhou, Hanting Chen, Zhicheng Liu, Xinghao Chen,
+and Yunhe Wang. Root: Robust orthogonalized optimizer for neural network
+training, 2025. URL <code>https://arxiv.org/abs/2511.20626</code>.</p>
 <p>Dan Hendrycks and Kevin Gimpel. Gaussian error linear units
 (<span>GELU</span>). In <em>arXiv preprint arXiv:1606.08415</em>, 2016.
 URL <code>https://arxiv.org/abs/1606.08415</code>.</p>
@@ -5479,7 +5482,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 28 supported optimizers with their memory footprint, per-step
+all 29 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5663,6 +5666,15 @@ wd, fraction <span class="math inline">\(f\)</span>, NS steps <span
 class="math inline">\(k\)</span>, <span
 class="math inline">\(\beta_2\)</span> (NorMuon) &amp; <span
 class="citation" data-cites="amsel_dion3_2026"></span><br />
+ROOT &amp; Orthogonality (robust) &amp; 1 (<span
+class="math inline">\(m\)</span>); + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> + quantile sort
+&amp; lr, momentum, wd, NS steps <span class="math inline">\(k\)</span>,
+quantile <span class="math inline">\(p\)</span>; <span
+class="math inline">\(\beta\)</span>, eps for
+embeddings/pos/heads/vectors &amp; <span class="citation"
+data-cites="he_root_2025"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -7799,6 +7811,207 @@ to Muon (or NorMuon), and a single momentum buffer per matrix parameter
 suffices; error feedback lets ignored rows participate
 eventually.</p></li>
 </ul>
+<h4 id="root-robust-orthogonalized-optimizer.">ROOT (Robust
+Orthogonalized Optimizer).</h4>
+<figure id="fig:opt-root"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/root.svg" alt="image" /></span></p>
+
+<figcaption>Step flow of ROOT: momentum accumulation, soft-threshold
+outlier separation, and shape-calibrated Newton–Schulz
+orthogonalization.</figcaption>
+</figure>
+<p>ROOT <span class="citation" data-cites="he_root_2025"></span> is a
+<strong>robustness-oriented revision of Muon</strong> that attacks two
+fragilities of the fixed-coefficient Newton–Schulz pipeline. First, the
+universal coefficients <span
+class="math inline">\((a,b,c)=(3.4445,-4.7750,2.0315)\)</span> are
+calibrated for an “average” matrix shape and lose precision exactly on
+square and near-square layers: the orthogonalization MSE ranges from
+<span class="math inline">\(0.0499\)</span> at <span
+class="math inline">\(2048\times2048\)</span> to <span
+class="math inline">\(0.0003\)</span> at <span
+class="math inline">\(2048\times16384\)</span> in Table 1 of the paper.
+ROOT replaces them with per-shape coefficients <span
+class="math inline">\(\{a^{(m,n)}, b^{(m,n)}, c^{(m,n)}\}\)</span>
+calibrated offline over momentum singular-value distributions (Mixed 1:3
+real-to-random calibration), a scheme the authors call
+<em>AdaNewton</em>. Second, heavy-tailed gradient components distort the
+Frobenius normalization required by Newton–Schulz and are amplified by
+the polynomial iteration; ROOT models the momentum as <span
+class="math inline">\(M_t = B_t + O_t\)</span> and solves a proximal L1
+problem whose closed-form solution is soft-thresholding. Only the robust
+base component <span class="math inline">\(B_t\)</span> is
+orthogonalized; the sparse outlier component <span
+class="math inline">\(O_t\)</span> is discarded. For a hidden-layer
+weight matrix <span class="math inline">\(W \in \mathbb{R}^{m\times
+n}\)</span>, momentum <span class="math inline">\(\mu\)</span>, learning
+rate <span class="math inline">\(\eta\)</span>, percentile <span
+class="math inline">\(p\)</span> and iteration count <span
+class="math inline">\(K\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \mu M_{t-1} + \nabla \mathcal{L}(\theta_{t-1})
+\quad\text{(momentum, Eq. 1)} \\
+\varepsilon_t &amp;= \operatorname{Quantile}(|M_t|, p)
+\quad\text{(dynamic threshold, } p=0.90 \text{ default)} \\
+O_t &amp;= \mathcal{T}_{\varepsilon_t}[M_t], \quad
+\mathcal{T}_\varepsilon[x]_i =
+\operatorname{sign}(x_i)\max(|x_i|-\varepsilon, 0)
+\quad\text{(soft-threshold, Eqs. 7--10)} \\
+B_t &amp;= M_t - O_t \quad\text{(clipped robust component, Eq. 9)} \\
+X_0 &amp;= \frac{B_t}{\lVert B_t\rVert_F}, \qquad X_k = a^{(m,n)}X_{k-1}
++ b^{(m,n)}X_{k-1}(X_{k-1}^\top X_{k-1}) + c^{(m,n)}X_{k-1}(X_{k-1}^\top
+X_{k-1})^2 \\
+\theta_t &amp;= \theta_{t-1} - \eta X_K \quad\text{(update, }
+K=5\text{)}
+\end{aligned}\]</span></p>
+<div id="tab:root-coefficients">
+<table>
+<caption>AdaNewton coefficients from Table 1 of <span class="citation"
+data-cites="he_root_2025"></span> (Mixed 1:3 calibration). Shapes
+outside the table fall back to Muon’s fixed <span
+class="math inline">\((3.4445,-4.7750,2.0315)\)</span>.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span
+class="math inline">\(m\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(n\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(a^{(m,n)}\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(b^{(m,n)}\)</span></th>
+<th style="text-align: right;"><span
+class="math inline">\(c^{(m,n)}\)</span></th>
+<th style="text-align: right;">MSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">3.3334</td>
+<td style="text-align: right;"><span
+class="math inline">\(-4.2591\)</span></td>
+<td style="text-align: right;">1.7791</td>
+<td style="text-align: right;">0.0352</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">3.3732</td>
+<td style="text-align: right;"><span
+class="math inline">\(-4.6134\)</span></td>
+<td style="text-align: right;">2.0576</td>
+<td style="text-align: right;">0.0470</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">3.3886</td>
+<td style="text-align: right;"><span
+class="math inline">\(-4.9026\)</span></td>
+<td style="text-align: right;">2.3105</td>
+<td style="text-align: right;">0.0587</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3072</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.9091</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.8108\)</span></td>
+<td style="text-align: right;">1.8600</td>
+<td style="text-align: right;">0.0024</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.7739</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.4911\)</span></td>
+<td style="text-align: right;">1.6992</td>
+<td style="text-align: right;">0.0010</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.5925</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.0010\)</span></td>
+<td style="text-align: right;">1.4138</td>
+<td style="text-align: right;">0.0003</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">16384</td>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2.7045</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.2335\)</span></td>
+<td style="text-align: right;">1.5336</td>
+<td style="text-align: right;">0.0003</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Initial parameters <span class="math inline">\(\theta\)</span>,
+learning rate <span class="math inline">\(\eta\)</span>, momentum <span
+class="math inline">\(\mu\)</span>, percentile <span
+class="math inline">\(p\)</span>, Newton–Schulz iters <span
+class="math inline">\(K\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \mu M +
+G\)</span> <span class="math inline">\(\varepsilon \gets
+\operatorname{Quantile}(|M|, p)\)</span> <span class="math inline">\(O
+\gets \operatorname{sign}(M)\max(|M|-\varepsilon, 0)\)</span> <span
+class="math inline">\(B \gets M - O\)</span> <span
+class="math inline">\(X_0 \gets \frac{B}{\|B\|_F + \epsilon}\)</span>
+<span class="math inline">\(A_k \gets X_k X_k^\top\)</span> <span
+class="math inline">\(B_k \gets b^{(m,n)} A_k + c^{(m,n)} A_k^2\)</span>
+<span class="math inline">\(X_{k+1} \gets a^{(m,n)} X_k + B_k
+X_k\)</span> <span class="math inline">\(W \gets W - \eta X_K\)</span>
+<span class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P);
+\eta, \beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>Following the hybrid recipe of Muon, only hidden-layer 2-D matrices
+take the ROOT path; embedding tables, learned positional encodings,
+output heads and every non-matrix parameter are trained with decoupled
+AdamW using the group-level learning rate, weight decay, <span
+class="math inline">\(\beta_1, \beta_2\)</span> and <span
+class="math inline">\(\epsilon\)</span> settings. The paper’s LLM runs
+apply a <span class="math inline">\(0.2\)</span> update-RMS scaling
+factor following Moonlight; this implementation lets the per-group
+learning rates absorb that calibration, so no scale constant is applied.
+Shapes absent from Table <a href="#tab:root-coefficients"
+data-reference-type="ref" data-reference="tab:root-coefficients">7</a>
+fall back to Muon’s fixed coefficients, and the dynamic quantile costs
+an additional sort of <span class="math inline">\(|M_t|\)</span> per
+matrix per step.</p>
+<h4 id="cons.-26">Cons.</h4>
+<ul>
+<li><p>The percentile threshold requires an <span
+class="math inline">\(O(N\log N)\)</span> sort of the momentum matrix at
+every step, on top of the Newton–Schulz matmuls.</p></li>
+<li><p>The calibrated coefficient table covers seven shapes only; every
+other shape falls back to Muon’s fixed coefficients.</p></li>
+<li><p>Outliers are discarded rather than shrunk, so an extremely noisy
+gradient can also lose informative signal; the paper’s ablation shows
+the trade-off is governed by the percentile (0.85 truncates too much,
+0.99 too little).</p></li>
+</ul>
+<h4 id="pros.-26">Pros.</h4>
+<ul>
+<li><p>Dimension-invariant orthogonalization precision: shape-calibrated
+coefficients remove the precision cliff that fixed coefficients show on
+square and near-square layers.</p></li>
+<li><p>Outlier-robust without retuning the Muon recipe; the paper
+reports lower loss and a better zero-shot average than Muon and AdamW at
+1B scale (60.12 vs 59.59 vs 59.05) and gains on ViT/CIFAR-10.</p></li>
+<li><p>Same single momentum buffer per matrix parameter as Muon, and the
+<code>softthresh</code>/<code>ada_newton</code> toggles expose the
+paper’s ablations directly.</p></li>
+</ul>
 <h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
 Population-Based Hybrids</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -7962,7 +8175,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-26">Cons.</h4>
+<h4 id="cons.-27">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -7984,7 +8197,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-26">Pros.</h4>
+<h4 id="pros.-27">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -8117,7 +8330,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-27">Cons.</h4>
+<h4 id="cons.-28">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -8143,7 +8356,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-27">Pros.</h4>
+<h4 id="pros.-28">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B
@@ -16424,7 +16637,7 @@ head keeps <span class="math inline">\(3.94\)</span>M, leaving <span
 class="math inline">\(4.15\)</span>M total parameters—the paper’s own
 accounting, where the head is dropped only for deployment.</p>
 <p>Table <a href="#tab:eelbert-results" data-reference-type="ref"
-data-reference="tab:eelbert-results">15</a> summarises the reference
+data-reference="tab:eelbert-results">16</a> summarises the reference
 results reported by <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results">
@@ -16620,7 +16833,7 @@ Nothing in this chain needs a GPU.</figcaption>
 </figure>
 <h2 id="the-stage-ledger-of-round-2">The Stage Ledger of Round 2</h2>
 <p>Table <a href="#tab:stage-ledger" data-reference-type="ref"
-data-reference="tab:stage-ledger">16</a> reproduces the ledger. Training
+data-reference="tab:stage-ledger">17</a> reproduces the ledger. Training
 dominates both the record count and the cost: 1<span>,</span>039
 attempts, of which 868 succeeded and 171 failed, with a median of 68
 minutes and a P90 of 84 minutes per attempt—906 GPU-hours in total, of
@@ -16824,7 +17037,7 @@ the largest is <code>engram__conformer_attn</code> at
 which attaches a large key–value table to the attention block.</p>
 <p>The composition chart (Figure <a href="#fig:r2-params-composition"
 data-reference-type="ref"
-data-reference="fig:r2-params-composition">82</a>) is the most useful
+data-reference="fig:r2-params-composition">83</a>) is the most useful
 diagnostic of the section. The token embeddings and the output head are
 fixed costs of roughly 49k parameters each, so almost every difference
 between configurations is paid in the attention block and the FFN—the
@@ -16868,9 +17081,9 @@ token rewrites the ranking. Both signals are therefore reported
 throughout, and the inference tables should be read as a
 catastrophic-failure check rather than as a leaderboard. Table <a
 href="#tab:r2-top-loss" data-reference-type="ref"
-data-reference="tab:r2-top-loss">17</a> lists the ten best pairs by
+data-reference="tab:r2-top-loss">18</a> lists the ten best pairs by
 final loss and Table <a href="#tab:r2-top-acc" data-reference-type="ref"
-data-reference="tab:r2-top-acc">18</a> the ten best by held-out
+data-reference="tab:r2-top-acc">19</a> the ten best by held-out
 accuracy; the two tables have no pair in common.</p>
 <div id="tab:r2-top-loss">
 <table>
@@ -17123,7 +17336,7 @@ the median clip ratio is 0.90.</figcaption>
 <h2 id="the-atimesb-atlas">The A<span
 class="math inline">\(\times\)</span>B Atlas</h2>
 <p>The atlas (Figure <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">90</a>) is
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">91</a>) is
 the centrepiece of the experiment: a matrix in which each cell is one
 hybrid pair, rows index the first mixer, columns index the second, and
 colour encodes the final loss. It is read in two directions. Column by
@@ -17157,7 +17370,7 @@ train.</figcaption>
 </figure>
 <h4 id="which-second-mixer-to-pick.">Which second mixer to pick.</h4>
 <p>Table <a href="#tab:r2-best-b" data-reference-type="ref"
-data-reference="tab:r2-best-b">19</a> ranks second mixers by mean final
+data-reference="tab:r2-best-b">20</a> ranks second mixers by mean final
 loss across every pair that contains them. The <em>Pairs</em> column is
 the sample size behind each mean and should be read alongside it: a
 single-pair mean (for example <code>mamba</code>, with one pair) is
@@ -17442,7 +17655,7 @@ not a substitute for held-out evaluation.</figcaption>
 <p>The optimizer sweep is the most sobering chart of the round: 23
 optimizers, the same 210k backbone, and a final-loss range of only
 10.10–10.77 nats (Table <a href="#tab:r2-optimizers"
-data-reference-type="ref" data-reference="tab:r2-optimizers">21</a>).
+data-reference-type="ref" data-reference="tab:r2-optimizers">22</a>).
 <code>q_apollo</code> wins at 10.098 and <code>galore_adamw</code>
 closes the table at 10.772, but a dozen optimizers land on exactly
 10.404—the run is too short for the choice of optimizer to separate from
@@ -17621,12 +17834,12 @@ overhead.</figcaption>
 <h4 id="normalization-and-positional-encoding.">Normalization and
 positional encoding.</h4>
 <p>Among the normalizations (Table <a href="#tab:r2-norms"
-data-reference-type="ref" data-reference="tab:r2-norms">22</a>),
+data-reference-type="ref" data-reference="tab:r2-norms">23</a>),
 <code>flash_norm</code> wins clearly at 9.749 nats—half a nat ahead of
 the runner-up, a large margin by the standards of this round—while
 <code>prms_norm</code> and <code>rms_norm</code> lag. In the positional
 encodings (Table <a href="#tab:r2-pe" data-reference-type="ref"
-data-reference="tab:r2-pe">23</a>), the PAPE family
+data-reference="tab:r2-pe">24</a>), the PAPE family
 (<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
 sweeps the podium, and classical RoPE is mid-table. Both results are
 useful calibration: “modern” is not automatically better on a 100-epoch
@@ -17782,7 +17995,7 @@ classical RoPE is mid-table at this scale.</figcaption>
 </figure>
 <h4 id="structural-switches.">Structural switches.</h4>
 <p>The structural toggles (Table <a href="#tab:r2-trans"
-data-reference-type="ref" data-reference="tab:r2-trans">24</a>) separate
+data-reference-type="ref" data-reference="tab:r2-trans">25</a>) separate
 more than the optimizers do—evidence that, at this scale, architecture
 is a stronger lever than the update rule. The three wins are factorised
 embeddings (9.623), a SwiGLU FFN (9.901) and two Hyperloop loops
@@ -18146,7 +18359,7 @@ class="math inline">\(r = 1.00\)</span>), which is expected because the
 clip ratio is computed from the gradient norm, and neither correlates
 with quality.</p>
 <p>The correlation matrix of Figure <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">109</a> is
+data-reference-type="ref" data-reference="fig:r2-correlation">110</a> is
 computed over all 868 rows. Read that way, parameter count correlates
 with loss at <span class="math inline">\(-0.43\)</span> and with
 accuracy at <span class="math inline">\(+0.42\)</span>, apparently
