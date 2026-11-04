@@ -8273,6 +8273,16 @@ class="math inline">\(\tau\)</span> de Kendall de 0,66–0,69).</p></li>
 <h4
 id="ea4llm-estrategias-evolutivas-para-modelos-de-lenguaje-grandes.">EA4LLM
 (Estrategias Evolutivas para Modelos de Lenguaje Grandes).</h4>
+<figure id="fig:opt-ea4llm"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/ea4llm.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de un paso de EA4LLM: cada iteración evalúa <span
+class="math inline">\(N\)</span> perturbaciones gaussianas de los
+parámetros sobre un minilote compartido por todos los miembros, las
+puntúa por la log-verosimilitud por token negada, convierte las
+recompensas en pesos z-score o de rango centrado y reproduce el mismo
+ruido sembrado para acumular la dirección ES — sin gradientes ni estado
+del optimizador por parámetro.</figcaption>
+</figure>
 <p>EA4LLM <span class="citation" data-cites="liu_ea4llm_2025"></span> es
 una <strong>alternativa sin gradientes a Adam</strong> que elimina por
 completo la retropropagación y el estado del optimizador, y es el primer
@@ -17426,7 +17436,7 @@ con 415 904, impulsada por el banco de memoria <code>engram</code>, que
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">81</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">82</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -17730,7 +17740,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">89</a>) es
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">90</a>) es
 el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -18773,7 +18783,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">108</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">109</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
