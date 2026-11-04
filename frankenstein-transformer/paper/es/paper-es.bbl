@@ -1,4 +1,4 @@
-\begin{thebibliography}{139}
+\begin{thebibliography}{140}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -564,9 +564,10 @@ Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng
 \newblock URL \url{https://arxiv.org/abs/1908.03265}.
 \newblock Version Number: 4.
 
-\bibitem[Liu et~al.(2026)Liu, Peng, Zhang, Chen, and Guo]{liu_mlra_2026}
+\bibitem[Liu et~al.(2026{\natexlab{a}})Liu, Peng, Zhang, Chen, and
+  Guo]{liu_mlra_2026}
 Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
-\newblock Multi-head low-rank attention, 2026.
+\newblock Multi-head low-rank attention, 2026{\natexlab{a}}.
 \newblock URL \url{https://arxiv.org/abs/2603.02188}.
 
 \bibitem[Liu et~al.(2025)Liu, Song, Hao, and Zhou]{liu_ea4llm_2025}
@@ -583,6 +584,14 @@ Zirui Liu, Jiayi Yuan, Hongye Jin, Shaochen Zhong, Zhaozhuo Xu, Vladimir
   2024.
 \newblock URL \url{https://arxiv.org/abs/2402.02750}.
 \newblock arXiv:2402.02750.
+
+\bibitem[Liu et~al.(2026{\natexlab{b}})Liu, Zhang, Wang, Zhao, Su, Yang, and
+  Zhang]{liu_muon2_2026}
+Ziyue Liu, Ruijie Zhang, Zhengyang Wang, Yequan Zhao, Yupeng Su, Zi~Yang, and
+  Zheng Zhang.
+\newblock Muon$^2$: Boosting muon via adaptive second-moment preconditioning,
+  2026{\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2604.09967}.
 
 \bibitem[Loshchilov and Hutter(2017)]{loshchilov_decoupled_2017}
 Ilya Loshchilov and Frank Hutter.
