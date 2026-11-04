@@ -1,4 +1,4 @@
-\begin{thebibliography}{140}
+\begin{thebibliography}{141}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -436,6 +436,11 @@ Yongchao Huang and Hassan Raza.
 \newblock Gaussian mixture attention: Linear-time sequence mixing via
   probabilistic latent routing, 2026.
 \newblock URL \url{https://arxiv.org/abs/2606.18283}.
+
+\bibitem[Ji et~al.(2026)Ji, Xu, An, Luo, Wu, and Huang]{ji_adampm_2026}
+Xiaowei Ji, Lishan Xu, Jianing An, Jie Luo, Wenjun Wu, and Lei Huang.
+\newblock Adampm: Memory-efficient llm optimization via moment pooling, 2026.
+\newblock URL \url{https://arxiv.org/abs/2610.24598}.
 
 \bibitem[Jolicoeur-Martineau et~al.(2026)Jolicoeur-Martineau, Sukthanker,
   Cameron, and Gervais]{jolicoeur_sliding_window_2026}
