@@ -1291,6 +1291,26 @@ id="toc-pseudocódigo-en-pytorch-1">Pseudocódigo en PyTorch</a></li>
 id="toc-desviaciones-y-notas-de-implementación">Desviaciones y Notas de
 Implementación</a></li>
 </ul></li>
+<li><a href="#sec:annex-embeddings-dinamicos"
+id="toc-sec:annex-embeddings-dinamicos">Embeddings de Tokens Dinámicos
+(EELBERT)</a>
+<ul>
+<li><a href="#resumen-ejecutivo-3" id="toc-resumen-ejecutivo-3">Resumen
+Ejecutivo</a></li>
+<li><a href="#algoritmo" id="toc-algoritmo">Algoritmo</a></li>
+<li><a href="#contrato-de-configuración"
+id="toc-contrato-de-configuración">Contrato de Configuración</a></li>
+<li><a href="#inyección-del-vocabulario-y-ciclo-de-vida"
+id="toc-inyección-del-vocabulario-y-ciclo-de-vida">Inyección del
+Vocabulario y Ciclo de Vida</a></li>
+<li><a href="#contabilidad-de-tamaño-y-resultados-del-paper"
+id="toc-contabilidad-de-tamaño-y-resultados-del-paper">Contabilidad de
+Tamaño y Resultados del Paper</a></li>
+<li><a href="#mapa-de-implementación"
+id="toc-mapa-de-implementación">Mapa de Implementación</a></li>
+<li><a href="#alcance-y-limitaciones"
+id="toc-alcance-y-limitaciones">Alcance y Limitaciones</a></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introducción">Introducción</h1>
@@ -2269,7 +2289,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>135</span> urlstyle</p>
+<p><span>136</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2352,6 +2372,9 @@ Hochreiter. Fast and accurate deep network learning by exponential
 linear units (<span>ELUs</span>). <em>arXiv preprint
 arXiv:1511.07289</em>, 2016. URL
 <code>https://arxiv.org/abs/1511.07289</code>.</p>
+<p>Gabrielle Cohn, Rishika Agarwal, Deepanshu Gupta, and Siddharth
+Patwardhan. : Tiny models through dynamic embeddings. URL
+<code>http://arxiv.org/abs/2310.20144</code>. 2023 Industry Track.</p>
 <p>Chang Dai, Hongyu Shan, Mingyang Song, and Di Liang. : Hyperbolic
 rotary positional encoding for stable long-range dependency modeling in
 large language models, 2025. URL
@@ -5722,6 +5745,15 @@ Convolución de Embedding &amp; Conv1d depthwise aplicada sobre el flujo
 de embeddings antes del primer bloque transformer; proporciona filtrado
 ligero de contexto local; controlado por
 <code>embedding_conv_kernel</code> &amp; (interno)<br />
+Embeddings Dinámicos (EELBERT) &amp; Reemplaza la tabla <span
+class="math inline">\(V \times H\)</span> por un hash de agrupación de
+<span class="math inline">\(n\)</span>-gramas calculado al vuelo sobre
+las cadenas de tokens; congelado, sin parámetros de embedding
+entrenables; controlado por el bloque <code>embedding.dynamic.*</code>
+(Anexo <a href="#sec:annex-embeddings-dinamicos"
+data-reference-type="ref"
+data-reference="sec:annex-embeddings-dinamicos">31</a>) &amp; <span
+class="citation" data-cites="cohn_eelbert_2023"></span><br />
 Frontend de audio &amp; Tramas log-mel/espectrograma/raw a través de dos
 etapas Conv2d con stride 2 y una proyección lineal (reducción de tramas
 <span class="math inline">\(4\times\)</span>); lado de entrada de
@@ -15899,5 +15931,352 @@ cambios.</p></li>
 <li><p><strong>Caché.</strong> No hay caché de encoder incremental para
 audio; ASR consume un utterance completo por forward.</p></li>
 </ul>
+<h1 id="sec:annex-embeddings-dinamicos">Embeddings de Tokens Dinámicos
+(EELBERT)</h1>
+<h2 id="resumen-ejecutivo-3">Resumen Ejecutivo</h2>
+<p><code>embedding.dynamic</code> reemplaza la tabla de embedding de
+entrada entrenable <span class="math inline">\(V\times H\)</span> por un
+<em>hash de agrupación de <span
+class="math inline">\(n\)</span>-gramas</em> calculado al vuelo sobre la
+cadena del token, siguiendo EELBERT <span class="citation"
+data-cites="cohn_eelbert_2023"></span>. La tabla de búsqueda desaparece
+del conteo de parámetros, de los checkpoints y de los artefactos nativos
+de despliegue. El efecto es mayor en los modelos pequeños, donde la capa
+de búsqueda domina el presupuesto (en BERT-tiny el embedding de entrada
+concentra cerca del <span class="math inline">\(90\%\)</span> de los
+parámetros), y es complementario a cuantización, poda y destilación.</p>
+<p>Los embeddings dinámicos son <em>congelados</em>: nunca se entrenan
+ni reciben gradientes. Solo cambian cómo un id de token se convierte en
+vector; todo lo demás (mezcladores, normalización, residuales,
+enrutamiento, optimizadores) permanece igual. Como en el paper, la
+cabeza de salida sigue siendo una matriz independiente y no atada:
+durante el preentrenamiento MLM todavía almacena una matriz <span
+class="math inline">\(V\times H\)</span>, de modo que la ventaja de
+tamaño se materializa en el artefacto solo-backbone o posterior al
+ajuste fino (el checkpoint de entrenamiento no es automáticamente <span
+class="math inline">\(15\times\)</span> más pequeño). La implementación
+vive en , el contrato de configuración es el bloque
+<code>model.embedding.dynamic.*</code>, y el vocabulario del tokenizador
+lo inyectan los pipelines de entrenamiento, despliegue e inferencia
+mediante .</p>
+<h2 id="algoritmo">Algoritmo</h2>
+<p>Sea <span class="math inline">\(w\)</span> una cadena de token de
+<span class="math inline">\(l\)</span> bytes con valores <span
+class="math inline">\(b_1,\dots,b_l\)</span>, y <span
+class="math inline">\(d=H\)</span> el ancho del embedding. El algoritmo
+tiene cinco pasos, con <span class="math inline">\(N\)</span> el tamaño
+máximo de <span class="math inline">\(n\)</span>-grama y <span
+class="math inline">\(B\)</span> el bucket de hash.</p>
+<ol>
+<li><p><strong>Semillas.</strong> Se extraen <span
+class="math inline">\(d\)</span> semillas de un único estado aleatorio
+almacenado <span class="math inline">\(s\)</span>, <span
+class="math display">\[\mathbf{h} = (h_1,\dots,h_d) \in
+\{0,\dots,B-1\}^d,
+\qquad \mathbf{h} \sim \mathrm{Uniform}(\text{semilla}=s).\]</span> Solo
+se persiste el entero <span class="math inline">\(s\)</span>; el vector
+de semillas es una función determinista de él.</p></li>
+<li><p><strong>Firmas de <span
+class="math inline">\(i\)</span>-gramas.</strong> Para <span
+class="math inline">\(i=1,\dots,N\)</span> se calcula el hash polinómico
+rodante de cada <span class="math inline">\(i\)</span>-grama, <span
+class="math display">\[\sigma_i(j) = \Big(\sum_{t=0}^{i-1}
+b_{j+t}\,a^{\,i-1-t}\Big) \bmod B,
+\qquad j=1,\dots,k_i,
+\qquad k_i=\max(l-i+1,0),\]</span> con <span
+class="math inline">\(a=257\)</span> (primo, mayor que cualquier byte
+UTF-8). Los hashes se calculan de forma incremental: el hash del <span
+class="math inline">\((i{+}1)\)</span>-grama reutiliza el del <span
+class="math inline">\(i\)</span>-grama y añade un byte, por lo que el
+token completo cuesta <span
+class="math inline">\(\mathcal{O}(lN)\)</span> operaciones
+enteras.</p></li>
+<li><p><strong>Proyección particionada.</strong> Se divide <span
+class="math inline">\(\mathbf{h}\)</span> en <span
+class="math inline">\(N\)</span> partes contiguas <span
+class="math inline">\(\mathbf{h}_i\)</span> de longitud <span
+class="math inline">\(d_i\)</span> con <span
+class="math display">\[\sum_{i=1}^{N} d_i = d, \qquad d_i \propto
+i,\]</span> de modo que los <span
+class="math inline">\(n\)</span>-gramas más largos reciben más
+dimensiones. La matriz de proyección de cada tamaño de grama es el
+producto externo <span class="math display">\[\mathbf{P}_i = \sigma_i
+\otimes \mathbf{h}_i \in \mathbb{Z}^{k_i\times d_i}.\]</span></p></li>
+<li><p><strong>Plegado.</strong> Cada entrada se lleva a <span
+class="math inline">\([-1,1]\)</span> mediante <span
+class="math display">\[\phi(x) = \frac{(x \bmod B) - \mathbf{1}[x \bmod
+B &gt; B/2]\;B}{B/2} \in (-1, 1],\]</span> lo que mantiene el embedding
+acotado sin almacenar ni normalizar una tabla.</p></li>
+<li><p><strong>Agrupación y concatenación.</strong> Se promedia cada
+proyección sobre sus <span class="math inline">\(k_i\)</span> filas y se
+concatenan las <span class="math inline">\(N\)</span> piezas: <span
+class="math display">\[\mathbf{e}_i = \frac{1}{k_i}\sum_{j=1}^{k_i}
+\phi\big(\mathbf{P}_i[j,:]\big),
+\qquad
+\mathbf{e} = [\mathbf{e}_1;\dots;\mathbf{e}_N] \in
+\mathbb{R}^{d}.\]</span> Si un token es más corto que <span
+class="math inline">\(i\)</span>, entonces <span
+class="math inline">\(k_i=0\)</span> y esa partición aporta un vector
+nulo.</p></li>
+</ol>
+<p>Como el hash es polinómico sobre caracteres, los tokens
+morfológicamente relacionados (p. ej. <code>runner</code> y
+<code>running</code>) comparten muchos <span
+class="math inline">\(1\)</span>/<span
+class="math inline">\(2\)</span>/<span
+class="math inline">\(3\)</span>-gramas y quedan cerca en el espacio de
+embedding. El paper muestra que esto importa sobre todo en modelos
+pequeños: sustituir el hash de <span
+class="math inline">\(n\)</span>-gramas por un hash puramente aleatorio
+(que preserva posición) cuesta <span class="math inline">\(5.0\)</span>
+puntos de GLUE en BERT-mini pero solo <span
+class="math inline">\(0.3\)</span> en BERT-base.</p>
+<h2 id="contrato-de-configuración">Contrato de Configuración</h2>
+<div id="tab:dynamic-embedding-config-es">
+<table>
+<caption>Configuración de embeddings dinámicos. El bloque compone con
+<code>embedding.conv.*</code>, que aplica un Conv1d sobre el flujo
+dinámico de ancho <span class="math inline">\(H\)</span>.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Clave
+(<code>model.embedding.dynamic.*</code>)</strong></th>
+<th style="text-align: center;"><strong>Defecto</strong></th>
+<th style="text-align: left;"><strong>Efecto</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>enabled</code></td>
+<td style="text-align: center;"><code>false</code></td>
+<td style="text-align: left;">Reemplaza la tabla de búsqueda por el
+embedding hash congelado. Mutuamente excluyente con
+<code>embedding.factorized.enabled</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ngram_max</code></td>
+<td style="text-align: center;"><code>3</code></td>
+<td style="text-align: left;">Tamaño máximo de <span
+class="math inline">\(n\)</span>-grama <span
+class="math inline">\(N\)</span>; debe cumplir <span
+class="math inline">\(1 \le N \le H\)</span>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>bucket</code></td>
+<td style="text-align: center;"><code>1000000007</code></td>
+<td style="text-align: left;">Bucket de hash <span
+class="math inline">\(B\)</span> (<span
+class="math inline">\(10^9+7\)</span> en el paper). Cambiarlo cambia
+todos los embeddings.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>seed</code></td>
+<td style="text-align: center;"><code>42</code></td>
+<td style="text-align: left;">Estado aleatorio <span
+class="math inline">\(s\)</span> de las semillas; semillas idénticas
+reproducen embeddings idénticos.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>precompute</code></td>
+<td style="text-align: center;"><code>true</code></td>
+<td style="text-align: left;">Memoiza la tabla <span
+class="math inline">\(V\times H\)</span> en un buffer <em>no
+persistente</em> (caché pura; nunca se guarda ni se exporta).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>El esquema impone la exclusión mutua con embeddings factorizados dos
+veces: una regla condicional <code>if/then</code> en
+<code>src/schema/_conditional_rules.yaml</code> y una comprobación en
+<code>__post_init__</code> de <code>FrankensteinModelConfig</code>. El
+bloque solo es válido para las clases de texto
+(<code>frankenstein_text_encoder</code> y
+<code>frankenstein_text_decoder</code>); la ViT usa un embedding
+convolucional de parches y el frontend de audio no es una búsqueda de
+vocabulario, por lo que <code>config_loader</code> rechaza la
+combinación en esas clases.</p>
+<h2 id="inyección-del-vocabulario-y-ciclo-de-vida">Inyección del
+Vocabulario y Ciclo de Vida</h2>
+<p>Los embeddings hash consumen cadenas de tokens, mientras que los
+modelos reciben ids enteros. Por eso la configuración lleva un campo de
+ejecución sin esquema, <code>token_vocab</code> (cadenas de tokens
+ordenadas por id). <code>inject_token_vocab(config, tokenizer)</code>
+las extrae de un tokenizador HuggingFace (<code>get_vocab()</code>) o
+del envoltorio legacy de SentencePiece (<code>vocab</code>, token <span
+class="math inline">\(\to\)</span> id), las adjunta antes de
+<code>build_model</code> y alinea <code>vocab_size</code> con los ids
+del tokenizador. El motor de entrenamiento ( y ), el cargador de
+checkpoints de despliegue y el motor de inferencia llaman al ayudante,
+de modo que el vocabulario no necesita aparecer en el YAML. Construir
+<code>DynamicEmbedding</code> sin vocabulario lanza un error
+accionable.</p>
+<p>El checkpoint no almacena pesos de embedding:
+<code>state_dict()</code> no contiene nada para la capa de entrada, y el
+vocabulario viaja con el tokenizador guardado junto al checkpoint. Con
+<code>precompute: true</code> la tabla calculada es un buffer no
+persistente: sigue a <code>.to(device)</code> pero queda excluida de
+checkpoints y exportaciones, por lo que es exactamente equivalente al
+cálculo al vuelo. Con <code>precompute: false</code> el hash se
+recalcula por lote (menos memoria residente, pasos más lentos); ambas
+rutas coinciden salvo por el orden de reducción en float32.</p>
+<p>Los artefactos nativos de despliegue y el exportador GGUF conservan
+por tanto la ventaja de tamaño. La exportación a HuggingFace
+Transformers no puede ejecutar el hash personalizado, así que
+materializa la tabla calculada como un <code>nn.Embedding</code>
+congelado, registra la conversión en el informe de compatibilidad y
+emite una advertencia de que la ventaja de tamaño de EELBERT no se
+preserva en ese artefacto.</p>
+<h2 id="contabilidad-de-tamaño-y-resultados-del-paper">Contabilidad de
+Tamaño y Resultados del Paper</h2>
+<p>El bloque eliminado son pesos <span class="math inline">\(V\times
+H\)</span>; el bloque añadido es solo el Conv1d opcional (<span
+class="math inline">\(k H^2 + H\)</span>) cuando
+<code>embedding.conv.enabled</code> está activo. En nuestro preset
+(geometría BERT-tiny: 2 capas, <span
+class="math inline">\(H=128\)</span>, 2 cabezas, FFN reducida a <span
+class="math inline">\(128\)</span>, <span
+class="math inline">\(V=30{,}522\)</span>), la tabla de entrada elimina
+<span class="math inline">\(3.91\)</span>M pesos mientras la cabeza MLM
+no atada conserva <span class="math inline">\(3.94\)</span>M, dejando
+<span class="math inline">\(4.15\)</span>M parámetros totales: la misma
+contabilidad del paper, donde la cabeza se descarta solo para el
+despliegue.</p>
+<p>La Tabla <a href="#tab:eelbert-results-es" data-reference-type="ref"
+data-reference="tab:eelbert-results-es">14</a> resume los resultados de
+referencia reportados por <span class="citation"
+data-cites="cohn_eelbert_2023"></span>.</p>
+<div id="tab:eelbert-results-es">
+<table>
+<caption>Resultados de referencia de EELBERT (Tabla 2 de <span
+class="citation" data-cites="cohn_eelbert_2023"></span>); latencia en un
+MacBook Pro M1 con 32 GB de RAM. UNO-EELBERT es EELBERT-tiny con el
+tamaño intermedio reducido a <span
+class="math inline">\(128\)</span>.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Modelo</strong></th>
+<th style="text-align: right;"><strong>Paráms.</strong></th>
+<th style="text-align: right;"><strong>Tamaño</strong></th>
+<th style="text-align: right;"><strong>GLUE</strong></th>
+<th style="text-align: right;"><strong><span
+class="math inline">\(\Delta\)</span>GLUE</strong></th>
+<th style="text-align: right;"><strong>Latencia</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">BERT-base</td>
+<td style="text-align: right;">109.5M</td>
+<td style="text-align: right;">438 MB</td>
+<td style="text-align: right;">0.775</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">162.0 ms</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EELBERT-base</td>
+<td style="text-align: right;">86.1M</td>
+<td style="text-align: right;">344 MB</td>
+<td style="text-align: right;">0.760</td>
+<td style="text-align: right;"><span
+class="math inline">\(-1.5\)</span></td>
+<td style="text-align: right;">165.0 ms</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BERT-mini</td>
+<td style="text-align: right;">11.17M</td>
+<td style="text-align: right;">44.8 MB</td>
+<td style="text-align: right;">0.753</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">7.0 ms</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EELBERT-mini</td>
+<td style="text-align: right;">3.36M</td>
+<td style="text-align: right;">13.4 MB</td>
+<td style="text-align: right;">0.746</td>
+<td style="text-align: right;"><span
+class="math inline">\(-0.7\)</span></td>
+<td style="text-align: right;">9.9 ms</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BERT-tiny</td>
+<td style="text-align: right;">4.39M</td>
+<td style="text-align: right;">17.7 MB</td>
+<td style="text-align: right;">0.671</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1.7 ms</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EELBERT-tiny</td>
+<td style="text-align: right;">0.48M</td>
+<td style="text-align: right;">2.04 MB</td>
+<td style="text-align: right;">0.666</td>
+<td style="text-align: right;"><span
+class="math inline">\(-0.5\)</span></td>
+<td style="text-align: right;">3.9 ms</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UNO-EELBERT</td>
+<td style="text-align: right;">0.31M</td>
+<td style="text-align: right;">1.24 MB</td>
+<td style="text-align: right;">0.632</td>
+<td style="text-align: right;"><span
+class="math inline">\(-3.9\)</span></td>
+<td style="text-align: right;">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>La complejidad de un embedding de token es <span
+class="math inline">\(\mathcal{O}(l\,d)\)</span> frente a la búsqueda
+<span class="math inline">\(\mathcal{O}(1)\)</span> de BERT: para los
+anchos de 128–768 usados por BERT, la latencia adicional es despreciable
+a escala base pero visible en modelos diminutos (cerca de <span
+class="math inline">\(2.3\times\)</span> para EELBERT-tiny en la tabla).
+El paper propone tres mitigaciones que esta implementación deja como
+opciones de ingeniería: una máscara dispersa de ancho fijo sobre el
+producto externo (<span class="math inline">\(\mathcal{O}(l\,s)\)</span>
+con <span class="math inline">\(s\ll d\)</span>), el hash paralelo por
+token, y una caché acotada de los <span
+class="math inline">\(n\)</span>-gramas más frecuentes.</p>
+<h2 id="mapa-de-implementación">Mapa de Implementación</h2>
+<ul>
+<li><p>— <code>DynamicEmbedding</code>: semillas, hash rodante por
+bloques, producto externo particionado, plegado, agrupación, Conv1d
+opcional y <code>embedding_table()</code>.</p></li>
+<li><p>— despacho de <code>emb</code> (<code>dynamic</code> <span
+class="math inline">\(\to\)</span> <code>factorized</code> <span
+class="math inline">\(\to\)</span> <code>nn.Embedding</code>); el
+decoder lo reutiliza a través de su backbone encoder. La exclusión mutua
+y los rangos viven en .</p></li>
+<li><p>— <code>token_strings()</code> e
+<code>inject_token_vocab()</code>, compartidos por el motor, la ruta CLI
+de entrenamiento, despliegue e inferencia.</p></li>
+<li><p>— materialización de la tabla congelada y advertencia de
+exportación.</p></li>
+<li><p>— determinismo por semilla, cotas <span
+class="math inline">\([-1,1]\)</span>, similitud morfológica, paridad
+precompute vs. al vuelo, cero parámetros entrenables, errores de
+vocabulario y configuración, forwards de encoder/decoder, regla del
+esquema y materialización de exportación.</p></li>
+<li><p>y — presets; ambos pasan smoke tests, y el arnés E2E cubre la
+combinación como <code>trans_dynamic_emb</code>.</p></li>
+</ul>
+<h2 id="alcance-y-limitaciones">Alcance y Limitaciones</h2>
+<p>Los embeddings dinámicos son un mecanismo de compresión, no un nuevo
+objetivo de aprendizaje de representaciones: no aproximan un embedding
+BERT entrenado y no pueden entrenarse ni ajustarse. Como el mapeo es una
+función determinista de (cadena, semilla, <span
+class="math inline">\(B\)</span>, <span
+class="math inline">\(N\)</span>), cambiar cualquiera de ellos invalida
+los checkpoints entrenados previamente. El diseño también acopla el
+modelo al tokenizador que produjo los ids de entrenamiento: el
+vocabulario (y por tanto las cadenas de tokens) forma parte del contrato
+del artefacto, y cambiar el tokenizador altera silenciosamente todos los
+embeddings de entrada. Por último, la exportación a HuggingFace pierde
+la ventaja de tamaño por construcción, así que los despliegues en
+dispositivo deberían preferir el checkpoint nativo, el paquete de
+despliegue o GGUF.</p>
 </body>
 </html>

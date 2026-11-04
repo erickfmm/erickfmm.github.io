@@ -1,4 +1,4 @@
-\begin{thebibliography}{135}
+\begin{thebibliography}{136}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -157,6 +157,12 @@ Djork-Arn{\'e} Clevert, Thomas Unterthiner, and Sepp Hochreiter.
   ({ELUs}).
 \newblock \emph{arXiv preprint arXiv:1511.07289}, 2016.
 \newblock URL \url{https://arxiv.org/abs/1511.07289}.
+
+\bibitem[Cohn et~al.()Cohn, Agarwal, Gupta, and Patwardhan]{cohn_eelbert_2023}
+Gabrielle Cohn, Rishika Agarwal, Deepanshu Gupta, and Siddharth Patwardhan.
+\newblock {EELBERT}: Tiny models through dynamic embeddings.
+\newblock URL \url{http://arxiv.org/abs/2310.20144}.
+\newblock {EMNLP} 2023 Industry Track.
 
 \bibitem[Dai et~al.(2025)Dai, Shan, Song, and Liang]{dai_hope_2025}
 Chang Dai, Hongyu Shan, Mingyang Song, and Di~Liang.
