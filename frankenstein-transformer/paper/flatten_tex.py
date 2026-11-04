@@ -4,42 +4,42 @@
 Inlines every ``\\input{path}`` (recursively) and replaces
 ``\\bibliographystyle{...}`` / ``\\bibliography{...}`` with the contents of the
 resolved ``.bbl`` file (produced by bibtex). The result is a single document
-that pandoc can convert to HTML without resolving \\input or .bib at conversion
-time.
+that pandoc can convert to HTML without resolving \\input or .bib at
+conversion time.
 
-With ``--web`` the document is additionally prepared for the browser build:
-
-* ``\\fitfigure{...}`` (an ``\\adjustbox`` wrapper pandoc does not understand
-  and therefore silently drops) is unwrapped, so the inner
-  ``\\includegraphics`` survives the conversion.
-* every ``\\includegraphics{...figures/<name>.pdf}`` is rewritten to the
-  matching SVG under ``--figures-url``. The lookup is by file stem, so the
-  English (``figures/<name>.pdf``) and Spanish (``../paper/figures/<name>.pdf``)
-  sources both resolve against the same SVG tree.
+With ``--web`` the document is prepared for the browser build. The figures are
+**not** rewritten inside the LaTeX: letting pandoc see ``\\includegraphics``
+makes it drop several ``longtable`` environments later in the document. Instead
+the LaTeX is left untouched (pandoc still discards the ``\\adjustbox``-based
+``\\fitfigure`` wrapper) and a JSON manifest maps each ``fig:<label>`` to the
+SVG that ``postprocess_html.py`` injects into the matching empty ``<figure>``.
 
 Usage:
     python3 flatten_tex.py <input.tex> <input.bbl> <output.tex> [options]
 
 Options:
-    --web                 Prepare the document for the HTML/paper-tab build.
+    --web                 Emit the figure manifest for the HTML build.
+    --manifest PATH       Where to write the manifest (default: <output>.figures.json).
     --figures-dir DIR     Directory holding the compiled SVG figures.
                           Defaults to ``figures`` relative to the current
                           working directory (the paper/ build root).
-    --figures-url URL     URL prefix for the rewritten figures.
+    --figures-url URL     URL prefix for the figure SVGs.
                           Default: /frankenstein-transformer/paper/figures
 
 If <input.bbl> does not exist the bibliography is dropped (the rest still
 inlines). Exit code is 0 on success.
 """
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
 
 DEFAULT_FIGURES_URL = "/frankenstein-transformer/paper/figures"
 
-FIGURE_COMMAND = "\\fitfigure{"
-INCLUDE_RE = re.compile(r"\\includegraphics\{([^}]+)\}")
+FIGURE_ENV_RE = re.compile(r"\\begin\{figure\}(?:\[[^\]]*\])?(.*?)\\end\{figure\}", re.S)
+INCLUDE_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
+LABEL_RE = re.compile(r"\\label\{(fig:[^}]+)\}")
 
 
 def _flatten_inputs(text: str, base_dir: Path) -> str:
@@ -61,43 +61,40 @@ def _svg_index(figures_dir: Path) -> dict[str, str]:
     return index
 
 
-def _webify(text: str, figures_dir: Path, figures_url: str) -> str:
-    """Unwrap \\fitfigure and point every \\includegraphics at its SVG."""
-    # Invocations look like `\fitfigure{\includegraphics{...}}`; the macro
-    # definition ends with `\fitfigure}[1]{`, so replacing the trailing `{`
-    # only touches call sites.
-    text = text.replace(FIGURE_COMMAND, "{")
-
+def figure_manifest(text: str, figures_dir: Path, figures_url: str) -> dict[str, str]:
+    """Map every ``fig:<label>`` to the SVG URL that belongs in its figure."""
     if not figures_dir.is_dir():
         print(f"WARNING: figures dir not found: {figures_dir}", file=sys.stderr)
-        return text
+        return {}
 
     index = _svg_index(figures_dir)
     if not index:
         print(f"WARNING: no .svg files under {figures_dir}", file=sys.stderr)
-        return text
+        return {}
 
     prefix = figures_url.rstrip("/")
+    manifest: dict[str, str] = {}
     missing: list[str] = []
-    rewritten = 0
 
-    def repl(m):
-        nonlocal rewritten
-        raw = m.group(1).strip()
-        if raw.startswith(prefix):
-            return m.group(0)
-        rel = index.get(Path(raw).stem)
+    for match in FIGURE_ENV_RE.finditer(text):
+        body = match.group(1)
+        include = INCLUDE_RE.search(body)
+        if include is None:
+            continue
+        label = LABEL_RE.search(body)
+        if label is None:
+            missing.append(f"{include.group(1)} (no fig: label)")
+            continue
+        rel = index.get(Path(include.group(1).strip()).stem)
         if rel is None:
-            missing.append(raw)
-            return m.group(0)
-        rewritten += 1
-        return f"\\includegraphics{{{prefix}/{rel}}}"
+            missing.append(f"{label.group(1)} -> {include.group(1)}")
+            continue
+        manifest[label.group(1)] = f"{prefix}/{rel}"
 
-    text = INCLUDE_RE.sub(repl, text)
-    print(f"web figures: {rewritten} rewritten, {len(missing)} unresolved")
+    print(f"web figures: {len(manifest)} mapped, {len(missing)} unresolved")
     for raw in missing:
         print(f"WARNING: no SVG for {raw}", file=sys.stderr)
-    return text
+    return manifest
 
 
 def flatten(
@@ -106,7 +103,7 @@ def flatten(
     web: bool = False,
     figures_dir: Path | None = None,
     figures_url: str = DEFAULT_FIGURES_URL,
-) -> str:
+) -> tuple[str, dict[str, str]]:
     text = tex_path.read_text(encoding="utf-8", errors="replace")
     text = _flatten_inputs(text, tex_path.parent)
 
@@ -117,9 +114,12 @@ def flatten(
     text = re.sub(r"\\bibliographystyle\{[^}]*\}\s*", "", text)
     text = re.sub(r"\\bibliography\{[^}]*\}", lambda _m: bbl, text)
 
-    if web:
-        text = _webify(text, figures_dir or Path("figures"), figures_url)
-    return text
+    manifest = (
+        figure_manifest(text, figures_dir or Path("figures"), figures_url)
+        if web
+        else {}
+    )
+    return text, manifest
 
 
 def main() -> int:
@@ -132,7 +132,13 @@ def main() -> int:
     parser.add_argument(
         "--web",
         action="store_true",
-        help="unwrap \\fitfigure and rewrite figure includes to SVG",
+        help="write the fig:<label> -> SVG manifest for postprocess_html.py",
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=None,
+        help="manifest path (default: <output>.figures.json)",
     )
     parser.add_argument(
         "--figures-dir",
@@ -147,7 +153,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    text = flatten(
+    text, manifest = flatten(
         args.tex,
         args.bbl,
         web=args.web,
@@ -156,6 +162,15 @@ def main() -> int:
     )
     args.out.write_text(text, encoding="utf-8")
     print(f"OK {args.out} ({args.out.stat().st_size} bytes)")
+
+    if args.web:
+        manifest_path = args.manifest or args.out.with_suffix(
+            args.out.suffix + ".figures.json"
+        )
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        print(f"OK {manifest_path} ({len(manifest)} figures)")
     return 0
 
 

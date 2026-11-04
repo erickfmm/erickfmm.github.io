@@ -15,8 +15,8 @@ paper/
 │   └── paper-es.pdf    # compiled output
 ├── bibliography/       # *.bib referenced by \bibliography{../bibliography/...}
 ├── figures/            # SVG figures generated from docs/paper/figures/*.mmd
-├── flatten_tex.py      # inlines \input + .bbl; --web swaps figure PDFs for SVG
-├── postprocess_html.py # marks the pandoc <img> output as lazy-loaded
+├── flatten_tex.py      # inlines \input + .bbl; --web writes the figure manifest
+├── postprocess_html.py # injects the SVGs into <figure> and lazy-loads images
 ├── paper-en.html       # pandoc output (English)  ← used by the web app
 ├── paper-es.html       # pandoc output (Spanish)  ← used by the web app
 └── README.md
@@ -58,10 +58,10 @@ From this directory (`frankenstein-transformer/paper/`):
           pdflatex -interaction=nonstopmode paper-es.tex )
 
 # 2) Flatten each paper into a single self-contained .tex (inline \input + .bbl)
-#    --web unwraps \fitfigure (pandoc would drop it) and points every
-#    \includegraphics at the SVG copy under /frankenstein-transformer/paper/figures/.
-python3 flatten_tex.py en/paper.tex     en/paper.bbl     /tmp/paper-en-flat.tex --web
-python3 flatten_tex.py es/paper-es.tex  es/paper-es.bbl  /tmp/paper-es-flat.tex --web
+#    --web keeps the LaTeX untouched and writes a fig:<label> -> SVG manifest.
+#    (Handing \includegraphics to pandoc makes it drop 8 longtables.)
+python3 flatten_tex.py en/paper.tex     en/paper.bbl     /tmp/paper-en-flat.tex --web --manifest /tmp/paper-en-figures.json
+python3 flatten_tex.py es/paper-es.tex  es/paper-es.bbl  /tmp/paper-es-flat.tex --web --manifest /tmp/paper-es-figures.json
 
 # 3) Convert to standalone HTML with MathJax + TOC
 pandoc /tmp/paper-en-flat.tex -f latex -t html5 \
@@ -72,8 +72,9 @@ pandoc /tmp/paper-es-flat.tex -f latex -t html5 \
     --standalone --mathjax --toc --toc-depth=3 -V lang=es \
     -o paper-es.html
 
-# 4) Mark the 70+ inline figures as lazy-loaded
-python3 postprocess_html.py paper-en.html paper-es.html
+# 4) Inject the SVG figures into their empty <figure> and mark images lazy
+python3 postprocess_html.py --manifest /tmp/paper-en-figures.json paper-en.html
+python3 postprocess_html.py --manifest /tmp/paper-es-figures.json paper-es.html
 ```
 
 The SVG figures themselves are generated in the main repo and copied here:
@@ -86,9 +87,11 @@ The SVG figures themselves are generated in the main repo and copied here:
 
 ## Notes
 
-- Figures are inline SVG in the HTML. `\fitfigure` (an `\adjustbox` wrapper
-  pandoc does not understand) is unwrapped by `flatten_tex.py --web`; without
-  that flag pandoc silently drops every figure and leaves only the caption.
+- Figures are inline SVG in the HTML. Pandoc drops the `\fitfigure`
+  (`\adjustbox`) wrapper and leaves a caption-only `<figure id="fig:...">`;
+  `flatten_tex.py --web` maps those labels to SVGs and `postprocess_html.py`
+  injects the `<img>`. Do **not** let pandoc parse `\includegraphics`: doing so
+  silently drops 8 `longtable` environments in the schema annex.
 - Algorithmic pseudocode (`algorithm`/`algpseudocode`) still does not render in
   the HTML output; the banner points readers to the PDF for it.
 - The compiled PDFs are also served at `/frankenstein-transformer/paper/en.pdf`
