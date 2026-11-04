@@ -194,32 +194,40 @@ Este trabajo no está afiliado<br />
 <div class="abstract">
 <div class="abstract-title">Abstract</div>
 <p>Las arquitecturas transformer dominan el modelado de secuencias en
-procesamiento del lenguaje natural, visión por computadora y biología
-computacional. El trabajo reciente ha diversificado la atención más allá
-del softmax denso—bloques recurrentes y retentivos, patrones dispersos,
-mecanismos con compuerta, proyecciones latentes, capas con memoria y
-reglas de peso rápido—mientras que los optimizadores se han ampliado más
-allá de AdamW con métodos de reducción de varianza, eficientes en
-memoria, sin programación, de segundo orden y de bajo rango. Comparar
-estas ideas bajo condiciones consistentes sigue siendo costoso, pues
-cada variante debe implementarse, integrarse y mantenerse, lo que
-dificulta la reproducibilidad. Proponemos Frankenstein Transformer, un
-conjunto de herramientas CLI basado en configuración
-(<code>frankenstein-transformer</code>) que unifica la definición, el
-entrenamiento, el despliegue y la inferencia de modelos tras un único
-esquema YAML estricto. El conjunto de herramientas cubre cuarenta y
-cinco mezcladores de secuencia en nueve familias y veinticuatro familias
-de optimizadores con control por grupo de parámetros, y soporta clases
-de modelo encoder, decoder, Vision Transformer y audio para masked
-language modeling, modelado causal de lenguaje, embeddings de oraciones,
-tareas de imagen, reconocimiento de voz y clasificación de audio. El
-aporte de este software es un contrato de experimentación validado: las
-configuraciones inválidas fallan antes de entrenar, cada arquitectura y
+procesamiento del lenguaje natural, visión por computadora, habla y
+biología computacional, pero el espacio de diseño a su alrededor se ha
+fragmentado. La atención se ha diversificado más allá del softmax denso
+en bloques recurrentes y retentivos, patrones dispersos, mecanismos con
+compuerta, proyecciones latentes, capas con memoria y reglas de peso
+rápido; los optimizadores se han ampliado más allá de AdamW con métodos
+de reducción de varianza, eficientes en memoria, sin programación, de
+segundo orden y de bajo rango. Comparar estas ideas bajo condiciones
+consistentes sigue siendo costoso, porque cada variante debe
+implementarse, integrarse en un pipeline de entrenamiento y mantenerse
+por separado—una duplicación de esfuerzo que dificulta la
+reproducibilidad y complica alinear las comparaciones publicadas.
+Presentamos Frankenstein Transformer, un conjunto de herramientas CLI
+basado en configuración (<code>frankenstein-transformer</code>) que
+unifica la definición, el entrenamiento, el despliegue y la inferencia
+de modelos tras un único esquema YAML estricto. El conjunto de
+herramientas cubre cuarenta y cinco mezcladores de secuencia en nueve
+familias y veinticuatro familias de optimizadores con control de
+hiperparámetros por grupo de parámetros, y soporta clases de modelo
+encoder, decoder, Vision Transformer y audio para masked language
+modeling, modelado causal de lenguaje, embeddings de oraciones, tareas
+de imagen, reconocimiento de voz y clasificación de audio. Su aporte es
+un contrato de experimentación validado: las configuraciones inválidas
+fallan antes de comenzar el entrenamiento, cada arquitectura y
 optimizador comparte una interfaz operativa, y el mismo documento
-gestiona entrenamiento, despliegue cuantizado, exportación y un
-constructor web generado desde el esquema. Describimos la taxonomía, el
-enrutamiento de optimizadores, las rutas de despliegue y la integración,
-y remitimos el detalle matemático y de implementación a los
+gestiona el entrenamiento, el despliegue y la exportación cuantizados, y
+un constructor web generado desde el esquema. El contrato se ejercita de
+extremo a extremo en una campaña de medición de 868 configuraciones (905
+horas de GPU) que entrena, exporta, cuantiza y evalúa cada par de
+mezcladores, cada optimizador y cada ruta de despliegue a través de la
+misma interfaz, publicada como informe interactivo con datasets
+descargables. Describimos la taxonomía de arquitecturas, el enrutamiento
+de optimizadores, las rutas de despliegue y la superficie de
+integración, y remitimos el detalle matemático y de implementación a los
 apéndices.</p>
 </div>
 </header>
@@ -2121,45 +2129,69 @@ no confirmado de máscaras de segmentación. El adaptador deja
 deliberadamente intacto el núcleo de dashAI, de modo que futuros
 releases no puedan romperlo por acoplamiento.</p>
 <h1 id="sec:empirical-evaluation">Evaluación Empírica</h1>
-<p>Las secciones anteriores describen lo que el conjunto de herramientas
-puede expresar. Esta sección informa qué ocurrió cuando el contrato se
-ejercitó a escala: cada par de mezcladores, cada optimizador y cada ruta
-de despliegue se entrenó, exportó, cuantizó y evaluó a través de la
-misma interfaz YAML. La campaña se organiza en <em>rondas</em>. La
-ronda 1 fue un ensayo a escala de humo del arnés (5<span>,</span>129
-registros de etapas, corridas de entrenamiento de alrededor de medio
-minuto cada una) para depurar el propio pipeline. La ronda 2 es la
-campaña de medición que se analiza aquí: 868 configuraciones entrenadas
-de principio a fin, 2<span>,</span>656<span>,</span>372 pasos de
-optimización registrados y 905 horas de GPU, publicadas como un informe
-interactivo con datasets descargables.<a href="#fn1"
-class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
-<p>Dos apéndices acompañan a esta sección. El Apéndice <a
-href="#sec:annex-experiment-harness" data-reference-type="ref"
-data-reference="sec:annex-experiment-harness">33</a> documenta el arnés:
-el pipeline de cinco etapas, los tres registradores independientes, los
-datasets consolidados y la cadena de herramientas de reporte, de modo
-que una nueva ronda consista en apuntar los mismos scripts a una carpeta
-nueva. El Apéndice <a href="#sec:annex-experiment-2"
-data-reference-type="ref" data-reference="sec:annex-experiment-2">34</a>
-reporta la ronda 2 en detalle, con el censo de parámetros, las curvas de
-entrenamiento, el atlas A<span class="math inline">\(\times\)</span>B
-completo, las barridas de ablación y las mediciones de despliegue.</p>
+<p>Las secciones anteriores describen el conjunto de herramientas en
+términos de lo que puede expresar: qué mezcladores, optimizadores,
+normalizaciones y rutas de despliegue admite el esquema. Esta sección
+pasa del diseño a la evidencia e informa qué ocurrió cuando ese diseño
+se ejercitó a escala. Cada par de mezcladores, cada optimizador y cada
+ruta de despliegue del estudio se entrenó, exportó, cuantizó y evaluó a
+través de la misma interfaz YAML, de modo que las mediciones que siguen
+son comparables por construcción: una diferencia entre dos
+configuraciones refleja las configuraciones mismas y no diferencias en
+la fontanería que las rodea.</p>
+<p>La campaña se organiza en <em>rondas</em>. Una ronda es una pasada
+completa del arnés de experimentación sobre un conjunto generado de
+configuraciones, desde el entrenamiento hasta el reporte. La ronda 1 fue
+un ensayo a escala de humo—5<span>,</span>129 registros de etapas, con
+corridas de entrenamiento de alrededor de medio minuto cada una—cuyo
+propósito era depurar el propio pipeline antes de comprometer cómputo
+serio. La ronda 2 es la campaña de medición que se analiza aquí: 868
+configuraciones entrenadas de principio a fin,
+2<span>,</span>656<span>,</span>372 pasos de optimización registrados y
+905 horas de GPU de entrenamiento en esas corridas, publicadas como un
+informe interactivo con datasets descargables, de modo que cualquier
+número de esta sección puede rederivarse sin volver a correr nada.<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></p>
+<p>Dos apéndices acompañan a esta sección con propósitos
+complementarios. El Apéndice <a href="#sec:annex-experiment-harness"
+data-reference-type="ref"
+data-reference="sec:annex-experiment-harness">33</a> documenta el
+arnés—el pipeline de cinco etapas, los tres registradores
+independientes, los datasets consolidados y la cadena de herramientas de
+reporte—con el detalle suficiente para que lanzar una ronda nueva se
+reduzca a apuntar los mismos scripts a una carpeta nueva. El Apéndice <a
+href="#sec:annex-experiment-2" data-reference-type="ref"
+data-reference="sec:annex-experiment-2">34</a> reporta la ronda 2 en
+detalle, con el censo de parámetros, las curvas de entrenamiento, el
+atlas A<span class="math inline">\(\times\)</span>B completo, las
+barridas de ablación y las mediciones de despliegue. Esta sección
+enuncia los hallazgos y los interpreta; los apéndices llevan la
+evidencia que los respalda.</p>
 <h2 id="qué-mide-una-ronda">Qué mide una ronda</h2>
 <p>Todas las configuraciones pasan por las mismas cinco etapas, que
 muestra la Figura <a href="#fig:experiment-pipeline"
 data-reference-type="ref"
-data-reference="fig:experiment-pipeline">11</a>. Un único archivo YAML
-selecciona el modelo (un mezclador, un par de mezcladores como
+data-reference="fig:experiment-pipeline">11</a>: se entrena durante 100
+épocas, se exporta el checkpoint, este se despliega dos veces (una en
+formato estándar y otra cuantizado tras el entrenamiento), los dos
+modelos desplegados se evalúan sobre cuatro consignas enmascaradas
+reservadas cada uno, y se exporta un paquete de Hugging Face. Un único
+archivo YAML gobierna las cinco etapas: selecciona el modelo (un
+mezclador, un par de mezcladores declarado como
 <code>layer_pattern: [A, B]</code>, un transformer de visión o una
-ablación del esqueleto), la tarea y el presupuesto de entrenamiento. El
-pipeline entrena 100 épocas, exporta un checkpoint estándar, lo
-despliega dos veces (estándar y cuantizado post-entrenamiento), evalúa
-cuatro consignas enmascaradas reservadas por formato y exporta un
-paquete de Hugging Face. Tres registradores observan el proceso de forma
-independiente: un log de entrenamiento paso a paso, un censo de
-parámetros por grupo de módulos y un libro con una fila por ejecución de
-etapa. El informe une los tres por el slug de configuración.</p>
+ablación del esqueleto), la tarea y el presupuesto de entrenamiento.
+Como el archivo es la única entrada, toda medición puede rastrearse
+hasta la configuración que la produjo, y toda configuración puede volver
+a correrse para reproducir su medición.</p>
+<p>Tres registradores observan el proceso de forma independiente y se
+unen solo al momento del reporte: un log de entrenamiento paso a paso,
+un censo de parámetros por grupo de módulos y un libro con una fila por
+ejecución de etapa. La independencia es una salvaguarda deliberada:
+ningún registrador puede corromper en silencio la imagen completa, y un
+desacuerdo entre registradores es en sí mismo un diagnóstico. El informe
+une los tres por el slug de configuración, un identificador corto
+derivado mecánicamente del archivo YAML.</p>
 <figure id="fig:experiment-pipeline"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiment-pipeline.svg" alt="image" /></span></p>
 
 <figcaption>Una configuración de una ronda. Las cinco etapas las
@@ -2169,17 +2201,20 @@ el informe publicado se documenta en el Apéndice <a
 href="#sec:annex-experiment-harness" data-reference-type="ref"
 data-reference="sec:annex-experiment-harness">33</a>.</figcaption>
 </figure>
-<p>La ronda 2 se generó programáticamente. Los pares híbridos son las
-combinaciones de la lista de 42 mezcladores tomadas de dos en dos,
-materializadas como un modelo de dos capas cuya capa 0 ejecuta el
-mezclador A y la capa 1 el mezclador B; los singles usan una sola capa.
-Como las combinaciones siguen el orden fijo de la lista, no existe
-ningún par invertido <span class="math inline">\((B, A)\)</span>, así
-que la asimetría “primer versus segundo mezclador” que se reporta abajo
-está confundida con el orden de la lista y debe leerse de forma
-descriptiva. La Tabla <a href="#tab:round2-families"
-data-reference-type="ref" data-reference="tab:round2-families">1</a>
-resume la población.</p>
+<p>La ronda 2 se generó programáticamente y no a mano. Los pares
+híbridos son todas las combinaciones de la lista de 42 mezcladores
+tomadas de dos en dos, materializadas como un modelo de dos capas cuya
+capa 0 ejecuta el mezclador A y la capa 1 el mezclador B; las líneas
+base de un solo mezclador usan una capa. Como las combinaciones siguen
+el orden fijo de la lista, no existe ningún par invertido <span
+class="math inline">\((B, A)\)</span>: la campaña mide <code>A__B</code>
+pero nunca <code>B__A</code>. La asimetría “primer versus segundo
+mezclador” que se reporta abajo está, por tanto, confundida con el orden
+de la lista—la posición en la pila coincide con la posición en la
+lista—y debe leerse de forma descriptiva y no causal. La Tabla <a
+href="#tab:round2-families" data-reference-type="ref"
+data-reference="tab:round2-families">1</a> resume la población por
+familia.</p>
 <div id="tab:round2-families">
 <table>
 <caption>Población de la ronda 2. Las medianas se calculan por familia;
@@ -2317,91 +2352,152 @@ las familias de visión, audio y datos reales.</caption>
 </tbody>
 </table>
 </div>
+<p>Las familias difieren en lo que mantienen fijo, y esa distinción guía
+todas las comparaciones que siguen. Los pares híbridos y los singles
+varían la pila de mezcladores misma. Las familias de optimizadores,
+estructural, de normalización y de codificación posicional comparten el
+mismo esqueleto de 210k parámetros y varían exactamente un componente—y
+eso es precisamente lo que las convierte en ablaciones. Las familias de
+tarea, tokenizer, tamaño de lote, datos reales y audio cambian el
+objetivo o los datos y, por tanto, la escala de la pérdida, razón por la
+cual nunca se comparan directamente con la barrida de mezcladores.</p>
 <h2 id="hallazgos">Hallazgos</h2>
-<p><strong>El segundo mezclador es la palanca más fuerte.</strong> Entre
-los pares híbridos, el segundo mezclador mueve la pérdida final media
-desde 9,37 nats (<code>sparsek</code>) hasta 10,18 (<code>mamba</code>),
-una brecha de 0,81 nats, mientras que el primero solo abarca 0,55
-(9,26–9,81 nats, restringido a las familias con suficientes muestras).
-Leído columna a columna, un buen B mantiene casi todo A en la banda de
-8,9–9,6 nats; leído fila a fila, ningún primer mezclador rescata a un
-segundo malo. A esta escala, la elección de B domina a la de A por un
-factor de aproximadamente 1,5<span
-class="math inline">\(\times\)</span>.</p>
-<p><strong>Emparejar no es aditivo.</strong> Si se define la sinergia de
-un par como la media de sus dos marginales menos su pérdida medida,
-<span class="math inline">\(S_{A,B} = (\mu_A + \mu_B)/2 -
-L_{A,B}\)</span>, la mejor interacción es <code>nsa+engram</code> con
-<span class="math inline">\(+1{,}304\)</span> nats y la peor
+<p>Seis hallazgos resumen la ronda. Cada uno se enuncia como una
+afirmación, se respalda con una medición y se acompaña de su
+interpretación.</p>
+<p><strong>El segundo mezclador es la palanca más fuerte.</strong> Para
+cada mezclador candidato <span class="math inline">\(B\)</span>,
+considérese la pérdida final media de todos los pares en los que <span
+class="math inline">\(B\)</span> ocupa la segunda posición. Esa media
+marginal va de 9,37 nats (<code>sparsek</code>) a 10,18
+(<code>mamba</code>): una brecha de 0,81 nats. El rango correspondiente
+para la primera posición es de solo 0,55 nats (9,26–9,81, restringido a
+los mezcladores con suficientes pares para una media estable). La misma
+asimetría aparece al leer el atlas en geometría: columna a columna (B
+fijo, A variable), un buen segundo mezclador mantiene casi todo primer
+mezclador dentro de la banda de 8,9–9,6 nats, mientras que fila a fila
+(A fijo, B variable), ningún primer mezclador rescata a un segundo malo.
+Dicho de otro modo, el par hereda su techo de su segunda capa y, a esta
+escala, la elección de B vale aproximadamente 1,5<span
+class="math inline">\(\times\)</span> la elección de A. Las pérdidas se
+reportan en nats—la unidad de logaritmo natural de la entropía cruzada—,
+así que una brecha de 0,81 nats equivale a un factor de <span
+class="math inline">\(e^{0{,}81} \approx 2{,}2\times\)</span> en la
+media geométrica de la verosimilitud asignada al token correcto.</p>
+<p><strong>Emparejar no es aditivo.</strong> Si los mezcladores
+contribuyeran de forma independiente, la pérdida de un par sería
+predecible a partir de sus partes. No lo es. Defínase la media marginal
+<span class="math inline">\(\mu_M\)</span> como la pérdida media de
+todos los pares que contienen el mezclador <span
+class="math inline">\(M\)</span>, y la sinergia de un par como la media
+de sus dos marginales menos su pérdida medida, <span
+class="math inline">\(S_{A,B} = (\mu_A + \mu_B)/2 - L_{A,B}\)</span>:
+sinergia positiva significa que el par es mejor de lo que sugieren sus
+partes; negativa, que es peor. La mejor interacción es
+<code>nsa+engram</code> con <span
+class="math inline">\(+1{,}304\)</span> nats y la peor
 <code>gqa+tucker</code> con <span
-class="math inline">\(-1{,}018\)</span>. La cola positiva empareja un
-primer mezclador barato y estable con un segundo de memoria pesada; la
-cola negativa está dominada por segundos mezcladores que parecen
-promedio en aislamiento (<code>gta</code>, <code>gqa</code>,
-<code>tucker</code>) pero chocan al apilarse tras un A fuerte. El ruido
-de interacción (<span class="math inline">\(\pm 0{,}3\)</span> nats) es
-mayor que la diferencia entre la mayoría de los optimizadores de la
-ablación.</p>
-<p><strong>La escala es una palanca débil a este tamaño.</strong> Sobre
-los pares híbridos, el número de parámetros correlaciona con la pérdida
-final a <span class="math inline">\(r = -0{,}20\)</span> y con la
-precisión de validación a <span class="math inline">\(r =
--0{,}07\)</span>, mientras que predice el coste de forma fiable (<span
-class="math inline">\(r = 0{,}68\)</span> con el tiempo por paso, <span
-class="math inline">\(r = 0{,}65\)</span> con el tiempo total). El
-modelo más grande (<code>engram__conformer_attn</code>, 415 904
-parámetros) no es el mejor. Sobre las 868 filas la correlación parece
-más fuerte (<span class="math inline">\(r = -0{,}43\)</span> para la
-pérdida), pero eso es una confusión de familias: los transformers de
-visión son a la vez más grandes y mucho más fáciles de ajustar, así que
-la comparación de interés es la de los pares.</p>
+class="math inline">\(-1{,}018\)</span>. La cola positiva empareja de
+forma consistente un primer mezclador barato y estable con un segundo de
+memoria pesada; la cola negativa está dominada por segundos mezcladores
+que parecen promedio en aislamiento (<code>gta</code>, <code>gqa</code>,
+<code>tucker</code>) pero chocan al apilarse tras un primer mezclador
+fuerte. La consecuencia práctica es que el atlas no puede resumirse en
+dos listas ordenadas: el ruido de interacción (<span
+class="math inline">\(\pm 0{,}3\)</span> nats) es mayor que la
+diferencia entre la mayoría de los optimizadores de la ablación.</p>
+<p><strong>La escala es una palanca débil a este tamaño.</strong> Dentro
+de los pares híbridos, el número de parámetros correlaciona con la
+pérdida final a <span class="math inline">\(r = -0{,}20\)</span> y con
+la precisión de validación a <span class="math inline">\(r =
+-0{,}07\)</span>: a esta escala, añadir parámetros apenas compra
+calidad. Lo que los parámetros sí predicen de forma fiable es el coste
+(<span class="math inline">\(r = 0{,}68\)</span> con el tiempo por paso,
+<span class="math inline">\(r = 0{,}65\)</span> con el tiempo total). El
+modelo más grande de la ronda (<code>engram__conformer_attn</code>,
+415<span>,</span>904 parámetros) no es el mejor. Sobre las 868 filas la
+correlación parece mucho más fuerte (<span class="math inline">\(r =
+-0{,}43\)</span> para la pérdida), pero es una confusión de familias al
+estilo de la paradoja de Simpson: los transformers de visión son a la
+vez más grandes y mucho más fáciles de ajustar que los pares MLM, así
+que el coeficiente agregado mide la brecha entre familias y no el efecto
+del tamaño. La comparación de interés es la de dentro de los pares, y
+allí el tamaño es casi irrelevante.</p>
 <p><strong>La cuantización post-entrenamiento es prácticamente
-gratis.</strong> De las 810 configuraciones desplegadas en ambos
-formatos, 800 conservan una tasa top-5 idéntica; el top-1 medio pasa de
-5,62% a 5,43% y el top-5 medio de 13,36% a 13,24%, ambos deltas dentro
-de una muestra de evaluación. El despliegue cuantizado <em>no</em> es
-más rápido de extremo a extremo (32,3% de las corridas, ratio mediano
-0,64<span class="math inline">\(\times\)</span>) porque la etapa está
-dominada por la serialización y la conversión; la evaluación en sí es
-más rápida en el 51,2% de las corridas con una mediana de 1,03<span
-class="math inline">\(\times\)</span>.</p>
+gratis.</strong> Cuantizar significa aquí convertir los pesos entrenados
+a un formato de menor precisión tras el entrenamiento, sin reentrenar.
+De las 810 configuraciones desplegadas en ambos formatos, 800 conservan
+una tasa top-5 idéntica; el top-1 medio pasa de 5,62% a 5,43% y el top-5
+medio de 13,36% a 13,24%—deltas de <span
+class="math inline">\(-0{,}19\)</span> y <span
+class="math inline">\(-0{,}12\)</span> puntos porcentuales, dentro de la
+resolución de una evaluación de cuatro frases. El despliegue cuantizado
+<em>no</em> es más rápido de extremo a extremo—gana en solo el 32,3% de
+las corridas, con un ratio mediano de 0,64<span
+class="math inline">\(\times\)</span>—porque la etapa está dominada por
+la serialización y la conversión de formato y no por la aritmética. La
+evaluación en sí, que sí mide inferencia, es más rápida en el 51,2% de
+las corridas con una aceleración mediana de 1,03<span
+class="math inline">\(\times\)</span>. La afirmación de calidad es firme
+(la cuantización no mueve las métricas); la afirmación de velocidad es
+sobre el pipeline y no sobre el formato.</p>
 <p><strong>La tanda es honesta con sus fallos y sus puntos
 ciegos.</strong> El libro contiene 5<span>,</span>271 registros de
-etapas con 275 fallos (171 de entrenamiento, 104 de despliegue), todos
-fuera de las 868 configuraciones analizadas. Cuatro mezcladores
+etapas, de los cuales 275 son fallos (171 de entrenamiento, 104 de
+despliegue); todos caen fuera de las 868 configuraciones analizadas, que
+se eligieron precisamente porque entrenaron. Cuatro mezcladores
 (<code>cca</code>, <code>ccgqa</code>, <code>msa</code>,
-<code>ssog</code>) nunca entrenan, lo que explica exactamente las 158
-celdas ausentes del atlas de 861 celdas. Otros cuatro
-(<code>standard</code>, <code>bigbird</code>, <code>longformer</code>,
-<code>titan</code>) producen pérdidas bit a bit idénticas porque sus
-ventanas (al menos 64 tokens) cubren toda la secuencia de 32 tokens; el
-atlas mide un mismo modelo cuatro veces. Por separado, 37 pares aparecen
-bajo las grafías <code>retnet</code> y <code>retnet_attn</code> con
-métricas idénticas, una implementación duplicada que el análisis
-colapsa.</p>
+<code>ssog</code>) nunca entrenan en ninguna configuración, lo que
+explica exactamente las 158 celdas ausentes del atlas de 861 celdas.
+Otros cuatro (<code>standard</code>, <code>bigbird</code>,
+<code>longformer</code>, <code>titan</code>) producen pérdidas bit a bit
+idénticas porque sus ventanas de atención (al menos 64 tokens) cubren
+toda la secuencia de 32 tokens—a esta longitud de contexto colapsan al
+mismo modelo denso y el atlas mide un mismo modelo cuatro veces. Por
+separado, 37 pares aparecen bajo las grafías <code>retnet</code> y
+<code>retnet_attn</code> con métricas idénticas—una implementación bajo
+dos nombres—y el análisis los colapsa. Reportar estos defectos de forma
+explícita es una decisión de diseño: un cero silencioso o un duplicado
+oculto contaminarían toda estadística posterior.</p>
 <p><strong>El bloque de visión funciona.</strong> La segmentación
 alcanza 90,7% de precisión media de validación, la clasificación 75,8% y
 la predicción de parches 69,9%, un orden de magnitud por encima de los
-pares MLM. Esa brecha refleja la dificultad de la tarea, no la calidad
-del mezclador, y por eso las familias se mantienen separadas en todo el
-informe.</p>
+pares MLM. La brecha refleja la dificultad de las tareas y no la calidad
+de los mezcladores: adivinar un token enmascarado en un vocabulario de
+512 tokens es más difícil que los objetivos de visión a esta escala. Por
+eso las familias se mantienen separadas a lo largo de todo el informe y
+no se enuncia ningún ranking entre familias.</p>
 <h2 id="amenazas-a-la-validez">Amenazas a la validez</h2>
-<p>El modelo es pequeño (127k–416k parámetros, un vocabulario español de
-512 tokens, secuencias de 32 tokens, una semilla por configuración y 100
-épocas). Todas las curvas de aprendizaje siguen bajando en la época 100,
-así que el ranking premia a los que aprenden rápido y no a la calidad
-convergida. La inferencia usa cuatro frases por configuración, de modo
-que un acierto extra mueve una tasa top-5 en 25 puntos porcentuales; la
-señal de validación es un detector de fallos catastróficos, no un
-instrumento de ranking. Varios optimizadores convergen a la misma
-pérdida porque la corrida es demasiado corta para separarlos, y una
-corrida de clasificación de texto colapsó a una predicción constante, lo
-que es un modo de fallo y no un buen modelo. Los rankings del
-Apéndice <a href="#sec:annex-experiment-2" data-reference-type="ref"
-data-reference="sec:annex-experiment-2">34</a> son, por tanto,
-direccionales. La próxima ronda debería repetir el atlas con 256–512
-tokens, un conjunto de evaluación de 200 frases, al menos tres semillas
-y 300 épocas para los mejores pares.</p>
+<p>Los hallazgos anteriores están condicionados por la escala de la
+ronda, y cuatro limitaciones deben templar su lectura.</p>
+<ul>
+<li><p><strong>Escala y convergencia.</strong> Los modelos son pequeños
+(127k–416k parámetros), el vocabulario es de 512 tokens en español, las
+secuencias son de 32 tokens y cada configuración entrena 100 épocas con
+una sola semilla. Todas las curvas de aprendizaje siguen bajando en la
+época 100, así que el ranking premia a los que aprenden rápido y no a la
+calidad convergida.</p></li>
+<li><p><strong>Resolución de la señal de evaluación.</strong> La
+inferencia usa cuatro frases por configuración. Un acierto adicional
+mueve una tasa top-5 en 25 puntos porcentuales, de modo que la señal de
+validación es un detector de fallos catastróficos y no un instrumento de
+ranking.</p></li>
+<li><p><strong>Empates entre optimizadores.</strong> Varios
+optimizadores convergen a la misma pérdida porque la corrida es
+demasiado corta para separarlos; el ranking de optimizadores es, cuando
+mucho, indicativo.</p></li>
+<li><p><strong>Modos de fallo conocidos.</strong> Una corrida de
+clasificación de texto colapsó a una predicción constante—un modo de
+fallo registrado como tal y no un modelo utilizable—y los cuatro
+mezcladores que nunca entrenan y el alias <code>retnet</code> se cargan
+como advertencias explícitas.</p></li>
+</ul>
+<p>Los rankings del Apéndice <a href="#sec:annex-experiment-2"
+data-reference-type="ref" data-reference="sec:annex-experiment-2">34</a>
+son, por tanto, direccionales: indican dónde mirar después, no
+veredictos finales. La próxima ronda debería repetir el atlas con
+256–512 tokens, un conjunto de evaluación de 200 frases, al menos tres
+semillas y 300 épocas para los mejores pares.</p>
 <h1 id="sec:discussion">Discusión</h1>
 <p>Las decisiones de diseño en Frankenstein Transformer reflejan varias
 tensiones de ingeniería e investigación en las herramientas modernas de
@@ -16652,27 +16748,36 @@ despliegue o GGUF.</p>
 <p>Este apéndice documenta la maquinaria detrás de la Sección <a
 href="#sec:empirical-evaluation" data-reference-type="ref"
 data-reference="sec:empirical-evaluation">9</a>. Su propósito es la
-reproducibilidad entre rondas: un experimento nuevo es una carpeta nueva
-bajo <code>experimentos/</code>, y los mismos scripts de consolidación,
-reporte y publicación operan sobre ella sin cambios. El arnés está
-deliberadamente separado del código del modelo—solo lee lo que
-entrenamiento y despliegue escriben—así que un experimento nunca depende
-de la versión de la biblioteca que lo produjo, y la biblioteca nunca se
-entera de la campaña que la usó.</p>
+reproducibilidad entre rondas: un experimento nuevo es simplemente una
+carpeta nueva bajo <code>experimentos/</code>, y los mismos scripts de
+consolidación, reporte y publicación operan sobre ella sin cambios. El
+arnés está deliberadamente desacoplado del código del modelo en ambas
+direcciones—solo lee lo que entrenamiento y despliegue escriben—, de
+modo que un experimento nunca depende de la versión de la biblioteca que
+lo produjo y la biblioteca nunca se entera de la campaña que la usó. La
+consecuencia práctica es que las rondas siguen siendo interpretables y
+reconstruibles mucho después de que la biblioteca haya evolucionado.</p>
 <h2 id="etapas-y-registros">Etapas y registros</h2>
-<p>Cada configuración es un archivo YAML y un slug. El slug codifica la
-familia y los mezcladores: <code>attn_nsa_attn__engram_attn</code> es un
-par híbrido, <code>attn_single_mamba</code> una línea base de un solo
-mezclador, y las ablaciones llevan sus propios prefijos
-(<code>opt_</code>, <code>norm_</code>, <code>pe_</code>,
-<code>trans_</code>, <code>vit_</code>, <code>task_</code>,
-<code>tokenizer_</code>, <code>batch_</code>, <code>realdata_</code>,
-<code>audio_</code>, <code>bitnet_</code>). Todas las corridas ejecutan
-las mismas cinco etapas: entrenar, exportar el checkpoint, desplegar en
-formato estándar y cuantizado, evaluar cuatro consignas enmascaradas
-reservadas por formato y exportar el paquete de Hugging Face. Un fallo
-en una etapa se registra, no aborta la tanda y aparece después como una
-fila ausente en lugar de como un cero silencioso.</p>
+<p>Cada configuración es un archivo YAML y un slug. El slug es un
+identificador corto que codifica la familia y los mezcladores:
+<code>attn_nsa_attn__engram_attn</code> es un par híbrido (primer
+mezclador <code>nsa</code>, segundo mezclador <code>engram</code>),
+<code>attn_single_mamba</code> es una línea base de un solo mezclador, y
+las familias de ablación llevan sus propios prefijos (<code>opt_</code>,
+<code>norm_</code>, <code>pe_</code>, <code>trans_</code>,
+<code>vit_</code>, <code>task_</code>, <code>tokenizer_</code>,
+<code>batch_</code>, <code>realdata_</code>, <code>audio_</code>,
+<code>bitnet_</code>). Todas las corridas ejecutan las mismas cinco
+etapas: entrenar, exportar el checkpoint, desplegar en formato estándar
+y cuantizado, evaluar cuatro consignas enmascaradas reservadas por
+formato y exportar el paquete de Hugging Face.</p>
+<p>La política de fallos merece una nota. Un fallo en una etapa se
+registra, no aborta la tanda y aparece después como una fila ausente en
+lugar de como un cero silencioso. La distinción importa para la
+estadística posterior: un modelo que falló al entrenar no debe
+confundirse con un modelo que entrenó y puntuó cero, y una celda ausente
+del atlas debe poder rastrearse hasta un fallo registrado y no hasta un
+hueco inadvertido.</p>
 <p>Tres registradores escriben de forma independiente y se unen solo al
 momento del reporte:</p>
 <ol>
@@ -16681,16 +16786,18 @@ corrida con una fila por paso de optimización: pérdida, precisión,
 learning rate, normas de gradiente por grupo de parámetros, razón de
 recorte, tiempo por paso y rendimiento. La ronda 2 registró
 2<span>,</span>656<span>,</span>372 filas, que se procesan en streaming
-y se reducen a medias por época antes de dibujar cualquier
-gráfico.</p></li>
+y se reducen a medias por época antes de dibujar cualquier gráfico:
+nadie grafica 2,6 millones de puntos, y la reducción es determinista,
+así que la curva publicada es una función exacta del log crudo.</p></li>
 <li><p><strong>El censo de parámetros.</strong> Para cada configuración,
 el número de parámetros de cada grupo de módulos (atención, embeddings,
 FFN, cabeza, normalización, codificación posicional, mHC, router,
-residual). Esto es lo que separa “el modelo es más grande” de “el bloque
-de atención es más grande”.</p></li>
+residual). Es lo que separa “el modelo es más grande” de “el bloque de
+atención es más grande” y permite atribuir el coste por componente y no
+solo por modelo.</p></li>
 <li><p><strong>El libro del pipeline.</strong> Una fila por ejecución de
 etapa con categoría, estado, duración y código de retorno. Es el único
-registro de los fallos y, por tanto, la única fuente para el análisis de
+registro de los fallos y, por tanto, la única fuente del análisis de
 fiabilidad.</p></li>
 </ol>
 <figure id="fig:experiment-reporting"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiment-reporting.svg" alt="image" /></span></p>
@@ -16706,14 +16813,18 @@ ronda 2</h2>
 <p>La Tabla <a href="#tab:stage-ledger" data-reference-type="ref"
 data-reference="tab:stage-ledger">16</a> reproduce el libro. El
 entrenamiento domina tanto el conteo de registros como el coste:
-1<span>,</span>039 intentos, 868 éxitos y 171 fallos, una mediana de 68
-minutos y un P90 de 84 minutos por corrida exitosa, para 906 horas de
-GPU en total. El despliegue es la otra etapa que falla (104 veces de
-1<span>,</span>734), y los fallos son simétricos: una configuración cuyo
-export estándar falla también falla en el cuantizado, lo que apunta a la
-serialización del checkpoint o de la configuración y no a la
-cuantización. La evaluación y el export a Hugging Face nunca fallaron en
-la población analizada.</p>
+1<span>,</span>039 intentos, de los cuales 868 tuvieron éxito y 171
+fallaron, con una mediana de 68 minutos y un P90 de 84 minutos por
+intento—906 horas de GPU en total, de las cuales 905 corresponden a las
+868 corridas analizadas y el resto a los intentos descartados. Todas las
+demás etapas se miden en segundos. El despliegue es la única etapa
+además del entrenamiento que falla (104 veces de 1<span>,</span>734), y
+los fallos son simétricos: siempre que el export estándar de una
+configuración falla, falla también su export cuantizado. La simetría
+apunta a una causa raíz compartida aguas arriba de la cuantización—la
+serialización del checkpoint o de la configuración—y no al paso de
+cuantizar en sí. La evaluación y el export a Hugging Face nunca fallaron
+en la población analizada.</p>
 <div id="tab:stage-ledger">
 <table>
 <caption>Libro de etapas del pipeline para la ronda 2. Las duraciones
@@ -16779,17 +16890,26 @@ campaña.</caption>
 </tbody>
 </table>
 </div>
-<p>Los 275 fallos son informativos y no solo inconvenientes. Los 171
+<p>Los 275 fallos son informativos y no un mero inconveniente. Los 171
 fallos de entrenamiento quedan fuera de las 868 configuraciones
 analizadas, que se eligieron precisamente porque entrenaron; los 104
-fallos de despliegue ocurren en pares. La distribución de fallos por
-familia y el análisis de huellas idénticas de los cuatro mezcladores que
+fallos de despliegue ocurren en pares simétricos, como se explicó
+arriba. Leído como medición de fiabilidad, el libro dice que el pipeline
+falla de forma ruidosa y temprana—en entrenamiento o en export—y nunca
+en silencio durante la evaluación. La distribución de fallos por familia
+y el análisis de huellas idénticas de los cuatro mezcladores que
 colapsan con 32 tokens se grafican en el Apéndice <a
 href="#sec:annex-experiment-2" data-reference-type="ref"
 data-reference="sec:annex-experiment-2">34</a>.</p>
 <h2 id="datasets-consolidados">Datasets consolidados</h2>
-<p>La cadena de reporte parte de las carpetas crudas y produce un
-conjunto pequeño de tablas unidas. Se publican con el informe para que
+<p>La cadena de reporte parte de las carpetas crudas por corrida y
+produce un conjunto pequeño de tablas unidas (Tabla <a
+href="#tab:round-datasets" data-reference-type="ref"
+data-reference="tab:round-datasets">[tab:round-datasets]</a>). La clave
+de unión es el slug de configuración: <code>master.csv</code> lleva una
+fila por configuración con el censo de parámetros, el resumen de
+entrenamiento, los estados de etapa y las puntuaciones de inferencia uno
+al lado del otro. Las tablas se publican con el informe para que
 cualquier figura se pueda reconstruir sin los 702 MB de logs paso a
 paso, y los CSV crudos por corrida se publican aparte, comprimidos con
 gzip, para quien necesite datos a nivel de paso.</p>
@@ -16822,42 +16942,45 @@ un archivo por configuración.<br />
 </div>
 <h2 id="reconstruir-una-ronda">Reconstruir una ronda</h2>
 <p>El pipeline son tres scripts y un publicador, todos de biblioteca
-estándar o solo pandas/numpy/matplotlib:</p>
+estándar o solo pandas/numpy/matplotlib, y todos ejecutan en CPU:</p>
 <ol>
 <li><p><code>python experimentos/to_csv.py N</code> lee
 <code>experimentos/N/</code> sin modificarlo y escribe CSVs consolidados
 en <code>experimentos/N/csvs/</code>: la tabla de inferencia con la
 columna <code>notes</code> expandida en una columna por cada par
 <code>key=value</code>, el censo de parámetros como una fila por
-configuración, el libro de resultados como tabla plana y los CSV de
-entrenamiento por corrida concatenados más su media, desviación estándar
-y última fila por corrida.</p></li>
+configuración, el libro de resultados como tabla plana, y los CSV de
+entrenamiento por corrida concatenados junto con su media, desviación
+estándar y última fila por corrida.</p></li>
 <li><p><code>python experimentos/N/report/build_data.py</code> procesa
 los logs crudos en streaming, une los tres registradores por slug y
 escribe <code>master.csv</code> y las tablas derivadas.</p></li>
 <li><p><code>python experimentos/N/report/make_charts.py</code>
-renderiza cada figura dos veces (oscura y clara) y registra los pies en
-<code>registry.json</code>; <code>make_report.py</code> consume ambos
-para emitir la página estática bilingüe.</p></li>
+renderiza cada figura dos veces (tema oscuro y claro) y registra los
+pies en <code>registry.json</code>; <code>make_report.py</code> consume
+ambos para emitir la página estática bilingüe.</p></li>
 <li><p><code>bash experimentos/N/report/publish.sh</code> copia la
 página, las figuras y los datasets al espejo de GitHub Pages. Nunca hace
 commit ni push por sí mismo.</p></li>
 </ol>
 <p>Las figuras del artículo son un subconjunto curado de los mismos
 constructores de gráficos, exportado como PDF vectorial por
-<code>make_paper_figures.py</code>. Toda la cadena es solo CPU y
-reproduce cada número de este apéndice a partir de los datasets
-publicados.</p>
+<code>make_paper_figures.py</code>. La división del trabajo es
+deliberada: un mismo conjunto de constructores alimenta el informe web y
+el artículo, así que un número del artículo y el píxel correspondiente
+del sitio no pueden divergir. Toda la cadena es solo CPU y reproduce
+cada número de este apéndice a partir de los datasets publicados.</p>
 <h2 id="ronda-1-el-piloto">Ronda 1: el piloto</h2>
 <p>La ronda 1 ejercitó el mismo arnés de extremo a extremo a escala de
 humo: 5<span>,</span>129 registros de etapas, corridas de entrenamiento
 de aproximadamente medio minuto y la misma secuencia de cinco etapas. Su
-propósito era validar la generación de slugs, la contabilidad del libro,
-la simetría del despliegue y las uniones del reporte antes de
-comprometer tiempo de GPU. No se analiza más aquí porque las corridas
-eran demasiado cortas para separar arquitecturas; su valor es que la
-ronda 2 heredó un arnés en el que cada modo de fallo ya se había visto
-una vez.</p>
+propósito era validar la mecánica—la generación de slugs, la
+contabilidad del libro, la simetría del despliegue y las uniones del
+reporte—antes de comprometer tiempo de GPU en la campaña real. No se
+analiza más aquí porque las corridas eran demasiado cortas para separar
+arquitecturas; su valor es procedimental: la ronda 2 heredó un arnés
+cuya contabilidad ya estaba ejercitada y cuyos modos de fallo ya eran
+conocidos.</p>
 <h1 id="sec:annex-experiment-2">Ronda 2: el atlas de los mixers</h1>
 <p>Este apéndice reporta la ronda 2 en su totalidad. Sigue el orden del
 informe publicado: el paisaje de parámetros, los resultados de
@@ -16867,7 +16990,8 @@ mediciones de despliegue e inferencia, la fiabilidad del pipeline y las
 correlaciones entre las variables medidas. Todos los números provienen
 de <code>master.csv</code> del dataset publicado; todas las figuras se
 regeneran con <code>make_paper_figures.py</code> a partir de los mismos
-constructores de gráficos que el informe web.</p>
+constructores de gráficos que el informe web, así que el apéndice y el
+sitio no pueden contradecirse.</p>
 <h2 id="configuración-2">Configuración</h2>
 <p>La población es de 868 configuraciones: 703 registros de pares
 híbridos (667 pares únicos tras colapsar el duplicado
@@ -16875,34 +16999,41 @@ híbridos (667 pares únicos tras colapsar el duplicado
 mezclador, 48 transformers de visión y 79 ablaciones. Cada corrida
 entrena 100 épocas (unos 3<span>,</span>000 pasos) sobre un vocabulario
 español de 512 tokens con secuencias de 32 tokens, una semilla, el mismo
-calendario de warm-up más coseno y BitNet activado por defecto. Los
-pares híbridos son las combinaciones de dos elementos de la lista de 42
-mezcladores, con la capa 0 ejecutando el mezclador A y la capa 1 el
-mezclador B; no existe ningún par invertido, así que la asimetría
-primero/segundo es descriptiva. Un par está cubierto si ambos
+calendario de warm-up más coseno y BitNet activado por defecto. Mantener
+fijos el calendario, los datos y el presupuesto es lo que hace
+comparables las celdas: las únicas partes que se mueven son las
+decisiones arquitectónicas bajo estudio. Los pares híbridos son las
+combinaciones de dos elementos de la lista de 42 mezcladores, con la
+capa 0 ejecutando el mezclador A y la capa 1 el mezclador B; no existe
+ningún par invertido, así que la asimetría primero/segundo es
+descriptiva. Una celda de la rejilla está cubierta solo si ambos
 mezcladores entrenan en todas las configuraciones que los contienen: la
 rejilla tiene <span class="math inline">\(42\times41/2 = 861\)</span>
 celdas y se midieron 667.</p>
 <h2 id="el-paisaje-de-parámetros">El paisaje de parámetros</h2>
 <p>Las 868 configuraciones abarcan de 127 328 a 415 904 parámetros, con
 una mediana de 220 160. Los pares híbridos ocupan el centro del rango
-porque combinan dos módulos de atención; las corridas más pequeñas son
+porque apilan dos módulos de atención; las corridas más pequeñas son
 líneas base de un solo mezclador como <code>attn_single_mamba</code>
 (127 328 parámetros), y la mayor es <code>engram__conformer_attn</code>
 con 415 904, impulsada por el banco de memoria <code>engram</code>, que
 añade una gran tabla clave-valor al bloque de atención.</p>
-<p>El gráfico de composición es el diagnóstico más útil de esta sección.
-Los embeddings y la cabeza de salida son costes fijos de unos 49k
-parámetros cada uno, así que cualquier diferencia entre configuraciones
-se paga casi por completo en el bloque de atención y la FFN. Los
-transformers de visión son la familia más costosa porque añaden
-embeddings de parches y una cabeza de clasificación mayor, mientras que
-las ablaciones de optimizador, normalización o codificación posicional
-mantienen por diseño el mismo esqueleto de 210k. El coste tiene una
-lectura clara: <code>engram</code> añade entre 100k y 160k parámetros
-cada vez que aparece, y <code>mamba</code> y <code>retnet</code> están
-entre los segundos mezcladores más baratos aunque sean los peores—barato
-y malo, la peor combinación.</p>
+<p>El gráfico de composición (Figura <a
+href="#fig:r2-params-composition" data-reference-type="ref"
+data-reference="fig:r2-params-composition">80</a>) es el diagnóstico más
+útil de la sección. Los embeddings y la cabeza de salida son costes
+fijos de unos 49k parámetros cada uno, así que casi toda diferencia
+entre configuraciones se paga en el bloque de atención y la FFN—los dos
+componentes que los experimentos realmente varían. Los transformers de
+visión son la familia más costosa porque añaden embeddings de parches y
+una cabeza de clasificación mayor, mientras que las ablaciones de
+optimizador, normalización o codificación posicional mantienen por
+diseño el mismo esqueleto de 210k, de modo que solo difiere el
+componente ablacionado. El coste tiene una lectura clara por mezclador:
+<code>engram</code> añade entre 100k y 160k parámetros cada vez que
+aparece, y <code>mamba</code> y <code>retnet</code> están entre los
+segundos mezcladores más baratos aunque sean los peores—barato y malo,
+la peor combinación en ambos ejes.</p>
 <figure id="fig:r2-params-composition"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/params_composition.svg" alt="image" /></span></p>
 
 <figcaption>Dónde viven los parámetros, por familia. Los embeddings y la
@@ -16919,22 +17050,26 @@ comparten un esqueleto.</figcaption>
 <p>Entre los pares híbridos, la pérdida final va de 8,116 a 10,450 nats
 (mediana 9,595). El mejor par es <code>nsa__engram_attn</code> con
 8,116, seguido de <code>gated_deltanet2__sparda_attn</code> (8,567) y
-<code>falcon3__conformer_attn</code> (8,620). El peor,
-<code>gqa__tucker_attn</code>, necesita 10,450 nats. La brecha entre
-extremos supera la brecha entre casi todas las ablaciones de
-optimizadores, y ese es el argumento más fuerte para elegir bien el par
-de atención.</p>
-<p>Pérdida y precisión de validación no coinciden. Su correlación de
-rangos entre pares es débil, el par con mejor pérdida marca 0,0% de
-top-1, y el de mejor precisión (<code>fox__falcon1a_attn</code>) alcanza
-12,55% con una pérdida de entrenamiento peor (9,292). Con cuatro frases
-de evaluación, un token afortunado reescribe el ranking, así que hay que
-reportar ambas señales. La Tabla <a href="#tab:r2-top-loss"
+<code>falcon3__conformer_attn</code> (8,620); el peor,
+<code>gqa__tucker_attn</code>, necesita 10,450. La brecha entre el mejor
+y el peor par supera la brecha entre casi todas las ablaciones de
+optimizadores—el argumento más fuerte de la ronda para elegir bien el
+par de atención: la pila de mezcladores importa más que el
+optimizador.</p>
+<p>Pérdida y precisión de validación, sin embargo, no coinciden. Su
+correlación de rangos entre pares es débil; el par con mejor pérdida
+absoluta marca 0,0% de top-1, y el de mejor precisión
+(<code>fox__falcon1a_attn</code>) alcanza 12,55% con una pérdida de
+entrenamiento peor (9,292). La razón es la resolución: con cuatro frases
+de evaluación, un token afortunado o desafortunado reescribe el ranking.
+Por eso se reportan ambas señales a lo largo del apéndice, y las tablas
+de inferencia deben leerse como control de fallos catastróficos y no
+como clasificación. La Tabla <a href="#tab:r2-top-loss"
 data-reference-type="ref" data-reference="tab:r2-top-loss">17</a> lista
 los diez mejores pares por pérdida final y la Tabla <a
 href="#tab:r2-top-acc" data-reference-type="ref"
 data-reference="tab:r2-top-acc">18</a> los diez mejores por precisión de
-validación.</p>
+validación; las dos tablas no comparten ningún par.</p>
 <div id="tab:r2-top-loss">
 <table>
 <caption>Los diez mejores pares híbridos por pérdida final de
@@ -17153,20 +17288,22 @@ y el mejor por precisión tiene peor pérdida.</figcaption>
 </figure>
 <h2 id="dinámica-de-entrenamiento">Dinámica de entrenamiento</h2>
 <p>Todas las corridas usan el mismo calendario de warm-up más coseno,
-así que las curvas de aprendizaje son directamente comparables. La
-población de pares sigue descendiendo en la época 100: la pérdida
-mediana cae de unos 10,2 nats en la época 0 a 9,49 al final. La tanda
-mide, por tanto, velocidad de aprendizaje y no calidad convergida, y
-todo ranking debe leerse como “qué par aprende más rápido en
-3<span>,</span>000 pasos”.</p>
-<p>Las normas de gradiente son estables entre familias (1,87 para el
-bloque de atención, 0,92 para la FFN, 3,47 para la cabeza), y la razón
-de recorte mediana se sitúa en 0,90, por debajo del umbral de 1,0, así
-que la mayoría de los pasos pasan sin recorte y este solo actúa en los
-picos. El rendimiento mediano es 357 tokens/s para la población de
-pares; la cola de 3k–31k pertenece a ablaciones de tokenizer y audio
-cuyo cronómetro cubre solo parte del trabajo, por lo que el análisis de
-Pareto la excluye.</p>
+así que las curvas de aprendizaje son directamente comparables sin
+renormalización. La población de pares sigue descendiendo en la
+época 100: la pérdida mediana cae de unos 10,2 nats en la época 0 a 9,49
+al final. La tanda mide, por tanto, velocidad de aprendizaje y no
+calidad convergida, y todo ranking de este apéndice debe leerse como
+“qué par aprende más rápido en 3<span>,</span>000 pasos” y no como “qué
+par es el mejor en el límite”.</p>
+<p>Las estadísticas de optimización son tranquilas. Las normas de
+gradiente son estables entre familias (1,87 para el bloque de atención,
+0,92 para la FFN, 3,47 para la cabeza), y la razón de recorte mediana se
+sitúa en 0,90—por debajo del umbral de recorte de 1,0—, así que la
+mayoría de los pasos pasan sin recorte y este solo actúa en los picos.
+El rendimiento mediano es 357 tokens/s para la población de pares; la
+cola de 3k–31k visible en los gráficos pertenece a las ablaciones de
+tokenizer y audio, cuyo cronómetro cubre solo parte del trabajo, por lo
+que el análisis de Pareto la excluye.</p>
 <figure id="fig:r2-curves-quantiles"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/curves_quantiles.svg" alt="image" /></span></p>
 
 <figcaption>Curvas de la población con banda P10–P90. Las curvas siguen
@@ -17186,20 +17323,26 @@ porque la razón mediana es 0,90.</figcaption>
 </figure>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
-<p>El atlas es el centro del experimento: cada celda es un par híbrido,
-las filas son el primer mezclador y las columnas el segundo. Leído
-columna a columna, el segundo mezclador domina: un B bueno
-(<code>sparsek</code>, <code>engram</code>, <code>mlra</code>) mantiene
-casi todo A en la banda de 8,9–9,6 nats, mientras que un B malo
-(<code>mamba</code>, <code>retnet</code>, <code>bigbird</code>) arrastra
-incluso al mejor A por encima de 10 nats. Leído fila a fila, ningún
-primer mezclador rescata a un segundo malo.</p>
+<p>El atlas (Figura <a href="#fig:r2-matrix-loss"
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">88</a>) es
+el centro del experimento: una matriz en la que cada celda es un par
+híbrido, las filas indexan el primer mezclador, las columnas el segundo
+y el color codifica la pérdida final. Se lee en dos direcciones. Columna
+a columna—segundo mezclador fijo, primero variable—, el segundo
+mezclador domina: un B bueno (<code>sparsek</code>, <code>engram</code>,
+<code>mlra</code>) mantiene casi todo A en la banda de 8,9–9,6 nats,
+mientras que un B malo (<code>mamba</code>, <code>retnet</code>,
+<code>bigbird</code>) arrastra incluso al mejor A por encima de 10 nats.
+Fila a fila—primer mezclador fijo, segundo variable—, ningún A rescata a
+un B malo. La asimetría es la forma visual del primer hallazgo de la
+Sección <a href="#sec:empirical-evaluation" data-reference-type="ref"
+data-reference="sec:empirical-evaluation">9</a>.</p>
 <p>La cobertura es casi completa: se entrenaron 667 de los 861 pares
 posibles. Los 158 pares que nunca entrenaron son exactamente los que
 contienen <code>cca</code>, <code>ccgqa</code>, <code>msa</code> o
-<code>ssog</code>, cuatro mezcladores que fallan en toda configuración
-(<span class="math inline">\(4\times41 - \binom{4}{2} =
-158\)</span>).</p>
+<code>ssog</code>—cuatro mezcladores que fallan en toda configuración—,
+lo que da la cuenta exacta: <span class="math inline">\(4\times41 -
+\binom{4}{2} = 158\)</span>.</p>
 <figure id="fig:r2-matrix-loss"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/matrix_loss.svg" alt="image" /></span></p>
 
 <figcaption>El atlas A<span class="math inline">\(\times\)</span>B de
@@ -17218,12 +17361,15 @@ elegir.</h4>
 <p>La Tabla <a href="#tab:r2-best-b" data-reference-type="ref"
 data-reference="tab:r2-best-b">19</a> ordena los segundos mezcladores
 por pérdida final media en todos los pares que los contienen. La columna
-Pares indica el tamaño de muestra detrás de cada media; una media de un
-solo par (por ejemplo <code>mamba</code>) es anecdótica. La mitad
-inferior es tan informativa como la superior: <code>mamba</code>,
+<em>Pares</em> es el tamaño de muestra detrás de cada media y debe
+leerse junto con ella: una media de un solo par (por ejemplo
+<code>mamba</code>, con un par) es anecdótica, mientras que una media de
+30–40 pares es una estimación sólida. La mitad inferior de la tabla es
+tan informativa como la superior: <code>mamba</code>,
 <code>bigbird</code>, <code>longformer</code> y <code>retnet</code> son
-baratos pero arrastran sistemáticamente al par, justo el patrón que
-muestran los mapas de calor.</p>
+baratos pero arrastran sistemáticamente a sus pares—justo el patrón que
+muestran los mapas de calor, y una advertencia contra equiparar economía
+de parámetros con calidad.</p>
 <div id="tab:r2-best-b">
 <table>
 <caption>Segundos mezcladores ordenados por pérdida final media en los
@@ -17355,17 +17501,24 @@ pares que los contienen (mejores ocho y peores ocho).</caption>
 </div>
 <h4 id="la-interacción-supera-a-los-marginales.">La interacción supera a
 los marginales.</h4>
-<p>El gráfico de sinergia mide cuánto mejor es un par frente a la media
-de sus dos marginales, <span class="math display">\[S_{A,B} =
+<p>Ordenar los mezcladores individualmente no permite reconstruir el
+atlas, porque los pares interactúan. El gráfico de sinergia lo
+cuantifica: para cada par mide cuánto mejor (o peor) es el par frente a
+la media de sus dos marginales, <span class="math display">\[S_{A,B} =
 \frac{\mu_A + \mu_B}{2} - L_{A,B},\]</span> donde <span
 class="math inline">\(\mu_A\)</span> y <span
 class="math inline">\(\mu_B\)</span> son las pérdidas medias de todos
-los pares que contienen A y B. <code>nsa+engram</code> gana 1,304 nats y
-los diez primeros comparten un patrón: un primer mezclador barato y
-limpio con un segundo de memoria pesada. La cola negativa está dominada
-por <code>gta</code>, <code>gqa</code> y <code>tucker</code> como
-B—mezcladores que parecen promedio en aislamiento pero chocan al
-apilarse tras un A fuerte.</p>
+los pares que contienen A y B, respectivamente. Sinergia positiva
+significa que el par supera lo que sus partes prediccen.
+<code>nsa+engram</code> gana 1,304 nats y la parte alta de la tabla
+comparte un patrón: un primer mezclador barato y limpio apilado bajo uno
+de memoria pesada. La cola negativa está dominada por <code>gta</code>,
+<code>gqa</code> y <code>tucker</code> como B—mezcladores que parecen
+promedio en aislamiento pero chocan al apilarse tras un A fuerte. Para
+síntesis, el mensaje es que una lista ordenada de mezcladores es un
+resumen necesario pero una herramienta de diseño insuficiente: antes de
+componer una pila hay que consultar el atlas o, al menos, la tabla de
+sinergia.</p>
 <div id="tab:r2-synergy">
 <table>
 <caption>Las mejores y peores interacciones entre mezcladores por
@@ -17474,8 +17627,9 @@ que chocan tras un A fuerte.</figcaption>
 <figure id="fig:r2-pareto"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/pareto_speed_loss.svg" alt="image" /></span></p>
 
 <figcaption>Frontera de Pareto velocidad–calidad de los pares híbridos.
-La frontera la pueblan pares cuyo segundo mezclador tiene memoria pesada
-pero cuyo primero es barato.</figcaption>
+Un par está en la frontera cuando ningún otro es a la vez más rápido y
+mejor; la frontera la pueblan pares cuyo segundo mezclador tiene memoria
+pesada pero cuyo primero es barato.</figcaption>
 </figure>
 <figure id="fig:r2-top5-b"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/top5_by_b.svg" alt="image" /></span></p>
 
@@ -17492,14 +17646,21 @@ validación.</figcaption>
 </figure>
 <h2 id="ablaciones">Ablaciones</h2>
 <h4 id="optimizadores.">Optimizadores.</h4>
-<p>La barrida de optimizadores es el gráfico más aleccionador: 23
-optimizadores, el mismo esqueleto de 210k y un rango de 10,10–10,77
-nats. <code>q_apollo</code> gana con 10,098 y <code>galore_adamw</code>
-cierra la tabla con 10,772, pero una docena de optimizadores aterrizan
-exactamente en 10,404, así que la corrida es demasiado corta para
-separar la elección del ruido de semilla. Las diferencias de velocidad
-sí son reales: el tiempo por paso varía un 30% y <code>shampoo</code> y
-<code>muon</code> pagan sobrecoste visible.</p>
+<p>La barrida de optimizadores es el gráfico más aleccionador de la
+ronda: 23 optimizadores, el mismo esqueleto de 210k y un rango de
+pérdida final de solo 10,10–10,77 nats (Tabla <a
+href="#tab:r2-optimizers" data-reference-type="ref"
+data-reference="tab:r2-optimizers">21</a>). <code>q_apollo</code> gana
+con 10,098 y <code>galore_adamw</code> cierra la tabla con 10,772, pero
+una docena de optimizadores aterrizan exactamente en 10,404—la corrida
+es demasiado corta para que la elección del optimizador se separe del
+ruido, y el resumen honesto a este presupuesto es que la mayoría de los
+optimizadores modernos son intercambiables. Las diferencias de velocidad
+sí son reales: el tiempo medio por paso varía en torno a un 30% y los
+métodos de segundo orden y ortogonalizados (<code>shampoo</code>,
+<code>muon</code>) pagan un sobrecoste visible. Cuando las corridas son
+cortas, el optimizador conviene elegirlo por velocidad y no por pérdida
+final.</p>
 <div id="tab:r2-optimizers">
 <table>
 <caption>Ablación de optimizadores: pérdida final, top-1 de validación y
@@ -17668,13 +17829,19 @@ pagan el sobrecoste visible.</figcaption>
 </figure>
 <h4 id="normalización-y-codificación-posicional.">Normalización y
 codificación posicional.</h4>
-<p>Entre las normalizaciones, <code>flash_norm</code> gana con claridad
-(9,749 nats, medio nat por delante del segundo), mientras que
-<code>prms_norm</code> y <code>rms_norm</code> quedan atrás. En
-codificaciones posicionales la familia PAPE (<code>pape_ri</code>,
-<code>pape</code>, <code>pape_efficient</code>) barre el podio, y RoPE
-clásico queda a media tabla a esta escala—recordatorio de que “moderno”
-no es automáticamente mejor en una corrida de 100 épocas.</p>
+<p>Entre las normalizaciones (Tabla <a href="#tab:r2-norms"
+data-reference-type="ref" data-reference="tab:r2-norms">22</a>),
+<code>flash_norm</code> gana con claridad con 9,749 nats—medio nat por
+delante del segundo, un margen grande según los estándares de esta
+ronda—, mientras que <code>prms_norm</code> y <code>rms_norm</code>
+quedan atrás. En las codificaciones posicionales (Tabla <a
+href="#tab:r2-pe" data-reference-type="ref"
+data-reference="tab:r2-pe">23</a>), la familia PAPE
+(<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
+barre el podio y RoPE clásico queda a media tabla. Ambos resultados
+sirven de calibración: “moderno” no es automáticamente mejor en una
+corrida de 100 épocas a esta escala, y decisiones de componente que en
+la literatura parecen refinamientos aquí pueden separar medio nat.</p>
 <div id="tab:r2-norms">
 <table>
 <caption>Ablación de normalización sobre el esqueleto
@@ -17825,12 +17992,16 @@ del resto por medio nat.</figcaption>
 y RoPE clásico queda a media tabla a esta escala.</figcaption>
 </figure>
 <h4 id="conmutadores-estructurales.">Conmutadores estructurales.</h4>
-<p>Los conmutadores estructurales se separan más que los optimizadores.
-Los embeddings factorizados (9,623), la FFN SwiGLU (9,901) y dos bucles
-de Hyperloop (9,908) son las tres victorias; los conmutadores de BitNet
-quedan en 10,016, mHC en 10,186 y las variantes de residuales en
-10,43–10,49. Mixture-of-Depths es el peor conmutador con 10,854,
-consistente con su incompatibilidad con mHC a esta profundidad.</p>
+<p>Los conmutadores estructurales (Tabla <a href="#tab:r2-trans"
+data-reference-type="ref" data-reference="tab:r2-trans">24</a>) se
+separan más que los optimizadores—evidencia de que, a esta escala, la
+arquitectura es una palanca más fuerte que la regla de actualización.
+Las tres victorias son los embeddings factorizados (9,623), la FFN
+SwiGLU (9,901) y dos bucles de Hyperloop (9,908). Los conmutadores de
+BitNet quedan en 10,016, mHC en 10,186 y las variantes de residuales
+entre 10,43 y 10,49. Mixture-of-Depths es el peor conmutador con 10,854,
+consistente con su incompatibilidad documentada con mHC a esta
+profundidad.</p>
 <div id="tab:r2-trans">
 <table>
 <caption>Conmutadores estructurales, ordenados por pérdida
@@ -17979,11 +18150,13 @@ conmutador.</figcaption>
 precisión media de validación, la clasificación 75,8% y la predicción de
 parches 69,9%. Estas cifras están un orden de magnitud por encima de los
 pares MLM (mediana 4,0%) porque la tarea es más fácil, no porque el
-mezclador importe más, y por eso el informe mantiene las familias
-separadas. Las ablaciones de tokenizer y tarea se comportan como se
-espera: el tokenizer cambia la pérdida en varios nats porque cambia el
+mezclador importe más; el informe mantiene las familias separadas y no
+extrae ninguna conclusión entre familias. Las ablaciones de tokenizer y
+tarea se comportan como se espera y sirven sobre todo de anclas de
+escala: el tokenizer mueve la pérdida en varios nats porque cambia el
 vocabulario y la longitud media de secuencia, y la tarea la cambia
-porque cambia el objetivo.</p>
+porque cambia el objetivo mismo. Ninguna es comparable con la barrida de
+mezcladores, y ambas quedan fuera de ella.</p>
 <figure id="fig:r2-vit"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/vit_split.svg" alt="image" /></span></p>
 
 <figcaption>Tareas de visión por objetivo. La segmentación es la más
@@ -17998,20 +18171,22 @@ mezcladores.</figcaption>
 <h2 id="despliegue-e-inferencia">Despliegue e inferencia</h2>
 <p>La cuantización post-entrenamiento es la buena noticia de la ronda.
 En las 810 configuraciones con ambos formatos, el top-1 medio pasa de
-5,62% a 5,43% y el top-5 medio de 13,36% a 13,24%, deltas de <span
+5,62% a 5,43% y el top-5 medio de 13,36% a 13,24%—deltas de <span
 class="math inline">\(-0{,}19\)</span> y <span
 class="math inline">\(-0{,}12\)</span> puntos porcentuales. Ochocientas
-configuraciones quedan exactamente iguales; las pocas que se mueven lo
-hacen por una muestra de cuatro. Para un modelo a escala de humo es el
-resultado esperado, pero vale la pena medirlo en vez de asumirlo.</p>
-<p>La historia de velocidad es menos halagüeña. El despliegue cuantizado
-es más rápido que el estándar solo en el 32,3% de las corridas (ratio
-mediano 0,64<span class="math inline">\(\times\)</span>) porque la etapa
-de despliegue está dominada por la serialización y la conversión, no por
-la inferencia; la evaluación es más rápida el 51,2% de las veces con una
-aceleración mediana de 1,03<span class="math inline">\(\times\)</span>.
-La inferencia en sí tarda unos 10,5 s para cuatro frases, que es la
-métrica que importa en producción.</p>
+de las 810 configuraciones quedan exactamente iguales, y las pocas que
+se mueven lo hacen por una sola muestra de cuatro. Para un modelo a
+escala de humo es el resultado esperado, pero vale la pena medirlo en
+vez de asumirlo.</p>
+<p>La historia de velocidad es menos halagüeña, y la razón es
+estructural. El despliegue cuantizado es más rápido que el estándar solo
+en el 32,3% de las corridas (ratio mediano 0,64<span
+class="math inline">\(\times\)</span>) porque la etapa de despliegue
+está dominada por la serialización y la conversión de formato, no por la
+inferencia; la etapa de evaluación, que sí mide inferencia, es más
+rápida el 51,2% de las veces con una aceleración mediana de 1,03<span
+class="math inline">\(\times\)</span>. La inferencia en sí tarda unos
+10,5 s para cuatro frases—el número que importa en producción.</p>
 <p>La mejor configuración de inferencia no es la de mejor pérdida.
 <code>mamba__engram_attn</code> acierta tres de cuatro tokens en el
 top-5 (75,0%) con una pérdida de entrenamiento de 10,277, por encima de
@@ -18141,26 +18316,29 @@ style="text-align: left;"><code>gated_deltanet__tucker_attn</code></td>
 <h2 id="fiabilidad-del-pipeline">Fiabilidad del pipeline</h2>
 <p>El libro registra 5<span>,</span>271 ejecuciones de etapas. 868
 entrenamientos tuvieron éxito y 171 fallaron con código de salida
-distinto de cero, todos fuera de las 868 configuraciones analizadas, que
+distinto de cero—todos fuera de las 868 configuraciones analizadas, que
 se eligieron justamente porque entrenaron. El despliegue falló 104 veces
 de 1<span>,</span>734, siempre en pares simétricos: una configuración
 que falla el export estándar también falla el cuantizado, lo que apunta
 a una causa raíz compartida (serialización del checkpoint o de la
 configuración) y no a la cuantización en sí.</p>
-<p>Dos hallazgos de calidad de datos condicionan la interpretación.
-Primero, cuatro mixers nunca entrenan: <code>cca</code>,
+<p>Dos hallazgos de calidad de datos condicionan la interpretación del
+atlas. Primero, cuatro mezcladores nunca entrenan: <code>cca</code>,
 <code>ccgqa</code>, <code>msa</code> y <code>ssog</code> fallan en sus
-cuatro singles y en los 158 pares que los contienen, exactamente las 158
-celdas ausentes del atlas. Segundo, cuatro mixers son indistinguibles
-con contexto de 32 tokens: <code>standard</code>, <code>bigbird</code>,
+cuatro singles y en los 158 pares que los contienen—exactamente las 158
+celdas ausentes. Segundo, cuatro mezcladores son indistinguibles con un
+contexto de 32 tokens: <code>standard</code>, <code>bigbird</code>,
 <code>longformer</code> y <code>titan</code> comparten pérdidas y
-parámetros bit a bit idénticos porque sus ventanas (al menos 64 tokens)
-cubren toda la secuencia y la variante aumentada con posición se reduce
-a atención multi-cabeza pura; coinciden en los 33 segundos mixers
-compartidos. Por separado, 37 pares aparecen como
+recuentos de parámetros bit a bit idénticos porque sus ventanas (al
+menos 64 tokens) cubren toda la secuencia y la variante aumentada con
+posición se reduce a atención multi-cabeza pura; coinciden en los 33
+segundos mezcladores compartidos. Por separado, 37 pares aparecen como
 <code>attn_retnet__X</code> y <code>attn_retnet_attn__X</code> con
 métricas idénticas—dos nombres para una implementación—que el atlas
-colapsa a una fila.</p>
+colapsa a una fila. Cada uno de estos hechos es una advertencia que se
+arrastra hacia adelante y no un defecto oculto: el atlas tiene 667
+celdas medidas, 158 estructuralmente ausentes y cuatro mezcladores que,
+a esta longitud de contexto, son el mismo modelo.</p>
 <figure id="fig:r2-stage-status"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/stage_status.svg" alt="image" /></span></p>
 
 <figcaption>Fiabilidad del pipeline. El 95% de los registros de etapa
@@ -18182,7 +18360,8 @@ predice de forma fiable es el coste (<span class="math inline">\(r =
 0{,}68\)</span> con el tiempo por paso, <span class="math inline">\(r =
 0{,}65\)</span> con el tiempo total). La pérdida de entrenamiento apenas
 informa sobre la calidad de inferencia (<span class="math inline">\(r =
-0{,}14\)</span> con el top-5). La norma de gradiente y la razón de
+0{,}14\)</span> con el top-5)—la forma cuantitativa del desacuerdo
+pérdida/precisión anotado arriba. La norma de gradiente y la razón de
 recorte son exactamente redundantes entre sí (<span
 class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
@@ -18192,13 +18371,15 @@ data-reference-type="ref" data-reference="fig:r2-correlation">107</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
-class="math inline">\(+0{,}42\)</span>, lo que contradice los números de
-solo pares. Ambas lecturas son correctas: la matriz de todas las filas
+class="math inline">\(+0{,}42\)</span>, en aparente contradicción con
+los números de solo pares. Ambas lecturas son correctas, y la
+reconciliación es una confusión de manual: la matriz de todas las filas
 está dominada por el contraste entre transformers de visión (más
 grandes, mucha menor pérdida, mucha mayor precisión) y pares MLM, así
-que mide la brecha de familias y no el efecto del tamaño. Dentro de la
-población que importa para el atlas—los pares híbridos—el tamaño es casi
-irrelevante.</p>
+que mide la brecha entre familias y no el efecto del tamaño dentro de
+una familia. Dentro de la población de la que trata el atlas—los pares
+híbridos—el tamaño es casi irrelevante, y ese es el número que debe
+citarse.</p>
 <figure id="fig:r2-correlation"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/correlation.svg" alt="image" /></span></p>
 
 <figcaption>Matriz de correlación sobre las 868 configuraciones. Las
@@ -18209,24 +18390,28 @@ class="math inline">\(-0{,}07\)</span>.</figcaption>
 </figure>
 <h2 id="lectura-práctica-y-próximos-pasos">Lectura práctica y próximos
 pasos</h2>
-<p>Si hay que elegir a ciegas, usa un segundo mezclador con memoria
-pesada (<code>engram</code>, <code>sparsek</code>, <code>mlra</code>) y
-un primero barato y estable (<code>fox</code>, <code>gqa</code>,
+<p>Si hay que elegir un par a ciegas, la ronda respalda una heurística
+simple: usa un segundo mezclador con memoria pesada
+(<code>engram</code>, <code>sparsek</code>, <code>mlra</code>) y un
+primero barato y estable (<code>fox</code>, <code>gqa</code>,
 <code>gated_deltanet2</code>), y evita <code>mamba</code>,
 <code>retnet</code> y <code>bigbird</code> como B. Espera unos <span
-class="math inline">\(\pm0{,}3\)</span> nats de ruido de interacción,
-mayor que la diferencia entre la mayoría de los optimizadores.</p>
-<p>La ronda también define a su propia sucesora. El atlas debería
-repetirse con 256–512 tokens, donde los cuatro mezcladores que colapsan
-se vuelven distinguibles y los patrones dispersos se dispersan de
-verdad; la evaluación debería usar un conjunto reservado de 200 frases
-con log-verosimilitud por token, porque cuatro frases no pueden ordenar
-800 configuraciones; los mejores pares deberían entrenarse 300 épocas,
-porque todas las curvas siguen bajando; el alias <code>retnet</code> y
-los cuatro mezcladores que fallan deberían corregirse o retirarse de la
-lista; y deberían correrse al menos tres semillas en las familias de
-ablación, donde la dispersión actual está dentro del ruido de semilla.
-La cuantización debería ser el formato de despliegue por defecto: costó
+class="math inline">\(\pm0{,}3\)</span> nats de ruido de
+interacción—mayor que la diferencia entre la mayoría de los
+optimizadores y, por tanto, la incertidumbre dominante al componer una
+pila.</p>
+<p>La ronda también define a su propia sucesora, y sus limitaciones son
+la especificación. El atlas debería repetirse con 256–512 tokens, donde
+los cuatro mezcladores que colapsan por ventana se vuelven distinguibles
+y los patrones dispersos se dispersan de verdad; la evaluación debería
+usar un conjunto reservado de 200 frases puntuado por log-verosimilitud
+por token, porque cuatro frases no pueden ordenar 800 configuraciones;
+los mejores pares deberían entrenarse 300 épocas, porque todas las
+curvas siguen bajando; el alias <code>retnet</code> y los cuatro
+mezcladores que fallan deberían corregirse o retirarse de la lista; y
+las familias de ablación deberían correr al menos tres semillas, porque
+la dispersión actual está dentro del ruido de semilla. Finalmente, la
+cuantización debería ser el formato de despliegue por defecto: costó
 0,12 puntos de top-5 y aceleró la evaluación en la mitad de las
 corridas.</p>
 <section id="footnotes" class="footnotes footnotes-end-of-document"
