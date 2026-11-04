@@ -1,4 +1,4 @@
-\begin{thebibliography}{137}
+\begin{thebibliography}{138}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -561,6 +561,12 @@ Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng
 Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
 \newblock Multi-head low-rank attention, 2026.
 \newblock URL \url{https://arxiv.org/abs/2603.02188}.
+
+\bibitem[Liu et~al.(2025)Liu, Song, Hao, and Zhou]{liu_ea4llm_2025}
+WenTao Liu, Siyu Song, Hao Hao, and Aimin Zhou.
+\newblock Ea4llm: A gradient-free approach to large language model optimization
+  via evolutionary algorithms, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.10603}.
 
 \bibitem[Liu et~al.(2024)Liu, Yuan, Jin, Zhong, Xu, Braverman, Chen, and
   Hu]{kivi_liu_2024}
