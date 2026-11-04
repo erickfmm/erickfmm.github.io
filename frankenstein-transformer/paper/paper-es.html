@@ -472,6 +472,9 @@ de Lote Grande, Eficientes en Memoria y Sin Tasa de Aprendizaje</a></li>
 href="#optimizadores-de-segundo-orden-geométricos-y-de-ortogonalidad"
 id="toc-optimizadores-de-segundo-orden-geométricos-y-de-ortogonalidad">Optimizadores
 de Segundo Orden, Geométricos y de Ortogonalidad</a></li>
+<li><a href="#híbridos-evolutivos-y-poblacionales"
+id="toc-híbridos-evolutivos-y-poblacionales">Híbridos Evolutivos y
+Poblacionales</a></li>
 </ul></li>
 <li><a href="#sec:annex-transformer"
 id="toc-sec:annex-transformer">Transformadores Densos, Recurrentes y
@@ -1982,7 +1985,7 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veintiséis familias de optimizadores en siete
+sistema soporta veintisiete familias de optimizadores en ocho
 categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
 momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
@@ -1990,10 +1993,11 @@ GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
 sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
-Turbo-Muon, AF-Muon, AdaMuon, Dion3); y optimizadores de adaptividad
-ajustable (Anon). Los algoritmos, el pseudocódigo y las comparaciones de
-memoria y complejidad se recopilan en el Apéndice <a
-href="#sec:annex-optimizers" data-reference-type="ref"
+Turbo-Muon, AF-Muon, AdaMuon, Dion3); optimizadores de adaptividad
+ajustable (Anon); y métodos evolutivos poblacionales (EvE). Los
+algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
+se recopilan en el Apéndice <a href="#sec:annex-optimizers"
+data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
@@ -2730,7 +2734,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>136</span> urlstyle</p>
+<p><span>137</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3115,6 +3119,8 @@ URL <code>http://arxiv.org/abs/2108.12409</code>.</p>
 expansion, 2024. URL <code>https://arxiv.org/abs/2404.07904</code>.</p>
 <p>Yuxiang Qiu, Qwen Team, et al. Gated attention for large language
 models, 2025. URL <code>https://arxiv.org/abs/2505.06708</code>.</p>
+<p>Shashank Raj and Kalyanmoy Deb. Eve: An alternate optimizer to adam,
+2026. URL <code>https://arxiv.org/abs/2609.35614</code>.</p>
 <p>Prajit Ramachandran, Barret Zoph, and Quoc V. Le. Searching for
 activation functions. In <em>arXiv preprint arXiv:1710.05941</em>, 2017.
 URL <code>https://arxiv.org/abs/1710.05941</code>.</p>
@@ -5349,7 +5355,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-45 mezcladores de secuencia en nueve familias, 26 optimizadores, 6
+45 mezcladores de secuencia en nueve familias, 27 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5636,7 +5642,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 26 optimizadores soportados con su huella de memoria, costo
+los 27 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -5847,6 +5853,20 @@ class="math inline">\(\beta_1\)</span>, <span
 class="math inline">\(\beta_2\)</span>, eps, wd, <span
 class="math inline">\(\gamma\)</span> &amp; <span class="citation"
 data-cites="anon2026anon"></span><br />
+</p>
+<p><br />
+EvE &amp; Híbrido evolutivo (DE + rescate Adam) &amp; 12 (<span
+class="math inline">\(4z\)</span>, <span
+class="math inline">\(4m\)</span>, <span
+class="math inline">\(4v\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> + hasta <span
+class="math inline">\(n_{adam}\)</span> fwd/bwd &amp; lr (<span
+class="math inline">\(\eta_{lr}\)</span>), <span
+class="math inline">\(F\)</span>, <span
+class="math inline">\(\sigma\)</span>, <span
+class="math inline">\(n_{adam}\)</span>, jitter <span
+class="math inline">\(\gamma\)</span>, wd (L2) &amp; <span
+class="citation" data-cites="raj_eve_2026"></span><br />
 </p>
 </div>
 <h2 id="variantes-de-normalización">Variantes de Normalización</h2>
@@ -8027,6 +8047,217 @@ se reduce a Muon (o NorMuon), y basta un único búfer de momentum por
 parámetro matricial; el error feedback permite que las filas ignoradas
 participen eventualmente.</p></li>
 </ul>
+<h2 id="híbridos-evolutivos-y-poblacionales">Híbridos Evolutivos y
+Poblacionales</h2>
+<h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
+<figure id="fig:opt-eve"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/eve.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de paso de EvE: una población en régimen estable de
+cuatro candidatos desafía una ranura por iteración (round-robin) con un
+hijo de evolución diferencial; una ráfaga de Adam con estado persistente
+rescata al hijo solo cuando no mejora, y la selección voraz con números
+aleatorios comunes mantiene el mejor-observado monótono.</figcaption>
+</figure>
+<p>EvE <span class="citation" data-cites="raj_eve_2026"></span> es una
+<strong>alternativa poblacional a Adam</strong> orientada al régimen con
+abundante búsqueda y presupuesto restringido, un nivel por encima del
+entrenamiento final: rankear o podar configuraciones candidatas dentro
+de la búsqueda de hiperparámetros y arquitecturas. En lugar de refinar
+un único punto, EvE mantiene una población en régimen estable de cuatro
+candidatos y desafía una ranura por iteración (round-robin) con un hijo
+de evolución diferencial <em>rand-to-pbest/1</em>; solo cuando el hijo
+no logra mejorar al incumbente de la ranura, EvE ejecuta una ráfaga
+corta de Adam estándar sobre el mismo minilote, conservando el punto
+refinado solo si supera al hijo. La selección es voraz, de modo que el
+mejor-observado es monótono no creciente en objetivos deterministas, y
+como los gradientes se usan solo como un rescate dirigido, el costo por
+iteración se mantiene dentro de un factor constante de un paso de Adam
+sin importar la dimensión.</p>
+<p>Toda la búsqueda interna ocurre en el cubo unitario <span
+class="math inline">\(z \in [0,1]^n\)</span> mediante la aplicación afín
+<span class="math inline">\(\mathbf{x} = \mathbf{x}_l + \mathbf{z} \odot
+(\mathbf{x}_u - \mathbf{x}_l)\)</span>, de modo que un paso de tamaño
+fijo nunca sobrepasa las coordenadas de rango estrecho ni se queda corto
+en las de rango amplio. La población se inicializa por proximidad — un
+ancla con tres perturbaciones gaussianas, <span
+class="math inline">\(\sigma = 0.1\)</span> — anclada en los pesos
+iniciales del propio modelo (el precedente LoRA del artículo), con la
+caja de búsqueda por tensor centrada en el ancla con la semianchura
+Kaiming <span class="math inline">\(\sqrt{6/\mathrm{fan\_\allowbreak
+in}}\)</span>. Cada iteración extrae tres donantes distintos <span
+class="math inline">\(a, b, c \ne i\)</span> y construye el hijo con un
+peso de diferencia perturbado (el jitter se aplica solo al término de
+diferencia; la atracción hacia pbest usa el <span
+class="math inline">\(F\)</span> sin perturbar): <span
+class="math display">\[\begin{aligned}
+z_{\text{hijo}} &amp;= \operatorname{clamp}\big(z_a + F_t (z_b - z_c) +
+F (z_{\text{pbest}} - z_a),\ 0,\ 1\big), &amp;
+F_t &amp;= F\big(1 + \gamma (u - \tfrac{1}{2})\big), \quad u \sim
+U(0,1),
+\end{aligned}\]</span> con <span class="math inline">\(F = 0.5\)</span>
+y <span class="math inline">\(\gamma = 10^{-4}\)</span>. Una mutación
+polinomial opcional (PM; desactivada por defecto para el entrenamiento
+de redes, ya que un empujón de una sola coordenada esencialmente nunca
+gana su compuerta de aceptación/rechazo a escala de red) perturba
+exactamente un gen con tasa <span class="math inline">\(p = 1/n\)</span>
+e índice de distribución <span class="math inline">\(\eta = 20\)</span>,
+con la perturbación acotada y autoescalada a la distancia a cada
+frontera: <span class="math display">\[\begin{aligned}
+z_d &amp;\leftarrow z_d + \delta_q (z_u - z_l)_d, &amp;
+\delta_q &amp;=
+\begin{cases}
+\bigl[2r + (1 - 2r)(1 -
+\delta_1)^{\frac{1}{\eta+1}}\bigr]^{\frac{1}{\eta+1}} - 1, &amp; r \le
+0.5,\\[2pt]
+1 - \bigl[2(1 - r) + 2(r - 0.5)(1 -
+\delta_2)^{\frac{1}{\eta+1}}\bigr]^{\frac{1}{\eta+1}}, &amp; r &gt; 0.5,
+\end{cases}
+\end{aligned}\]</span> con <span class="math inline">\(\delta_1 = (z_d -
+z_l)/(z_u - z_l)\)</span>, <span class="math inline">\(\delta_2 = (z_u -
+z_d)/(z_u - z_l)\)</span> y <span class="math inline">\(r \sim
+U(0,1)\)</span>. Cuando el hijo (posiblemente mutado) no supera el valor
+de la ranura, EvE ejecuta <span
+class="math inline">\(n_{\text{adam}}\)</span> pasos de Adam estándar
+sobre él <em>en coordenadas reales</em>, con el weight decay L2 clásico
+plegado en el gradiente antes de la actualización de momentos (el Adam
+estándar de PyTorch, no la regla desacoplada de AdamW) y cada iterado
+reclampado a la caja: <span class="math display">\[\begin{aligned}
+g_t &amp;= \nabla_{\mathbf{x}} f(\mathbf{x}_{t-1}; B_t) + \lambda
+\mathbf{x}_{t-1}, &amp;
+m_t &amp;= \beta_1 m_{t-1} + (1 - \beta_1) g_t, &amp;
+v_t &amp;= \beta_2 v_{t-1} + (1 - \beta_2) g_t^2, \\
+\widehat{m}_t &amp;= \frac{m_t}{1 - \beta_1^t}, &amp;
+\widehat{v}_t &amp;= \frac{v_t}{1 - \beta_2^t}, &amp;
+\mathbf{x}_t &amp;= \operatorname{clamp}\Big(\mathbf{x}_{t-1} -
+\eta_{lr} \frac{\widehat{m}_t}{\sqrt{\widehat{v}_t} + \epsilon},\
+\mathbf{x}_l,\ \mathbf{x}_u\Big),
+\end{aligned}\]</span> con <span class="math inline">\(\beta_1 =
+0.9\)</span>, <span class="math inline">\(\beta_2 = 0.999\)</span>,
+<span class="math inline">\(\epsilon = 10^{-8}\)</span>. Cada ranura de
+la población conserva su propio estado persistente <span
+class="math inline">\((m, v, t)\)</span> durante toda la ejecución, de
+modo que las ráfagas de respaldo forman una trayectoria de Adam continua
+en lugar de arranques en frío repetidos. Cada evaluación de una
+iteración — la actualización de la ranura, el hijo y toda la ráfaga de
+respaldo — se puntúa sobre un único minilote recién extraído <span
+class="math inline">\(B_t\)</span> (números aleatorios comunes), y un
+candidato reemplaza al incumbente solo si es estrictamente mejor en ese
+mismo lote. En esta implementación, los sufijos compartidos por grupo
+<code>lr_</code>, <code>wd_</code>, <code>betas_</code> y
+<code>eps_</code> configuran el respaldo Adam por grupo de parámetros
+(<code>wd_</code> es el término L2 <span
+class="math inline">\(\lambda\)</span> dentro de <span
+class="math inline">\(g_t\)</span>), los parámetros vivos del modelo
+contienen siempre la mejor ranura entre pasos, y el paso se basa en
+closure: el trainer reevalúa el lote actual sobre cada punto candidato
+dentro de <code>optimizer.step()</code>, razón por la cual EvE requiere
+<code>gradient_accumulation_steps: 1</code> y no está disponible para
+SBERT.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Objetivo <span class="math inline">\(f\)</span> con cotas <span
+class="math inline">\(\mathbf{x}_l, \mathbf{x}_u\)</span>, iteraciones
+<span class="math inline">\(T\)</span>, peso DE <span
+class="math inline">\(F\)</span>, jitter <span
+class="math inline">\(\gamma\)</span>, jitter de inicialización <span
+class="math inline">\(\sigma\)</span>, índice PM <span
+class="math inline">\(\eta\)</span>, pasos de respaldo <span
+class="math inline">\(n_{\text{adam}}\)</span>, LR del respaldo <span
+class="math inline">\(\eta_{lr}\)</span>, decaimiento L2 <span
+class="math inline">\(\lambda\)</span>, semilla <span
+class="math inline">\(s\)</span>, USE_PM Mejor punto <span
+class="math inline">\(\arg\min_k z_k\)</span> y valor <span
+class="math inline">\(\min_k f_k\)</span> <span
+class="math inline">\(z_1 \sim U(0,1)^n\)</span> (ancla: los pesos
+iniciales); <span class="math inline">\(z_k \gets
+\operatorname{clamp}(z_1 + \sigma\epsilon_k, 0, 1)\)</span>, <span
+class="math inline">\(\epsilon_k \sim \mathcal{N}(0, I_n)\)</span>,
+<span class="math inline">\(k = 2,3,4\)</span> <span
+class="math inline">\(f_k \gets f(\mathbf{x}_l + z_k \odot (\mathbf{x}_u
+- \mathbf{x}_l))\)</span> para <span class="math inline">\(k =
+1,\dots,4\)</span>; <span class="math inline">\(\text{estado}_k \gets
+(\mathbf{0}, \mathbf{0}, 0)\)</span> <span class="math inline">\(i \gets
+((t - 1) \bmod 4) + 1\)</span> extraer minilote <span
+class="math inline">\(B_t\)</span>; <span class="math inline">\(f_i
+\gets f(\mathbf{x}_i; B_t)\)</span> extraer <span
+class="math inline">\(a, b, c\)</span> distintos en <span
+class="math inline">\(\{1,\dots,4\} \setminus \{i\}\)</span>; <span
+class="math inline">\(F_t \gets F(1 + \gamma(u - 0.5))\)</span>, <span
+class="math inline">\(u \sim U(0,1)\)</span> <span
+class="math inline">\(z_{\text{hijo}} \gets \operatorname{clamp}(z_a +
+F_t(z_b - z_c) + F(z_{\text{pbest}} - z_a), 0, 1)\)</span> <span
+class="math inline">\(f_{\text{hijo}} \gets f(z_{\text{hijo}};
+B_t)\)</span> <span class="math inline">\(z_{\text{mut}} \gets
+\operatorname{PM}(z_{\text{hijo}}, \eta)\)</span>; <span
+class="math inline">\(f_{\text{mut}} \gets f(z_{\text{mut}};
+B_t)\)</span> <span class="math inline">\(z_{\text{hijo}},
+f_{\text{hijo}} \gets z_{\text{mut}}, f_{\text{mut}}\)</span> <span
+class="math inline">\(z_{\text{cand}}, f_{\text{cand}} \gets
+z_{\text{hijo}}, f_{\text{hijo}}\)</span> <span
+class="math inline">\(\mathbf{x} \gets \mathbf{x}_l + z_{\text{hijo}}
+\odot (\mathbf{x}_u - \mathbf{x}_l)\)</span> <span
+class="math inline">\(\mathbf{x} \gets
+\operatorname{AdamStep}(\mathbf{x}, \nabla_{\mathbf{x}} f(\mathbf{x};
+B_t), \eta_{lr}, \lambda, \text{estado}_i)\)</span>; <span
+class="math inline">\(\mathbf{x} \gets \operatorname{clamp}(\mathbf{x},
+\mathbf{x}_l, \mathbf{x}_u)\)</span> <span
+class="math inline">\(z_{\text{adam}} \gets (\mathbf{x} -
+\mathbf{x}_l)/(\mathbf{x}_u - \mathbf{x}_l)\)</span>; <span
+class="math inline">\(f_{\text{adam}} \gets f(z_{\text{adam}};
+B_t)\)</span> <span class="math inline">\((z_{\text{cand}},
+f_{\text{cand}}) \gets \arg\min_{(z, f) \in \{(z_{\text{hijo}},
+f_{\text{hijo}}),\, (z_{\text{adam}}, f_{\text{adam}})\}} f\)</span>
+<span class="math inline">\(z_i \gets z_{\text{cand}}\)</span>; <span
+class="math inline">\(f_i \gets f_{\text{cand}}\)</span> <span
+class="math inline">\(\arg\min_k z_k\)</span>, <span
+class="math inline">\(\min_k f_k\)</span></p>
+</div>
+</div>
+<h4 id="contras.-26">Contras.</h4>
+<ul>
+<li><p>Quedan aproximadamente un punto de exactitud (MNIST) y 9–11% de
+pérdida relativa (ajuste fino LoRA) por detrás de Adam a presupuesto de
+evaluación igualado; el artículo no reclama superioridad en la etapa
+final.</p></li>
+<li><p>13<span class="math inline">\(\times\)</span> el conteo de
+parámetros vivos en almacenamiento total (cuatro copias de población más
+ocho copias de momentos persistentes) frente al 4<span
+class="math inline">\(\times\)</span> de Adam; el multiplicador pico
+medido en GPU es menor (2,95<span class="math inline">\(\times\)</span>)
+pero fijo e independiente de la dimensión.</p></li>
+<li><p>Su tasa de aprendizaje no se transfiere desde la de Adam y
+requiere su propia búsqueda (3–100<span
+class="math inline">\(\times\)</span> mayor según la tarea); la
+población de cuatro miembros muestra la mayor varianza entre semillas de
+los nueve métodos comparados.</p></li>
+<li><p>Paso basado en closure: el trainer reevalúa el lote dentro de
+<code>optimizer.step()</code>, por lo que la acumulación de gradientes
+no está soportada y el bucle SBERT (<code>fit</code> de
+sentence-transformers) no puede alojarlo; la mutación polinomial es un
+costo puro a escala de red y está desactivada por defecto.</p></li>
+</ul>
+<h4 id="ventajas.-26">Ventajas.</h4>
+<ul>
+<li><p>Mejor-observado monótono por construcción en objetivos
+deterministas (selección voraz de aceptar solo si es estrictamente
+mejor), con costo por iteración dentro de un factor constante de un paso
+de Adam sin importar la dimensión.</p></li>
+<li><p>Gana o empata con Adam en el 76% de las 70 celdas (problema,
+dimensión) de los siete problemas sintéticos escalables hasta <span
+class="math inline">\(10^6\)</span> variables, de forma más decisiva en
+los multimodales.</p></li>
+<li><p>Termina presupuestos de evaluación igualados 1,7–3,9<span
+class="math inline">\(\times\)</span> más rápido en tiempo de reloj en
+entrenamiento real (una MLP sobre MNIST y ajuste fino LoRA de un modelo
+de 1.500 millones de parámetros), intercambiando una cantidad modesta de
+calidad final por velocidad.</p></li>
+<li><p>Dentro de successive halving, completa búsquedas de
+hiperparámetros y arquitecturas 3,1–3,5<span
+class="math inline">\(\times\)</span> más rápido mientras rankea
+configuraciones candidatas con una consistencia con Adam comparable a la
+que Adam tiene consigo mismo entre semillas (<span
+class="math inline">\(\tau\)</span> de Kendall de 0,66–0,69).</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Grupo</strong> &amp; <strong>Métodos</strong> &amp;
@@ -8062,6 +8293,12 @@ a los parámetros unidimensionales una actualización RMS, sin estado
 auxiliar de AdamW; Dion3 conserva la actualización espectral pero
 ortogonaliza solo una fracción de las filas del momentum por paso con
 Gram Newton–Schulz y error feedback.<br />
+Híbrido evolutivo &amp; EvE &amp; ranking rápido y monótono de
+candidatos para bucles de búsqueda &amp; Una población de evolución
+diferencial en régimen estable con un rescate dirigido de Adam
+intercambia calidad final por velocidad de reloj; es mejor como
+optimizador interno de búsqueda de hiperparámetros o
+arquitecturas.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Transformadores Densos, Recurrentes y
@@ -17020,7 +17257,7 @@ con 415 904, impulsada por el banco de memoria <code>engram</code>, que
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">80</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">81</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -17324,7 +17561,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">88</a>) es
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">89</a>) es
 el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -18367,7 +18604,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">107</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">108</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span

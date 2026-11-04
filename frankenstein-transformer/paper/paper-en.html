@@ -462,6 +462,9 @@ Memory-Efficient, and Parameter-Free Optimizers</a></li>
 <li><a href="#second-order-geometric-and-orthogonality-optimizers"
 id="toc-second-order-geometric-and-orthogonality-optimizers">Second-Order,
 Geometric, and Orthogonality Optimizers</a></li>
+<li><a href="#evolutionary-and-population-based-hybrids"
+id="toc-evolutionary-and-population-based-hybrids">Evolutionary and
+Population-Based Hybrids</a></li>
 </ul></li>
 <li><a href="#sec:annex-transformer"
 id="toc-sec:annex-transformer">Dense, Recurrent, and Memory-Augmented
@@ -1906,7 +1909,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-six optimizer families in seven
+groups. The system supports twenty-seven optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1914,9 +1917,10 @@ APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3);
-and adaptivity-tunable optimizers (Anon). Algorithms, pseudocode, and
-memory and complexity comparisons are collected in Appendix <a
-href="#sec:annex-optimizers" data-reference-type="ref"
+adaptivity-tunable optimizers (Anon); and evolutionary population-based
+hybrids (EvE). Algorithms, pseudocode, and memory and complexity
+comparisons are collected in Appendix <a href="#sec:annex-optimizers"
+data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
@@ -2608,7 +2612,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>136</span> urlstyle</p>
+<p><span>137</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2993,6 +2997,8 @@ URL <code>http://arxiv.org/abs/2108.12409</code>.</p>
 expansion, 2024. URL <code>https://arxiv.org/abs/2404.07904</code>.</p>
 <p>Yuxiang Qiu, Qwen Team, et al. Gated attention for large language
 models, 2025. URL <code>https://arxiv.org/abs/2505.06708</code>.</p>
+<p>Shashank Raj and Kalyanmoy Deb. Eve: An alternate optimizer to adam,
+2026. URL <code>https://arxiv.org/abs/2609.35614</code>.</p>
 <p>Prajit Ramachandran, Barret Zoph, and Quoc V. Le. Searching for
 activation functions. In <em>arXiv preprint arXiv:1710.05941</em>, 2017.
 URL <code>https://arxiv.org/abs/1710.05941</code>.</p>
@@ -5192,7 +5198,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 45 sequence mixers
-across nine families, 25 optimizers, 6 normalization variants, 43
+across nine families, 27 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -5469,7 +5475,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 26 supported optimizers with their memory footprint, per-step
+all 27 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5677,6 +5683,20 @@ class="math inline">\(\beta_1\)</span>, <span
 class="math inline">\(\beta_2\)</span>, eps, wd, <span
 class="math inline">\(\gamma\)</span> &amp; <span class="citation"
 data-cites="anon2026anon"></span><br />
+</p>
+<p><br />
+EvE &amp; Evolutionary hybrid (DE + Adam rescue) &amp; 12 (<span
+class="math inline">\(4z\)</span>, <span
+class="math inline">\(4m\)</span>, <span
+class="math inline">\(4v\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> + up to <span
+class="math inline">\(n_{adam}\)</span> fwd/bwd &amp; lr (<span
+class="math inline">\(\eta_{lr}\)</span>), <span
+class="math inline">\(F\)</span>, <span
+class="math inline">\(\sigma\)</span>, <span
+class="math inline">\(n_{adam}\)</span>, jitter <span
+class="math inline">\(\gamma\)</span>, wd (L2) &amp; <span
+class="citation" data-cites="raj_eve_2026"></span><br />
 </p>
 </div>
 <h2 id="normalization-variants">Normalization Variants</h2>
@@ -7768,6 +7788,211 @@ to Muon (or NorMuon), and a single momentum buffer per matrix parameter
 suffices; error feedback lets ignored rows participate
 eventually.</p></li>
 </ul>
+<h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
+Population-Based Hybrids</h2>
+<h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
+<figure id="fig:opt-eve"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/eve.svg" alt="image" /></span></p>
+
+<figcaption>Step flow of EvE: a steady-state population of four
+challenges one round-robin slot per iteration with a DE child; a
+persistent-state Adam burst rescues the child only when it fails to
+improve, and greedy common-random-number selection keeps the best-so-far
+monotone.</figcaption>
+</figure>
+<p>EvE <span class="citation" data-cites="raj_eve_2026"></span> is a
+<strong>population-based alternate to Adam</strong> targeted at the
+search-heavy, budget-constrained regime one level above final-stage
+training: ranking or pruning candidate configurations inside
+hyperparameter and architecture search. Instead of refining a single
+point, EvE keeps a steady-state population of four candidates and
+challenges one round-robin slot per iteration with a
+<em>rand-to-pbest/1</em> differential-evolution child; only when the
+child fails to improve the slot’s incumbent does EvE run a short burst
+of stock Adam on the same minibatch, keeping the refined point only if
+it beats the child. Selection is greedy, so the best-so-far value is
+monotone non-increasing on deterministic objectives, and because
+gradients are used only as a targeted rescue, per-iteration cost stays
+within a constant factor of a single Adam step regardless of
+dimension.</p>
+<p>All internal search happens on the unit cube <span
+class="math inline">\(z \in [0,1]^n\)</span> via the affine map <span
+class="math inline">\(\mathbf{x} = \mathbf{x}_l + \mathbf{z} \odot
+(\mathbf{x}_u - \mathbf{x}_l)\)</span>, so a fixed-size step never
+overshoots narrow-range coordinates or under-moves wide ones. The
+population is initialized by proximity — one anchor with three Gaussian
+jitters, <span class="math inline">\(\sigma = 0.1\)</span> — anchored at
+the model’s own initial weights (the paper’s LoRA precedent), with the
+per-tensor search box centered on the anchor at the Kaiming half-width
+<span class="math inline">\(\sqrt{6/\mathrm{fan\_\allowbreak
+in}}\)</span>. Each iteration draws three distinct donors <span
+class="math inline">\(a, b, c \ne i\)</span> and builds the child with a
+jittered difference weight (the jitter applies only to the difference
+term; the pbest pull uses the unjittered <span
+class="math inline">\(F\)</span>): <span
+class="math display">\[\begin{aligned}
+z_{\text{child}} &amp;= \operatorname{clamp}\big(z_a + F_t (z_b - z_c) +
+F (z_{\text{pbest}} - z_a),\ 0,\ 1\big), &amp;
+F_t &amp;= F\big(1 + \gamma (u - \tfrac{1}{2})\big), \quad u \sim
+U(0,1),
+\end{aligned}\]</span> with <span class="math inline">\(F = 0.5\)</span>
+and <span class="math inline">\(\gamma = 10^{-4}\)</span>. An optional
+polynomial mutation (PM; off by default for neural-network training,
+since a single-coordinate nudge essentially never wins its accept/reject
+gate at network scale) perturbs exactly one gene at rate <span
+class="math inline">\(p = 1/n\)</span> with distribution index <span
+class="math inline">\(\eta = 20\)</span>, the perturbation bounded and
+self-scaling to the distance to each boundary: <span
+class="math display">\[\begin{aligned}
+z_d &amp;\leftarrow z_d + \delta_q (z_u - z_l)_d, &amp;
+\delta_q &amp;=
+\begin{cases}
+\bigl[2r + (1 - 2r)(1 -
+\delta_1)^{\frac{1}{\eta+1}}\bigr]^{\frac{1}{\eta+1}} - 1, &amp; r \le
+0.5,\\[2pt]
+1 - \bigl[2(1 - r) + 2(r - 0.5)(1 -
+\delta_2)^{\frac{1}{\eta+1}}\bigr]^{\frac{1}{\eta+1}}, &amp; r &gt; 0.5,
+\end{cases}
+\end{aligned}\]</span> with <span class="math inline">\(\delta_1 = (z_d
+- z_l)/(z_u - z_l)\)</span>, <span class="math inline">\(\delta_2 = (z_u
+- z_d)/(z_u - z_l)\)</span> and <span class="math inline">\(r \sim
+U(0,1)\)</span>. When the (possibly mutated) child fails to beat the
+slot’s value, EvE runs <span
+class="math inline">\(n_{\text{adam}}\)</span> stock-Adam steps on it
+<em>in real coordinates</em>, with classic L2 weight decay folded into
+the gradient before the moment update (PyTorch’s stock Adam, not AdamW’s
+decoupled rule) and every iterate clamped back into the box: <span
+class="math display">\[\begin{aligned}
+g_t &amp;= \nabla_{\mathbf{x}} f(\mathbf{x}_{t-1}; B_t) + \lambda
+\mathbf{x}_{t-1}, &amp;
+m_t &amp;= \beta_1 m_{t-1} + (1 - \beta_1) g_t, &amp;
+v_t &amp;= \beta_2 v_{t-1} + (1 - \beta_2) g_t^2, \\
+\widehat{m}_t &amp;= \frac{m_t}{1 - \beta_1^t}, &amp;
+\widehat{v}_t &amp;= \frac{v_t}{1 - \beta_2^t}, &amp;
+\mathbf{x}_t &amp;= \operatorname{clamp}\Big(\mathbf{x}_{t-1} -
+\eta_{lr} \frac{\widehat{m}_t}{\sqrt{\widehat{v}_t} + \epsilon},\
+\mathbf{x}_l,\ \mathbf{x}_u\Big),
+\end{aligned}\]</span> with <span class="math inline">\(\beta_1 =
+0.9\)</span>, <span class="math inline">\(\beta_2 = 0.999\)</span>,
+<span class="math inline">\(\epsilon = 10^{-8}\)</span>. Each population
+slot keeps its own persistent <span class="math inline">\((m, v,
+t)\)</span> state across the whole run, so fallback bursts form one
+continuous Adam trajectory rather than repeated cold starts. Every
+evaluation of an iteration — the slot refresh, the child and the whole
+fallback burst — is scored on one freshly drawn minibatch <span
+class="math inline">\(B_t\)</span> (common random numbers), and a
+candidate replaces the incumbent only if it is strictly better on that
+same batch. In this implementation the shared per-group
+<code>lr_</code>, <code>wd_</code>, <code>betas_</code> and
+<code>eps_</code> configure the Adam fallback per parameter group
+(<code>wd_</code> is the L2 term <span
+class="math inline">\(\lambda\)</span> inside <span
+class="math inline">\(g_t\)</span>), the live model parameters always
+hold the best-so-far slot between steps, and the step is closure-based —
+the trainer re-evaluates the current batch on each candidate point
+inside <code>optimizer.step()</code>, which is why EvE requires
+<code>gradient_accumulation_steps: 1</code> and is not available for
+SBERT.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Objective <span class="math inline">\(f\)</span> with bounds <span
+class="math inline">\(\mathbf{x}_l, \mathbf{x}_u\)</span>, iterations
+<span class="math inline">\(T\)</span>, DE weight <span
+class="math inline">\(F\)</span>, jitter <span
+class="math inline">\(\gamma\)</span>, init jitter <span
+class="math inline">\(\sigma\)</span>, PM index <span
+class="math inline">\(\eta\)</span>, fallback steps <span
+class="math inline">\(n_{\text{adam}}\)</span>, fallback LR <span
+class="math inline">\(\eta_{lr}\)</span>, L2 decay <span
+class="math inline">\(\lambda\)</span>, seed <span
+class="math inline">\(s\)</span>, USE_PM Best point <span
+class="math inline">\(\arg\min_k z_k\)</span> and value <span
+class="math inline">\(\min_k f_k\)</span> <span
+class="math inline">\(z_1 \sim U(0,1)^n\)</span> (anchor: the initial
+weights); <span class="math inline">\(z_k \gets \operatorname{clamp}(z_1
++ \sigma\epsilon_k, 0, 1)\)</span>, <span
+class="math inline">\(\epsilon_k \sim \mathcal{N}(0, I_n)\)</span>,
+<span class="math inline">\(k = 2,3,4\)</span> <span
+class="math inline">\(f_k \gets f(\mathbf{x}_l + z_k \odot (\mathbf{x}_u
+- \mathbf{x}_l))\)</span> for <span class="math inline">\(k =
+1,\dots,4\)</span>; <span class="math inline">\(\text{state}_k \gets
+(\mathbf{0}, \mathbf{0}, 0)\)</span> <span class="math inline">\(i \gets
+((t - 1) \bmod 4) + 1\)</span> draw minibatch <span
+class="math inline">\(B_t\)</span>; <span class="math inline">\(f_i
+\gets f(\mathbf{x}_i; B_t)\)</span> draw distinct <span
+class="math inline">\(a, b, c \in \{1,\dots,4\} \setminus
+\{i\}\)</span>; <span class="math inline">\(F_t \gets F(1 + \gamma(u -
+0.5))\)</span>, <span class="math inline">\(u \sim U(0,1)\)</span> <span
+class="math inline">\(z_{\text{child}} \gets \operatorname{clamp}(z_a +
+F_t(z_b - z_c) + F(z_{\text{pbest}} - z_a), 0, 1)\)</span> <span
+class="math inline">\(f_{\text{child}} \gets f(z_{\text{child}};
+B_t)\)</span> <span class="math inline">\(z_{\text{mut}} \gets
+\operatorname{PM}(z_{\text{child}}, \eta)\)</span>; <span
+class="math inline">\(f_{\text{mut}} \gets f(z_{\text{mut}};
+B_t)\)</span> <span class="math inline">\(z_{\text{child}},
+f_{\text{child}} \gets z_{\text{mut}}, f_{\text{mut}}\)</span> <span
+class="math inline">\(z_{\text{cand}}, f_{\text{cand}} \gets
+z_{\text{child}}, f_{\text{child}}\)</span> <span
+class="math inline">\(\mathbf{x} \gets \mathbf{x}_l + z_{\text{child}}
+\odot (\mathbf{x}_u - \mathbf{x}_l)\)</span> <span
+class="math inline">\(\mathbf{x} \gets
+\operatorname{AdamStep}(\mathbf{x}, \nabla_{\mathbf{x}} f(\mathbf{x};
+B_t), \eta_{lr}, \lambda, \text{state}_i)\)</span>; <span
+class="math inline">\(\mathbf{x} \gets \operatorname{clamp}(\mathbf{x},
+\mathbf{x}_l, \mathbf{x}_u)\)</span> <span
+class="math inline">\(z_{\text{adam}} \gets (\mathbf{x} -
+\mathbf{x}_l)/(\mathbf{x}_u - \mathbf{x}_l)\)</span>; <span
+class="math inline">\(f_{\text{adam}} \gets f(z_{\text{adam}};
+B_t)\)</span> <span class="math inline">\((z_{\text{cand}},
+f_{\text{cand}}) \gets \arg\min_{(z, f) \in \{(z_{\text{child}},
+f_{\text{child}}),\, (z_{\text{adam}}, f_{\text{adam}})\}} f\)</span>
+<span class="math inline">\(z_i \gets z_{\text{cand}}\)</span>; <span
+class="math inline">\(f_i \gets f_{\text{cand}}\)</span> <span
+class="math inline">\(\arg\min_k z_k\)</span>, <span
+class="math inline">\(\min_k f_k\)</span></p>
+</div>
+</div>
+<h4 id="cons.-26">Cons.</h4>
+<ul>
+<li><p>A step behind Adam at matched evaluation budgets: roughly one
+accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
+fine-tuning tasks; the paper does not claim final-stage
+superiority.</p></li>
+<li><p>13<span class="math inline">\(\times\)</span> the live parameter
+count in total storage (four population copies plus eight persistent
+moment copies) against Adam’s 4<span
+class="math inline">\(\times\)</span>; the measured peak GPU multiplier
+is lower (2.95<span class="math inline">\(\times\)</span>) but fixed and
+dimension-independent.</p></li>
+<li><p>The learning rate does not transfer from Adam’s and needs its own
+search (3–100<span class="math inline">\(\times\)</span> higher
+depending on the task); the four-member population shows the widest
+seed-to-seed variance of the nine methods compared.</p></li>
+<li><p>Closure-based step: the trainer re-evaluates the batch inside
+<code>optimizer.step()</code>, so gradient accumulation is unsupported
+and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
+it; polynomial mutation is pure cost at network scale and is off by
+default.</p></li>
+</ul>
+<h4 id="pros.-26">Pros.</h4>
+<ul>
+<li><p>Monotone best-so-far by construction on deterministic objectives
+(greedy accept-only-if-better selection), with per-iteration cost within
+a constant factor of a single Adam step regardless of
+dimension.</p></li>
+<li><p>Wins or ties Adam on 76% of 70 (problem, dimension) benchmark
+cells across seven classical scalable problems up to <span
+class="math inline">\(10^6\)</span> variables, most decisively on the
+multimodal ones.</p></li>
+<li><p>Finishes matched evaluation budgets 1.7–3.9<span
+class="math inline">\(\times\)</span> faster in wall-clock on real
+training (an MLP on MNIST and LoRA fine-tuning of a 1.5B-parameter
+model), trading a modest amount of final quality for speed.</p></li>
+<li><p>Inside successive halving, completes hyperparameter and
+architecture searches 3.1–3.5<span class="math inline">\(\times\)</span>
+faster while ranking candidate configurations about as consistently with
+Adam as Adam does with itself across seeds (Kendall’s <span
+class="math inline">\(\tau\)</span> of 0.66–0.69).</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Group</strong> &amp; <strong>Methods</strong> &amp;
@@ -7799,6 +8024,11 @@ one-dimensional parameters an RMS update, with no AdamW auxiliary state;
 Dion3 keeps the spectral update but orthogonalizes only a fraction of
 the momentum rows per step with Gram Newton–Schulz and error
 feedback.<br />
+Evolutionary hybrid &amp; EvE &amp; fast, monotone candidate ranking for
+search loops &amp; A steady-state differential-evolution population with
+a targeted Adam rescue trades final quality for wall-clock speed; best
+used as the inner optimizer of hyperparameter or architecture
+search.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Dense, Recurrent, and Memory-Augmented
@@ -16426,7 +16656,7 @@ the largest is <code>engram__conformer_attn</code> at
 which attaches a large key–value table to the attention block.</p>
 <p>The composition chart (Figure <a href="#fig:r2-params-composition"
 data-reference-type="ref"
-data-reference="fig:r2-params-composition">80</a>) is the most useful
+data-reference="fig:r2-params-composition">81</a>) is the most useful
 diagnostic of the section. The token embeddings and the output head are
 fixed costs of roughly 49k parameters each, so almost every difference
 between configurations is paid in the attention block and the FFN—the
@@ -16725,7 +16955,7 @@ the median clip ratio is 0.90.</figcaption>
 <h2 id="the-atimesb-atlas">The A<span
 class="math inline">\(\times\)</span>B Atlas</h2>
 <p>The atlas (Figure <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">88</a>) is
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">89</a>) is
 the centrepiece of the experiment: a matrix in which each cell is one
 hybrid pair, rows index the first mixer, columns index the second, and
 colour encodes the final loss. It is read in two directions. Column by
@@ -17748,7 +17978,7 @@ class="math inline">\(r = 1.00\)</span>), which is expected because the
 clip ratio is computed from the gradient norm, and neither correlates
 with quality.</p>
 <p>The correlation matrix of Figure <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">107</a> is
+data-reference-type="ref" data-reference="fig:r2-correlation">108</a> is
 computed over all 868 rows. Read that way, parameter count correlates
 with loss at <span class="math inline">\(-0.43\)</span> and with
 accuracy at <span class="math inline">\(+0.42\)</span>, apparently

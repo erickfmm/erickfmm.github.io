@@ -1,4 +1,4 @@
-\begin{thebibliography}{136}
+\begin{thebibliography}{137}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -715,6 +715,11 @@ Zhen Qin, Xu~Han, et~al.
 Yuxiang Qiu, Qwen Team, et~al.
 \newblock Gated attention for large language models, 2025.
 \newblock URL \url{https://arxiv.org/abs/2505.06708}.
+
+\bibitem[Raj and Deb(2026)]{raj_eve_2026}
+Shashank Raj and Kalyanmoy Deb.
+\newblock Eve: An alternate optimizer to adam, 2026.
+\newblock URL \url{https://arxiv.org/abs/2609.35614}.
 
 \bibitem[Ramachandran et~al.(2017)Ramachandran, Zoph, and
   Le]{ramachandran2017swish}
