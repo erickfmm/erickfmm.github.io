@@ -367,6 +367,7 @@ var FTParamEstimator = (function () {
 
     var fact = toBool(pick(m, 'embedding.factorized.enabled', 'use_factorized_embedding', false), false);
     var fD = toNum(pick(m, 'embedding.factorized.dim', 'factorized_embedding_dim', 128), 128);
+    var dyn = toBool(pick(m, 'embedding.dynamic.enabled', 'use_dynamic_embedding', false), false);
     var conv = toBool(pick(m, 'embedding.conv.enabled', 'use_embedding_conv', true), true);
     var cK = toNum(pick(m, 'embedding.conv.kernel', 'embedding_conv_kernel', 3), 3);
     var bitnetOn = toBool(pick(m, 'bitnet.enabled', 'use_bitnet', true), true);
@@ -404,6 +405,11 @@ var FTParamEstimator = (function () {
             + (aCh * aCh * 9 + aCh)       // Conv2d(C→C, k=3, s=2, p=1) + bias
             + (aCh * aFreq2 * H + H);     // Linear(C·F'→H) + bias
       }
+    } else if (dyn) {
+      // EELBERT (arXiv:2310.20144): no trainable input lookup table — the
+      // computed hash table is a non-persistent buffer. The optional Conv1d
+      // operates over the H-wide stream.
+      if (conv) emb += cK * H * H + H;
     } else if (fact) {
       emb = V * fD;
       if (conv) emb += cK * fD * fD + fD; // depthwise Conv1d
@@ -498,6 +504,7 @@ var FTParamEstimator = (function () {
 
     var notes = [];
     if (moe) notes.push('MoE: ' + nE + ' experts');
+    if (dyn) notes.push('dynamic embeddings (EELBERT): no input table');
     if (loops > 1) notes.push(loops + ' loops (weights reused)');
     if (mhcEnabled && hyperloop) notes.push('Hyperloop ' + (hlBegin || hlEnd ? hlBegin + 'L→' + (nL - hlBegin - hlEnd) + 'L(x' + loops + ')→' + hlEnd + 'L' : 'x' + loops) + ', n=' + mhcN + ', H^res=' + hlRp);
     else if (mhcEnabled) notes.push('mHC n=' + mhcN);
