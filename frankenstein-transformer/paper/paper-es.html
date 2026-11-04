@@ -1985,16 +1985,16 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veintisiete familias de optimizadores en ocho
-categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
-momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
-AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
-GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
-sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
+sistema soporta veintiocho familias de optimizadores en ocho categorías:
+líneas base clásicas (SGD con momentum, AdamW, RAdam); momentum y
+reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious AdamW);
+métodos eficientes en memoria y de bajo rango (Adafactor, GaLore, Lion,
+APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y sin
+parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
 Turbo-Muon, AF-Muon, AdaMuon, Dion3); optimizadores de adaptividad
-ajustable (Anon); y métodos evolutivos poblacionales (EvE). Los
+ajustable (Anon); y métodos evolutivos poblacionales (EvE, EA4LLM). Los
 algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
 se recopilan en el Apéndice <a href="#sec:annex-optimizers"
 data-reference-type="ref"
@@ -2734,7 +2734,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>137</span> urlstyle</p>
+<p><span>138</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3037,6 +3037,10 @@ rate and beyond, 2019. URL
 <p>Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
 Multi-head low-rank attention, 2026. URL
 <code>https://arxiv.org/abs/2603.02188</code>.</p>
+<p>WenTao Liu, Siyu Song, Hao Hao, and Aimin Zhou. Ea4llm: A
+gradient-free approach to large language model optimization via
+evolutionary algorithms, 2025. URL
+<code>https://arxiv.org/abs/2510.10603</code>.</p>
 <p>Zirui Liu, Jiayi Yuan, Hongye Jin, Shaochen Zhong, Zhaozhuo Xu,
 Vladimir Braverman, Beidi Chen, and Xia Hu. : A tuning-free asymmetric
 2bit quantization for <span>KV</span> cache, 2024. URL
@@ -5355,7 +5359,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-45 mezcladores de secuencia en nueve familias, 27 optimizadores, 6
+45 mezcladores de secuencia en nueve familias, 28 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5642,7 +5646,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 27 optimizadores soportados con su huella de memoria, costo
+los 28 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -5867,6 +5871,14 @@ class="math inline">\(\sigma\)</span>, <span
 class="math inline">\(n_{adam}\)</span>, jitter <span
 class="math inline">\(\gamma\)</span>, wd (L2) &amp; <span
 class="citation" data-cites="raj_eve_2026"></span><br />
+EA4LLM &amp; Estrategias evolutivas sin gradientes &amp; 0 (solo RNG y
+contadores) &amp; <span class="math inline">\(N\)</span> evaluaciones
+fwd/bwd, sin estado &amp; lr (<span
+class="math inline">\(\alpha\)</span>), población <span
+class="math inline">\(N\)</span>, <span
+class="math inline">\(\sigma\)</span>, shaping, antitético, <span
+class="math inline">\(1/\sigma\)</span> &amp; <span class="citation"
+data-cites="liu_ea4llm_2025"></span><br />
 </p>
 </div>
 <h2 id="variantes-de-normalización">Variantes de Normalización</h2>
@@ -8258,6 +8270,160 @@ configuraciones candidatas con una consistencia con Adam comparable a la
 que Adam tiene consigo mismo entre semillas (<span
 class="math inline">\(\tau\)</span> de Kendall de 0,66–0,69).</p></li>
 </ul>
+<h4
+id="ea4llm-estrategias-evolutivas-para-modelos-de-lenguaje-grandes.">EA4LLM
+(Estrategias Evolutivas para Modelos de Lenguaje Grandes).</h4>
+<p>EA4LLM <span class="citation" data-cites="liu_ea4llm_2025"></span> es
+una <strong>alternativa sin gradientes a Adam</strong> que elimina por
+completo la retropropagación y el estado del optimizador, y es el primer
+método que los autores validan para el preentrenamiento de parámetros
+completos de LLM desde cero, en modelos estilo Qwen3 de 0,5B a 32B
+parámetros. En lugar de diferenciar una pérdida, EA4LLM trata la
+verosimilitud del siguiente token como una aptitud de caja negra y
+estima una dirección de descenso a partir de una población de
+perturbaciones gaussianas. La aptitud es la log-probabilidad media por
+token del siguiente token verdadero, enmascarada para el relleno, que es
+exactamente el objetivo causal estándar salvo el signo: <span
+class="math display">\[\begin{aligned}
+p_t &amp;= \operatorname{softmax}(z_t), &amp;
+R(x;\theta) &amp;= \frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \log
+p_\theta\!\left(x_{t+1}\mid x_{\le t}\right), &amp;
+F(\theta) &amp;= \frac{1}{|D|}\sum_{x\in D} R(x;\theta),
+\end{aligned}\]</span> con logits <span
+class="math inline">\(z_t\)</span>, máscara de relleno <span
+class="math inline">\(m_t \in \{0,1\}\)</span> y corpus <span
+class="math inline">\(D\)</span>. Cada iteración muestrea <span
+class="math inline">\(N\)</span> ruidos independientes <span
+class="math inline">\(\epsilon_j \sim \mathcal{N}(0, I)\)</span>, evalúa
+la aptitud perturbada <span class="math inline">\(r_j = F(\theta +
+\sigma\epsilon_j)\)</span> sobre un subconjunto <span
+class="math inline">\(D_t \subset D\)</span> de tamaño <span
+class="math inline">\(M\)</span> extraído uniformemente (el subconjunto
+es compartido por todos los miembros de la iteración, de modo que el
+estimador estocástico sigue siendo insesgado, <span
+class="math inline">\(\mathbb{E}[F_M(\theta)] = F(\theta)\)</span>), y
+transforma las recompensas en pesos mediante normalización z-score o
+rangos centrados: <span class="math display">\[\begin{aligned}
+w_j &amp;= \frac{r_j - \bar r}{\operatorname{std}(r)}
+&amp;&amp;\text{o}&amp;
+w_j &amp;= \operatorname{rank}(r_j) - \frac{N-1}{2},
+\end{aligned}\]</span> donde <span
+class="math inline">\(\operatorname{rank}(\cdot)\)</span> asigna <span
+class="math inline">\(0,\dots,N-1\)</span> tras ordenar. La dirección es
+la media ponderada por el ruido, opcionalmente escalada al estilo NES
+por <span class="math inline">\(1/\sigma\)</span>, y la actualización
+asciende la aptitud: <span class="math display">\[\begin{aligned}
+\hat g &amp;= \frac{1}{N}\sum_{j=1}^{N} w_j \epsilon_j
+&amp;&amp;\text{o}&amp;
+\hat g &amp;= \frac{1}{N\sigma}\sum_{j=1}^{N} w_j \epsilon_j,
+&amp;&amp;&amp;
+\theta \leftarrow \theta + \alpha \hat g .
+\end{aligned}\]</span> El muestreo antitético evalúa el par <span
+class="math inline">\(\pm\sigma\epsilon\)</span> de <span
+class="math inline">\(N/2\)</span> semillas en lugar de un signo por
+semilla. El runner del artículo usa <span class="math inline">\(N =
+30\)</span>, <span class="math inline">\(\sigma = 10^{-3}\)</span>,
+<span class="math inline">\(\alpha = 5\times 10^{-4}\)</span> y <span
+class="math inline">\(M = 5000\)</span> muestras de evaluación por
+iteración (<span class="math inline">\(T = 1000\)</span> iteraciones,
+micro-lote 16, longitud máxima de secuencia 256); el muestreo
+antitético, el shaping por rangos, el escalado NES <span
+class="math inline">\(1/\sigma\)</span>, los multiplicadores
+agrupados/por capas y los programas de decaimiento del tamaño de paso
+están todos <em>desactivados</em> en esas ejecuciones, y el Apéndice A.1
+afirma que el algoritmo desplegado elimina directamente los operadores
+agrupados y los multiplicadores. En esta implementación el paso se basa
+en closure: el minilote actual del trainer proporciona <span
+class="math inline">\(D_t\)</span> y la pérdida se niega para formar la
+aptitud, el <code>lr_</code> compartido por grupo es el tamaño de paso
+<span class="math inline">\(\alpha\)</span>, y <code>wd_</code> aplica
+un decaimiento multiplicativo desacoplado antes del movimiento ES (una
+extensión por consistencia con el repositorio — el artículo no define
+weight decay). El ruido se regenera a partir de una semilla entera por
+miembro en una segunda pasada, por lo que el conjunto completo de ruido
+nunca se almacena: el estado del optimizador es O(1) y no existen
+búferes de momentos. Como EvE, EA4LLM requiere
+<code>gradient_accumulation_steps: 1</code> y no está disponible para
+SBERT (el closure no puede coexistir con el bucle de ajuste de SBERT), y
+AMP no está soportado en la ruta de closure.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros <span class="math inline">\(\theta\)</span>, aptitud <span
+class="math inline">\(F\)</span> (pérdida negada), iteraciones <span
+class="math inline">\(T\)</span>, población <span
+class="math inline">\(N\)</span>, escala de ruido <span
+class="math inline">\(\sigma\)</span>, tamaño de paso <span
+class="math inline">\(\alpha\)</span>, tamaño del subconjunto <span
+class="math inline">\(M\)</span>, normalización (z-score o rangos),
+semilla <span class="math inline">\(s\)</span>, USE_ANTITHETIC,
+USE_RANK, USE_NES Parámetros optimizados <span
+class="math inline">\(\theta_T\)</span> sembrar el generador persistente
+con <span class="math inline">\(s\)</span> extraer minilote <span
+class="math inline">\(D_t \subset D\)</span>, <span
+class="math inline">\(|D_t| = M\)</span> extraer semillas <span
+class="math inline">\(\{s_j\}_{j=1}^{N/2}\)</span> (antitético) o <span
+class="math inline">\(\{s_j\}_{j=1}^{N}\)</span> <span
+class="math inline">\(\text{recompensas} \gets [\,]\)</span> <span
+class="math inline">\(\epsilon \gets \operatorname{randn}(s_j)\)</span>;
+<span class="math inline">\(\theta \gets \theta \pm
+\sigma\epsilon\)</span>; <span class="math inline">\(r \gets -f(\theta;
+D_t)\)</span>; <span class="math inline">\(\theta \gets \theta \mp
+\sigma\epsilon\)</span> añadir <span class="math inline">\(r\)</span> a
+recompensas <span class="math inline">\(w \gets\)</span>
+z-score(recompensas) o rangos centrados(recompensas) <span
+class="math inline">\(g \gets 0\)</span> <span
+class="math inline">\(\epsilon \gets \operatorname{randn}(s_j)\)</span>;
+<span class="math inline">\(g \gets g + w_j (\pm\epsilon)\)</span> <span
+class="math inline">\(\theta \gets \theta + \alpha g /
+(N\sigma)\)</span> si USE_NES, si no <span class="math inline">\(\theta
+\gets \theta + \alpha g / N\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="contras.-27">Contras.</h4>
+<ul>
+<li><p>Requiere <span class="math inline">\(N\)</span> evaluaciones
+forward por paso (30 en el artículo), por lo que la eficiencia de
+muestreo queda por detrás de los métodos de primer orden y la varianza
+del estimador es mayor; el artículo reporta sensibilidad a <span
+class="math inline">\(N\)</span>, <span
+class="math inline">\(\sigma\)</span>, <span
+class="math inline">\(\alpha\)</span> y a la elección de
+normalización.</p></li>
+<li><p>No hay gradiente disponible, de modo que las rutas de recorte de
+gradiente y AMP no aplican: el arnés de closure del trainer rechaza
+<code>use_amp</code>, exige <code>gradient_accumulation_steps: 1</code>
+y el bucle SBERT no puede alojarlo. Cada evaluación además paga una
+pasada backward a través del closure compartido aunque ES la
+descarte.</p></li>
+<li><p>A presupuestos de evaluación igualados el artículo no reclama
+calidad final superior a Adam; su argumento es la memoria (&gt;4<span
+class="math inline">\(\times\)</span> de reducción con <span
+class="math inline">\(\ge\)</span>4B parámetros) y la viabilidad sin
+gradientes, con el muestreo antitético, el shaping por rangos y el
+escalado NES desactivados en sus propias ejecuciones a gran
+escala.</p></li>
+<li><p>Como el z-score hace que la magnitud de la actualización sea
+independiente de <span class="math inline">\(\sigma\)</span> y de la
+escala del gradiente, <span class="math inline">\(\alpha\)</span> debe
+ajustarse por tarea en lugar de transferirse desde Adam.</p></li>
+</ul>
+<h4 id="ventajas.-27">Ventajas.</h4>
+<ul>
+<li><p>Estado del optimizador nulo: sin momentos y sin copias de
+población, por lo que el artículo mide 60,01 frente a 137,61 GB en 8B y
+137,61 frente a 431,76 GB en 32B contra Adam.</p></li>
+<li><p>Proporciona el primer preentrenamiento ES estable de parámetros
+completos desde cero en 0,5B–32B, con curvas de pérdida que descienden
+de forma sostenida (Figura 1) y sin cálculo de gradientes.</p></li>
+<li><p>Agnóstico a la arquitectura: la aptitud solo necesita una pasada
+forward y una probabilidad, por lo que los operadores no diferenciables
+se vuelven entrenables.</p></li>
+<li><p>La aptitud submuestreada es un estimador insesgado de la aptitud
+sobre el corpus completo, y la reproducción sembrada en dos pasadas hace
+el ruido reproducible manteniendo el estado del optimizador en
+O(1).</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Grupo</strong> &amp; <strong>Métodos</strong> &amp;
@@ -8293,12 +8459,15 @@ a los parámetros unidimensionales una actualización RMS, sin estado
 auxiliar de AdamW; Dion3 conserva la actualización espectral pero
 ortogonaliza solo una fracción de las filas del momentum por paso con
 Gram Newton–Schulz y error feedback.<br />
-Híbrido evolutivo &amp; EvE &amp; ranking rápido y monótono de
-candidatos para bucles de búsqueda &amp; Una población de evolución
-diferencial en régimen estable con un rescate dirigido de Adam
-intercambia calidad final por velocidad de reloj; es mejor como
-optimizador interno de búsqueda de hiperparámetros o
-arquitecturas.<br />
+Híbrido evolutivo &amp; EvE, EA4LLM &amp; ranking rápido y monótono de
+candidatos para bucles de búsqueda; actualizaciones sin gradientes de
+parámetros completos &amp; Una población de evolución diferencial en
+régimen estable con un rescate dirigido de Adam intercambia calidad
+final por velocidad de reloj; es mejor como optimizador interno de
+búsqueda de hiperparámetros o arquitecturas. EA4LLM elimina los
+gradientes por completo — ES de orden cero con aptitud de
+log-verosimilitud por token y sin estado del optimizador, la opción
+centrada en memoria para preentrenar a escala.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Transformadores Densos, Recurrentes y

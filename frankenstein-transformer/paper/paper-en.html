@@ -1909,7 +1909,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-seven optimizer families in eight
+groups. The system supports twenty-eight optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1918,7 +1918,7 @@ APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3);
 adaptivity-tunable optimizers (Anon); and evolutionary population-based
-hybrids (EvE). Algorithms, pseudocode, and memory and complexity
+hybrids (EvE, EA4LLM). Algorithms, pseudocode, and memory and complexity
 comparisons are collected in Appendix <a href="#sec:annex-optimizers"
 data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
@@ -2612,7 +2612,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>137</span> urlstyle</p>
+<p><span>138</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2915,6 +2915,10 @@ rate and beyond, 2019. URL
 <p>Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
 Multi-head low-rank attention, 2026. URL
 <code>https://arxiv.org/abs/2603.02188</code>.</p>
+<p>WenTao Liu, Siyu Song, Hao Hao, and Aimin Zhou. Ea4llm: A
+gradient-free approach to large language model optimization via
+evolutionary algorithms, 2025. URL
+<code>https://arxiv.org/abs/2510.10603</code>.</p>
 <p>Zirui Liu, Jiayi Yuan, Hongye Jin, Shaochen Zhong, Zhaozhuo Xu,
 Vladimir Braverman, Beidi Chen, and Xia Hu. : A tuning-free asymmetric
 2bit quantization for <span>KV</span> cache, 2024. URL
@@ -5198,7 +5202,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 45 sequence mixers
-across nine families, 27 optimizers, 6 normalization variants, 43
+across nine families, 28 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -5475,7 +5479,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 27 supported optimizers with their memory footprint, per-step
+all 28 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5697,6 +5701,13 @@ class="math inline">\(\sigma\)</span>, <span
 class="math inline">\(n_{adam}\)</span>, jitter <span
 class="math inline">\(\gamma\)</span>, wd (L2) &amp; <span
 class="citation" data-cites="raj_eve_2026"></span><br />
+EA4LLM &amp; Gradient-free evolution strategies &amp; 0 (RNG + counters
+only) &amp; <span class="math inline">\(N\)</span> fwd/bwd evals, no
+state &amp; lr (<span class="math inline">\(\alpha\)</span>), population
+<span class="math inline">\(N\)</span>, <span
+class="math inline">\(\sigma\)</span>, shaping, antithetic, <span
+class="math inline">\(1/\sigma\)</span> &amp; <span class="citation"
+data-cites="liu_ea4llm_2025"></span><br />
 </p>
 </div>
 <h2 id="normalization-variants">Normalization Variants</h2>
@@ -7993,6 +8004,150 @@ faster while ranking candidate configurations about as consistently with
 Adam as Adam does with itself across seeds (Kendall’s <span
 class="math inline">\(\tau\)</span> of 0.66–0.69).</p></li>
 </ul>
+<h4 id="ea4llm-evolution-strategies-for-large-language-models.">EA4LLM
+(Evolution Strategies for Large Language Models).</h4>
+<p>EA4LLM <span class="citation" data-cites="liu_ea4llm_2025"></span> is
+a <strong>gradient-free alternative to Adam</strong> that removes
+backpropagation and optimizer state entirely, and it is the first method
+the authors validate for full-parameter pretraining of LLMs from
+scratch, across Qwen3-style models from 0.5B to 32B parameters. Instead
+of differentiating a loss, EA4LLM treats the next-token likelihood as a
+black-box fitness and estimates a descent direction from a population of
+Gaussian perturbations. The fitness is the mean token-level
+log-probability of the true next token, masked for padding, which is
+exactly the standard causal-LM objective up to sign: <span
+class="math display">\[\begin{aligned}
+p_t &amp;= \operatorname{softmax}(z_t), &amp;
+R(x;\theta) &amp;= \frac{1}{\sum_t m_t}\sum_{t=1}^{T} m_t \log
+p_\theta\!\left(x_{t+1}\mid x_{\le t}\right), &amp;
+F(\theta) &amp;= \frac{1}{|D|}\sum_{x\in D} R(x;\theta),
+\end{aligned}\]</span> with logits <span
+class="math inline">\(z_t\)</span>, padding mask <span
+class="math inline">\(m_t \in \{0,1\}\)</span> and corpus <span
+class="math inline">\(D\)</span>. Each iteration samples <span
+class="math inline">\(N\)</span> independent noises <span
+class="math inline">\(\epsilon_j \sim \mathcal{N}(0, I)\)</span>,
+evaluates the perturbed fitness <span class="math inline">\(r_j =
+F(\theta + \sigma\epsilon_j)\)</span> on one uniformly drawn subset
+<span class="math inline">\(D_t \subset D\)</span> of size <span
+class="math inline">\(M\)</span> (the subset is shared by every member
+of the iteration, so the stochastic estimator stays unbiased, <span
+class="math inline">\(\mathbb{E}[F_M(\theta)] = F(\theta)\)</span>), and
+shapes the rewards into weights by z-score normalization or centered
+ranks: <span class="math display">\[\begin{aligned}
+w_j &amp;= \frac{r_j - \bar r}{\operatorname{std}(r)}
+&amp;&amp;\text{or}&amp;
+w_j &amp;= \operatorname{rank}(r_j) - \frac{N-1}{2},
+\end{aligned}\]</span> where <span
+class="math inline">\(\operatorname{rank}(\cdot)\)</span> assigns <span
+class="math inline">\(0,\dots,N-1\)</span> after sorting. The direction
+is the noise-weighted mean, optionally scaled NES-style by <span
+class="math inline">\(1/\sigma\)</span>, and the update ascends the
+fitness: <span class="math display">\[\begin{aligned}
+\hat g &amp;= \frac{1}{N}\sum_{j=1}^{N} w_j \epsilon_j
+&amp;&amp;\text{or}&amp;
+\hat g &amp;= \frac{1}{N\sigma}\sum_{j=1}^{N} w_j \epsilon_j,
+&amp;&amp;&amp;
+\theta \leftarrow \theta + \alpha \hat g .
+\end{aligned}\]</span> Antithetic sampling evaluates the <span
+class="math inline">\(\pm\sigma\epsilon\)</span> pair of <span
+class="math inline">\(N/2\)</span> seeds instead of one sign per seed.
+The paper’s runner uses <span class="math inline">\(N = 30\)</span>,
+<span class="math inline">\(\sigma = 10^{-3}\)</span>, <span
+class="math inline">\(\alpha = 5\times 10^{-4}\)</span> and <span
+class="math inline">\(M = 5000\)</span> evaluation samples per iteration
+(<span class="math inline">\(T = 1000\)</span> iterations, micro-batch
+16, maximum sequence length 256); antithetic sampling, rank shaping, the
+NES <span class="math inline">\(1/\sigma\)</span> scaling,
+grouped/layered multipliers and step-size schedules are all <em>off</em>
+in those runs, and Appendix A.1 states that the deployed algorithm
+removes the grouped operators and multipliers outright. In this
+implementation the step is closure-based: the trainer’s current
+minibatch supplies <span class="math inline">\(D_t\)</span> and the loss
+is negated to form the fitness, the shared per-group <code>lr_</code> is
+the step size <span class="math inline">\(\alpha\)</span>, and
+<code>wd_</code> applies a decoupled multiplicative decay before the ES
+move (a repo-consistency extension — the paper defines no weight decay).
+Noise is regenerated from one integer seed per member in a second pass,
+so the full noise set is never stored: optimizer state is O(1) and no
+moment buffers exist. Like EvE, EA4LLM requires
+<code>gradient_accumulation_steps: 1</code> and is not available for
+SBERT (the closure cannot coexist with the SBERT fit loop), and AMP is
+not supported on the closure path.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parameters <span class="math inline">\(\theta\)</span>, fitness <span
+class="math inline">\(F\)</span> (negated loss), iterations <span
+class="math inline">\(T\)</span>, population <span
+class="math inline">\(N\)</span>, noise scale <span
+class="math inline">\(\sigma\)</span>, step size <span
+class="math inline">\(\alpha\)</span>, subset size <span
+class="math inline">\(M\)</span>, normalization (z-score or rank), seed
+<span class="math inline">\(s\)</span>, USE_ANTITHETIC, USE_RANK,
+USE_NES Optimized parameters <span
+class="math inline">\(\theta_T\)</span> seed the persistent generator
+with <span class="math inline">\(s\)</span> draw minibatch <span
+class="math inline">\(D_t \subset D\)</span>, <span
+class="math inline">\(|D_t| = M\)</span> draw seeds <span
+class="math inline">\(\{s_j\}_{j=1}^{N/2}\)</span> (antithetic) or <span
+class="math inline">\(\{s_j\}_{j=1}^{N}\)</span> <span
+class="math inline">\(\text{rewards} \gets [\,]\)</span> <span
+class="math inline">\(\epsilon \gets \operatorname{randn}(s_j)\)</span>;
+<span class="math inline">\(\theta \gets \theta \pm
+\sigma\epsilon\)</span>; <span class="math inline">\(r \gets -f(\theta;
+D_t)\)</span>; <span class="math inline">\(\theta \gets \theta \mp
+\sigma\epsilon\)</span> append <span class="math inline">\(r\)</span> to
+rewards <span class="math inline">\(w \gets\)</span> z-score(rewards) or
+centered ranks(rewards) <span class="math inline">\(g \gets 0\)</span>
+<span class="math inline">\(\epsilon \gets
+\operatorname{randn}(s_j)\)</span>; <span class="math inline">\(g \gets
+g + w_j (\pm\epsilon)\)</span> <span class="math inline">\(\theta \gets
+\theta + \alpha g / (N\sigma)\)</span> if USE_NES, else <span
+class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="cons.-27">Cons.</h4>
+<ul>
+<li><p>Requires <span class="math inline">\(N\)</span> forward
+evaluations per step (30 in the paper), so sample efficiency trails
+first-order methods and the variance of the estimate is higher; the
+paper reports sensitivity to <span class="math inline">\(N\)</span>,
+<span class="math inline">\(\sigma\)</span>, <span
+class="math inline">\(\alpha\)</span> and the normalization
+choice.</p></li>
+<li><p>No gradient is available, so the gradient-clipping and AMP paths
+do not apply: the trainer’s closure harness rejects
+<code>use_amp</code>, requires
+<code>gradient_accumulation_steps: 1</code>, and the SBERT loop cannot
+host it. Each evaluation also pays a backward pass through the shared
+closure even though ES discards it.</p></li>
+<li><p>At matched evaluation budgets the paper does not claim superior
+final quality to Adam; its case is memory (&gt;4<span
+class="math inline">\(\times\)</span> reduction at <span
+class="math inline">\(\ge\)</span>4B parameters) and gradient-free
+feasibility, with antithetic sampling, rank shaping and NES scaling
+disabled in its own large-scale runs.</p></li>
+<li><p>Because the z-score makes the update magnitude independent of
+<span class="math inline">\(\sigma\)</span> and of the gradient scale,
+<span class="math inline">\(\alpha\)</span> must be tuned per task
+rather than transferred from Adam.</p></li>
+</ul>
+<h4 id="pros.-27">Pros.</h4>
+<ul>
+<li><p>Zero optimizer state: no moments and no population copies, so the
+paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B
+against Adam.</p></li>
+<li><p>Provides the first stable full-parameter ES pretraining from
+scratch across 0.5B–32B, with steadily decreasing loss curves (Figure 1)
+and no gradient computation.</p></li>
+<li><p>Architecture-agnostic: the fitness only needs a forward pass and
+a probability, so non-differentiable operators become
+trainable.</p></li>
+<li><p>The subsampled fitness is an unbiased estimator of the
+full-corpus fitness, and the two-pass seeded replay makes the noise
+reproducible while keeping optimizer state at O(1).</p></li>
+</ul>
 <div class="longtable">
 <p><span>L<span>2.5cm</span>L<span>3.5cm</span>L<span>2.3cm</span>L<span>5.0cm</span></span>
 <strong>Group</strong> &amp; <strong>Methods</strong> &amp;
@@ -8024,11 +8179,14 @@ one-dimensional parameters an RMS update, with no AdamW auxiliary state;
 Dion3 keeps the spectral update but orthogonalizes only a fraction of
 the momentum rows per step with Gram Newton–Schulz and error
 feedback.<br />
-Evolutionary hybrid &amp; EvE &amp; fast, monotone candidate ranking for
-search loops &amp; A steady-state differential-evolution population with
-a targeted Adam rescue trades final quality for wall-clock speed; best
-used as the inner optimizer of hyperparameter or architecture
-search.<br />
+Evolutionary hybrid &amp; EvE, EA4LLM &amp; fast, monotone candidate
+ranking for search loops; gradient-free full-parameter updates &amp; A
+steady-state differential-evolution population with a targeted Adam
+rescue trades final quality for wall-clock speed; best used as the inner
+optimizer of hyperparameter or architecture search. EA4LLM removes
+gradients entirely — zeroth-order ES with token-level log-likelihood
+fitness and no optimizer state, the memory-first option for pretraining
+at scale.<br />
 </p>
 </div>
 <h1 id="sec:annex-transformer">Dense, Recurrent, and Memory-Augmented
