@@ -1985,19 +1985,19 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta veintinueve familias de optimizadores en ocho
-categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
-momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
-AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
-GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y
-sin parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
+sistema soporta treinta familias de optimizadores en ocho categorías:
+líneas base clásicas (SGD con momentum, AdamW, RAdam); momentum y
+reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious AdamW);
+métodos eficientes en memoria y de bajo rango (Adafactor, GaLore, Lion,
+APOLLO, APOLLO-Mini, Q-APOLLO); métodos sin programación y sin
+parámetros (Schedule-Free AdamW, Prodigy) con escalado para lotes
 grandes (LAMB); métodos conscientes de la curvatura y de segundo orden
 (Sophia, Shampoo, SOAP); métodos orientados a geometría (Muon,
-Turbo-Muon, AF-Muon, AdaMuon, Dion3, ROOT); optimizadores de adaptividad
-ajustable (Anon); y métodos evolutivos poblacionales (EvE, EA4LLM). Los
-algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
-se recopilan en el Apéndice <a href="#sec:annex-optimizers"
-data-reference-type="ref"
+Turbo-Muon, AF-Muon, AdaMuon, Dion3, ROOT, Muon²); optimizadores de
+adaptividad ajustable (Anon); y métodos evolutivos poblacionales (EvE,
+EA4LLM). Los algoritmos, el pseudocódigo y las comparaciones de memoria
+y complejidad se recopilan en el Apéndice <a
+href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
@@ -2734,7 +2734,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>139</span> urlstyle</p>
+<p><span>140</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3038,7 +3038,7 @@ Jianfeng Gao, and Jiawei Han. On the variance of the adaptive learning
 rate and beyond, 2019. URL
 <code>https://arxiv.org/abs/1908.03265</code>. Version Number: 4.</p>
 <p>Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
-Multi-head low-rank attention, 2026. URL
+Multi-head low-rank attention, 2026<span>a</span>. URL
 <code>https://arxiv.org/abs/2603.02188</code>.</p>
 <p>WenTao Liu, Siyu Song, Hao Hao, and Aimin Zhou. Ea4llm: A
 gradient-free approach to large language model optimization via
@@ -3048,6 +3048,11 @@ evolutionary algorithms, 2025. URL
 Vladimir Braverman, Beidi Chen, and Xia Hu. : A tuning-free asymmetric
 2bit quantization for <span>KV</span> cache, 2024. URL
 <code>https://arxiv.org/abs/2402.02750</code>. arXiv:2402.02750.</p>
+<p>Ziyue Liu, Ruijie Zhang, Zhengyang Wang, Yequan Zhao, Yupeng Su,
+Zi Yang, and Zheng Zhang. Muon<span class="math inline">\(^2\)</span>:
+Boosting muon via adaptive second-moment preconditioning,
+2026<span>b</span>. URL
+<code>https://arxiv.org/abs/2604.09967</code>.</p>
 <p>Ilya Loshchilov and Frank Hutter. Decoupled weight decay
 regularization, 2017. URL <code>https://arxiv.org/abs/1711.05101</code>.
 Version Number: 3.</p>
@@ -5649,7 +5654,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 29 optimizadores soportados con su huella de memoria, costo
+los 30 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -5845,6 +5850,16 @@ class="math inline">\(p\)</span>; <span
 class="math inline">\(\beta\)</span>, eps para
 embeddings/pos/heads/vectores &amp; <span class="citation"
 data-cites="he_root_2025"></span><br />
+Muon² &amp; Ortogonalidad + adaptativa &amp; 2 (<span
+class="math inline">\(m\)</span>, <span
+class="math inline">\(v\)</span>); factorizado: 1 (<span
+class="math inline">\(m\)</span>) + fila/col; + <span
+class="math inline">\(v\)</span> en el respaldo AdamW &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr, <span
+class="math inline">\(\beta_1\)</span>, <span
+class="math inline">\(\beta_2\)</span>, eps, wd, pasos NS <span
+class="math inline">\(k\)</span>, factored &amp; <span class="citation"
+data-cites="liu_muon2_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Adaptativo de bajo rango &amp; 2 bajo rango + proy &amp;
@@ -8279,6 +8294,126 @@ Muon, y los interruptores
 <code>softthresh</code>/<code>ada_newton</code> exponen directamente las
 ablaciones del artículo.</p></li>
 </ul>
+<h4
+id="muon²-ortogonalización-con-precondicionamiento-de-segundo-momento.">Muon²
+(Ortogonalización con Precondicionamiento de Segundo Momento).</h4>
+<p>Muon<span class="math inline">\(^2\)</span> <span class="citation"
+data-cites="liu_muon2_2026"></span> generaliza Muon al precondicionar el
+momentum con un <strong>EMA de segundo momento estilo Adam antes de la
+ortogonalización de Newton–Schulz</strong>. El artículo muestra que el
+cuello de botella práctico de la aproximación polar de Muon es la matriz
+de momentum mal condicionada (los espectros al inicio del entrenamiento
+abarcan <span class="math inline">\(10^{-4}\)</span>–<span
+class="math inline">\(1\)</span> y cerca de la mitad de los valores
+singulares caen en la “zona muerta” de NS); dividir por <span
+class="math inline">\(\sqrt{V_t}\)</span> estrecha el espectro, de modo
+que cada paso de NS se alinea mejor con la actualización ortogonalizada
+verdadera (similitud coseno <span class="math inline">\(0.916\)</span>
+con <span class="math inline">\(K{=}3\)</span> frente a <span
+class="math inline">\(0.931\)</span> de Muon con <span
+class="math inline">\(K{=}5\)</span>, y <span
+class="math inline">\(0.975\)</span> con <span
+class="math inline">\(K{=}5\)</span>). Para una matriz de pesos de capa
+oculta <span class="math inline">\(W \in \mathbb{R}^{n \times
+m}\)</span> con tasa de aprendizaje <span
+class="math inline">\(\eta\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \beta_1 M_{t-1} + (1-\beta_1) G_t &amp;&amp; \text{(EMA de
+momentum, Ec.~2)} \\
+V_t &amp;= \beta_2 V_{t-1} + (1-\beta_2)\, (G_t \odot G_t) &amp;&amp;
+\text{(EMA de segundo momento, Ec.~3)} \\
+\widetilde{M}_t &amp;= M_t \oslash \big(\sqrt{V_t} + \epsilon
+\mathbf{1}\big) &amp;&amp; \text{(precondicionamiento, Ec.~4)} \\
+X_0 &amp;= \frac{\widetilde{M}_t}{\|\widetilde{M}_t\|_F + \epsilon},
+\qquad
+X_{k+1} = aX_k + b\, X_k X_k^\top X_k + c\, X_k (X_k X_k^\top)^2 X_k
+&amp;&amp; \text{(NS, Ec.~5)} \\
+W_{t+1} &amp;= W_t - \eta \sqrt{m/n}\, X_K &amp;&amp;
+\text{(actualización, Ec.~6)}
+\end{aligned}\]</span> con los mismos coeficientes quínticos <span
+class="math inline">\((a,b,c)=(3.4445,-4.7750,2.0315)\)</span> que Muon
+y el factor de tasa de aprendizaje <span
+class="math inline">\(\sqrt{m/n}\)</span> propuesto por Bernstein
+(2025). La variante eficiente en memoria <strong>Muon<span
+class="math inline">\(^2\)</span>-F</strong> reemplaza <span
+class="math inline">\(V_t\)</span> por estadísticas de fila/columna
+estilo Adafactor: <span class="math display">\[\begin{aligned}
+r_t &amp;= \beta_2 r_{t-1} +
+(1-\beta_2)\,\mathrm{sum}_{\mathrm{col}}(G_t \odot G_t), \qquad
+c_t = \beta_2 c_{t-1} + (1-\beta_2)\,\mathrm{sum}_{\mathrm{row}}(G_t
+\odot G_t), \\
+\widehat{V}_t &amp;= \frac{r_t\, c_t^\top}{\mathrm{sum}(r_t)},
+\end{aligned}\]</span> manteniendo la memoria dentro de <span
+class="math inline">\(\sim\)</span>0.3% de Muon a escala 7B (47.53 vs
+47.29 GB) y conservando la mayor parte del beneficio de Muon<span
+class="math inline">\(^2\)</span>. En preentrenamiento de GPT, LLaMA y
+Mezcla de Expertos hasta 13B parámetros, Muon<span
+class="math inline">\(^2\)</span> supera a Muon con igual número de
+iteraciones NS y lo iguala con <span
+class="math inline">\(K{=}3\)</span> en lugar de <span
+class="math inline">\(5\)</span> (una reducción del 40%), ahorrando
+hasta un cuarto del tiempo de entrenamiento con la misma pérdida.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span>, <span
+class="math inline">\(\beta_1, \beta_2\)</span>, iteraciones NS <span
+class="math inline">\(K\)</span>, precondicionador <span
+class="math inline">\(\epsilon\)</span> Parámetros actualizados <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \beta_1 M
++ (1-\beta_1) G\)</span> <span class="math inline">\(V \gets \beta_2 V +
+(1-\beta_2) (G \odot G)\)</span> <span
+class="math inline">\(\widetilde{M} \gets M \oslash (\sqrt{V} +
+\epsilon\mathbf{1})\)</span> <span class="math inline">\(X_0 \gets
+\widetilde{M} / (\|\widetilde{M}\|_F + \epsilon)\)</span> <span
+class="math inline">\(A_k \gets X_k X_k^\top\)</span> <span
+class="math inline">\(X_{k+1} \gets 3.4445\,X_k - 4.7750\,A_k X_k +
+2.0315\,A_k^2 X_k\)</span> <span class="math inline">\(W \gets W - \eta
+\sqrt{m/n}\, X_K\)</span> <span class="math inline">\(P \gets
+\operatorname{AdamW}(P, \nabla f(P); \eta, \beta_1, \beta_2, \epsilon,
+\lambda)\)</span> <span class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>Siguiendo la receta híbrida de Muon, solo las matrices 2-D de capas
+ocultas toman la ruta Muon<span class="math inline">\(^2\)</span>; las
+tablas de embeddings, los encodings posicionales aprendidos, las cabezas
+de salida y todo parámetro no matricial se entrenan con AdamW
+desacoplado usando la tasa de aprendizaje, el weight decay, <span
+class="math inline">\(\beta_1, \beta_2\)</span> y <span
+class="math inline">\(\epsilon\)</span> del grupo — los mismos <span
+class="math inline">\(\beta_1, \beta_2, \epsilon\)</span> que
+parametrizan las Ecs. 2–4, de modo que un único conjunto de
+hiperparámetros por grupo configura ambas rutas.</p>
+<h4 id="contras.-27">Contras.</h4>
+<ul>
+<li><p>Un búfer de estado completo adicional respecto de Muon (dos EMAs
+de momentos por matriz), que duplica la memoria del optimizador en la
+ruta ortogonalizada salvo que se active la variante
+factorizada.</p></li>
+<li><p>La escala de actualización <span
+class="math inline">\(\sqrt{m/n}\)</span> difiere de la ruta
+<code>muon</code> simple de este repositorio, por lo que las tasas de
+aprendizaje no se transfieren uno a uno entre las dos entradas del
+registro.</p></li>
+<li><p>El artículo no fija valores por defecto para <span
+class="math inline">\(\beta_1, \beta_2\)</span>; esta implementación
+hereda los valores compartidos por grupo <span
+class="math inline">\((0.9, 0.95)\)</span>.</p></li>
+</ul>
+<h4 id="ventajas.-27">Ventajas.</h4>
+<ul>
+<li><p>Mejor ortogonalización con igual número de iteraciones NS y la
+misma calidad con un 40% menos de iteraciones (3 en lugar de 5),
+recortando cómputo y comunicación de NS.</p></li>
+<li><p>Ganancias consistentes sobre Muon en preentrenamiento de GPT,
+LLaMA y Mezcla de Expertos hasta 13B parámetros, con hasta un cuarto del
+tiempo de entrenamiento ahorrado con la misma pérdida.</p></li>
+<li><p>El interruptor <code>factored</code> expone Muon<span
+class="math inline">\(^2\)</span>-F, que mantiene la memoria dentro de
+<span class="math inline">\(\sim\)</span>0.3% de Muon conservando la
+mayor parte del beneficio.</p></li>
+</ul>
 <h2 id="híbridos-evolutivos-y-poblacionales">Híbridos Evolutivos y
 Poblacionales</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -8445,7 +8580,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="contras.-27">Contras.</h4>
+<h4 id="contras.-28">Contras.</h4>
 <ul>
 <li><p>Quedan aproximadamente un punto de exactitud (MNIST) y 9–11% de
 pérdida relativa (ajuste fino LoRA) por detrás de Adam a presupuesto de
@@ -8468,7 +8603,7 @@ no está soportada y el bucle SBERT (<code>fit</code> de
 sentence-transformers) no puede alojarlo; la mutación polinomial es un
 costo puro a escala de red y está desactivada por defecto.</p></li>
 </ul>
-<h4 id="ventajas.-27">Ventajas.</h4>
+<h4 id="ventajas.-28">Ventajas.</h4>
 <ul>
 <li><p>Mejor-observado monótono por construcción en objetivos
 deterministas (selección voraz de aceptar solo si es estrictamente
@@ -8610,7 +8745,7 @@ class="math inline">\(\theta \gets \theta + \alpha g /
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-28">Contras.</h4>
+<h4 id="contras.-29">Contras.</h4>
 <ul>
 <li><p>Requiere <span class="math inline">\(N\)</span> evaluaciones
 forward por paso (30 en el artículo), por lo que la eficiencia de
@@ -8638,7 +8773,7 @@ independiente de <span class="math inline">\(\sigma\)</span> y de la
 escala del gradiente, <span class="math inline">\(\alpha\)</span> debe
 ajustarse por tarea en lugar de transferirse desde Adam.</p></li>
 </ul>
-<h4 id="ventajas.-28">Ventajas.</h4>
+<h4 id="ventajas.-29">Ventajas.</h4>
 <ul>
 <li><p>Estado del optimizador nulo: sin momentos y sin copias de
 población, por lo que el artículo mide 60,01 frente a 137,61 GB en 8B y

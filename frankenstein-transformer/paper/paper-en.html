@@ -1909,7 +1909,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports twenty-nine optimizer families in eight
+groups. The system supports thirty optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1917,7 +1917,7 @@ APOLLO, APOLLO-Mini, Q-APOLLO); schedule-free and parameter-free methods
 (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3,
-ROOT); adaptivity-tunable optimizers (Anon); and evolutionary
+ROOT, Muon²); adaptivity-tunable optimizers (Anon); and evolutionary
 population-based hybrids (EvE, EA4LLM). Algorithms, pseudocode, and
 memory and complexity comparisons are collected in Appendix <a
 href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2612,7 +2612,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>139</span> urlstyle</p>
+<p><span>140</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2916,7 +2916,7 @@ Jianfeng Gao, and Jiawei Han. On the variance of the adaptive learning
 rate and beyond, 2019. URL
 <code>https://arxiv.org/abs/1908.03265</code>. Version Number: 4.</p>
 <p>Songtao Liu, Hongwu Peng, Zhiwei Zhang, Zhengyu Chen, and Yue Guo.
-Multi-head low-rank attention, 2026. URL
+Multi-head low-rank attention, 2026<span>a</span>. URL
 <code>https://arxiv.org/abs/2603.02188</code>.</p>
 <p>WenTao Liu, Siyu Song, Hao Hao, and Aimin Zhou. Ea4llm: A
 gradient-free approach to large language model optimization via
@@ -2926,6 +2926,11 @@ evolutionary algorithms, 2025. URL
 Vladimir Braverman, Beidi Chen, and Xia Hu. : A tuning-free asymmetric
 2bit quantization for <span>KV</span> cache, 2024. URL
 <code>https://arxiv.org/abs/2402.02750</code>. arXiv:2402.02750.</p>
+<p>Ziyue Liu, Ruijie Zhang, Zhengyang Wang, Yequan Zhao, Yupeng Su,
+Zi Yang, and Zheng Zhang. Muon<span class="math inline">\(^2\)</span>:
+Boosting muon via adaptive second-moment preconditioning,
+2026<span>b</span>. URL
+<code>https://arxiv.org/abs/2604.09967</code>.</p>
 <p>Ilya Loshchilov and Frank Hutter. Decoupled weight decay
 regularization, 2017. URL <code>https://arxiv.org/abs/1711.05101</code>.
 Version Number: 3.</p>
@@ -5482,7 +5487,7 @@ class="citation" data-cites="pisoni_ssog_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 29 supported optimizers with their memory footprint, per-step
+all 30 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5675,6 +5680,16 @@ quantile <span class="math inline">\(p\)</span>; <span
 class="math inline">\(\beta\)</span>, eps for
 embeddings/pos/heads/vectors &amp; <span class="citation"
 data-cites="he_root_2025"></span><br />
+Muon² &amp; Orthogonality + adaptive &amp; 2 (<span
+class="math inline">\(m\)</span>, <span
+class="math inline">\(v\)</span>); factored: 1 (<span
+class="math inline">\(m\)</span>) + row/col; + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr, <span
+class="math inline">\(\beta_1\)</span>, <span
+class="math inline">\(\beta_2\)</span>, eps, wd, NS steps <span
+class="math inline">\(k\)</span>, factored &amp; <span class="citation"
+data-cites="liu_muon2_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -8012,6 +8027,120 @@ reports lower loss and a better zero-shot average than Muon and AdamW at
 <code>softthresh</code>/<code>ada_newton</code> toggles expose the
 paper’s ablations directly.</p></li>
 </ul>
+<h4 id="muon²-second-moment-preconditioned-orthogonalization.">Muon²
+(Second-Moment Preconditioned Orthogonalization).</h4>
+<p>Muon<span class="math inline">\(^2\)</span> <span class="citation"
+data-cites="liu_muon2_2026"></span> generalizes Muon by preconditioning
+the momentum with an <strong>Adam-style second-moment EMA before the
+Newton–Schulz orthogonalization</strong>. The paper shows that the
+practical bottleneck of Muon’s polar approximation is the
+ill-conditioned momentum matrix (early-training spectra span <span
+class="math inline">\(10^{-4}\)</span>–<span
+class="math inline">\(1\)</span> with roughly half the singular values
+in the NS “dead zone”); dividing by <span
+class="math inline">\(\sqrt{V_t}\)</span> tightens the spectrum, so
+every NS step aligns better with the true orthogonalized update (cosine
+similarity <span class="math inline">\(0.916\)</span> at <span
+class="math inline">\(K{=}3\)</span> vs Muon’s <span
+class="math inline">\(0.931\)</span> at <span
+class="math inline">\(K{=}5\)</span>, rising to <span
+class="math inline">\(0.975\)</span> at <span
+class="math inline">\(K{=}5\)</span>). For a hidden-layer weight matrix
+<span class="math inline">\(W \in \mathbb{R}^{n \times m}\)</span> with
+learning rate <span class="math inline">\(\eta\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \beta_1 M_{t-1} + (1-\beta_1) G_t &amp;&amp; \text{(momentum
+EMA, Eq.~2)} \\
+V_t &amp;= \beta_2 V_{t-1} + (1-\beta_2)\, (G_t \odot G_t) &amp;&amp;
+\text{(second-moment EMA, Eq.~3)} \\
+\widetilde{M}_t &amp;= M_t \oslash \big(\sqrt{V_t} + \epsilon
+\mathbf{1}\big) &amp;&amp; \text{(preconditioning, Eq.~4)} \\
+X_0 &amp;= \frac{\widetilde{M}_t}{\|\widetilde{M}_t\|_F + \epsilon},
+\qquad
+X_{k+1} = aX_k + b\, X_k X_k^\top X_k + c\, X_k (X_k X_k^\top)^2 X_k
+&amp;&amp; \text{(NS, Eq.~5)} \\
+W_{t+1} &amp;= W_t - \eta \sqrt{m/n}\, X_K &amp;&amp; \text{(update,
+Eq.~6)}
+\end{aligned}\]</span> with the same quintic coefficients <span
+class="math inline">\((a,b,c)=(3.4445,-4.7750,2.0315)\)</span> as Muon
+and the <span class="math inline">\(\sqrt{m/n}\)</span> learning-rate
+factor proposed by Bernstein (2025). The memory-efficient variant
+<strong>Muon<span class="math inline">\(^2\)</span>-F</strong> replaces
+<span class="math inline">\(V_t\)</span> with Adafactor-style row/column
+statistics: <span class="math display">\[\begin{aligned}
+r_t &amp;= \beta_2 r_{t-1} +
+(1-\beta_2)\,\mathrm{sum}_{\mathrm{col}}(G_t \odot G_t), \qquad
+c_t = \beta_2 c_{t-1} + (1-\beta_2)\,\mathrm{sum}_{\mathrm{row}}(G_t
+\odot G_t), \\
+\widehat{V}_t &amp;= \frac{r_t\, c_t^\top}{\mathrm{sum}(r_t)},
+\end{aligned}\]</span> keeping memory within <span
+class="math inline">\(\sim\)</span>0.3% of Muon at 7B scale (47.53 vs
+47.29 GB) while retaining most of Muon<span
+class="math inline">\(^2\)</span>’s benefit. Across GPT, LLaMA and
+Mixture-of-Experts pre-training up to 13B parameters, Muon<span
+class="math inline">\(^2\)</span> outperforms Muon at equal NS
+iterations and matches it with <span
+class="math inline">\(K{=}3\)</span> instead of <span
+class="math inline">\(5\)</span> (a 40% reduction), saving up to a
+quarter of training time at equal loss.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Initial parameters <span class="math inline">\(\theta\)</span>,
+learning rate <span class="math inline">\(\eta\)</span>, <span
+class="math inline">\(\beta_1, \beta_2\)</span>, NS iters <span
+class="math inline">\(K\)</span>, preconditioner <span
+class="math inline">\(\epsilon\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \beta_1 M
++ (1-\beta_1) G\)</span> <span class="math inline">\(V \gets \beta_2 V +
+(1-\beta_2) (G \odot G)\)</span> <span
+class="math inline">\(\widetilde{M} \gets M \oslash (\sqrt{V} +
+\epsilon\mathbf{1})\)</span> <span class="math inline">\(X_0 \gets
+\widetilde{M} / (\|\widetilde{M}\|_F + \epsilon)\)</span> <span
+class="math inline">\(A_k \gets X_k X_k^\top\)</span> <span
+class="math inline">\(X_{k+1} \gets 3.4445\,X_k - 4.7750\,A_k X_k +
+2.0315\,A_k^2 X_k\)</span> <span class="math inline">\(W \gets W - \eta
+\sqrt{m/n}\, X_K\)</span> <span class="math inline">\(P \gets
+\operatorname{AdamW}(P, \nabla f(P); \eta, \beta_1, \beta_2, \epsilon,
+\lambda)\)</span> <span class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>Following the hybrid recipe of Muon, only hidden-layer 2-D matrices
+take the Muon<span class="math inline">\(^2\)</span> path; embedding
+tables, learned positional encodings, output heads and every non-matrix
+parameter are trained with decoupled AdamW using the group-level
+learning rate, weight decay, <span class="math inline">\(\beta_1,
+\beta_2\)</span> and <span class="math inline">\(\epsilon\)</span>
+settings — the same <span class="math inline">\(\beta_1, \beta_2,
+\epsilon\)</span> also parameterize Eqs. 2–4, so one per-group knob set
+configures both paths.</p>
+<h4 id="cons.-27">Cons.</h4>
+<ul>
+<li><p>One extra full-size state buffer over Muon (two moment EMAs per
+matrix), doubling optimizer memory on the orthogonalized path unless the
+factored variant is enabled.</p></li>
+<li><p>The <span class="math inline">\(\sqrt{m/n}\)</span> update scale
+differs from this repository’s plain <code>muon</code> path, so learning
+rates do not transfer one-to-one between the two registry
+entries.</p></li>
+<li><p><span class="math inline">\(\beta_1, \beta_2\)</span> defaults
+are not fixed by the paper; this implementation inherits the shared
+per-group defaults <span class="math inline">\((0.9,
+0.95)\)</span>.</p></li>
+</ul>
+<h4 id="pros.-27">Pros.</h4>
+<ul>
+<li><p>Better orthogonalization at equal NS iterations and equal quality
+with 40% fewer iterations (3 instead of 5), cutting NS compute and
+communication.</p></li>
+<li><p>Consistent gains over Muon across GPT, LLaMA and
+Mixture-of-Experts pre-training up to 13B parameters, with up to a
+quarter of training time saved at matched loss.</p></li>
+<li><p>The <code>factored</code> toggle exposes Muon<span
+class="math inline">\(^2\)</span>-F, which keeps memory within <span
+class="math inline">\(\sim\)</span>0.3% of Muon while preserving most of
+the benefit.</p></li>
+</ul>
 <h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
 Population-Based Hybrids</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -8175,7 +8304,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-27">Cons.</h4>
+<h4 id="cons.-28">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -8197,7 +8326,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-27">Pros.</h4>
+<h4 id="pros.-28">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -8330,7 +8459,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-28">Cons.</h4>
+<h4 id="cons.-29">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -8356,7 +8485,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-28">Pros.</h4>
+<h4 id="pros.-29">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B
