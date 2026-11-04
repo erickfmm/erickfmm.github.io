@@ -309,6 +309,15 @@ id="toc-esquema-de-configuración-de-passthrough">Esquema de
 Configuración de Passthrough</a></li>
 <li><a href="#estado" id="toc-estado">Estado</a></li>
 </ul></li>
+<li><a href="#sec:empirical-evaluation"
+id="toc-sec:empirical-evaluation">Evaluación Empírica</a>
+<ul>
+<li><a href="#qué-mide-una-ronda" id="toc-qué-mide-una-ronda">Qué mide
+una ronda</a></li>
+<li><a href="#hallazgos" id="toc-hallazgos">Hallazgos</a></li>
+<li><a href="#amenazas-a-la-validez"
+id="toc-amenazas-a-la-validez">Amenazas a la validez</a></li>
+</ul></li>
 <li><a href="#sec:discussion" id="toc-sec:discussion">Discusión</a>
 <ul>
 <li><a href="#compromisos-de-diseño-basado-en-esquemas"
@@ -1311,6 +1320,46 @@ id="toc-mapa-de-implementación">Mapa de Implementación</a></li>
 <li><a href="#alcance-y-limitaciones"
 id="toc-alcance-y-limitaciones">Alcance y Limitaciones</a></li>
 </ul></li>
+<li><a href="#sec:annex-experiment-harness"
+id="toc-sec:annex-experiment-harness">El arnés de experimentación</a>
+<ul>
+<li><a href="#etapas-y-registros" id="toc-etapas-y-registros">Etapas y
+registros</a></li>
+<li><a href="#el-libro-de-etapas-de-la-ronda-2"
+id="toc-el-libro-de-etapas-de-la-ronda-2">El libro de etapas de la
+ronda 2</a></li>
+<li><a href="#datasets-consolidados"
+id="toc-datasets-consolidados">Datasets consolidados</a></li>
+<li><a href="#reconstruir-una-ronda"
+id="toc-reconstruir-una-ronda">Reconstruir una ronda</a></li>
+<li><a href="#ronda-1-el-piloto" id="toc-ronda-1-el-piloto">Ronda 1: el
+piloto</a></li>
+</ul></li>
+<li><a href="#sec:annex-experiment-2"
+id="toc-sec:annex-experiment-2">Ronda 2: el atlas de los mixers</a>
+<ul>
+<li><a href="#configuración-2"
+id="toc-configuración-2">Configuración</a></li>
+<li><a href="#el-paisaje-de-parámetros"
+id="toc-el-paisaje-de-parámetros">El paisaje de parámetros</a></li>
+<li><a href="#resultados-de-entrenamiento"
+id="toc-resultados-de-entrenamiento">Resultados de
+entrenamiento</a></li>
+<li><a href="#dinámica-de-entrenamiento"
+id="toc-dinámica-de-entrenamiento">Dinámica de entrenamiento</a></li>
+<li><a href="#el-atlas-atimesb" id="toc-el-atlas-atimesb">El atlas
+A<span class="math inline">\(\times\)</span>B</a></li>
+<li><a href="#ablaciones" id="toc-ablaciones">Ablaciones</a></li>
+<li><a href="#despliegue-e-inferencia"
+id="toc-despliegue-e-inferencia">Despliegue e inferencia</a></li>
+<li><a href="#fiabilidad-del-pipeline"
+id="toc-fiabilidad-del-pipeline">Fiabilidad del pipeline</a></li>
+<li><a href="#qué-predice-la-calidad"
+id="toc-qué-predice-la-calidad">Qué predice la calidad</a></li>
+<li><a href="#lectura-práctica-y-próximos-pasos"
+id="toc-lectura-práctica-y-próximos-pasos">Lectura práctica y próximos
+pasos</a></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introducción">Introducción</h1>
@@ -1389,7 +1438,7 @@ disponible.</p>
 <ol>
 <li><p><strong>Requisitos previos</strong>: el Apéndice <a
 href="#sec:annex-tutorial" data-reference-type="ref"
-data-reference="sec:annex-tutorial">11</a> introduce transformers y
+data-reference="sec:annex-tutorial">12</a> introduce transformers y
 atención para lectores nuevos en el área.</p></li>
 <li><p><strong>Contrato de configuración</strong>: la Sección <a
 href="#sec:config-centric-architecture" data-reference-type="ref"
@@ -1401,24 +1450,24 @@ sus reglas de validación.</p></li>
 href="#sec:attention-families" data-reference-type="ref"
 data-reference="sec:attention-families">4.1</a> compara las familias de
 mezcladores de secuencia; los Apéndices <a href="#sec:annex-transformer"
-data-reference-type="ref" data-reference="sec:annex-transformer">15</a>,
+data-reference-type="ref" data-reference="sec:annex-transformer">16</a>,
 <a href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">16</a>, <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">17</a> y <a
+data-reference="sec:annex-latent">17</a>, <a href="#sec:annex-sparse"
+data-reference-type="ref" data-reference="sec:annex-sparse">18</a> y <a
 href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">18</a> recopilan la literatura de
+data-reference="sec:annex-gated">19</a> recopilan la literatura de
 soporte, con los detalles de normalización, BitNet y memoria condicional
 en el Apéndice <a href="#sec:annex-norm-bitnet-mod"
 data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a> y los residuales con
+data-reference="sec:annex-norm-bitnet-mod">20</a> y los residuales con
 restricción de variedad en el Apéndice <a href="#sec:annex-mhc"
 data-reference-type="ref"
-data-reference="sec:annex-mhc">21</a>.</p></li>
+data-reference="sec:annex-mhc">22</a>.</p></li>
 <li><p><strong>Optimización</strong>: la Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> resume el enrutamiento de
 optimizadores; el Apéndice <a href="#sec:annex-optimizers"
-data-reference-type="ref" data-reference="sec:annex-optimizers">14</a>
+data-reference-type="ref" data-reference="sec:annex-optimizers">15</a>
 ofrece el análisis completo de las familias.</p></li>
 <li><p><strong>Despliegue e inferencia</strong>: las Secciones <a
 href="#sec:quantization" data-reference-type="ref"
@@ -1658,14 +1707,14 @@ identificadores aceptados y la enumeración completa aparece en la
 Figura <a href="#fig:comprehensive-taxonomy" data-reference-type="ref"
 data-reference="fig:comprehensive-taxonomy">2</a> y el Apéndice <a
 href="#sec:annex-summary-tables" data-reference-type="ref"
-data-reference="sec:annex-summary-tables">13</a>.</p>
+data-reference="sec:annex-summary-tables">14</a>.</p>
 <h4 id="selección-de-optimizador.">Selección de optimizador.</h4>
 <p><code>training.optimizer.optimizer_class</code> selecciona una de
 veinticuatro familias de optimizadores, resumidas en la Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> y detalladas en el
 Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
-data-reference="sec:annex-optimizers">14</a>.</p>
+data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:system-architecture"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/system-architecture.svg" alt="image" /></span></p>
 
 <figcaption>Arquitectura del sistema: la configuración pasa por la
@@ -1691,7 +1740,7 @@ modos de enmascaramiento.</p>
 <h2 id="esquema-de-configuración">Esquema de Configuración</h2>
 <p>El esquema completo—campos, tipos, rangos y reglas de validación—se
 documenta en el Apéndice <a href="#sec:annex-schema"
-data-reference-type="ref" data-reference="sec:annex-schema">12</a>. Los
+data-reference-type="ref" data-reference="sec:annex-schema">13</a>. Los
 bloques en bucle se configuran con <code>num_layers</code> y
 <code>num_loops</code>, lo que da <code>num_layers</code><span
 class="math inline">\(\times\)</span><code>num_loops</code> capas
@@ -1727,7 +1776,7 @@ determinista, de modo que ejecuciones repetidas con el mismo hardware y
 software reproducen inicialización, orden de lotes y partición. El
 pseudocódigo completo y la formulación de la partición se remiten al
 Apéndice <a href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">20</a>.</p>
 <h2 id="sec:normalization">Variantes de Normalización</h2>
 <p>La normalización es a la vez una decisión de modelado y una cuestión
 de compatibilidad del esquema. Los valores aceptados de
@@ -1736,7 +1785,7 @@ de compatibilidad del esquema. Los valores aceptados de
 <code>prms_norm</code> (RMSNorm parcial) y <code>flash_norm</code>
 (RMSNorm sin pesos). Sus formulaciones y comparación se detallan en el
 Apéndice <a href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">20</a>.</p>
 <h2 id="sec:residual-stream">Arquitecturas de Flujo Residual</h2>
 <p>Las conexiones residuales se exponen como una decisión de
 macro-diseño mediante el bloque <code>model.residuals</code>:</p>
@@ -1759,8 +1808,8 @@ data-cites="xie_mhc_2025"></span>.</p></li>
 <p>Attention Residuals se compone con mHC y Mixture-of-Depths; las
 formulaciones, el cableado y los resultados reportados se recopilan en
 los Apéndices <a href="#sec:annex-attnres" data-reference-type="ref"
-data-reference="sec:annex-attnres">22</a> y <a href="#sec:annex-mhc"
-data-reference-type="ref" data-reference="sec:annex-mhc">21</a>.</p>
+data-reference="sec:annex-attnres">23</a> y <a href="#sec:annex-mhc"
+data-reference-type="ref" data-reference="sec:annex-mhc">22</a>.</p>
 <h1 id="sec:architecture-taxonomy">Taxonomía de Arquitecturas e
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
@@ -1805,7 +1854,7 @@ atención multi-cabeza con un módulo de convolución depthwise entre dos
 capas feed-forward Macaron, aportando a cada capa una rama local junto
 al campo receptivo global (Anexo <a href="#sec:annex-17"
 data-reference-type="ref"
-data-reference="sec:annex-17">29</a>).</p></li>
+data-reference="sec:annex-17">30</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
@@ -1833,7 +1882,7 @@ el compromiso entre expresividad y eficiencia. Las formulaciones, las
 formas paralela y recurrente, el pseudocódigo y una tabla comparativa se
 recopilan en el Apéndice <a href="#sec:annex-transformer"
 data-reference-type="ref"
-data-reference="sec:annex-transformer">15</a>.</p>
+data-reference="sec:annex-transformer">16</a>.</p>
 <figure id="fig:dense-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/dense-map.svg" alt="image" /></span></p>
 
 <figcaption>Líneas base de atención densa. La atención estándar y la
@@ -1860,7 +1909,7 @@ que GMA reemplaza la interacción por pares con enrutamiento
 probabilístico mediante componentes de mezcla gaussiana aprendidos. Las
 formulaciones, el pseudocódigo y una tabla comparativa se recopilan en
 el Apéndice <a href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">16</a>.</p>
+data-reference="sec:annex-latent">17</a>.</p>
 <figure id="fig:latent-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/latent-map.svg" alt="image" /></span></p>
 
 <figcaption>Atención latente y de bajo rango. Los pares clave–valor se
@@ -1887,7 +1936,7 @@ patrón de ventana tanto en entrenamiento como en inferencia. Las
 formulaciones, el pseudocódigo, las características por bloque y una
 tabla comparativa se recopilan en el Apéndice <a
 href="#sec:annex-sparse" data-reference-type="ref"
-data-reference="sec:annex-sparse">17</a>.</p>
+data-reference="sec:annex-sparse">18</a>.</p>
 <figure id="fig:sparse-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/sparse-map.svg" alt="image" /></span></p>
 
 <figcaption>Decisiones de diseño en atención dispersa. Los métodos
@@ -1904,7 +1953,7 @@ actualizaciones de estado recurrente (GLA, variantes de DeltaNet, HGRN2,
 KDA) o en la ruta de atención completa (FoX, Gated Softmax). Las
 formulaciones, el pseudocódigo y una tabla comparativa se recopilan en
 el Apéndice <a href="#sec:annex-gated" data-reference-type="ref"
-data-reference="sec:annex-gated">18</a>.</p>
+data-reference="sec:annex-gated">19</a>.</p>
 <p>La atención de peso rápido reformula la actualización recurrente como
 una regla de aprendizaje continuo en línea; las seis variantes Falcon
 <span class="citation" data-cites="zhang_falcon_2026"></span> unifican
@@ -1914,7 +1963,7 @@ olvido explícito. Cada variante incluye un escaneo recurrente de
 referencia y un kernel paralelo por fragmentos. Las formulaciones, los
 parámetros de configuración y los resultados publicados se recopilan en
 el Apéndice <a href="#sec:annex-fast-weight" data-reference-type="ref"
-data-reference="sec:annex-fast-weight">26</a>.</p>
+data-reference="sec:annex-fast-weight">27</a>.</p>
 <figure id="fig:gating-template"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/gating-template.svg" alt="image" /></span></p>
 
 <figcaption>Plantilla genérica de compuerta. Una compuerta puede decaer
@@ -1937,7 +1986,7 @@ Turbo-Muon, AF-Muon, AdaMuon, Dion3); y optimizadores de adaptividad
 ajustable (Anon). Los algoritmos, el pseudocódigo y las comparaciones de
 memoria y complejidad se recopilan en el Apéndice <a
 href="#sec:annex-optimizers" data-reference-type="ref"
-data-reference="sec:annex-optimizers">14</a>.</p>
+data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
 <figcaption>Selección de optimizador en la práctica: la clase determina
@@ -1958,7 +2007,7 @@ mismo subcomando emite artefactos estándar o cuantizados, o exporta
 formatos HuggingFace Transformers y BitNet GGUF para runtimes externos.
 Las formulaciones y las estimaciones de tamaño se remiten al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">20</a>.</p>
 <figure id="fig:deploy-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/deploy-flow.svg" alt="image" /></span></p>
 
 <figcaption>Ruta de despliegue desde un checkpoint entrenado hasta un
@@ -1997,7 +2046,7 @@ corpus, clustering y exportación persistente de embeddings.</figcaption>
 entre los modos de similitud, búsqueda, cluster y codificación sobre un
 codificador compartido—se remite al Apéndice <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
+data-reference="sec:annex-norm-bitnet-mod">20</a>.</p>
 <h1 id="sec:dashai-plugin">Integración Sin Código: El Plugin
 <code>dashai-frankenstein</code></h1>
 <p>El CLI y el generador web descritos en la Sección <a
@@ -2037,7 +2086,7 @@ class="math inline">\(k\)</span>.</p></li>
 (<code>BaseModel</code>, <code>ImageClassificationTask</code>): usa la
 cabeza de clasificación del ViT (Apéndice <a href="#sec:annex-vision"
 data-reference-type="ref"
-data-reference="sec:annex-vision">23</a>).</p></li>
+data-reference="sec:annex-vision">24</a>).</p></li>
 <li><p><strong><code>FrankensteinViTSegmenter</code></strong>
 (<code>BaseModel</code>, <code>SegmentationTask</code> del plugin): usa
 la cabeza de segmentación del ViT y devuelve mapas de clases por
@@ -2071,10 +2120,304 @@ MLM, campos nativos diferidos para ajustes de alto impacto y renderizado
 no confirmado de máscaras de segmentación. El adaptador deja
 deliberadamente intacto el núcleo de dashAI, de modo que futuros
 releases no puedan romperlo por acoplamiento.</p>
+<h1 id="sec:empirical-evaluation">Evaluación Empírica</h1>
+<p>Las secciones anteriores describen lo que el conjunto de herramientas
+puede expresar. Esta sección informa qué ocurrió cuando el contrato se
+ejercitó a escala: cada par de mezcladores, cada optimizador y cada ruta
+de despliegue se entrenó, exportó, cuantizó y evaluó a través de la
+misma interfaz YAML. La campaña se organiza en <em>rondas</em>. La
+ronda 1 fue un ensayo a escala de humo del arnés (5<span>,</span>129
+registros de etapas, corridas de entrenamiento de alrededor de medio
+minuto cada una) para depurar el propio pipeline. La ronda 2 es la
+campaña de medición que se analiza aquí: 868 configuraciones entrenadas
+de principio a fin, 2<span>,</span>656<span>,</span>372 pasos de
+optimización registrados y 905 horas de GPU, publicadas como un informe
+interactivo con datasets descargables.<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>Dos apéndices acompañan a esta sección. El Apéndice <a
+href="#sec:annex-experiment-harness" data-reference-type="ref"
+data-reference="sec:annex-experiment-harness">33</a> documenta el arnés:
+el pipeline de cinco etapas, los tres registradores independientes, los
+datasets consolidados y la cadena de herramientas de reporte, de modo
+que una nueva ronda consista en apuntar los mismos scripts a una carpeta
+nueva. El Apéndice <a href="#sec:annex-experiment-2"
+data-reference-type="ref" data-reference="sec:annex-experiment-2">34</a>
+reporta la ronda 2 en detalle, con el censo de parámetros, las curvas de
+entrenamiento, el atlas A<span class="math inline">\(\times\)</span>B
+completo, las barridas de ablación y las mediciones de despliegue.</p>
+<h2 id="qué-mide-una-ronda">Qué mide una ronda</h2>
+<p>Todas las configuraciones pasan por las mismas cinco etapas, que
+muestra la Figura <a href="#fig:experiment-pipeline"
+data-reference-type="ref"
+data-reference="fig:experiment-pipeline">11</a>. Un único archivo YAML
+selecciona el modelo (un mezclador, un par de mezcladores como
+<code>layer_pattern: [A, B]</code>, un transformer de visión o una
+ablación del esqueleto), la tarea y el presupuesto de entrenamiento. El
+pipeline entrena 100 épocas, exporta un checkpoint estándar, lo
+despliega dos veces (estándar y cuantizado post-entrenamiento), evalúa
+cuatro consignas enmascaradas reservadas por formato y exporta un
+paquete de Hugging Face. Tres registradores observan el proceso de forma
+independiente: un log de entrenamiento paso a paso, un censo de
+parámetros por grupo de módulos y un libro con una fila por ejecución de
+etapa. El informe une los tres por el slug de configuración.</p>
+<figure id="fig:experiment-pipeline"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiment-pipeline.svg" alt="image" /></span></p>
+
+<figcaption>Una configuración de una ronda. Las cinco etapas las
+gobierna un único archivo YAML y las registran tres registradores
+independientes; la cadena de reporte offline que convierte los logs en
+el informe publicado se documenta en el Apéndice <a
+href="#sec:annex-experiment-harness" data-reference-type="ref"
+data-reference="sec:annex-experiment-harness">33</a>.</figcaption>
+</figure>
+<p>La ronda 2 se generó programáticamente. Los pares híbridos son las
+combinaciones de la lista de 42 mezcladores tomadas de dos en dos,
+materializadas como un modelo de dos capas cuya capa 0 ejecuta el
+mezclador A y la capa 1 el mezclador B; los singles usan una sola capa.
+Como las combinaciones siguen el orden fijo de la lista, no existe
+ningún par invertido <span class="math inline">\((B, A)\)</span>, así
+que la asimetría “primer versus segundo mezclador” que se reporta abajo
+está confundida con el orden de la lista y debe leerse de forma
+descriptiva. La Tabla <a href="#tab:round2-families"
+data-reference-type="ref" data-reference="tab:round2-families">1</a>
+resume la población.</p>
+<div id="tab:round2-families">
+<table>
+<caption>Población de la ronda 2. Las medianas se calculan por familia;
+la métrica de validación es top-1 para los pares MLM y precisión para
+las familias de visión, audio y datos reales.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Familia</th>
+<th style="text-align: right;">Configs</th>
+<th style="text-align: right;">Parám. med.</th>
+<th style="text-align: right;">Pérd. med.</th>
+<th style="text-align: right;">Métrica med.</th>
+<th style="text-align: right;">tok/s med.</th>
+<th style="text-align: right;">Min med.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Pares híbridos</td>
+<td style="text-align: right;">703</td>
+<td style="text-align: right;">220 928</td>
+<td style="text-align: right;">9,591</td>
+<td style="text-align: right;">4,08%</td>
+<td style="text-align: right;">356</td>
+<td style="text-align: right;">75,3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Singles</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">157 584</td>
+<td style="text-align: right;">9,762</td>
+<td style="text-align: right;">3,57%</td>
+<td style="text-align: right;">366</td>
+<td style="text-align: right;">24,8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ViT</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">315 694</td>
+<td style="text-align: right;">1,205</td>
+<td style="text-align: right;">75,97%</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">9,4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Optimizadores</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">210 752</td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">391</td>
+<td style="text-align: right;">21,2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Estructurales</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">210 752</td>
+<td style="text-align: right;">10,397</td>
+<td style="text-align: right;">5,71%</td>
+<td style="text-align: right;">387</td>
+<td style="text-align: right;">21,2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Codif. posicional</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">210 752</td>
+<td style="text-align: right;">10,381</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">402</td>
+<td style="text-align: right;">21,9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Normalización</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">210 512</td>
+<td style="text-align: right;">10,348</td>
+<td style="text-align: right;">1,61%</td>
+<td style="text-align: right;">407</td>
+<td style="text-align: right;">20,7</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Datos reales</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">247 788</td>
+<td style="text-align: right;">1,060</td>
+<td style="text-align: right;">39,04%</td>
+<td style="text-align: right;">392</td>
+<td style="text-align: right;">7,6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tarea</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">210 752</td>
+<td style="text-align: right;">8,603</td>
+<td style="text-align: right;">5,90%</td>
+<td style="text-align: right;">457</td>
+<td style="text-align: right;">19,4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tokenizer</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">210 752</td>
+<td style="text-align: right;">5,978</td>
+<td style="text-align: right;">4,37%</td>
+<td style="text-align: right;">4 202</td>
+<td style="text-align: right;">1,1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tamaño de lote</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">210 752</td>
+<td style="text-align: right;">10,368</td>
+<td style="text-align: right;">5,40%</td>
+<td style="text-align: right;">596</td>
+<td style="text-align: right;">13,0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BitNet/GGUF</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">209 856</td>
+<td style="text-align: right;">10,369</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">562</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Audio</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">147 171</td>
+<td style="text-align: right;">1,099</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">31 082</td>
+<td style="text-align: right;">1,2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="hallazgos">Hallazgos</h2>
+<p><strong>El segundo mezclador es la palanca más fuerte.</strong> Entre
+los pares híbridos, el segundo mezclador mueve la pérdida final media
+desde 9,37 nats (<code>sparsek</code>) hasta 10,18 (<code>mamba</code>),
+una brecha de 0,81 nats, mientras que el primero solo abarca 0,55
+(9,26–9,81 nats, restringido a las familias con suficientes muestras).
+Leído columna a columna, un buen B mantiene casi todo A en la banda de
+8,9–9,6 nats; leído fila a fila, ningún primer mezclador rescata a un
+segundo malo. A esta escala, la elección de B domina a la de A por un
+factor de aproximadamente 1,5<span
+class="math inline">\(\times\)</span>.</p>
+<p><strong>Emparejar no es aditivo.</strong> Si se define la sinergia de
+un par como la media de sus dos marginales menos su pérdida medida,
+<span class="math inline">\(S_{A,B} = (\mu_A + \mu_B)/2 -
+L_{A,B}\)</span>, la mejor interacción es <code>nsa+engram</code> con
+<span class="math inline">\(+1{,}304\)</span> nats y la peor
+<code>gqa+tucker</code> con <span
+class="math inline">\(-1{,}018\)</span>. La cola positiva empareja un
+primer mezclador barato y estable con un segundo de memoria pesada; la
+cola negativa está dominada por segundos mezcladores que parecen
+promedio en aislamiento (<code>gta</code>, <code>gqa</code>,
+<code>tucker</code>) pero chocan al apilarse tras un A fuerte. El ruido
+de interacción (<span class="math inline">\(\pm 0{,}3\)</span> nats) es
+mayor que la diferencia entre la mayoría de los optimizadores de la
+ablación.</p>
+<p><strong>La escala es una palanca débil a este tamaño.</strong> Sobre
+los pares híbridos, el número de parámetros correlaciona con la pérdida
+final a <span class="math inline">\(r = -0{,}20\)</span> y con la
+precisión de validación a <span class="math inline">\(r =
+-0{,}07\)</span>, mientras que predice el coste de forma fiable (<span
+class="math inline">\(r = 0{,}68\)</span> con el tiempo por paso, <span
+class="math inline">\(r = 0{,}65\)</span> con el tiempo total). El
+modelo más grande (<code>engram__conformer_attn</code>, 415 904
+parámetros) no es el mejor. Sobre las 868 filas la correlación parece
+más fuerte (<span class="math inline">\(r = -0{,}43\)</span> para la
+pérdida), pero eso es una confusión de familias: los transformers de
+visión son a la vez más grandes y mucho más fáciles de ajustar, así que
+la comparación de interés es la de los pares.</p>
+<p><strong>La cuantización post-entrenamiento es prácticamente
+gratis.</strong> De las 810 configuraciones desplegadas en ambos
+formatos, 800 conservan una tasa top-5 idéntica; el top-1 medio pasa de
+5,62% a 5,43% y el top-5 medio de 13,36% a 13,24%, ambos deltas dentro
+de una muestra de evaluación. El despliegue cuantizado <em>no</em> es
+más rápido de extremo a extremo (32,3% de las corridas, ratio mediano
+0,64<span class="math inline">\(\times\)</span>) porque la etapa está
+dominada por la serialización y la conversión; la evaluación en sí es
+más rápida en el 51,2% de las corridas con una mediana de 1,03<span
+class="math inline">\(\times\)</span>.</p>
+<p><strong>La tanda es honesta con sus fallos y sus puntos
+ciegos.</strong> El libro contiene 5<span>,</span>271 registros de
+etapas con 275 fallos (171 de entrenamiento, 104 de despliegue), todos
+fuera de las 868 configuraciones analizadas. Cuatro mezcladores
+(<code>cca</code>, <code>ccgqa</code>, <code>msa</code>,
+<code>ssog</code>) nunca entrenan, lo que explica exactamente las 158
+celdas ausentes del atlas de 861 celdas. Otros cuatro
+(<code>standard</code>, <code>bigbird</code>, <code>longformer</code>,
+<code>titan</code>) producen pérdidas bit a bit idénticas porque sus
+ventanas (al menos 64 tokens) cubren toda la secuencia de 32 tokens; el
+atlas mide un mismo modelo cuatro veces. Por separado, 37 pares aparecen
+bajo las grafías <code>retnet</code> y <code>retnet_attn</code> con
+métricas idénticas, una implementación duplicada que el análisis
+colapsa.</p>
+<p><strong>El bloque de visión funciona.</strong> La segmentación
+alcanza 90,7% de precisión media de validación, la clasificación 75,8% y
+la predicción de parches 69,9%, un orden de magnitud por encima de los
+pares MLM. Esa brecha refleja la dificultad de la tarea, no la calidad
+del mezclador, y por eso las familias se mantienen separadas en todo el
+informe.</p>
+<h2 id="amenazas-a-la-validez">Amenazas a la validez</h2>
+<p>El modelo es pequeño (127k–416k parámetros, un vocabulario español de
+512 tokens, secuencias de 32 tokens, una semilla por configuración y 100
+épocas). Todas las curvas de aprendizaje siguen bajando en la época 100,
+así que el ranking premia a los que aprenden rápido y no a la calidad
+convergida. La inferencia usa cuatro frases por configuración, de modo
+que un acierto extra mueve una tasa top-5 en 25 puntos porcentuales; la
+señal de validación es un detector de fallos catastróficos, no un
+instrumento de ranking. Varios optimizadores convergen a la misma
+pérdida porque la corrida es demasiado corta para separarlos, y una
+corrida de clasificación de texto colapsó a una predicción constante, lo
+que es un modo de fallo y no un buen modelo. Los rankings del
+Apéndice <a href="#sec:annex-experiment-2" data-reference-type="ref"
+data-reference="sec:annex-experiment-2">34</a> son, por tanto,
+direccionales. La próxima ronda debería repetir el atlas con 256–512
+tokens, un conjunto de evaluación de 200 frases, al menos tres semillas
+y 300 épocas para los mejores pares.</p>
 <h1 id="sec:discussion">Discusión</h1>
 <p>Las decisiones de diseño en Frankenstein Transformer reflejan varias
 tensiones de ingeniería e investigación en las herramientas modernas de
 aprendizaje profundo.</p>
+<p>La campaña reportada en la Sección <a
+href="#sec:empirical-evaluation" data-reference-type="ref"
+data-reference="sec:empirical-evaluation">9</a> convierte varias de esas
+tensiones en mediciones en lugar de opiniones. El esquema estricto
+rindió operativamente: 868 configuraciones se entrenaron, desplegaron y
+evaluaron a través del mismo contrato, y los fallos que quedaron se
+concentraron en cuatro mezcladores y en la serialización de checkpoints,
+no en la deriva de configuración. El sistema de optimizadores prefijados
+resultó expresivo pero, a 100 épocas, indeciso—una docena de
+optimizadores convergió a la misma pérdida—lo que es en sí mismo un
+argumento a favor del esquema: solo una barrida controlada puede mostrar
+que una dimensión de diseño no importa a una escala dada.</p>
 <h2 id="compromisos-de-diseño-basado-en-esquemas">Compromisos de Diseño
 Basado en Esquemas</h2>
 <p>El enfoque basado en esquemas proporciona beneficios significativos
@@ -2129,7 +2472,7 @@ pierden las hiper-conexiones sin restricción; mHC está validado solo al
 nivel de los experimentos MoE publicados de 3B–27B y se beneficiaría de
 reproducciones independientes a escalas menores (Apéndice <a
 href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">21</a>).</p>
+data-reference="sec:annex-mhc">22</a>).</p>
 <h2 id="fragmentación-del-panorama-de-optimizadores">Fragmentación del
 Panorama de Optimizadores</h2>
 <p>El soporte para veinticuatro familias de optimizadores en siete
@@ -2263,11 +2606,13 @@ la usabilidad pero puede no ser apropiada para todos los entornos de
 despliegue. Modos de configuración sin interfaz gráfica, gestión de
 configuración basada en API o ergonomía CLI mejorada podrían servir a
 flujos de trabajo HPC y de producción.</p></li>
-<li><p><strong>Evaluación Comparativa</strong>: Si bien el sistema
-permite entrenamiento con diversas arquitecturas, una evaluación
-comparativa exhaustiva que compare el rendimiento entre mezcladores y
-optimizadores en tareas estandarizadas proporcionaría orientación
-valiosa para la selección de configuraciones.</p></li>
+<li><p><strong>Evaluación Comparativa</strong>: La ronda 2 (Sección <a
+href="#sec:empirical-evaluation" data-reference-type="ref"
+data-reference="sec:empirical-evaluation">9</a>) aporta el primer atlas
+comparativo de la lista de mezcladores, pero es una medición de 32
+tokens, una semilla y 100 épocas. Las rondas futuras deberían extenderla
+a contexto más largo, más frases de validación y múltiples semillas
+antes de leer los rankings como conclusiones arquitectónicas.</p></li>
 <li><p><strong>Garantías de Estabilidad de Entrenamiento</strong>: La
 implementación actual incluye guardas contra NaN/Inf y recorte de
 gradiente, pero el análisis formal de condiciones de estabilidad para
@@ -3079,7 +3424,7 @@ tokenizador preentrenado desde <code>name_or_path</code>;
 <code>train_from_dataset</code> entrena un tokenizador nuevo desde el
 texto del dataset (ver §<a href="#subsec:tokenizer-config"
 data-reference-type="ref"
-data-reference="subsec:tokenizer-config">12.4</a>). Obligatorio cuando
+data-reference="subsec:tokenizer-config">13.4</a>). Obligatorio cuando
 se usa <code>base_model</code> con la tarea <code>mlm</code>.</p></li>
 <li><p><code>model_class</code> (enum) — Variante de arquitectura del
 modelo: <code>frankenstein_text_encoder</code> (codificador de
@@ -3088,12 +3433,12 @@ arquitectura mixta) o <code>frankenstein_text_decoder</code>
 <code>base_model</code> no está establecido.</p></li>
 <li><p><code>model</code> (object) — Parámetros de arquitectura del
 modelo (ver §<a href="#subsec:model-config" data-reference-type="ref"
-data-reference="subsec:model-config">12.2</a>). Obligatorio cuando
+data-reference="subsec:model-config">13.2</a>). Obligatorio cuando
 <code>base_model</code> no está establecido.</p></li>
 <li><p><code>training</code> (object, <strong>obligatorio</strong>) —
 Configuración de entrenamiento (ver §<a href="#subsec:training-config"
 data-reference-type="ref"
-data-reference="subsec:training-config">12.3</a>).</p></li>
+data-reference="subsec:training-config">13.3</a>).</p></li>
 </ul>
 <p>El esquema impone una regla de exclusión mutua: o bien
 <code>base_model</code> debe estar presente, o bien tanto
@@ -3105,7 +3450,7 @@ arquitectónicos. Los campos obligatorios son
 <code>dims.vocab_size</code>, <code>dims.hidden_size</code>,
 <code>dims.num_layers</code>, <code>dims.num_heads</code> y
 <code>dims.layer_pattern</code>. La Tabla <a href="#tab:model-fields"
-data-reference-type="ref" data-reference="tab:model-fields">1</a>
+data-reference-type="ref" data-reference="tab:model-fields">2</a>
 enumera todos los campos del modelo con sus tipos y descripciones.</p>
 <div id="tab:model-fields">
 <table>
@@ -3190,7 +3535,7 @@ Debe dividir <code>hidden_size</code> exactamente.</td>
 longitud debe igualar <code>num_layers</code>. 43 códigos de mezclador
 disponibles (ver Tabla <a href="#tab:layer-pattern"
 data-reference-type="ref"
-data-reference="tab:layer-pattern">12.2.1</a>).</td>
+data-reference="tab:layer-pattern">13.2.1</a>).</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3844,7 +4189,7 @@ planas en <code>model.*</code>.</p>
 <p>El array <code>model.dims.layer_pattern</code> acepta los siguientes
 43 códigos de mezclador. Cada elemento define una capa física en la pila
 del modelo. La Tabla <a href="#tab:layer-pattern-enum"
-data-reference-type="ref" data-reference="tab:layer-pattern-enum">2</a>
+data-reference-type="ref" data-reference="tab:layer-pattern-enum">3</a>
 enumera todos los tipos disponibles con su soporte de entrenamiento e
 inferencia.</p>
 <div id="tab:layer-pattern-enum">
@@ -4133,7 +4478,7 @@ class="math inline">\(\mathcal{O}(NK)\)</span> tiempo lineal</td>
 <p>El objeto <code>training</code> controla todo el pipeline de
 entrenamiento. El único campo obligatorio es <code>task</code>. La
 Tabla <a href="#tab:training-fields" data-reference-type="ref"
-data-reference="tab:training-fields">3</a> enumera todos los campos de
+data-reference="tab:training-fields">4</a> enumera todos los campos de
 entrenamiento.</p>
 <div id="tab:training-fields">
 <table>
@@ -4284,7 +4629,7 @@ antes del paso del optimizador.</td>
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Configuración del optimizador (ver §<a
 href="#subsec:optimizer-config" data-reference-type="ref"
-data-reference="subsec:optimizer-config">12.5</a>). Obligatorio cuando
+data-reference="subsec:optimizer-config">13.5</a>). Obligatorio cuando
 <code>task=mlm</code> o <code>task=causal_lm</code>.</td>
 </tr>
 <tr class="even">
@@ -4292,7 +4637,7 @@ data-reference="subsec:optimizer-config">12.5</a>). Obligatorio cuando
 <td style="text-align: left;">object</td>
 <td style="text-align: left;">Configuración de entrenamiento SBERT (ver
 §<a href="#subsec:sbert-config" data-reference-type="ref"
-data-reference="subsec:sbert-config">12.6</a>). Obligatorio cuando
+data-reference="subsec:sbert-config">13.6</a>). Obligatorio cuando
 <code>task=sbert</code>.</td>
 </tr>
 <tr class="odd">
@@ -4521,7 +4866,7 @@ modo que la matriz de embeddings siempre coincide con el tokenizador. En
 este modo <code>name_or_path</code> debe omitirse.</p></li>
 </ul>
 <p>La Tabla <a href="#tab:tokenizer-training" data-reference-type="ref"
-data-reference="tab:tokenizer-training">4</a> enumera los campos del
+data-reference="tab:tokenizer-training">5</a> enumera los campos del
 sub-objeto <code>tokenizer.training</code>.</p>
 <div id="tab:tokenizer-training">
 <table>
@@ -4650,7 +4995,7 @@ dedicados.</p>
 Específicos del Optimizador</h3>
 <p>La Tabla <a href="#tab:optimizer-specific-suffixes"
 data-reference-type="ref"
-data-reference="tab:optimizer-specific-suffixes">5</a> enumera los
+data-reference="tab:optimizer-specific-suffixes">6</a> enumera los
 sufijos globales adicionales soportados por cada optimizador (prefijados
 por el nombre del optimizador).</p>
 <div id="tab:optimizer-specific-suffixes">
@@ -5342,18 +5687,21 @@ class="math inline">\(\beta_1\)</span>, <span
 class="math inline">\(\beta_2\)</span>, eps, wd, <span
 class="math inline">\(k\)</span> &amp; <span class="citation"
 data-cites="liu_sophia_2023"></span><br />
-Muon &amp; Ortogonalidad &amp; 2 (<span
-class="math inline">\(m\)</span>, <span
-class="math inline">\(v\)</span>) &amp; <span
+Muon &amp; Ortogonalidad (híbrida) &amp; 1 (<span
+class="math inline">\(m\)</span>); + <span
+class="math inline">\(v\)</span> en el respaldo AdamW &amp; <span
 class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
-momentum, wd, pasos NS <span class="math inline">\(k\)</span> &amp;
-<span class="citation" data-cites="shen_convergence_2025"></span><br />
-Turbo-Muon &amp; Ortogonalidad &amp; 2 (<span
-class="math inline">\(m\)</span>, <span
-class="math inline">\(v\)</span>) &amp; <span
+momentum, wd, pasos NS <span class="math inline">\(k\)</span>; <span
+class="math inline">\(\beta\)</span>, eps para
+embeddings/pos/heads/vectores &amp; <span class="citation"
+data-cites="shen_convergence_2025"></span><br />
+Turbo-Muon &amp; Ortogonalidad (híbrida) &amp; 1 (<span
+class="math inline">\(m\)</span>); + <span
+class="math inline">\(v\)</span> en el respaldo AdamW &amp; <span
 class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
-momentum, wd, pasos NS <span class="math inline">\(k\)</span> &amp;
-<span class="citation"
+momentum, wd, pasos NS <span class="math inline">\(k\)</span>; <span
+class="math inline">\(\beta\)</span>, eps para
+embeddings/pos/heads/vectores &amp; <span class="citation"
 data-cites="boissin_turbo-muon_2025"></span><br />
 AF-Muon &amp; Tabla atada sin AdamW &amp; 1 (<span
 class="math inline">\(m\)</span>) &amp; <span
@@ -5752,14 +6100,14 @@ las cadenas de tokens; congelado, sin parámetros de embedding
 entrenables; controlado por el bloque <code>embedding.dynamic.*</code>
 (Anexo <a href="#sec:annex-embeddings-dinamicos"
 data-reference-type="ref"
-data-reference="sec:annex-embeddings-dinamicos">31</a>) &amp; <span
+data-reference="sec:annex-embeddings-dinamicos">32</a>) &amp; <span
 class="citation" data-cites="cohn_eelbert_2023"></span><br />
 Frontend de audio &amp; Tramas log-mel/espectrograma/raw a través de dos
 etapas Conv2d con stride 2 y una proyección lineal (reducción de tramas
 <span class="math inline">\(4\times\)</span>); lado de entrada de
 <code>frankenstein_audio</code>; controlado por el bloque
 <code>audio.*</code> (Anexo <a href="#sec:annex-18"
-data-reference-type="ref" data-reference="sec:annex-18">30</a>) &amp;
+data-reference-type="ref" data-reference="sec:annex-18">31</a>) &amp;
 <span class="citation" data-cites="Gulati2020"></span><br />
 </p>
 </div>
@@ -7150,26 +7498,42 @@ actualizaciones respeten restricciones geométricas. La justificación:
 las actualizaciones ortogonales preservan las normas durante el
 entrenamiento, evitando la deriva de norma observada en métodos basados
 en momento.</p>
+<p>Siguiendo la receta híbrida de <span class="citation"
+data-cites="shen_convergence_2025"></span>, la actualización
+ortogonalizada se reserva para las matrices de pesos de capas ocultas
+(grupos <span class="math inline">\(\mathtt{attention}\)</span>, <span
+class="math inline">\(\mathtt{ffn}\)</span> y otros bloques ocultos).
+Las tablas de embeddings, los encodings posicionales aprendidos, los
+heads de salida y todo parámetro no matricial (sesgos, escalas de
+normalización, kernels de convolución) se entrenan con AdamW desacoplado
+en lugar de omitirse, usando los valores por grupo de tasa de
+aprendizaje, weight decay, <span class="math inline">\(\beta_1,
+\beta_2\)</span> y <span class="math inline">\(\epsilon\)</span> de la
+configuración.</p>
 <div class="algorithm">
 <div class="algorithmic">
-<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>
-(matrices), tasa de aprendizaje <span
-class="math inline">\(\eta\)</span>, iteraciones Newton-Schulz <span
-class="math inline">\(K\)</span> Parámetros actualizados <span
-class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
-\gets \nabla f(W)\)</span> <span class="math inline">\(X_0 \gets
-\frac{G}{\|G\|_F + \epsilon}\)</span> <span class="math inline">\(A_k
-\gets X_k X_k^\top\)</span> <span class="math inline">\(B_k \gets (3/2)
-A_k - (1/2) A_k^2\)</span> <span class="math inline">\(X_{k+1} \gets B_k
-X_k\)</span> <span class="math inline">\(W \gets W - \eta X_K\)</span>
-<span class="math inline">\(\theta_T\)</span></p>
+<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span>,
+iteraciones Newton-Schulz <span class="math inline">\(K\)</span>
+Parámetros actualizados <span class="math inline">\(\theta_T\)</span>
+<span class="math inline">\(G \gets \nabla f(W)\)</span> <span
+class="math inline">\(X_0 \gets \frac{G}{\|G\|_F + \epsilon}\)</span>
+<span class="math inline">\(A_k \gets X_k X_k^\top\)</span> <span
+class="math inline">\(B_k \gets (3/2) A_k - (1/2) A_k^2\)</span> <span
+class="math inline">\(X_{k+1} \gets B_k X_k\)</span> <span
+class="math inline">\(W \gets W - \eta X_K\)</span> <span
+class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
+\beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
 <h4 id="contras.-21">Contras.</h4>
 <ul>
 <li><p>Varias multiplicaciones de matrices por iteración de
 Newton-Schulz; se requieren kernels personalizados eficientes.</p></li>
-<li><p>Definido solo para matrices de parámetros 2D.</p></li>
+<li><p>La construcción ortogonalizada está definida solo para matrices
+2D; las clases de parámetros restantes dependen del respaldo AdamW y de
+su calibración de tasa de aprendizaje por grupo.</p></li>
 </ul>
 <h4 id="ventajas.-21">Ventajas.</h4>
 <ul>
@@ -7191,23 +7555,28 @@ casi-ortogonal</strong> (AOL) antes de las iteraciones de Newton-Schulz.
 El precondicionador <span class="math inline">\(P = 1.5I -
 0.5X_0X_0^\top\)</span> se aplica al gradiente normalizado, reduciendo
 el número de pasos de ortogonalización requeridos a cuatro mientras
-preserva la geometría de actualización ortogonalizada.</p>
+preserva la geometría de actualización ortogonalizada. Hereda el
+enrutamiento híbrido de Muon: solo se ortogonalizan las matrices 2D de
+capas ocultas, mientras que las tablas de embeddings, los encodings
+posicionales aprendidos, los heads de salida y los parámetros no
+matriciales reciben actualizaciones AdamW desacopladas.</p>
 <div class="algorithm">
 <div class="algorithmic">
-<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>
-(matrices), tasa de aprendizaje <span
-class="math inline">\(\eta\)</span>, iteraciones Newton-Schulz <span
-class="math inline">\(K&#39;\)</span> (típicamente 4) Parámetros
-actualizados <span class="math inline">\(\theta_T\)</span> <span
-class="math inline">\(G \gets \nabla f(W)\)</span> <span
-class="math inline">\(X_0 \gets \frac{G}{\|G\|_F + \epsilon}\)</span>
-<strong>AOL (Almost-Orthogonal preconditioner):</strong> <span
-class="math inline">\(P \gets (1.5 I - 0.5 X_0 X_0^\top)\)</span> <span
-class="math inline">\(X_0 \gets P X_0\)</span> <span
-class="math inline">\(A_k \gets X_k X_k^\top\)</span> <span
-class="math inline">\(B_k \gets (3/2) A_k - (1/2) A_k^2\)</span> <span
-class="math inline">\(X_{k+1} \gets B_k X_k\)</span> <span
+<p>Parámetros iniciales <span class="math inline">\(\theta\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span>,
+iteraciones Newton-Schulz <span class="math inline">\(K&#39;\)</span>
+(típicamente 4) Parámetros actualizados <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(X_0 \gets
+\frac{G}{\|G\|_F + \epsilon}\)</span> <strong>AOL (Almost-Orthogonal
+preconditioner):</strong> <span class="math inline">\(P \gets (1.5 I -
+0.5 X_0 X_0^\top)\)</span> <span class="math inline">\(X_0 \gets P
+X_0\)</span> <span class="math inline">\(A_k \gets X_k X_k^\top\)</span>
+<span class="math inline">\(B_k \gets (3/2) A_k - (1/2) A_k^2\)</span>
+<span class="math inline">\(X_{k+1} \gets B_k X_k\)</span> <span
 class="math inline">\(W \gets W - \eta X_{K&#39;}\)</span> <span
+class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
+\beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
@@ -7215,8 +7584,9 @@ class="math inline">\(\theta_T\)</span></p>
 <ul>
 <li><p>Sigue siendo intensivo en cómputo; AOL añade una multiplicación
 de matrices de precondicionamiento.</p></li>
-<li><p>Requiere el mismo soporte de kernels personalizados que
-Muon.</p></li>
+<li><p>Requiere el mismo soporte de kernels personalizados que Muon, y
+comparte su dependencia del respaldo AdamW para las clases de parámetros
+no ocultas.</p></li>
 </ul>
 <h4 id="ventajas.-22">Ventajas.</h4>
 <ul>
@@ -8046,7 +8416,7 @@ la restricción fundamental de ingeniería: expresividad versus costo de
 despliegue. La familia de atención latente, que comprime el caché KV en
 un latente de rango bajo, se cubre en el Apéndice <a
 href="#sec:annex-latent" data-reference-type="ref"
-data-reference="sec:annex-latent">16</a>.</p>
+data-reference="sec:annex-latent">17</a>.</p>
 <h1 id="sec:annex-latent">Familias de Atención Latente y de Rango
 Bajo</h1>
 <p>Este anexo cubre la familia de mecanismos de atención de compresión
@@ -11069,7 +11439,7 @@ completitud.</p>
 <h4 id="composición-con-rms-parcial.">Composición con RMS parcial.</h4>
 <p>FlashNorm se compone naturalmente con el truco pRMSNorm (§<a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
-data-reference="sec:annex-norm-bitnet-mod">19</a>, subsección pRMSNorm):
+data-reference="sec:annex-norm-bitnet-mod">20</a>, subsección pRMSNorm):
 cuando <code>flashnorm_partial_ratio</code> <span
 class="math inline">\(=p&gt;0\)</span>, el RMS se estima solo de los
 primeros <span class="math inline">\(k=\lceil d\cdot p\rceil\)</span>
@@ -12390,7 +12760,7 @@ de la Tabla 6 del paper muestra que esto es a la vez más barato
 14.61 identity).</p>
 <p>Cuatro propiedades distinguen el cableado Hyperloop del mHC por
 subcapa (§<a href="#sec:annex-mhc" data-reference-type="ref"
-data-reference="sec:annex-mhc">21</a>): (1) las hiperconexiones se
+data-reference="sec:annex-mhc">22</a>): (1) las hiperconexiones se
 disparan una vez por <em>bucle</em>, no tras cada subcapa — también la
 ubicación más eficaz en la ablación de la Tabla 5 del paper; (2) el
 flujo se crea <em>copiando</em> la salida del bloque inicial <span
@@ -13921,7 +14291,7 @@ conversación y continuarla.</p>
 Veintiséis tienen ramas incrementales verificadas por paridad; el resto
 queda registrado con una justificación explícita, basada en el artículo,
 para ejecutarse sin caché (§<a href="#sec:kv-fallbacks"
-data-reference-type="ref" data-reference="sec:kv-fallbacks">27.4.5</a>).
+data-reference-type="ref" data-reference="sec:kv-fallbacks">28.4.5</a>).
 La cuantización y la expulsión son ortogonales a la matemática del
 mezclador: los códecs transforman tensores en <em>escritura</em> y las
 políticas actúan en <em>lectura</em>, de modo que el mismo códec
@@ -13981,7 +14351,7 @@ de salida temprana <span class="citation"
 data-cites="layerskip_elhoushi_2024"></span>.</p>
 <h3 id="slots-tipados">Slots Tipados</h3>
 <p>Seis tipos de slot cubren la taxonomía de §<a href="#sec:kv-recipes"
-data-reference-type="ref" data-reference="sec:kv-recipes">27.4</a>. Los
+data-reference-type="ref" data-reference="sec:kv-recipes">28.4</a>. Los
 slots indexados por posición almacenan una lista ordenada de
 <em>partes</em>; una parte es de precisión completa o una carga
 codificada, y la lectura concatena <span
@@ -14119,7 +14489,7 @@ class="math inline">\(\kappa_j \le q_i\)</span>, así que la máscara es
 vacía y el paso no necesita máscara alguna. Las familias dispersas
 sustituyen el predicado causal por un patrón basado en posiciones (§<a
 href="#sec:kv-recipes" data-reference-type="ref"
-data-reference="sec:kv-recipes">27.4</a>).</p>
+data-reference="sec:kv-recipes">28.4</a>).</p>
 <h3 id="codificaciones-posicionales-absolutas">Codificaciones
 Posicionales Absolutas</h3>
 <p>Las codificaciones absolutas aditivas (sinusoidal, aprendida) se
@@ -14165,7 +14535,7 @@ las claves y valores nuevos y atiende sobre todo el prefijo retenido:
 \mathbf{o} = \operatorname{softmax}(\mathbf{S})\,\mathbf{V},\]</span>
 con <span class="math inline">\(\mathbf{B}\)</span> el sesgo posicional
 de §<a href="#sec:kv-correctness" data-reference-type="ref"
-data-reference="sec:kv-correctness">27.3</a>. La atención de consultas
+data-reference="sec:kv-correctness">28.3</a>. La atención de consultas
 agrupadas cachea sólo las <span class="math inline">\(H_{kv}\)</span>
 cabezas compactas y expande los grupos de cabezas después de la lectura,
 que es de donde proviene su ventaja de caché <span class="citation"
@@ -15168,7 +15538,7 @@ class="math inline">\(3.9\%\)</span> WER en LibriSpeech
 <em>test-clean</em>/<em>test-other</em> sin modelo de lenguaje externo
 (Conformer-L, 118.8M parámetros), y es el mezclador recomendado para la
 clase de modelo de audio del Anexo <a href="#sec:annex-18"
-data-reference-type="ref" data-reference="sec:annex-18">30</a>. El
+data-reference-type="ref" data-reference="sec:annex-18">31</a>. El
 conjunto de herramientas ejecuta ambas capas feed-forward a paso
 completo (la variante “full-step” de la Tabla 5 del paper) y deja que la
 capa exterior posea la segunda; la Tabla <a
@@ -15275,7 +15645,7 @@ dedicado estilo Transformer-XL. En modo decoder la matriz de
 puntuaciones recibe la máscara causal habitual antes del softmax, y se
 usa la ruta de softmax fijo del Anexo <a
 href="#sec:fixed-implementation" data-reference-type="ref"
-data-reference="sec:fixed-implementation">28.3</a> cuando
+data-reference="sec:fixed-implementation">29.3</a> cuando
 <code>numerics.fixed_softmax</code> está habilitado.</p>
 <h4 id="módulo-de-convolución.">Módulo de convolución.</h4>
 <p>El módulo aplica una convolución depthwise con compuerta sobre el eje
@@ -15394,7 +15764,7 @@ idéntica a la de cualquier otro mezclador<br />
 Submuestreo convolucional <span class="math inline">\(4\times\)</span>
 &amp; frontend de <code>frankenstein_audio</code> &amp; Anexo <a
 href="#sec:annex-18" data-reference-type="ref"
-data-reference="sec:annex-18">30</a>; texto y ViT usan sus propios
+data-reference="sec:annex-18">31</a>; texto y ViT usan sus propios
 embeddings<br />
 Dropout (<span class="math inline">\(p=0.1\)</span>) &amp;
 <code>model.dims.dropout</code> &amp; global, por bloque<br />
@@ -15493,7 +15863,7 @@ bloque de atención plano.</p></li>
 <li><p><strong>Decodificación en streaming:</strong> usable en
 <code>mode: decoder</code> con padding convolucional causal, pero sin la
 caché incremental del Anexo <a href="#sec:annex-kv-cache"
-data-reference-type="ref" data-reference="sec:annex-kv-cache">27</a>; la
+data-reference-type="ref" data-reference="sec:annex-kv-cache">28</a>; la
 recurrencia depthwise es la pieza que falta.</p></li>
 </ul>
 <h1 id="sec:annex-18">Audio: Reconocimiento de Voz y Clasificación de
@@ -15509,7 +15879,7 @@ class="math inline">\(4\times\)</span>—y luego ejecuta la misma pila de
 tramas resultante. Como la pila es agnóstica de modalidad, todos los
 mezcladores de secuencia (incluido el Conformer del Anexo <a
 href="#sec:annex-17" data-reference-type="ref"
-data-reference="sec:annex-17">29</a>), normas, estrategias de residual,
+data-reference="sec:annex-17">30</a>), normas, estrategias de residual,
 codificaciones posicionales, optimizadores y bloques de enrutamiento
 están disponibles sin cambios. La clase soporta dos tareas:
 <strong>reconocimiento automático de voz</strong> (<code>asr</code>, con
@@ -15575,7 +15945,7 @@ mel;</p></li>
 <li><p><code>raw</code>: sin transformada espectral; el clip se entrega
 como mapa <span class="math inline">\(C \times T\)</span> (Sección <a
 href="#sec:annex-18-eeg" data-reference-type="ref"
-data-reference="sec:annex-18-eeg">30.8</a>).</p></li>
+data-reference="sec:annex-18-eeg">31.8</a>).</p></li>
 </ul></li>
 <li><p><strong>SpecAugment</strong> <span class="citation"
 data-cites="Park2019"></span>: se enmascaran <span
@@ -15715,7 +16085,7 @@ class="math inline">\(N\)</span> es la longitud de referencia.</p>
 <h2 id="clasificación-de-audio">Clasificación de Audio</h2>
 <p>La clasificación reutiliza las convenciones de pooling y cabeza del
 Vision Transformer (Anexo <a href="#sec:annex-vision"
-data-reference-type="ref" data-reference="sec:annex-vision">23</a>):
+data-reference-type="ref" data-reference="sec:annex-vision">24</a>):
 <code>pooling_mode: cls</code> antepone un token aprendido y lee la
 posición 0, <code>pooling_mode: gap</code> (el valor por defecto)
 promedia las salidas de las tramas. La cabeza es un <span
@@ -16143,7 +16513,7 @@ no atada conserva <span class="math inline">\(3.94\)</span>M, dejando
 contabilidad del paper, donde la cabeza se descarta solo para el
 despliegue.</p>
 <p>La Tabla <a href="#tab:eelbert-results-es" data-reference-type="ref"
-data-reference="tab:eelbert-results-es">14</a> resume los resultados de
+data-reference="tab:eelbert-results-es">15</a> resume los resultados de
 referencia reportados por <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results-es">
@@ -16278,5 +16648,1596 @@ embeddings de entrada. Por último, la exportación a HuggingFace pierde
 la ventaja de tamaño por construcción, así que los despliegues en
 dispositivo deberían preferir el checkpoint nativo, el paquete de
 despliegue o GGUF.</p>
+<h1 id="sec:annex-experiment-harness">El arnés de experimentación</h1>
+<p>Este apéndice documenta la maquinaria detrás de la Sección <a
+href="#sec:empirical-evaluation" data-reference-type="ref"
+data-reference="sec:empirical-evaluation">9</a>. Su propósito es la
+reproducibilidad entre rondas: un experimento nuevo es una carpeta nueva
+bajo <code>experimentos/</code>, y los mismos scripts de consolidación,
+reporte y publicación operan sobre ella sin cambios. El arnés está
+deliberadamente separado del código del modelo—solo lee lo que
+entrenamiento y despliegue escriben—así que un experimento nunca depende
+de la versión de la biblioteca que lo produjo, y la biblioteca nunca se
+entera de la campaña que la usó.</p>
+<h2 id="etapas-y-registros">Etapas y registros</h2>
+<p>Cada configuración es un archivo YAML y un slug. El slug codifica la
+familia y los mezcladores: <code>attn_nsa_attn__engram_attn</code> es un
+par híbrido, <code>attn_single_mamba</code> una línea base de un solo
+mezclador, y las ablaciones llevan sus propios prefijos
+(<code>opt_</code>, <code>norm_</code>, <code>pe_</code>,
+<code>trans_</code>, <code>vit_</code>, <code>task_</code>,
+<code>tokenizer_</code>, <code>batch_</code>, <code>realdata_</code>,
+<code>audio_</code>, <code>bitnet_</code>). Todas las corridas ejecutan
+las mismas cinco etapas: entrenar, exportar el checkpoint, desplegar en
+formato estándar y cuantizado, evaluar cuatro consignas enmascaradas
+reservadas por formato y exportar el paquete de Hugging Face. Un fallo
+en una etapa se registra, no aborta la tanda y aparece después como una
+fila ausente en lugar de como un cero silencioso.</p>
+<p>Tres registradores escriben de forma independiente y se unen solo al
+momento del reporte:</p>
+<ol>
+<li><p><strong>El log de entrenamiento paso a paso.</strong> Un CSV por
+corrida con una fila por paso de optimización: pérdida, precisión,
+learning rate, normas de gradiente por grupo de parámetros, razón de
+recorte, tiempo por paso y rendimiento. La ronda 2 registró
+2<span>,</span>656<span>,</span>372 filas, que se procesan en streaming
+y se reducen a medias por época antes de dibujar cualquier
+gráfico.</p></li>
+<li><p><strong>El censo de parámetros.</strong> Para cada configuración,
+el número de parámetros de cada grupo de módulos (atención, embeddings,
+FFN, cabeza, normalización, codificación posicional, mHC, router,
+residual). Esto es lo que separa “el modelo es más grande” de “el bloque
+de atención es más grande”.</p></li>
+<li><p><strong>El libro del pipeline.</strong> Una fila por ejecución de
+etapa con categoría, estado, duración y código de retorno. Es el único
+registro de los fallos y, por tanto, la única fuente para el análisis de
+fiabilidad.</p></li>
+</ol>
+<figure id="fig:experiment-reporting"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiment-reporting.svg" alt="image" /></span></p>
+
+<figcaption>La cadena de reporte offline. Los tres registradores se
+consolidan en archivos CSV, se unen por configuración en
+<code>master.csv</code>, se grafican en ambos temas y se renderizan en
+una página estática bilingüe con los datasets unidos publicados al lado.
+Nada de esta cadena necesita GPU.</figcaption>
+</figure>
+<h2 id="el-libro-de-etapas-de-la-ronda-2">El libro de etapas de la
+ronda 2</h2>
+<p>La Tabla <a href="#tab:stage-ledger" data-reference-type="ref"
+data-reference="tab:stage-ledger">16</a> reproduce el libro. El
+entrenamiento domina tanto el conteo de registros como el coste:
+1<span>,</span>039 intentos, 868 éxitos y 171 fallos, una mediana de 68
+minutos y un P90 de 84 minutos por corrida exitosa, para 906 horas de
+GPU en total. El despliegue es la otra etapa que falla (104 veces de
+1<span>,</span>734), y los fallos son simétricos: una configuración cuyo
+export estándar falla también falla en el cuantizado, lo que apunta a la
+serialización del checkpoint o de la configuración y no a la
+cuantización. La evaluación y el export a Hugging Face nunca fallaron en
+la población analizada.</p>
+<div id="tab:stage-ledger">
+<table>
+<caption>Libro de etapas del pipeline para la ronda 2. Las duraciones
+están en segundos; los totales son horas de reloj de toda la
+campaña.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Etapa</th>
+<th style="text-align: right;">Registros</th>
+<th style="text-align: right;">OK</th>
+<th style="text-align: right;">Fallos</th>
+<th style="text-align: right;">Mediana (s)</th>
+<th style="text-align: right;">P90 (s)</th>
+<th style="text-align: right;">Total (h)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Entrenamiento</td>
+<td style="text-align: right;">1<span>,</span>039</td>
+<td style="text-align: right;">868</td>
+<td style="text-align: right;">171</td>
+<td style="text-align: right;">4<span>,</span>101,45</td>
+<td style="text-align: right;">5<span>,</span>037,3</td>
+<td style="text-align: right;">906,0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Export a HF</td>
+<td style="text-align: right;">867</td>
+<td style="text-align: right;">867</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">17,41</td>
+<td style="text-align: right;">44,7</td>
+<td style="text-align: right;">5,4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Evaluación de inferencia</td>
+<td style="text-align: right;">1<span>,</span>630</td>
+<td style="text-align: right;">1<span>,</span>630</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">10,37</td>
+<td style="text-align: right;">13,1</td>
+<td style="text-align: right;">4,9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Despliegue</td>
+<td style="text-align: right;">1<span>,</span>734</td>
+<td style="text-align: right;">1<span>,</span>630</td>
+<td style="text-align: right;">104</td>
+<td style="text-align: right;">8,64</td>
+<td style="text-align: right;">38,0</td>
+<td style="text-align: right;">8,8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BitNet GGUF</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3,32</td>
+<td style="text-align: right;">3,3</td>
+<td style="text-align: right;">0,0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Los 275 fallos son informativos y no solo inconvenientes. Los 171
+fallos de entrenamiento quedan fuera de las 868 configuraciones
+analizadas, que se eligieron precisamente porque entrenaron; los 104
+fallos de despliegue ocurren en pares. La distribución de fallos por
+familia y el análisis de huellas idénticas de los cuatro mezcladores que
+colapsan con 32 tokens se grafican en el Apéndice <a
+href="#sec:annex-experiment-2" data-reference-type="ref"
+data-reference="sec:annex-experiment-2">34</a>.</p>
+<h2 id="datasets-consolidados">Datasets consolidados</h2>
+<p>La cadena de reporte parte de las carpetas crudas y produce un
+conjunto pequeño de tablas unidas. Se publican con el informe para que
+cualquier figura se pueda reconstruir sin los 702 MB de logs paso a
+paso, y los CSV crudos por corrida se publican aparte, comprimidos con
+gzip, para quien necesite datos a nivel de paso.</p>
+<div class="tabularx">
+<p><span>L<span>5.2cm</span>L<span>9.4cm</span></span> Archivo &amp;
+Contenido<br />
+<code>master.csv</code> &amp; Una fila por configuración; parámetros por
+grupo, métricas de entrenamiento finales y promediadas, duraciones y
+estados de etapa, puntuaciones de inferencia por formato.<br />
+<code>training_per_epoch.csv</code> &amp; Medias por corrida y época de
+pérdida, precisión, learning rate, normas de gradiente y rendimiento
+(2,66 M de pasos reducidos a 86<span>,</span>274 filas).<br />
+<code>inference_samples.csv</code> &amp; Cada registro de inferencia:
+cuatro muestras, dos formatos, una fila por muestra.<br />
+<code>pipeline_stages.csv</code> &amp; El libro de etapas completo
+(5<span>,</span>271 filas).<br />
+<code>param_metrics.csv</code> &amp; El censo crudo de parámetros por
+grupo de módulos.<br />
+<code>training_metrics_avg.csv</code> &amp; Promedios por corrida de las
+34 métricas registradas.<br />
+<code>training_metrics_final.csv</code> &amp; Instantánea del último
+paso de cada corrida.<br />
+<code>training_metrics_std.csv</code> &amp; Desviaciones estándar
+muestrales por corrida.<br />
+<code>results.md.csv</code> &amp; Resumen legible de los resultados del
+pipeline.<br />
+<code>data/raw/*.csv.gz</code> &amp; Los 868 logs de paso por corrida,
+un archivo por configuración.<br />
+</p>
+</div>
+<h2 id="reconstruir-una-ronda">Reconstruir una ronda</h2>
+<p>El pipeline son tres scripts y un publicador, todos de biblioteca
+estándar o solo pandas/numpy/matplotlib:</p>
+<ol>
+<li><p><code>python experimentos/to_csv.py N</code> lee
+<code>experimentos/N/</code> sin modificarlo y escribe CSVs consolidados
+en <code>experimentos/N/csvs/</code>: la tabla de inferencia con la
+columna <code>notes</code> expandida en una columna por cada par
+<code>key=value</code>, el censo de parámetros como una fila por
+configuración, el libro de resultados como tabla plana y los CSV de
+entrenamiento por corrida concatenados más su media, desviación estándar
+y última fila por corrida.</p></li>
+<li><p><code>python experimentos/N/report/build_data.py</code> procesa
+los logs crudos en streaming, une los tres registradores por slug y
+escribe <code>master.csv</code> y las tablas derivadas.</p></li>
+<li><p><code>python experimentos/N/report/make_charts.py</code>
+renderiza cada figura dos veces (oscura y clara) y registra los pies en
+<code>registry.json</code>; <code>make_report.py</code> consume ambos
+para emitir la página estática bilingüe.</p></li>
+<li><p><code>bash experimentos/N/report/publish.sh</code> copia la
+página, las figuras y los datasets al espejo de GitHub Pages. Nunca hace
+commit ni push por sí mismo.</p></li>
+</ol>
+<p>Las figuras del artículo son un subconjunto curado de los mismos
+constructores de gráficos, exportado como PDF vectorial por
+<code>make_paper_figures.py</code>. Toda la cadena es solo CPU y
+reproduce cada número de este apéndice a partir de los datasets
+publicados.</p>
+<h2 id="ronda-1-el-piloto">Ronda 1: el piloto</h2>
+<p>La ronda 1 ejercitó el mismo arnés de extremo a extremo a escala de
+humo: 5<span>,</span>129 registros de etapas, corridas de entrenamiento
+de aproximadamente medio minuto y la misma secuencia de cinco etapas. Su
+propósito era validar la generación de slugs, la contabilidad del libro,
+la simetría del despliegue y las uniones del reporte antes de
+comprometer tiempo de GPU. No se analiza más aquí porque las corridas
+eran demasiado cortas para separar arquitecturas; su valor es que la
+ronda 2 heredó un arnés en el que cada modo de fallo ya se había visto
+una vez.</p>
+<h1 id="sec:annex-experiment-2">Ronda 2: el atlas de los mixers</h1>
+<p>Este apéndice reporta la ronda 2 en su totalidad. Sigue el orden del
+informe publicado: el paisaje de parámetros, los resultados de
+entrenamiento, la dinámica de aprendizaje, el atlas A<span
+class="math inline">\(\times\)</span>B, las barridas de ablación, las
+mediciones de despliegue e inferencia, la fiabilidad del pipeline y las
+correlaciones entre las variables medidas. Todos los números provienen
+de <code>master.csv</code> del dataset publicado; todas las figuras se
+regeneran con <code>make_paper_figures.py</code> a partir de los mismos
+constructores de gráficos que el informe web.</p>
+<h2 id="configuración-2">Configuración</h2>
+<p>La población es de 868 configuraciones: 703 registros de pares
+híbridos (667 pares únicos tras colapsar el duplicado
+<code>retnet</code>/<code>retnet_attn</code>), 38 líneas base de un solo
+mezclador, 48 transformers de visión y 79 ablaciones. Cada corrida
+entrena 100 épocas (unos 3<span>,</span>000 pasos) sobre un vocabulario
+español de 512 tokens con secuencias de 32 tokens, una semilla, el mismo
+calendario de warm-up más coseno y BitNet activado por defecto. Los
+pares híbridos son las combinaciones de dos elementos de la lista de 42
+mezcladores, con la capa 0 ejecutando el mezclador A y la capa 1 el
+mezclador B; no existe ningún par invertido, así que la asimetría
+primero/segundo es descriptiva. Un par está cubierto si ambos
+mezcladores entrenan en todas las configuraciones que los contienen: la
+rejilla tiene <span class="math inline">\(42\times41/2 = 861\)</span>
+celdas y se midieron 667.</p>
+<h2 id="el-paisaje-de-parámetros">El paisaje de parámetros</h2>
+<p>Las 868 configuraciones abarcan de 127 328 a 415 904 parámetros, con
+una mediana de 220 160. Los pares híbridos ocupan el centro del rango
+porque combinan dos módulos de atención; las corridas más pequeñas son
+líneas base de un solo mezclador como <code>attn_single_mamba</code>
+(127 328 parámetros), y la mayor es <code>engram__conformer_attn</code>
+con 415 904, impulsada por el banco de memoria <code>engram</code>, que
+añade una gran tabla clave-valor al bloque de atención.</p>
+<p>El gráfico de composición es el diagnóstico más útil de esta sección.
+Los embeddings y la cabeza de salida son costes fijos de unos 49k
+parámetros cada uno, así que cualquier diferencia entre configuraciones
+se paga casi por completo en el bloque de atención y la FFN. Los
+transformers de visión son la familia más costosa porque añaden
+embeddings de parches y una cabeza de clasificación mayor, mientras que
+las ablaciones de optimizador, normalización o codificación posicional
+mantienen por diseño el mismo esqueleto de 210k. El coste tiene una
+lectura clara: <code>engram</code> añade entre 100k y 160k parámetros
+cada vez que aparece, y <code>mamba</code> y <code>retnet</code> están
+entre los segundos mezcladores más baratos aunque sean los peores—barato
+y malo, la peor combinación.</p>
+<figure id="fig:r2-params-composition"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/params_composition.svg" alt="image" /></span></p>
+
+<figcaption>Dónde viven los parámetros, por familia. Los embeddings y la
+cabeza son costes fijos; el bloque de atención y la FFN cargan las
+diferencias arquitectónicas.</figcaption>
+</figure>
+<figure id="fig:r2-params-family"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/params_family_box.svg" alt="image" /></span></p>
+
+<figcaption>Presupuesto de parámetros por familia de experimentos
+(escala log). La familia ViT es la más cara; las familias de ablación
+comparten un esqueleto.</figcaption>
+</figure>
+<h2 id="resultados-de-entrenamiento">Resultados de entrenamiento</h2>
+<p>Entre los pares híbridos, la pérdida final va de 8,116 a 10,450 nats
+(mediana 9,595). El mejor par es <code>nsa__engram_attn</code> con
+8,116, seguido de <code>gated_deltanet2__sparda_attn</code> (8,567) y
+<code>falcon3__conformer_attn</code> (8,620). El peor,
+<code>gqa__tucker_attn</code>, necesita 10,450 nats. La brecha entre
+extremos supera la brecha entre casi todas las ablaciones de
+optimizadores, y ese es el argumento más fuerte para elegir bien el par
+de atención.</p>
+<p>Pérdida y precisión de validación no coinciden. Su correlación de
+rangos entre pares es débil, el par con mejor pérdida marca 0,0% de
+top-1, y el de mejor precisión (<code>fox__falcon1a_attn</code>) alcanza
+12,55% con una pérdida de entrenamiento peor (9,292). Con cuatro frases
+de evaluación, un token afortunado reescribe el ranking, así que hay que
+reportar ambas señales. La Tabla <a href="#tab:r2-top-loss"
+data-reference-type="ref" data-reference="tab:r2-top-loss">17</a> lista
+los diez mejores pares por pérdida final y la Tabla <a
+href="#tab:r2-top-acc" data-reference-type="ref"
+data-reference="tab:r2-top-acc">18</a> los diez mejores por precisión de
+validación.</p>
+<div id="tab:r2-top-loss">
+<table>
+<caption>Los diez mejores pares híbridos por pérdida final de
+entrenamiento.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Par (A + B)</th>
+<th style="text-align: right;">Paráms.</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Top-1</th>
+<th style="text-align: right;">Top-5</th>
+<th style="text-align: right;">Entreno (min)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>nsa + engram</code></td>
+<td style="text-align: right;">383 999</td>
+<td style="text-align: right;">8,116</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">154,5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gated_deltanet2 + sparda</code></td>
+<td style="text-align: right;">254 336</td>
+<td style="text-align: right;">8,567</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">78,2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>falcon3 + conformer</code></td>
+<td style="text-align: right;">254 640</td>
+<td style="text-align: right;">8,620</td>
+<td style="text-align: right;">4,67%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">32,6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>falcon1a + conformer</code></td>
+<td style="text-align: right;">254 640</td>
+<td style="text-align: right;">8,633</td>
+<td style="text-align: right;">2,38%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">23,0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>falcon1 + conformer</code></td>
+<td style="text-align: right;">254 640</td>
+<td style="text-align: right;">8,639</td>
+<td style="text-align: right;">4,67%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">21,3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>fox + falcon2a</code></td>
+<td style="text-align: right;">222 768</td>
+<td style="text-align: right;">8,666</td>
+<td style="text-align: right;">2,40%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">84,2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>gqa + conformer</code></td>
+<td style="text-align: right;">242 720</td>
+<td style="text-align: right;">8,670</td>
+<td style="text-align: right;">5,87%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">88,3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>falcon3a + conformer</code></td>
+<td style="text-align: right;">254 640</td>
+<td style="text-align: right;">8,681</td>
+<td style="text-align: right;">3,97%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">23,2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fox + falcon2</code></td>
+<td style="text-align: right;">222 768</td>
+<td style="text-align: right;">8,705</td>
+<td style="text-align: right;">2,40%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">85,8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gla + engram</code></td>
+<td style="text-align: right;">387 296</td>
+<td style="text-align: right;">8,736</td>
+<td style="text-align: right;">5,17%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">149,2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="tab:r2-top-acc">
+<table>
+<caption>Los diez mejores pares híbridos por precisión top-1 de
+validación.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Par (A + B)</th>
+<th style="text-align: right;">Paráms.</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Top-1</th>
+<th style="text-align: right;">Top-5</th>
+<th style="text-align: right;">Entreno (min)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>fox + falcon1a</code></td>
+<td style="text-align: right;">214 232</td>
+<td style="text-align: right;">9,292</td>
+<td style="text-align: right;">12,55%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">79,3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>fox + falcon3</code></td>
+<td style="text-align: right;">214 232</td>
+<td style="text-align: right;">9,618</td>
+<td style="text-align: right;">12,55%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">106,1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fox + falcon3a</code></td>
+<td style="text-align: right;">214 232</td>
+<td style="text-align: right;">9,235</td>
+<td style="text-align: right;">12,55%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">77,3</td>
+</tr>
+<tr class="even">
+<td
+style="text-align: left;"><code>gated_deltanet2 + falcon2</code></td>
+<td style="text-align: right;">250 216</td>
+<td style="text-align: right;">9,105</td>
+<td style="text-align: right;">12,41%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">80,7</td>
+</tr>
+<tr class="odd">
+<td
+style="text-align: left;"><code>gated_deltanet2 + falcon2a</code></td>
+<td style="text-align: right;">250 216</td>
+<td style="text-align: right;">8,968</td>
+<td style="text-align: right;">12,41%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">82,1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>hgrn2 + gated_softmax</code></td>
+<td style="text-align: right;">238 688</td>
+<td style="text-align: right;">9,386</td>
+<td style="text-align: right;">12,30%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">71,7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>hgrn2 + tucker</code></td>
+<td style="text-align: right;">238 688</td>
+<td style="text-align: right;">9,221</td>
+<td style="text-align: right;">12,30%</td>
+<td style="text-align: right;">25,0%</td>
+<td style="text-align: right;">81,6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gqla + mlra</code></td>
+<td style="text-align: right;">194 624</td>
+<td style="text-align: right;">9,461</td>
+<td style="text-align: right;">11,85%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">56,0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>mla + mlra</code></td>
+<td style="text-align: right;">194 624</td>
+<td style="text-align: right;">9,464</td>
+<td style="text-align: right;">11,85%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">86,6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>deltanet + kda</code></td>
+<td style="text-align: right;">231 304</td>
+<td style="text-align: right;">9,024</td>
+<td style="text-align: right;">11,37%</td>
+<td style="text-align: right;">0,0%</td>
+<td style="text-align: right;">78,6</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:r2-loss-family"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/loss_family_box.svg" alt="image" /></span></p>
+
+<figcaption>Pérdida final de entrenamiento por familia (escala log). Las
+familias de visión y datos reales no son comparables con las pérdidas
+MLM; las familias se mantienen separadas.</figcaption>
+</figure>
+<figure id="fig:r2-acc-family"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/acc_family_box.svg" alt="image" /></span></p>
+
+<figcaption>Métrica de validación por familia. Las tareas de visión
+puntúan un orden de magnitud por encima del MLM porque la tarea es más
+fácil, no porque el mezclador importe más.</figcaption>
+</figure>
+<figure id="fig:r2-loss-acc"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/loss_acc_scatter.svg" alt="image" /></span></p>
+
+<figcaption>Pérdida final frente a métrica de validación. La relación es
+débil dentro de los pares: el mejor par por pérdida marca 0,0% de top-1
+y el mejor por precisión tiene peor pérdida.</figcaption>
+</figure>
+<h2 id="dinámica-de-entrenamiento">Dinámica de entrenamiento</h2>
+<p>Todas las corridas usan el mismo calendario de warm-up más coseno,
+así que las curvas de aprendizaje son directamente comparables. La
+población de pares sigue descendiendo en la época 100: la pérdida
+mediana cae de unos 10,2 nats en la época 0 a 9,49 al final. La tanda
+mide, por tanto, velocidad de aprendizaje y no calidad convergida, y
+todo ranking debe leerse como “qué par aprende más rápido en
+3<span>,</span>000 pasos”.</p>
+<p>Las normas de gradiente son estables entre familias (1,87 para el
+bloque de atención, 0,92 para la FFN, 3,47 para la cabeza), y la razón
+de recorte mediana se sitúa en 0,90, por debajo del umbral de 1,0, así
+que la mayoría de los pasos pasan sin recorte y este solo actúa en los
+picos. El rendimiento mediano es 357 tokens/s para la población de
+pares; la cola de 3k–31k pertenece a ablaciones de tokenizer y audio
+cuyo cronómetro cubre solo parte del trabajo, por lo que el análisis de
+Pareto la excluye.</p>
+<figure id="fig:r2-curves-quantiles"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/curves_quantiles.svg" alt="image" /></span></p>
+
+<figcaption>Curvas de la población con banda P10–P90. Las curvas siguen
+bajando en la época 100, así que la tanda mide velocidad de aprendizaje
+y no calidad convergida.</figcaption>
+</figure>
+<figure id="fig:r2-curves-top10"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/curves_top10.svg" alt="image" /></span></p>
+
+<figcaption>Los diez mejores pares a lo largo del tiempo. El orden se
+establece pronto y rara vez cambia después de la época 50.</figcaption>
+</figure>
+<figure id="fig:r2-grad-groups"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/grad_groups.svg" alt="image" /></span></p>
+
+<figcaption>Presión de gradiente por grupo de parámetros. La cabeza
+soporta el gradiente mayor y la FFN el menor; el recorte actúa rara vez
+porque la razón mediana es 0,90.</figcaption>
+</figure>
+<h2 id="el-atlas-atimesb">El atlas A<span
+class="math inline">\(\times\)</span>B</h2>
+<p>El atlas es el centro del experimento: cada celda es un par híbrido,
+las filas son el primer mezclador y las columnas el segundo. Leído
+columna a columna, el segundo mezclador domina: un B bueno
+(<code>sparsek</code>, <code>engram</code>, <code>mlra</code>) mantiene
+casi todo A en la banda de 8,9–9,6 nats, mientras que un B malo
+(<code>mamba</code>, <code>retnet</code>, <code>bigbird</code>) arrastra
+incluso al mejor A por encima de 10 nats. Leído fila a fila, ningún
+primer mezclador rescata a un segundo malo.</p>
+<p>La cobertura es casi completa: se entrenaron 667 de los 861 pares
+posibles. Los 158 pares que nunca entrenaron son exactamente los que
+contienen <code>cca</code>, <code>ccgqa</code>, <code>msa</code> o
+<code>ssog</code>, cuatro mezcladores que fallan en toda configuración
+(<span class="math inline">\(4\times41 - \binom{4}{2} =
+158\)</span>).</p>
+<figure id="fig:r2-matrix-loss"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/matrix_loss.svg" alt="image" /></span></p>
+
+<figcaption>El atlas A<span class="math inline">\(\times\)</span>B de
+pérdida final. Las filas son el primer mezclador y las columnas el
+segundo; las celdas vacías son pares que nunca entrenaron.</figcaption>
+</figure>
+<figure id="fig:r2-coverage"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/coverage.svg" alt="image" /></span></p>
+
+<figcaption>Cobertura de la rejilla A<span
+class="math inline">\(\times\)</span>B. Las celdas ausentes son los 158
+pares que contienen uno de los cuatro mezcladores que nunca
+entrenan.</figcaption>
+</figure>
+<h4 id="qué-segundo-mezclador-elegir.">Qué segundo mezclador
+elegir.</h4>
+<p>La Tabla <a href="#tab:r2-best-b" data-reference-type="ref"
+data-reference="tab:r2-best-b">19</a> ordena los segundos mezcladores
+por pérdida final media en todos los pares que los contienen. La columna
+Pares indica el tamaño de muestra detrás de cada media; una media de un
+solo par (por ejemplo <code>mamba</code>) es anecdótica. La mitad
+inferior es tan informativa como la superior: <code>mamba</code>,
+<code>bigbird</code>, <code>longformer</code> y <code>retnet</code> son
+baratos pero arrastran sistemáticamente al par, justo el patrón que
+muestran los mapas de calor.</p>
+<div id="tab:r2-best-b">
+<table>
+<caption>Segundos mezcladores ordenados por pérdida final media en los
+pares que los contienen (mejores ocho y peores ocho).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Segundo mezclador</th>
+<th style="text-align: right;">Pares</th>
+<th style="text-align: right;">Pérdida media</th>
+<th style="text-align: right;">Top-1 medio</th>
+<th style="text-align: right;">Paráms. medios</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>mlra</code></td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">9,368</td>
+<td style="text-align: right;">5,74%</td>
+<td style="text-align: right;">209 581</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>conformer</code></td>
+<td style="text-align: right;">36</td>
+<td style="text-align: right;">9,369</td>
+<td style="text-align: right;">3,39%</td>
+<td style="text-align: right;">259 861</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>engram</code></td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">9,373</td>
+<td style="text-align: right;">2,05%</td>
+<td style="text-align: right;">379 284</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>sparsek</code></td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">9,382</td>
+<td style="text-align: right;">4,82%</td>
+<td style="text-align: right;">208 926</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>falcon2a</code></td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">9,387</td>
+<td style="text-align: right;">4,33%</td>
+<td style="text-align: right;">229 973</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>fox</code></td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">9,409</td>
+<td style="text-align: right;">2,23%</td>
+<td style="text-align: right;">216 038</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>mla</code></td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">9,457</td>
+<td style="text-align: right;">4,66%</td>
+<td style="text-align: right;">217 989</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>mtla</code></td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">9,459</td>
+<td style="text-align: right;">5,29%</td>
+<td style="text-align: right;">217 223</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>falcon1</code></td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">9,779</td>
+<td style="text-align: right;">3,27%</td>
+<td style="text-align: right;">221 856</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gta</code></td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">9,788</td>
+<td style="text-align: right;">3,27%</td>
+<td style="text-align: right;">219 828</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>titan</code></td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">9,814</td>
+<td style="text-align: right;">6,28%</td>
+<td style="text-align: right;">204 768</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gla</code></td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">9,814</td>
+<td style="text-align: right;">3,90%</td>
+<td style="text-align: right;">222 555</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>standard</code></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">9,960</td>
+<td style="text-align: right;">6,65%</td>
+<td style="text-align: right;">206 264</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>sigmoid</code></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">10,045</td>
+<td style="text-align: right;">4,37%</td>
+<td style="text-align: right;">207 162</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>sparse_transformer</code></td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">10,108</td>
+<td style="text-align: right;">5,59%</td>
+<td style="text-align: right;">207 760</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>mamba</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">10,279</td>
+<td style="text-align: right;">2,04%</td>
+<td style="text-align: right;">192 608</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h4 id="la-interacción-supera-a-los-marginales.">La interacción supera a
+los marginales.</h4>
+<p>El gráfico de sinergia mide cuánto mejor es un par frente a la media
+de sus dos marginales, <span class="math display">\[S_{A,B} =
+\frac{\mu_A + \mu_B}{2} - L_{A,B},\]</span> donde <span
+class="math inline">\(\mu_A\)</span> y <span
+class="math inline">\(\mu_B\)</span> son las pérdidas medias de todos
+los pares que contienen A y B. <code>nsa+engram</code> gana 1,304 nats y
+los diez primeros comparten un patrón: un primer mezclador barato y
+limpio con un segundo de memoria pesada. La cola negativa está dominada
+por <code>gta</code>, <code>gqa</code> y <code>tucker</code> como
+B—mezcladores que parecen promedio en aislamiento pero chocan al
+apilarse tras un A fuerte.</p>
+<div id="tab:r2-synergy">
+<table>
+<caption>Las mejores y peores interacciones entre mezcladores por
+sinergia. Los valores positivos indican que el par es mejor de lo que
+sugieren sus partes.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Par</th>
+<th style="text-align: right;">Pérdida del par</th>
+<th style="text-align: right;">Esperada</th>
+<th style="text-align: right;">Sinergia</th>
+<th style="text-align: right;">Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>nsa + engram</code></td>
+<td style="text-align: right;">8,116</td>
+<td style="text-align: right;">9,420</td>
+<td style="text-align: right;"><span
+class="math inline">\(+1{,}304\)</span></td>
+<td style="text-align: right;">0,00%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gated_deltanet2 + sparda</code></td>
+<td style="text-align: right;">8,567</td>
+<td style="text-align: right;">9,448</td>
+<td style="text-align: right;"><span
+class="math inline">\(+0{,}881\)</span></td>
+<td style="text-align: right;">0,00%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fox + falcon2</code></td>
+<td style="text-align: right;">8,705</td>
+<td style="text-align: right;">9,446</td>
+<td style="text-align: right;"><span
+class="math inline">\(+0{,}741\)</span></td>
+<td style="text-align: right;">2,40%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gqa + falcon1</code></td>
+<td style="text-align: right;">8,784</td>
+<td style="text-align: right;">9,518</td>
+<td style="text-align: right;"><span
+class="math inline">\(+0{,}734\)</span></td>
+<td style="text-align: right;">2,86%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fox + falcon2a</code></td>
+<td style="text-align: right;">8,666</td>
+<td style="text-align: right;">9,390</td>
+<td style="text-align: right;"><span
+class="math inline">\(+0{,}724\)</span></td>
+<td style="text-align: right;">2,40%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>bigbird + gta</code></td>
+<td style="text-align: right;">10,445</td>
+<td style="text-align: right;">9,725</td>
+<td style="text-align: right;"><span
+class="math inline">\(-0{,}720\)</span></td>
+<td style="text-align: right;">1,79%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>retnet + gated_softmax</code></td>
+<td style="text-align: right;">10,239</td>
+<td style="text-align: right;">9,533</td>
+<td style="text-align: right;"><span
+class="math inline">\(-0{,}706\)</span></td>
+<td style="text-align: right;">7,70%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>mamba + engram</code></td>
+<td style="text-align: right;">10,277</td>
+<td style="text-align: right;">9,543</td>
+<td style="text-align: right;"><span
+class="math inline">\(-0{,}734\)</span></td>
+<td style="text-align: right;">1,10%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>mamba + sparda</code></td>
+<td style="text-align: right;">10,391</td>
+<td style="text-align: right;">9,643</td>
+<td style="text-align: right;"><span
+class="math inline">\(-0{,}749\)</span></td>
+<td style="text-align: right;">5,09%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gqa + tucker</code></td>
+<td style="text-align: right;">10,450</td>
+<td style="text-align: right;">9,432</td>
+<td style="text-align: right;"><span
+class="math inline">\(-1{,}018\)</span></td>
+<td style="text-align: right;">7,76%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:r2-synergy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/synergy.svg" alt="image" /></span></p>
+
+<figcaption>Mejores y peores interacciones entre mixers. La cola
+positiva empareja un primer mezclador barato y estable con un segundo de
+memoria pesada; la cola negativa está dominada por segundos mezcladores
+que chocan tras un A fuerte.</figcaption>
+</figure>
+<figure id="fig:r2-pareto"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/pareto_speed_loss.svg" alt="image" /></span></p>
+
+<figcaption>Frontera de Pareto velocidad–calidad de los pares híbridos.
+La frontera la pueblan pares cuyo segundo mezclador tiene memoria pesada
+pero cuyo primero es barato.</figcaption>
+</figure>
+<figure id="fig:r2-top5-b"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/top5_by_b.svg" alt="image" /></span></p>
+
+<figcaption>Top-5 por segundo mezclador. Con cuatro muestras por
+configuración, el intervalo entre barras adyacentes es una muestra, así
+que el orden es indicativo.</figcaption>
+</figure>
+<figure id="fig:r2-top5-loss"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/top5_vs_loss.svg" alt="image" /></span></p>
+
+<figcaption>Calidad de inferencia frente a pérdida de entrenamiento. La
+correlación es débil (<span class="math inline">\(r = 0{,}14\)</span>):
+la pérdida de entrenamiento no sustituye a la evaluación en
+validación.</figcaption>
+</figure>
+<h2 id="ablaciones">Ablaciones</h2>
+<h4 id="optimizadores.">Optimizadores.</h4>
+<p>La barrida de optimizadores es el gráfico más aleccionador: 23
+optimizadores, el mismo esqueleto de 210k y un rango de 10,10–10,77
+nats. <code>q_apollo</code> gana con 10,098 y <code>galore_adamw</code>
+cierra la tabla con 10,772, pero una docena de optimizadores aterrizan
+exactamente en 10,404, así que la corrida es demasiado corta para
+separar la elección del ruido de semilla. Las diferencias de velocidad
+sí son reales: el tiempo por paso varía un 30% y <code>shampoo</code> y
+<code>muon</code> pagan sobrecoste visible.</p>
+<div id="tab:r2-optimizers">
+<table>
+<caption>Ablación de optimizadores: pérdida final, top-1 de validación y
+rendimiento sobre el mismo esqueleto.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Optimizador</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Top-1</th>
+<th style="text-align: right;">Tok/s</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>q_apollo</code></td>
+<td style="text-align: right;">10,098</td>
+<td style="text-align: right;">3,63%</td>
+<td style="text-align: right;">436</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>sophia</code></td>
+<td style="text-align: right;">10,104</td>
+<td style="text-align: right;">1,79%</td>
+<td style="text-align: right;">378</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>lion</code></td>
+<td style="text-align: right;">10,245</td>
+<td style="text-align: right;">4,64%</td>
+<td style="text-align: right;">279</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>shampoo</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">382</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>adopt</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">391</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>mars_adamw</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">343</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>adan</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">359</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>adamw</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">384</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>schedulefree_adamw</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">487</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>soap</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">412</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ademamix</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">366</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>cautious_adamw</code></td>
+<td style="text-align: right;">10,404</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">365</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>prodigy</code></td>
+<td style="text-align: right;">10,439</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">349</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>sgd_momentum</code></td>
+<td style="text-align: right;">10,450</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">347</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>turbo_muon</code></td>
+<td style="text-align: right;">10,454</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">536</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>anon</code></td>
+<td style="text-align: right;">10,458</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">387</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>muon</code></td>
+<td style="text-align: right;">10,461</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">507</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>apollo</code></td>
+<td style="text-align: right;">10,519</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">401</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>adafactor</code></td>
+<td style="text-align: right;">10,530</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">395</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ada_muon</code></td>
+<td style="text-align: right;">10,620</td>
+<td style="text-align: right;">1,79%</td>
+<td style="text-align: right;">497</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>lamb</code></td>
+<td style="text-align: right;">10,653</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">464</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>radam</code></td>
+<td style="text-align: right;">10,738</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">502</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>galore_adamw</code></td>
+<td style="text-align: right;">10,772</td>
+<td style="text-align: right;">9,54%</td>
+<td style="text-align: right;">451</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:r2-opt-loss"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/opt_loss.svg" alt="image" /></span></p>
+
+<figcaption>Ablación de optimizadores: pérdida final. Una docena
+converge al mismo valor, lo que mide más la brevedad de la corrida que
+la calidad del optimizador.</figcaption>
+</figure>
+<figure id="fig:r2-opt-speed"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/opt_speed.svg" alt="image" /></span></p>
+
+<figcaption>Ablación de optimizadores: tiempo por paso medio. La
+dispersión es de un 30%; los métodos de segundo orden y ortogonalizados
+pagan el sobrecoste visible.</figcaption>
+</figure>
+<h4 id="normalización-y-codificación-posicional.">Normalización y
+codificación posicional.</h4>
+<p>Entre las normalizaciones, <code>flash_norm</code> gana con claridad
+(9,749 nats, medio nat por delante del segundo), mientras que
+<code>prms_norm</code> y <code>rms_norm</code> quedan atrás. En
+codificaciones posicionales la familia PAPE (<code>pape_ri</code>,
+<code>pape</code>, <code>pape_efficient</code>) barre el podio, y RoPE
+clásico queda a media tabla a esta escala—recordatorio de que “moderno”
+no es automáticamente mejor en una corrida de 100 épocas.</p>
+<div id="tab:r2-norms">
+<table>
+<caption>Ablación de normalización sobre el esqueleto
+compartido.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variante</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Top-1</th>
+<th style="text-align: right;">Paráms.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>flash_norm</code></td>
+<td style="text-align: right;">9,749</td>
+<td style="text-align: right;">1,43%</td>
+<td style="text-align: right;">209 600</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>dynamic_tanh</code></td>
+<td style="text-align: right;">10,246</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>derf</code></td>
+<td style="text-align: right;">10,295</td>
+<td style="text-align: right;">1,79%</td>
+<td style="text-align: right;">210 762</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>layer_norm</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>rms_norm</code></td>
+<td style="text-align: right;">10,436</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 272</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>prms_norm</code></td>
+<td style="text-align: right;">10,573</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">210 272</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="tab:r2-pe">
+<table>
+<caption>Ablación de codificación posicional.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Codificación</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Top-1</th>
+<th style="text-align: right;">Paráms.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>pari</code></td>
+<td style="text-align: right;">9,235</td>
+<td style="text-align: right;">0,00%</td>
+<td style="text-align: right;">211 520</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>pape</code></td>
+<td style="text-align: right;">9,455</td>
+<td style="text-align: right;">4,17%</td>
+<td style="text-align: right;">216 928</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>pape_efficient</code></td>
+<td style="text-align: right;">9,455</td>
+<td style="text-align: right;">4,17%</td>
+<td style="text-align: right;">216 928</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>learned_absolute</code></td>
+<td style="text-align: right;">9,525</td>
+<td style="text-align: right;">7,02%</td>
+<td style="text-align: right;">216 896</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>hope</code></td>
+<td style="text-align: right;">10,348</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>sinusoidal_absolute</code></td>
+<td style="text-align: right;">10,364</td>
+<td style="text-align: right;">6,68%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>bam</code></td>
+<td style="text-align: right;">10,397</td>
+<td style="text-align: right;">9,54%</td>
+<td style="text-align: right;">210 768</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>nope</code></td>
+<td style="text-align: right;">10,397</td>
+<td style="text-align: right;">9,54%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>none</code></td>
+<td style="text-align: right;">10,397</td>
+<td style="text-align: right;">9,54%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>rope</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>sinusoidal_rotary</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>alibi</code></td>
+<td style="text-align: right;">10,417</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:r2-norm"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/norm_loss.svg" alt="image" /></span></p>
+
+<figcaption>Ablación de normalización: <code>flash_norm</code> se separa
+del resto por medio nat.</figcaption>
+</figure>
+<figure id="fig:r2-pe"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/pe_loss.svg" alt="image" /></span></p>
+
+<figcaption>Ablación de codificación posicional: la familia PAPE lidera
+y RoPE clásico queda a media tabla a esta escala.</figcaption>
+</figure>
+<h4 id="conmutadores-estructurales.">Conmutadores estructurales.</h4>
+<p>Los conmutadores estructurales se separan más que los optimizadores.
+Los embeddings factorizados (9,623), la FFN SwiGLU (9,901) y dos bucles
+de Hyperloop (9,908) son las tres victorias; los conmutadores de BitNet
+quedan en 10,016, mHC en 10,186 y las variantes de residuales en
+10,43–10,49. Mixture-of-Depths es el peor conmutador con 10,854,
+consistente con su incompatibilidad con mHC a esta profundidad.</p>
+<div id="tab:r2-trans">
+<table>
+<caption>Conmutadores estructurales, ordenados por pérdida
+final.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Conmutador</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Top-1</th>
+<th style="text-align: right;">Paráms.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>factorized_emb</code></td>
+<td style="text-align: right;">9,623</td>
+<td style="text-align: right;">1,43%</td>
+<td style="text-align: right;">181 056</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ffn_swiglu</code></td>
+<td style="text-align: right;">9,901</td>
+<td style="text-align: right;">2,49%</td>
+<td style="text-align: right;">228 800</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>num_loops_</code></td>
+<td style="text-align: right;">9,908</td>
+<td style="text-align: right;">6,94%</td>
+<td style="text-align: right;">154 880</td>
+</tr>
+<tr class="even">
+<td
+style="text-align: left;"><code>fixed_softmax_ssmax_bitnet</code></td>
+<td style="text-align: right;">9,936</td>
+<td style="text-align: right;">2,60%</td>
+<td style="text-align: right;">209 864</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>bitnet_conv</code></td>
+<td style="text-align: right;">10,016</td>
+<td style="text-align: right;">2,60%</td>
+<td style="text-align: right;">209 856</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>bitnet_on</code></td>
+<td style="text-align: right;">10,016</td>
+<td style="text-align: right;">2,60%</td>
+<td style="text-align: right;">209 856</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>mhc</code></td>
+<td style="text-align: right;">10,186</td>
+<td style="text-align: right;">1,79%</td>
+<td style="text-align: right;">254 092</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>bitnet_routers</code></td>
+<td style="text-align: right;">10,327</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">247 104</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ssmax</code></td>
+<td style="text-align: right;">10,359</td>
+<td style="text-align: right;">9,54%</td>
+<td style="text-align: right;">210 760</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ffn_relu</code></td>
+<td style="text-align: right;">10,393</td>
+<td style="text-align: right;">3,83%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fixed_both</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>embedding_conv</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fixed_ce</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>pos_rope</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fixed_softmax</code></td>
+<td style="text-align: right;">10,401</td>
+<td style="text-align: right;">7,76%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>residuals_full_attn</code></td>
+<td style="text-align: right;">10,433</td>
+<td style="text-align: right;">9,54%</td>
+<td style="text-align: right;">210 944</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>residuals_none</code></td>
+<td style="text-align: right;">10,476</td>
+<td style="text-align: right;">5,71%</td>
+<td style="text-align: right;">210 752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>moe</code></td>
+<td style="text-align: right;">10,477</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">248 384</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>residuals_block_attn</code></td>
+<td style="text-align: right;">10,487</td>
+<td style="text-align: right;">1,79%</td>
+<td style="text-align: right;">210 944</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>mod</code></td>
+<td style="text-align: right;">10,854</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">210 944</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:r2-trans"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/trans_loss.svg" alt="image" /></span></p>
+
+<figcaption>Conmutadores estructurales. Los embeddings factorizados,
+SwiGLU y Hyperloop son las tres victorias; Mixture-of-Depths es el peor
+conmutador.</figcaption>
+</figure>
+<h4 id="visión-y-tareas.">Visión y tareas.</h4>
+<p>El bloque de visión funciona. La segmentación alcanza 90,7% de
+precisión media de validación, la clasificación 75,8% y la predicción de
+parches 69,9%. Estas cifras están un orden de magnitud por encima de los
+pares MLM (mediana 4,0%) porque la tarea es más fácil, no porque el
+mezclador importe más, y por eso el informe mantiene las familias
+separadas. Las ablaciones de tokenizer y tarea se comportan como se
+espera: el tokenizer cambia la pérdida en varios nats porque cambia el
+vocabulario y la longitud media de secuencia, y la tarea la cambia
+porque cambia el objetivo.</p>
+<figure id="fig:r2-vit"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/vit_split.svg" alt="image" /></span></p>
+
+<figcaption>Tareas de visión por objetivo. La segmentación es la más
+fácil y la predicción de parches la más difícil.</figcaption>
+</figure>
+<figure id="fig:r2-tokenizer-task"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/tokenizer_task.svg" alt="image" /></span></p>
+
+<figcaption>Ablaciones de tokenizer y tarea. Ambas cambian la escala de
+la pérdida, así que no son comparables con la barrida de
+mezcladores.</figcaption>
+</figure>
+<h2 id="despliegue-e-inferencia">Despliegue e inferencia</h2>
+<p>La cuantización post-entrenamiento es la buena noticia de la ronda.
+En las 810 configuraciones con ambos formatos, el top-1 medio pasa de
+5,62% a 5,43% y el top-5 medio de 13,36% a 13,24%, deltas de <span
+class="math inline">\(-0{,}19\)</span> y <span
+class="math inline">\(-0{,}12\)</span> puntos porcentuales. Ochocientas
+configuraciones quedan exactamente iguales; las pocas que se mueven lo
+hacen por una muestra de cuatro. Para un modelo a escala de humo es el
+resultado esperado, pero vale la pena medirlo en vez de asumirlo.</p>
+<p>La historia de velocidad es menos halagüeña. El despliegue cuantizado
+es más rápido que el estándar solo en el 32,3% de las corridas (ratio
+mediano 0,64<span class="math inline">\(\times\)</span>) porque la etapa
+de despliegue está dominada por la serialización y la conversión, no por
+la inferencia; la evaluación es más rápida el 51,2% de las veces con una
+aceleración mediana de 1,03<span class="math inline">\(\times\)</span>.
+La inferencia en sí tarda unos 10,5 s para cuatro frases, que es la
+métrica que importa en producción.</p>
+<p>La mejor configuración de inferencia no es la de mejor pérdida.
+<code>mamba__engram_attn</code> acierta tres de cuatro tokens en el
+top-5 (75,0%) con una pérdida de entrenamiento de 10,277, por encima de
+la mediana de los pares. Con cuatro muestras por configuración, el top-5
+es un instrumento romo: sirve para detectar fallos catastróficos, no
+para coronar un ganador.</p>
+<figure id="fig:r2-inference-format"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/inference_format.svg" alt="image" /></span></p>
+
+<figcaption>Inferencia estándar frente a cuantizada. Las distribuciones
+se solapan casi por completo.</figcaption>
+</figure>
+<figure id="fig:r2-quant-delta"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/quant_delta_dist.svg" alt="image" /></span></p>
+
+<figcaption>Distribución del delta de cuantización. Ochocientas de 810
+configuraciones tienen un delta exactamente cero.</figcaption>
+</figure>
+<figure id="fig:r2-quant-scatter"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/quant_scatter.svg" alt="image" /></span></p>
+
+<figcaption>Top-5 estándar frente a cuantizado. Cada punto en la
+diagonal es una configuración que la cuantización no
+cambió.</figcaption>
+</figure>
+<figure id="fig:r2-deploy-duration"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/deploy_duration.svg" alt="image" /></span></p>
+
+<figcaption>Coste por etapa del pipeline. El despliegue y la evaluación
+cuestan segundos; el entrenamiento cuesta horas.</figcaption>
+</figure>
+<div id="tab:r2-inference">
+<table>
+<caption>Configuraciones con mejor tasa top-5 en formato
+estándar.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Configuración</th>
+<th style="text-align: right;">Top-5 est.</th>
+<th style="text-align: right;">Top-1 est.</th>
+<th style="text-align: right;">Top-5 cuant.</th>
+<th style="text-align: right;">Pérdida final</th>
+<th style="text-align: right;">Paráms.</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>mamba__engram_attn</code></td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">10,277</td>
+<td style="text-align: right;">347 168</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>mamba__nsa_attn</code></td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">9,262</td>
+<td style="text-align: right;">192 479</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>retnet__fox_attn</code></td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">9,873</td>
+<td style="text-align: right;">220 936</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>bigbird__kda_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">10,196</td>
+<td style="text-align: right;">221 128</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fox__engram_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9,535</td>
+<td style="text-align: right;">375 496</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>fox__gated_softmax_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9,892</td>
+<td style="text-align: right;">220 744</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fox__tucker_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9,890</td>
+<td style="text-align: right;">220 744</td>
+</tr>
+<tr class="even">
+<td
+style="text-align: left;"><code>gated_deltanet__tucker_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9,796</td>
+<td style="text-align: right;">230 928</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>gla__falcon1_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9,511</td>
+<td style="text-align: right;">226 032</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>gla__mlra_attn</code></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9,538</td>
+<td style="text-align: right;">211 808</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="fiabilidad-del-pipeline">Fiabilidad del pipeline</h2>
+<p>El libro registra 5<span>,</span>271 ejecuciones de etapas. 868
+entrenamientos tuvieron éxito y 171 fallaron con código de salida
+distinto de cero, todos fuera de las 868 configuraciones analizadas, que
+se eligieron justamente porque entrenaron. El despliegue falló 104 veces
+de 1<span>,</span>734, siempre en pares simétricos: una configuración
+que falla el export estándar también falla el cuantizado, lo que apunta
+a una causa raíz compartida (serialización del checkpoint o de la
+configuración) y no a la cuantización en sí.</p>
+<p>Dos hallazgos de calidad de datos condicionan la interpretación.
+Primero, cuatro mixers nunca entrenan: <code>cca</code>,
+<code>ccgqa</code>, <code>msa</code> y <code>ssog</code> fallan en sus
+cuatro singles y en los 158 pares que los contienen, exactamente las 158
+celdas ausentes del atlas. Segundo, cuatro mixers son indistinguibles
+con contexto de 32 tokens: <code>standard</code>, <code>bigbird</code>,
+<code>longformer</code> y <code>titan</code> comparten pérdidas y
+parámetros bit a bit idénticos porque sus ventanas (al menos 64 tokens)
+cubren toda la secuencia y la variante aumentada con posición se reduce
+a atención multi-cabeza pura; coinciden en los 33 segundos mixers
+compartidos. Por separado, 37 pares aparecen como
+<code>attn_retnet__X</code> y <code>attn_retnet_attn__X</code> con
+métricas idénticas—dos nombres para una implementación—que el atlas
+colapsa a una fila.</p>
+<figure id="fig:r2-stage-status"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/stage_status.svg" alt="image" /></span></p>
+
+<figcaption>Fiabilidad del pipeline. El 95% de los registros de etapa
+tuvo éxito; entrenamiento y despliegue explican todos los
+fallos.</figcaption>
+</figure>
+<figure id="fig:r2-failures"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/failures_family.svg" alt="image" /></span></p>
+
+<figcaption>Dónde cayeron los 275 fallos. Los fallos de entrenamiento se
+concentran en las familias cuyos mezcladores nunca entrenan; los de
+despliegue son simétricos entre formatos.</figcaption>
+</figure>
+<h2 id="qué-predice-la-calidad">Qué predice la calidad</h2>
+<p>Sobre los pares híbridos, el número de parámetros correlaciona con la
+pérdida final a <span class="math inline">\(r = -0{,}20\)</span> y con
+la precisión de validación a <span class="math inline">\(r =
+-0{,}07\)</span>: el tamaño apenas compra calidad aquí. Lo que sí
+predice de forma fiable es el coste (<span class="math inline">\(r =
+0{,}68\)</span> con el tiempo por paso, <span class="math inline">\(r =
+0{,}65\)</span> con el tiempo total). La pérdida de entrenamiento apenas
+informa sobre la calidad de inferencia (<span class="math inline">\(r =
+0{,}14\)</span> con el top-5). La norma de gradiente y la razón de
+recorte son exactamente redundantes entre sí (<span
+class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
+la razón de recorte se calcula a partir de la norma de gradiente, y
+ninguna correlaciona con la calidad.</p>
+<p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
+data-reference-type="ref" data-reference="fig:r2-correlation">107</a> se
+calcula sobre las 868 filas. Leída así, el número de parámetros
+correlaciona con la pérdida a <span
+class="math inline">\(-0{,}43\)</span> y con la precisión a <span
+class="math inline">\(+0{,}42\)</span>, lo que contradice los números de
+solo pares. Ambas lecturas son correctas: la matriz de todas las filas
+está dominada por el contraste entre transformers de visión (más
+grandes, mucha menor pérdida, mucha mayor precisión) y pares MLM, así
+que mide la brecha de familias y no el efecto del tamaño. Dentro de la
+población que importa para el atlas—los pares híbridos—el tamaño es casi
+irrelevante.</p>
+<figure id="fig:r2-correlation"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/experiments/round2/correlation.svg" alt="image" /></span></p>
+
+<figcaption>Matriz de correlación sobre las 868 configuraciones. Las
+fuertes correlaciones parámetros–calidad son una confusión de familias;
+dentro de los pares híbridos caen a <span
+class="math inline">\(-0{,}20\)</span> y <span
+class="math inline">\(-0{,}07\)</span>.</figcaption>
+</figure>
+<h2 id="lectura-práctica-y-próximos-pasos">Lectura práctica y próximos
+pasos</h2>
+<p>Si hay que elegir a ciegas, usa un segundo mezclador con memoria
+pesada (<code>engram</code>, <code>sparsek</code>, <code>mlra</code>) y
+un primero barato y estable (<code>fox</code>, <code>gqa</code>,
+<code>gated_deltanet2</code>), y evita <code>mamba</code>,
+<code>retnet</code> y <code>bigbird</code> como B. Espera unos <span
+class="math inline">\(\pm0{,}3\)</span> nats de ruido de interacción,
+mayor que la diferencia entre la mayoría de los optimizadores.</p>
+<p>La ronda también define a su propia sucesora. El atlas debería
+repetirse con 256–512 tokens, donde los cuatro mezcladores que colapsan
+se vuelven distinguibles y los patrones dispersos se dispersan de
+verdad; la evaluación debería usar un conjunto reservado de 200 frases
+con log-verosimilitud por token, porque cuatro frases no pueden ordenar
+800 configuraciones; los mejores pares deberían entrenarse 300 épocas,
+porque todas las curvas siguen bajando; el alias <code>retnet</code> y
+los cuatro mezcladores que fallan deberían corregirse o retirarse de la
+lista; y deberían correrse al menos tres semillas en las familias de
+ablación, donde la dispersión actual está dentro del ruido de semilla.
+La cuantización debería ser el formato de despliegue por defecto: costó
+0,12 puntos de top-5 y aceleró la evaluación en la mitad de las
+corridas.</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://erickfmm.github.io/frankenstein-transformer/charts/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/charts/index.html</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
 </body>
 </html>
