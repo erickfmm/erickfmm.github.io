@@ -1615,7 +1615,9 @@ data-reference="sec:optimizer-families">5</a> and detailed in
 Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
 <figure id="fig:system-architecture">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/system-architecture.svg"
+alt="image" /></span></p>
 <figcaption>System architecture: configuration flows through validation,
 partitions into model, training, and optimizer components, executes at
 runtime, and produces deployment and SBERT artifacts.</figcaption>
@@ -1749,7 +1751,9 @@ data-reference-type="ref"
 data-reference="sec:annex-17">29</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg"
+alt="image" /></span></p>
 <figcaption>Taxonomy of the forty-five sequence mixers across nine
 functional categories. Dense baselines provide full global routing at
 quadratic cost; recurrent methods compress state for constant-time
@@ -1773,14 +1777,18 @@ and recurrent forms, pseudocode, and a comparison table are collected in
 Appendix <a href="#sec:annex-transformer" data-reference-type="ref"
 data-reference="sec:annex-transformer">15</a>.</p>
 <figure id="fig:dense-map">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/dense-map.svg"
+alt="image" /></span></p>
 <figcaption>Dense attention baselines. Standard and sigmoid attention
 compute full pairwise interactions; Grouped-Query Attention shares
 key–value heads across query groups, reducing memory traffic while
 keeping full attention expressivity.</figcaption>
 </figure>
 <figure id="fig:recurrent-map">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/recurrent-map.svg"
+alt="image" /></span></p>
 <figcaption>Recurrent and retentive family. RetNet offers parallel and
 recurrent forms, Mamba uses selective state-space parameters, ODE blocks
 model continuous depth, and Titans add test-time memory; all achieve
@@ -1797,7 +1805,9 @@ Gaussian-mixture components. Formulations, pseudocode, and a comparison
 table are collected in Appendix <a href="#sec:annex-latent"
 data-reference-type="ref" data-reference="sec:annex-latent">16</a>.</p>
 <figure id="fig:latent-map">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/latent-map.svg"
+alt="image" /></span></p>
 <figcaption>Latent and low-rank attention. Key–value pairs are projected
 into a low-rank latent space, where attention is computed at reduced
 cost, and projected back. Variants differ in factorization, head
@@ -1819,7 +1829,9 @@ and inference. Formulations, pseudocode, per-block characteristics, and
 a comparison table are collected in Appendix <a href="#sec:annex-sparse"
 data-reference-type="ref" data-reference="sec:annex-sparse">17</a>.</p>
 <figure id="fig:sparse-map">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/sparse-map.svg"
+alt="image" /></span></p>
 <figcaption>Sparse attention design choices. Methods reduce cost by
 restricting neighborhoods, constructing sparse graphs, or selecting only
 high-value tokens or blocks.</figcaption>
@@ -1843,7 +1855,9 @@ configuration knobs, and published results are collected in Appendix <a
 href="#sec:annex-fast-weight" data-reference-type="ref"
 data-reference="sec:annex-fast-weight">26</a>.</p>
 <figure id="fig:gating-template">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/gating-template.svg"
+alt="image" /></span></p>
 <figcaption>Generic gating template. A gate can decay existing memory,
 regulate write strength, or modulate dense attention outputs, depending
 on the block family.</figcaption>
@@ -1865,7 +1879,9 @@ memory and complexity comparisons are collected in Appendix <a
 href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">14</a>.</p>
 <figure id="fig:optimizer-routing">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizer-routing.svg"
+alt="image" /></span></p>
 <figcaption>Optimizer selection in practice: the class determines the
 update rule, while the schema controls how hyperparameters apply across
 the ten canonical parameter blocks (embeddings, positional encodings,
@@ -1885,7 +1901,9 @@ The formulations and size estimates are deferred to Appendix <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">19</a>.</p>
 <figure id="fig:deploy-flow">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/deploy-flow.svg"
+alt="image" /></span></p>
 <figcaption>Deployment path from a trained checkpoint to a compact
 artifact. Quantization is a deploy-stage transformation rather than a
 separate model family.</figcaption>
@@ -1913,7 +1931,9 @@ k-means).</p></li>
 retrieval.</p></li>
 </ul>
 <figure id="fig:sbert-modes">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/sbert-modes.svg"
+alt="image" /></span></p>
 <figcaption>SBERT workflow reuse. A single encoder supports online pair
 scoring, corpus retrieval, clustering, and persistent embedding
 export.</figcaption>
@@ -2987,725 +3007,277 @@ hyperparameters. Required fields are <code>dims.vocab_size</code>,
 <code>dims.hidden_size</code>, <code>dims.num_layers</code>,
 <code>dims.num_heads</code>, and <code>dims.layer_pattern</code>.
 Table <a href="#tab:model-fields" data-reference-type="ref"
-data-reference="tab:model-fields">1</a> lists all model fields with
-their types and descriptions.</p>
-<div id="tab:model-fields">
-<table>
-<caption>Complete model configuration fields. All fields are optional
-unless marked required.</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Field</strong></th>
-<th style="text-align: left;"><strong>Type</strong></th>
-<th style="text-align: left;"><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Field</strong></td>
-<td style="text-align: left;"><strong>Type</strong></td>
-<td style="text-align: left;"><strong>Description</strong></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">dims.mode</td>
-<td style="text-align: left;">enum (encoder, decoder)</td>
-<td style="text-align: left;">Attention masking mode.
+data-reference="tab:model-fields">[tab:model-fields]</a> lists all model
+fields with their types and descriptions.</p>
+<div class="longtable">
+<p>&gt;</p>
+<p>p<span>5.6cm</span>&gt;</p>
+<p>p<span>2.4cm</span>&gt;</p>
+<p>p<span>6.9cm</span></p>
+<p><strong>Field</strong> &amp; <strong>Type</strong> &amp;
+<strong>Description</strong><br />
+<strong>Field</strong> &amp; <strong>Type</strong> &amp;
+<strong>Description</strong><br />
+<br />
+</p>
+<p><br />
+dims.mode &amp; enum (encoder, decoder) &amp; Attention masking mode.
 <code>encoder</code> = bidirectional; <code>decoder</code> =
-causal.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">dims.vocab_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span> (required)</td>
-<td style="text-align: left;">Number of unique tokens in the vocabulary.
-Must match the tokenizer’s vocab size.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">dims.hidden_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span> (required)</td>
-<td style="text-align: left;">Hidden dimension. Must be divisible by
-<code>num_heads</code>. Typical: 512–2048.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">dims.num_layers</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span> (required)</td>
-<td style="text-align: left;">Number of physical transformer layers.
-Typical: 6–24.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">dims.num_loops</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Logical loop count. Each layer in
-<code>layer_pattern</code> runs <code>num_loops</code> times. Default:
-1.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">dims.num_heads</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span> (required)</td>
-<td style="text-align: left;">Number of parallel attention heads. Must
-divide <code>hidden_size</code> evenly.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">dims.dropout</td>
-<td style="text-align: left;">float [0,1]</td>
-<td style="text-align: left;">Global dropout rate. Typical: 0.1 (BERT
-standard).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">dims.layer_pattern</td>
-<td style="text-align: left;">array of enum (required)</td>
-<td style="text-align: left;">Ordered sequence of layer types. Length
-must equal <code>num_layers</code>. 43 mixer codes available (see
-Table <a href="#tab:layer-pattern" data-reference-type="ref"
-data-reference="tab:layer-pattern">12.2.1</a>).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">norm.type</td>
-<td style="text-align: left;">enum</td>
-<td style="text-align: left;">Normalization strategy:
+causal.<br />
+dims.vocab_size &amp; int <span class="math inline">\(\ge 1\)</span>
+(required) &amp; Number of unique tokens in the vocabulary. Must match
+the tokenizer’s vocab size.<br />
+dims.hidden_size &amp; int <span class="math inline">\(\ge 1\)</span>
+(required) &amp; Hidden dimension. Must be divisible by
+<code>num_heads</code>. Typical: 512–2048.<br />
+dims.num_layers &amp; int <span class="math inline">\(\ge 1\)</span>
+(required) &amp; Number of physical transformer layers. Typical:
+6–24.<br />
+dims.num_loops &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Logical loop count. Each layer in <code>layer_pattern</code> runs
+<code>num_loops</code> times. Default: 1.<br />
+dims.num_heads &amp; int <span class="math inline">\(\ge 1\)</span>
+(required) &amp; Number of parallel attention heads. Must divide
+<code>hidden_size</code> evenly.<br />
+dims.dropout &amp; float [0,1] &amp; Global dropout rate. Typical: 0.1
+(BERT standard).<br />
+dims.layer_pattern &amp; array of enum (required) &amp; Ordered sequence
+of layer types. Length must equal <code>num_layers</code>. 43 mixer
+codes available (see Table <a href="#tab:layer-pattern"
+data-reference-type="ref"
+data-reference="tab:layer-pattern">12.2.1</a>).<br />
+<br />
+norm.type &amp; enum &amp; Normalization strategy:
 <code>layer_norm</code>, <code>dynamic_tanh</code>, <code>derf</code>,
 <code>rms_norm</code>, <code>prms_norm</code>,
-<code>flash_norm</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">norm.partial_ratio</td>
-<td style="text-align: left;">float (0,1]</td>
-<td style="text-align: left;">Fraction of hidden dims for pRMSNorm
-estimation. Default: 0.0625.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">embedding.factorized.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable embedding matrix factorization to
-reduce parameters.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">embedding.factorized.dim</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Intermediate dimension for factorized
-embeddings. Typical: 64–256.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">embedding.conv.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Apply Conv1d over token embeddings to
-capture local n-gram patterns.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">embedding.conv.kernel</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Kernel size for embedding Conv1d. Typical:
-3.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.ode.solver</td>
-<td style="text-align: left;">enum (rk4, euler)</td>
-<td style="text-align: left;">Numerical integration method for ODE
-layers. Default: rk4.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.ode.steps</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Integration steps between consecutive
-transformer layers. Default: 2.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.retnet.heads</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Retention heads for
+<code>flash_norm</code>.<br />
+norm.partial_ratio &amp; float (0,1] &amp; Fraction of hidden dims for
+pRMSNorm estimation. Default: 0.0625.<br />
+<br />
+embedding.factorized.enabled &amp; bool &amp; Enable embedding matrix
+factorization to reduce parameters.<br />
+embedding.factorized.dim &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Intermediate dimension for factorized embeddings.
+Typical: 64–256.<br />
+<br />
+embedding.conv.enabled &amp; bool &amp; Apply Conv1d over token
+embeddings to capture local n-gram patterns.<br />
+embedding.conv.kernel &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Kernel size for embedding Conv1d. Typical: 3.<br />
+<br />
+attention.ode.solver &amp; enum (rk4, euler) &amp; Numerical integration
+method for ODE layers. Default: rk4.<br />
+attention.ode.steps &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Integration steps between consecutive transformer layers. Default:
+2.<br />
+<br />
+attention.retnet.heads &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Retention heads for
 <code>retnet</code>/<code>retnet_attn</code> layers. Must divide
-<code>hidden_size</code>. Default: 8.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.mla.latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Rank of joint KV latent for MLA. Default:
-<code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.gqla.latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Rank of joint KV latent for GQLA. Default:
-<code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.gqla.num_groups</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of GQA groups for GQLA decode path.
-Must divide <code>num_heads</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.gqla.decode_path</td>
-<td style="text-align: left;">enum (mqa_absorb, gqa)</td>
-<td style="text-align: left;">Decoding path for GQLA.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.mlra.latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Total latent rank for MLRA. Default:
-<code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.mlra.num_latent_heads</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of disjoint latent sub-spaces for
-MLRA. Default: 4.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.tucker.query_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Tucker rank for query weight tensor.
-Default: <code>hidden_size</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.tucker.key_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Tucker rank for key weight tensor.
-Default: <code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.tucker.value_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Tucker rank for value weight tensor.
-Default: <code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.iha.num_pseudo_heads</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of pseudo-heads per head for IHA.
-Default: <code>num_heads</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.gta.num_shared_groups</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of head groups sharing an attention
-map for GTA. Must divide <code>num_heads</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.gta.value_latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Rank of value-cache latent for GTA.
-Default: <code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.mtla.latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Latent rank for MTLA. Default:
-<code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.mtla.merge_factor</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of consecutive KV entries merged
-per temporal slot. Default: 2.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.mtla.stride</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Stride between merged temporal slots.
-Default: <code>mtla_merge_factor</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.cca.latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Latent width for CCA. Default:
+<code>hidden_size</code>. Default: 8.<br />
+<br />
+attention.mla.latent_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Rank of joint KV latent for MLA. Default:
+<code>hidden_size // 2</code>.<br />
+<br />
+attention.gqla.latent_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Rank of joint KV latent for GQLA. Default:
+<code>hidden_size // 2</code>.<br />
+attention.gqla.num_groups &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of GQA groups for GQLA decode path. Must divide
+<code>num_heads</code>.<br />
+attention.gqla.decode_path &amp; enum (mqa_absorb, gqa) &amp; Decoding
+path for GQLA.<br />
+<br />
+attention.mlra.latent_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Total latent rank for MLRA. Default:
+<code>hidden_size // 2</code>.<br />
+attention.mlra.num_latent_heads &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Number of disjoint latent
+sub-spaces for MLRA. Default: 4.<br />
+<br />
+attention.tucker.query_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Tucker rank for query weight tensor. Default:
+<code>hidden_size</code>.<br />
+attention.tucker.key_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Tucker rank for key weight tensor. Default:
+<code>hidden_size // 2</code>.<br />
+attention.tucker.value_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Tucker rank for value weight tensor. Default:
+<code>hidden_size // 2</code>.<br />
+<br />
+attention.iha.num_pseudo_heads &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of pseudo-heads per head for IHA. Default:
+<code>num_heads</code>.<br />
+<br />
+attention.gta.num_shared_groups &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Number of head groups sharing
+an attention map for GTA. Must divide <code>num_heads</code>.<br />
+attention.gta.value_latent_rank &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Rank of value-cache latent
+for GTA. Default: <code>hidden_size // 2</code>.<br />
+<br />
+attention.mtla.latent_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Latent rank for MTLA. Default:
+<code>hidden_size // 2</code>.<br />
+attention.mtla.merge_factor &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of consecutive KV entries merged per temporal
+slot. Default: 2.<br />
+attention.mtla.stride &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Stride between merged temporal slots. Default:
+<code>mtla_merge_factor</code>.<br />
+<br />
+attention.cca.latent_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Latent width for CCA. Default:
 <code>hidden_size // 4</code>. Must be divisible by
-<code>num_heads</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.cca.num_conv_layers</td>
-<td style="text-align: left;">enum (0, 1, 2)</td>
-<td style="text-align: left;">Number of convolution layers in CCA.
-Default: 2.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.cca.conv_kernel_seq</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Kernel size of depth-wise causal sequence
-conv. Default: 4.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.cca.conv_kernel_ch</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Kernel size of head-wise grouped channel
-conv. Default: 3.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.cca.qk_mean</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable q-k-mean bias in CCA. Default:
-<code>true</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.cca.value_shift</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable value-shift in CCA. Default:
-<code>true</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.ccgqa.query_latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Query latent width for CCGQA. Default:
-<code>hidden_size // 2</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.ccgqa.kv_latent_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">KV latent width for CCGQA. Default:
-<code>hidden_size // 8</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.ccgqa.num_kv_heads</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of KV heads for CCGQA. Must divide
-<code>num_heads</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.ccgqa.num_conv_layers</td>
-<td style="text-align: left;">enum (0, 1, 2)</td>
-<td style="text-align: left;">Number of convolution layers in CCGQA.
-Default: 2.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.ccgqa.conv_kernel_seq</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Kernel size of depth-wise causal sequence
-conv. Default: 4.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.ccgqa.conv_kernel_ch</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Kernel size of head-wise grouped channel
-conv. Default: 3.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.ccgqa.qk_mean</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable q-k-mean bias in CCGQA. Default:
-<code>true</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.ccgqa.value_shift</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable value-shift in CCGQA. Default:
-<code>true</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.msa.block_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Block size for MiniMax Sparse Attention.
-Default: 128.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.msa.topk_blocks</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of blocks selected per GQA group
-per query. Default: 16.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.msa.index_dim</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Dimensionality of Index Branch heads.
-Default: 64.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.msa.kl_loss_weight</td>
-<td style="text-align: left;">float <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Weight of KL alignment loss for MSA index
-branch. Default: 0.0.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.sparda.block_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">KV block size for SparDA. Default:
-128.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.sparda.topk_blocks</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of KV blocks selected per GQA
-group. Default: 16.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.sparda.forecast_dim</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Dimensionality of Forecast projection.
-Default: 64.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.engram.max_ngram_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-2\)</span></td>
-<td style="text-align: left;">Maximum N-gram order for Engram memory
-module.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.engram.n_heads_per_ngram</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of hash heads per N-gram
-order.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.engram.embed_dim_per_head</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Embedding dimension per hash head.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">attention.engram.kernel_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Causal depthwise conv kernel width for
-Engram.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">attention.engram.seed</td>
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">Random seed for N-gram hash
-multipliers.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mhc.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable the manifold-constrained n-stream
-residual (mHC, arXiv:2512.24880). Default: <code>false</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mhc.expansion_rate</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Residual-stream expansion factor <span
+<code>num_heads</code>.<br />
+attention.cca.num_conv_layers &amp; enum (0, 1, 2) &amp; Number of
+convolution layers in CCA. Default: 2.<br />
+attention.cca.conv_kernel_seq &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Kernel size of depth-wise causal sequence conv.
+Default: 4.<br />
+attention.cca.conv_kernel_ch &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Kernel size of head-wise grouped channel conv. Default:
+3.<br />
+attention.cca.qk_mean &amp; bool &amp; Enable q-k-mean bias in CCA.
+Default: <code>true</code>.<br />
+attention.cca.value_shift &amp; bool &amp; Enable value-shift in CCA.
+Default: <code>true</code>.<br />
+<br />
+attention.ccgqa.query_latent_rank &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Query latent width for CCGQA.
+Default: <code>hidden_size // 2</code>.<br />
+attention.ccgqa.kv_latent_rank &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; KV latent width for CCGQA. Default:
+<code>hidden_size // 8</code>.<br />
+attention.ccgqa.num_kv_heads &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of KV heads for CCGQA. Must divide
+<code>num_heads</code>.<br />
+attention.ccgqa.num_conv_layers &amp; enum (0, 1, 2) &amp; Number of
+convolution layers in CCGQA. Default: 2.<br />
+attention.ccgqa.conv_kernel_seq &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Kernel size of depth-wise
+causal sequence conv. Default: 4.<br />
+attention.ccgqa.conv_kernel_ch &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Kernel size of head-wise grouped channel conv. Default:
+3.<br />
+attention.ccgqa.qk_mean &amp; bool &amp; Enable q-k-mean bias in CCGQA.
+Default: <code>true</code>.<br />
+attention.ccgqa.value_shift &amp; bool &amp; Enable value-shift in
+CCGQA. Default: <code>true</code>.<br />
+<br />
+attention.msa.block_size &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Block size for MiniMax Sparse Attention. Default:
+128.<br />
+attention.msa.topk_blocks &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of blocks selected per GQA group per query.
+Default: 16.<br />
+attention.msa.index_dim &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Dimensionality of Index Branch heads. Default:
+64.<br />
+attention.msa.kl_loss_weight &amp; float <span class="math inline">\(\ge
+0\)</span> &amp; Weight of KL alignment loss for MSA index branch.
+Default: 0.0.<br />
+<br />
+attention.sparda.block_size &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; KV block size for SparDA. Default: 128.<br />
+attention.sparda.topk_blocks &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of KV blocks selected per GQA group. Default:
+16.<br />
+attention.sparda.forecast_dim &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Dimensionality of Forecast projection. Default:
+64.<br />
+<br />
+attention.engram.max_ngram_size &amp; int <span
+class="math inline">\(\ge 2\)</span> &amp; Maximum N-gram order for
+Engram memory module.<br />
+attention.engram.n_heads_per_ngram &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Number of hash heads per
+N-gram order.<br />
+attention.engram.embed_dim_per_head &amp; int <span
+class="math inline">\(\ge 1\)</span> &amp; Embedding dimension per hash
+head.<br />
+attention.engram.kernel_size &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Causal depthwise conv kernel width for Engram.<br />
+attention.engram.seed &amp; int &amp; Random seed for N-gram hash
+multipliers.<br />
+<br />
+mhc.enabled &amp; bool &amp; Enable the manifold-constrained n-stream
+residual (mHC, arXiv:2512.24880). Default: <code>false</code>.<br />
+mhc.expansion_rate &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Residual-stream expansion factor <span
 class="math inline">\(n\)</span>. The stream becomes <span
 class="math inline">\(n \times\)</span> <code>hidden_size</code>. <span
 class="math inline">\(1\)</span> recovers the identity mapping. Default:
-4.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mhc.sinkhorn_iters</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Sinkhorn-Knopp normalisation rounds
-constraining <span class="math inline">\(H^{\text{res}}\)</span> to be
-doubly stochastic. Default: 20.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mhc.gating_init</td>
-<td style="text-align: left;">float <span class="math inline">\(&gt;
-0\)</span></td>
-<td style="text-align: left;">Initial value of the mHC gating scalars
-<span class="math inline">\(\alpha\)</span>. Default: 0.01.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mhc.checkpoint</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Gradient checkpointing on mHC layers to
+4.<br />
+mhc.sinkhorn_iters &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Sinkhorn-Knopp normalisation rounds constraining <span
+class="math inline">\(H^{\text{res}}\)</span> to be doubly stochastic.
+Default: 20.<br />
+mhc.gating_init &amp; float <span class="math inline">\(&gt; 0\)</span>
+&amp; Initial value of the mHC gating scalars <span
+class="math inline">\(\alpha\)</span>. Default: 0.01.<br />
+mhc.checkpoint &amp; bool &amp; Gradient checkpointing on mHC layers to
 mitigate the <span class="math inline">\(\sim n\times\)</span>
-activation-memory increase. Default: <code>false</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mhc.full_prec_under_bitnet</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Keep the mHC coefficient projection
-full-precision under BitNet. Default: <code>true</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">moe.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable Mixture of Experts in FFN layers.
-Default: <code>true</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">moe.num_experts</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Total number of expert networks. Default:
-8.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">moe.top_k</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Experts activated per token. Must be <span
+activation-memory increase. Default: <code>false</code>.<br />
+mhc.full_prec_under_bitnet &amp; bool &amp; Keep the mHC coefficient
+projection full-precision under BitNet. Default:
+<code>true</code>.<br />
+<br />
+moe.enabled &amp; bool &amp; Enable Mixture of Experts in FFN layers.
+Default: <code>true</code>.<br />
+moe.num_experts &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Total number of expert networks. Default: 8.<br />
+moe.top_k &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Experts activated per token. Must be <span
 class="math inline">\(\le\)</span> <code>num_experts</code>. Default:
-2.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bitnet.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable BitLinear ternary weight
-quantization. Default: <code>true</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bitnet.routers</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Also quantize routing/scoring projections.
-Requires <code>bitnet.enabled=true</code>. Default:
-<code>false</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bitnet.conv</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Quantize embedding Conv1d with BitConv1d.
+2.<br />
+<br />
+bitnet.enabled &amp; bool &amp; Enable BitLinear ternary weight
+quantization. Default: <code>true</code>.<br />
+bitnet.routers &amp; bool &amp; Also quantize routing/scoring
+projections. Requires <code>bitnet.enabled=true</code>. Default:
+<code>false</code>.<br />
+bitnet.conv &amp; bool &amp; Quantize embedding Conv1d with BitConv1d.
 Requires <code>bitnet.enabled=true</code> and
 <code>embedding.conv.enabled=true</code>. Default:
-<code>false</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mixture_of_depths.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable Mixture-of-Depths token routing.
-Default: <code>false</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mixture_of_depths.capacity_ratio</td>
-<td style="text-align: left;">float (0,1]</td>
-<td style="text-align: left;">Fraction of tokens updated per layer.
-Default: 0.5.</td>
-</tr>
-<tr class="odd">
-<td
-style="text-align: left;">mixture_of_depths.router_aux_loss_weight</td>
-<td style="text-align: left;">float <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Weight for the router auxiliary loss.
-Default: 0.0.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ssmax.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable Scalable Softmax
-(arXiv:2505.22842). Default: <code>false</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">ssmax.s_init</td>
-<td style="text-align: left;">float <span class="math inline">\(&gt;
-0\)</span></td>
-<td style="text-align: left;">Initial per-head SSMax scalar. Default:
-1.0.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">numerics.fixed_softmax</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Cancellation-free softmax/log-softmax
-(arXiv:2610.31642). Default: <code>false</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">numerics.fixed_cross_entropy</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Hard-target CE with zero-sum gradient by
-construction (arXiv:2610.31642). Default: <code>false</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ffn.hidden_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Intermediate FFN dimension. Default: <span
-class="math inline">\(2\times\)</span> <code>hidden_size</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">ffn.activation</td>
-<td style="text-align: left;">enum</td>
-<td style="text-align: left;">FFN non-linearity (43 values). Default:
-<code>silu</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ffn.activation_config</td>
-<td style="text-align: left;">object</td>
-<td style="text-align: left;">Parameters for learnable/parametric
-activations.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">classification_head.enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable the NLP sequence-classification
-head. Default: <code>false</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">classification_head.num_labels</td>
-<td style="text-align: left;">int or null</td>
-<td style="text-align: left;">Number of classes.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">classification_head.pooling_mode</td>
-<td style="text-align: left;">enum (cls, gap)</td>
-<td style="text-align: left;">Pooling for the classification head.
-Default: <code>cls</code>.</td>
-</tr>
-</tbody>
-</table>
+<code>false</code>.<br />
+<br />
+mixture_of_depths.enabled &amp; bool &amp; Enable Mixture-of-Depths
+token routing. Default: <code>false</code>.<br />
+mixture_of_depths.capacity_ratio &amp; float (0,1] &amp; Fraction of
+tokens updated per layer. Default: 0.5.<br />
+mixture_of_depths.router_aux_loss_weight &amp; float <span
+class="math inline">\(\ge 0\)</span> &amp; Weight for the router
+auxiliary loss. Default: 0.0.<br />
+<br />
+ssmax.enabled &amp; bool &amp; Enable Scalable Softmax
+(arXiv:2505.22842). Default: <code>false</code>.<br />
+ssmax.s_init &amp; float <span class="math inline">\(&gt; 0\)</span>
+&amp; Initial per-head SSMax scalar. Default: 1.0.<br />
+<br />
+numerics.fixed_softmax &amp; bool &amp; Cancellation-free
+softmax/log-softmax (arXiv:2610.31642). Default:
+<code>false</code>.<br />
+numerics.fixed_cross_entropy &amp; bool &amp; Hard-target CE with
+zero-sum gradient by construction (arXiv:2610.31642). Default:
+<code>false</code>.<br />
+<br />
+ffn.hidden_size &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Intermediate FFN dimension. Default: <span
+class="math inline">\(2\times\)</span> <code>hidden_size</code>.<br />
+ffn.activation &amp; enum &amp; FFN non-linearity (43 values). Default:
+<code>silu</code>.<br />
+ffn.activation_config &amp; object &amp; Parameters for
+learnable/parametric activations.<br />
+<br />
+classification_head.enabled &amp; bool &amp; Enable the NLP
+sequence-classification head. Default: <code>false</code>.<br />
+classification_head.num_labels &amp; int or null &amp; Number of
+classes.<br />
+classification_head.pooling_mode &amp; enum (cls, gap) &amp; Pooling for
+the classification head. Default: <code>cls</code>.<br />
+</p>
 </div>
 <p>Fields are grouped under hierarchical sub-objects (<code>dims</code>,
 <code>norm</code>, <code>embedding</code>, <code>attention</code>,
@@ -3719,655 +3291,222 @@ for the rows that follow it. There are no flat feature keys at
 <p>The <code>model.dims.layer_pattern</code> array accepts the following
 43 mixer codes. Each element defines one physical layer in the model
 stack. Table <a href="#tab:layer-pattern-enum" data-reference-type="ref"
-data-reference="tab:layer-pattern-enum">2</a> lists all available types
-with their training and inference support.</p>
-<div id="tab:layer-pattern-enum">
-<table>
-<caption>Complete <code>layer_pattern</code> enumeration. <span
-class="math inline">\(\checkmark\)</span> = supported, <span
-class="math inline">\(\times\)</span> = not supported.
-<code>fasa_attn</code> and <code>sparge_attn</code> train as standard
-dense attention over their own projections and apply their sparse
-heuristic only at inference.</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Type</strong></th>
-<th style="text-align: left;"><strong>Description</strong></th>
-<th style="text-align: center;"><strong>Train</strong></th>
-<th style="text-align: center;"><strong>Infer</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Type</strong></td>
-<td style="text-align: left;"><strong>Description</strong></td>
-<td style="text-align: center;"><strong>Train</strong></td>
-<td style="text-align: center;"><strong>Infer</strong></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">standard_attn</td>
-<td style="text-align: left;">Classic multi-head self-attention
-(BERT-style)</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">sigmoid_attn</td>
-<td style="text-align: left;">Sigmoid-gated attention</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">gated_softmax_attn</td>
-<td style="text-align: left;">Gated softmax attention with post-SDPA
-sigmoid</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">titan_attn</td>
-<td style="text-align: left;">Titan attention with positional encoding
-(HoPE/RoPE)</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">retnet / retnet_attn</td>
-<td style="text-align: left;">Retention Network (RNN+transformer
-hybrid)</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mamba</td>
-<td style="text-align: left;">Selective state-space model (SSM)</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ode</td>
-<td style="text-align: left;">Continuous-depth ODE layer</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gla_attn</td>
-<td style="text-align: left;">Gated Linear Attention with multiplicative
-decay</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">deltanet_attn / gated_deltanet_attn</td>
-<td style="text-align: left;">DeltaNet with corrective delta rule</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gated_deltanet2_attn</td>
-<td style="text-align: left;">Gated DeltaNet-2 with decoupled
-channel-wise erase/write gates</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">hgrn2_attn</td>
-<td style="text-align: left;">HGRN2 with hierarchical forget gates</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">fox_attn</td>
-<td style="text-align: left;">Forgetting Transformer (FoX) with forget
-bias in logits</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">nsa_attn</td>
-<td style="text-align: left;">Native Sparse Attention
-(three-branch)</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">engram_attn</td>
-<td style="text-align: left;">N-gram conditional memory lookup</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">gqa_attn</td>
-<td style="text-align: left;">Grouped-Query Attention with configurable
-KV heads</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">longformer_attn</td>
-<td style="text-align: left;">Longformer: sliding windows + global
-tokens</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bigbird_attn</td>
-<td style="text-align: left;">BigBird: local + random + global
-attention</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">sparse_transformer_attn</td>
-<td style="text-align: left;">Sparse Transformer: factorized
-patterns</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">sparsek_attn</td>
-<td style="text-align: left;">SparseK: differentiable top-k KV
-selection</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">sparge_attn</td>
-<td style="text-align: left;">SpargeAttn — two-stage block pruning;
-dense training, sparse inference</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">fasa_attn</td>
-<td style="text-align: left;">FASA — frequency-aware token selection;
-dense training, sparse inference</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">msa_attn</td>
-<td style="text-align: left;">MiniMax Sparse Attention — block-sparse on
-GQA</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">sparda_attn</td>
-<td style="text-align: left;">SparDA — decoupled sparse attention with
-Forecast projection</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">kda_attn</td>
-<td style="text-align: left;">Kimi Delta Attention — channel-wise decay
-+ scalar write gate</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">falcon1_attn / falcon2_attn /
-falcon3_attn</td>
-<td style="text-align: left;">Falcon regression family — RAW
-prefix-aligned NLMS delta rule</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">falcon1a_attn / falcon2a_attn /
-falcon3a_attn</td>
-<td style="text-align: left;">Falcon inner-product family — shifted
-additive writes with ridge decay</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mla_attn</td>
-<td style="text-align: left;">Multi-Head Latent Attention + RoPE</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gqla_attn</td>
-<td style="text-align: left;">Group-Query Latent Attention — two
-decoding paths</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mlra_attn</td>
-<td style="text-align: left;">Multi-Head Low-Rank Attention —
-partitionable latent</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">tucker_attn</td>
-<td style="text-align: left;">Tucker Attention — generalised low-rank
-factorisation</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">iha_attn</td>
-<td style="text-align: left;">Interleaved Head Attention — cross-head
-pseudo-heads</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gta_attn</td>
-<td style="text-align: left;">Grouped-head laTenT Attention — shared map
-+ latent values</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">mtla_attn</td>
-<td style="text-align: left;">Multi-head Temporal Latent Attention —
-temporal KV merge</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">cca_attn</td>
-<td style="text-align: left;">Compressed Convolutional Attention —
-latent-space attention + convs</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ccgqa_attn</td>
-<td style="text-align: left;">Compressed Convolutional Grouped Query
-Attention — CCA + GQA in latent</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gma_attn</td>
-<td style="text-align: left;">Gaussian Mixture Attention — probabilistic
-latent routing, <span class="math inline">\(\mathcal{O}(NK)\)</span>
-linear-time</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ssog_attn</td>
-<td style="text-align: left;">Separable Sum of Gaussians — Gaussian
-field over relative position, near-linear <span
-class="math inline">\(\mathcal{O}(R N \sqrt{N})\)</span></td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-</tr>
-</tbody>
-</table>
+data-reference="tab:layer-pattern-enum">[tab:layer-pattern-enum]</a>
+lists all available types with their training and inference support.</p>
+<div class="longtable">
+<p>&gt;</p>
+<p>p<span>4.7cm</span>&gt;</p>
+<p>p<span>5.0cm</span>cc</p>
+<p><strong>Type</strong> &amp; <strong>Description</strong> &amp;
+<strong>Train</strong> &amp; <strong>Infer</strong><br />
+<strong>Type</strong> &amp; <strong>Description</strong> &amp;
+<strong>Train</strong> &amp; <strong>Infer</strong><br />
+<br />
+</p>
+<p>standard_attn &amp; Classic multi-head self-attention (BERT-style)
+&amp; &amp;<br />
+sigmoid_attn &amp; Sigmoid-gated attention &amp; &amp;<br />
+gated_softmax_attn &amp; Gated softmax attention with post-SDPA sigmoid
+&amp; &amp;<br />
+titan_attn &amp; Titan attention with positional encoding (HoPE/RoPE)
+&amp; &amp;<br />
+retnet / retnet_attn &amp; Retention Network (RNN+transformer hybrid)
+&amp; &amp;<br />
+mamba &amp; Selective state-space model (SSM) &amp; &amp;<br />
+ode &amp; Continuous-depth ODE layer &amp; &amp;<br />
+gla_attn &amp; Gated Linear Attention with multiplicative decay &amp;
+&amp;<br />
+deltanet_attn / gated_deltanet_attn &amp; DeltaNet with corrective delta
+rule &amp; &amp;<br />
+gated_deltanet2_attn &amp; Gated DeltaNet-2 with decoupled channel-wise
+erase/write gates &amp; &amp;<br />
+hgrn2_attn &amp; HGRN2 with hierarchical forget gates &amp; &amp;<br />
+fox_attn &amp; Forgetting Transformer (FoX) with forget bias in logits
+&amp; &amp;<br />
+nsa_attn &amp; Native Sparse Attention (three-branch) &amp; &amp;<br />
+engram_attn &amp; N-gram conditional memory lookup &amp; &amp;<br />
+gqa_attn &amp; Grouped-Query Attention with configurable KV heads &amp;
+&amp;<br />
+longformer_attn &amp; Longformer: sliding windows + global tokens &amp;
+&amp;<br />
+bigbird_attn &amp; BigBird: local + random + global attention &amp;
+&amp;<br />
+sparse_transformer_attn &amp; Sparse Transformer: factorized patterns
+&amp; &amp;<br />
+sparsek_attn &amp; SparseK: differentiable top-k KV selection &amp;
+&amp;<br />
+sparge_attn &amp; SpargeAttn — two-stage block pruning; dense training,
+sparse inference &amp; &amp;<br />
+fasa_attn &amp; FASA — frequency-aware token selection; dense training,
+sparse inference &amp; &amp;<br />
+msa_attn &amp; MiniMax Sparse Attention — block-sparse on GQA &amp;
+&amp;<br />
+sparda_attn &amp; SparDA — decoupled sparse attention with Forecast
+projection &amp; &amp;<br />
+kda_attn &amp; Kimi Delta Attention — channel-wise decay + scalar write
+gate &amp; &amp;<br />
+falcon1_attn / falcon2_attn / falcon3_attn &amp; Falcon regression
+family — RAW prefix-aligned NLMS delta rule &amp; &amp;<br />
+falcon1a_attn / falcon2a_attn / falcon3a_attn &amp; Falcon inner-product
+family — shifted additive writes with ridge decay &amp; &amp;<br />
+mla_attn &amp; Multi-Head Latent Attention + RoPE &amp; &amp;<br />
+gqla_attn &amp; Group-Query Latent Attention — two decoding paths &amp;
+&amp;<br />
+mlra_attn &amp; Multi-Head Low-Rank Attention — partitionable latent
+&amp; &amp;<br />
+tucker_attn &amp; Tucker Attention — generalised low-rank factorisation
+&amp; &amp;<br />
+iha_attn &amp; Interleaved Head Attention — cross-head pseudo-heads
+&amp; &amp;<br />
+gta_attn &amp; Grouped-head laTenT Attention — shared map + latent
+values &amp; &amp;<br />
+mtla_attn &amp; Multi-head Temporal Latent Attention — temporal KV merge
+&amp; &amp;<br />
+cca_attn &amp; Compressed Convolutional Attention — latent-space
+attention + convs &amp; &amp;<br />
+ccgqa_attn &amp; Compressed Convolutional Grouped Query Attention — CCA
++ GQA in latent &amp; &amp;<br />
+gma_attn &amp; Gaussian Mixture Attention — probabilistic latent
+routing, <span class="math inline">\(\mathcal{O}(NK)\)</span>
+linear-time &amp; &amp;<br />
+ssog_attn &amp; Separable Sum of Gaussians — Gaussian field over
+relative position, near-linear <span class="math inline">\(\mathcal{O}(R
+N \sqrt{N})\)</span> &amp; &amp;<br />
+</p>
 </div>
 <h2 id="subsec:training-config">Training Configuration</h2>
 <p>The <code>training</code> object controls the entire training
 pipeline. The only required field is <code>task</code>. Table <a
 href="#tab:training-fields" data-reference-type="ref"
-data-reference="tab:training-fields">3</a> lists all training
-fields.</p>
-<div id="tab:training-fields">
-<table>
-<caption>Complete training configuration fields.</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Field</strong></th>
-<th style="text-align: left;"><strong>Type</strong></th>
-<th style="text-align: left;"><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Field</strong></td>
-<td style="text-align: left;"><strong>Type</strong></td>
-<td style="text-align: left;"><strong>Description</strong></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">task</td>
-<td style="text-align: left;">enum (mlm, sbert, causal_lm)
-(required)</td>
-<td style="text-align: left;">Training objective. <code>mlm</code> =
-Masked Language Modeling; <code>sbert</code> = Sentence-BERT
-fine-tuning; <code>causal_lm</code> = autoregressive next-token
-prediction (requires
-<code>model_class=’frankenstein_text_decoder’</code>).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">num_epochs</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Complete passes through the training
-dataset (MLM only).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">batch_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Examples per optimizer step (before
-gradient accumulation).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">dataloader_workers</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Parallel worker processes for data
-loading.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">max_length</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Maximum token sequence length. Typical:
-128–2048.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mlm_probability</td>
-<td style="text-align: left;">float [0,1]</td>
-<td style="text-align: left;">Fraction of tokens masked for MLM
-prediction. Standard: 0.15.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">max_samples</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Total samples before stopping, independent
-of epochs.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">test_percentage</td>
-<td style="text-align: left;">float [0,100]</td>
-<td style="text-align: left;">Fraction of the dataset held out from
-training and evaluated at the end; the result is written to
-<code>test_metrics.json</code>. Default: 0 (disabled).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">dataset_batch_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Internal batch size for streaming
-dataset.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">num_workers</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Parallel workers for dataset streaming
-pipeline.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">cache_dir</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">Directory for caching processed
-datasets.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">local_parquet_dir</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">Path to local parquet files for offline
-streaming.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">prefer_local_cache</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Check local cache first before remote
-download.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">stream_local_parquet</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Stream from local parquet when
-<code>local_parquet_dir</code> is set.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">join_temp_data_context_window</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">If <span
-class="math inline">\(&gt;0\)</span>, joins cached token chunks into
-sequences of this length.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">join_temp_data_min_remainder_tokens</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Minimum content tokens in last partial
-joined window.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">use_amp</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable FP16 mixed precision.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gradient_accumulation_steps</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Accumulate gradients over N mini-batches
-before optimizer step.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">optimizer</td>
-<td style="text-align: left;">object</td>
-<td style="text-align: left;">Optimizer configuration (see §<a
+data-reference="tab:training-fields">[tab:training-fields]</a> lists all
+training fields.</p>
+<div class="longtable">
+<p>&gt;</p>
+<p>p<span>5.6cm</span>&gt;</p>
+<p>p<span>2.4cm</span>&gt;</p>
+<p>p<span>6.9cm</span></p>
+<p><strong>Field</strong> &amp; <strong>Type</strong> &amp;
+<strong>Description</strong><br />
+<strong>Field</strong> &amp; <strong>Type</strong> &amp;
+<strong>Description</strong><br />
+<br />
+</p>
+<p>task &amp; enum (mlm, sbert, causal_lm) (required) &amp; Training
+objective. <code>mlm</code> = Masked Language Modeling;
+<code>sbert</code> = Sentence-BERT fine-tuning; <code>causal_lm</code> =
+autoregressive next-token prediction (requires
+<code>model_class=’frankenstein_text_decoder’</code>).<br />
+num_epochs &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Complete passes through the training dataset (MLM only).<br />
+batch_size &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Examples per optimizer step (before gradient accumulation).<br />
+dataloader_workers &amp; int <span class="math inline">\(\ge 0\)</span>
+&amp; Parallel worker processes for data loading.<br />
+max_length &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Maximum token sequence length. Typical: 128–2048.<br />
+mlm_probability &amp; float [0,1] &amp; Fraction of tokens masked for
+MLM prediction. Standard: 0.15.<br />
+max_samples &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Total samples before stopping, independent of epochs.<br />
+test_percentage &amp; float [0,100] &amp; Fraction of the dataset held
+out from training and evaluated at the end; the result is written to
+<code>test_metrics.json</code>. Default: 0 (disabled).<br />
+dataset_batch_size &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Internal batch size for streaming dataset.<br />
+num_workers &amp; int <span class="math inline">\(\ge 0\)</span> &amp;
+Parallel workers for dataset streaming pipeline.<br />
+cache_dir &amp; string &amp; Directory for caching processed
+datasets.<br />
+local_parquet_dir &amp; string &amp; Path to local parquet files for
+offline streaming.<br />
+prefer_local_cache &amp; bool &amp; Check local cache first before
+remote download.<br />
+stream_local_parquet &amp; bool &amp; Stream from local parquet when
+<code>local_parquet_dir</code> is set.<br />
+join_temp_data_context_window &amp; int <span class="math inline">\(\ge
+0\)</span> &amp; If <span class="math inline">\(&gt;0\)</span>, joins
+cached token chunks into sequences of this length.<br />
+join_temp_data_min_remainder_tokens &amp; int <span
+class="math inline">\(\ge 0\)</span> &amp; Minimum content tokens in
+last partial joined window.<br />
+use_amp &amp; bool &amp; Enable FP16 mixed precision.<br />
+gradient_accumulation_steps &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Accumulate gradients over N mini-batches before
+optimizer step.<br />
+optimizer &amp; object &amp; Optimizer configuration (see §<a
 href="#subsec:optimizer-config" data-reference-type="ref"
 data-reference="subsec:optimizer-config">12.5</a>). Required when
-<code>task=mlm</code> or <code>task=causal_lm</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">sbert</td>
-<td style="text-align: left;">object</td>
-<td style="text-align: left;">SBERT training configuration (see §<a
+<code>task=mlm</code> or <code>task=causal_lm</code>.<br />
+sbert &amp; object &amp; SBERT training configuration (see §<a
 href="#subsec:sbert-config" data-reference-type="ref"
 data-reference="subsec:sbert-config">12.6</a>). Required when
-<code>task=sbert</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">scheduler_total_steps</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Total optimizer steps for LR
-schedule.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">scheduler_warmup_ratio</td>
-<td style="text-align: left;">float [0,1]</td>
-<td style="text-align: left;">Fraction of
-<code>scheduler_total_steps</code> for LR warmup.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">scheduler_type</td>
-<td style="text-align: left;">enum (cosine, constant,
-linear_warmup_then_constant)</td>
-<td style="text-align: left;">LR decay strategy.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">grad_clip_max_norm</td>
-<td style="text-align: left;">float <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Maximum allowed gradient norm. 0 =
-disabled.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">inf_post_clip_threshold</td>
-<td style="text-align: left;">float <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Threshold for flagging post-clip gradient
-explosions.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">max_nan_retries</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Maximum retries on NaN/Inf gradients
-before stopping.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">checkpoint_every_n_steps</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Save rolling checkpoint every N
-steps.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">max_rolling_checkpoints</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Maximum rolling checkpoints kept. Oldest
-deleted when exceeded.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">num_best_checkpoints</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Number of best checkpoints kept
-permanently (by validation loss).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">nan_check_interval</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Steps between NaN/Inf checks.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">log_gradient_stats</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Log per-layer gradient norms,
-min/max.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gradient_log_interval</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Steps between gradient stat logs.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">csv_log_path</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">File path for step-level training metrics
-in CSV format.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">csv_rotate_on_schema_change</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Rotate CSV file when schema changes.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">gpu_metrics_backend</td>
-<td style="text-align: left;">enum (nvml, none)</td>
-<td style="text-align: left;">GPU telemetry backend.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">nvml_device_index</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">GPU index to monitor (0 = first GPU).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">enable_block_grad_norms</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Log gradient norms per block (embeddings,
-attention, FFN, etc.).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">telemetry_log_interval</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Steps between heavy telemetry logs.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">gpu_temp_guard_enabled</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Strict GPU temperature monitoring.
-Requires <code>gpu_metrics_backend=nvml</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">switch_on_thermal</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Critical temp triggers GPU<span
+<code>task=sbert</code>.<br />
+scheduler_total_steps &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Total optimizer steps for LR schedule.<br />
+scheduler_warmup_ratio &amp; float [0,1] &amp; Fraction of
+<code>scheduler_total_steps</code> for LR warmup.<br />
+scheduler_type &amp; enum (cosine, constant,
+linear_warmup_then_constant) &amp; LR decay strategy.<br />
+grad_clip_max_norm &amp; float <span class="math inline">\(\ge
+0\)</span> &amp; Maximum allowed gradient norm. 0 = disabled.<br />
+inf_post_clip_threshold &amp; float <span class="math inline">\(\ge
+0\)</span> &amp; Threshold for flagging post-clip gradient
+explosions.<br />
+max_nan_retries &amp; int <span class="math inline">\(\ge 0\)</span>
+&amp; Maximum retries on NaN/Inf gradients before stopping.<br />
+checkpoint_every_n_steps &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Save rolling checkpoint every N steps.<br />
+max_rolling_checkpoints &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Maximum rolling checkpoints kept. Oldest deleted when
+exceeded.<br />
+num_best_checkpoints &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Number of best checkpoints kept permanently (by
+validation loss).<br />
+nan_check_interval &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Steps between NaN/Inf checks.<br />
+log_gradient_stats &amp; bool &amp; Log per-layer gradient norms,
+min/max.<br />
+gradient_log_interval &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Steps between gradient stat logs.<br />
+csv_log_path &amp; string &amp; File path for step-level training
+metrics in CSV format.<br />
+csv_rotate_on_schema_change &amp; bool &amp; Rotate CSV file when schema
+changes.<br />
+gpu_metrics_backend &amp; enum (nvml, none) &amp; GPU telemetry
+backend.<br />
+nvml_device_index &amp; int <span class="math inline">\(\ge 0\)</span>
+&amp; GPU index to monitor (0 = first GPU).<br />
+enable_block_grad_norms &amp; bool &amp; Log gradient norms per block
+(embeddings, attention, FFN, etc.).<br />
+telemetry_log_interval &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Steps between heavy telemetry logs.<br />
+gpu_temp_guard_enabled &amp; bool &amp; Strict GPU temperature
+monitoring. Requires <code>gpu_metrics_backend=nvml</code>.<br />
+switch_on_thermal &amp; bool &amp; Critical temp triggers GPU<span
 class="math inline">\(\to\)</span>CPU fallback, auto-resume on
-cooldown.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">gpu_temp_pause_threshold_c</td>
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">Temperature (<span
-class="math inline">\(^\circ\)</span>C) to pause training.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gpu_temp_resume_threshold_c</td>
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">Temperature (<span
+cooldown.<br />
+gpu_temp_pause_threshold_c &amp; float &amp; Temperature (<span
+class="math inline">\(^\circ\)</span>C) to pause training.<br />
+gpu_temp_resume_threshold_c &amp; float &amp; Temperature (<span
 class="math inline">\(^\circ\)</span>C) to resume training after
-pause.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">gpu_temp_critical_threshold_c</td>
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">Informational logging marker for severe
-thermal events.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">gpu_temp_poll_interval_seconds</td>
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">Seconds between temp checks during
-cooldown wait.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">use_galore</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Enable Gradient Low-Rank Projection for
-memory-efficient training.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">galore_rank</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Low-rank projection dimension for
-GaLore.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">galore_update_interval</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Steps between projection matrix
-recomputation.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">galore_scale</td>
-<td style="text-align: left;">float <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Scaling factor for projected
-gradients.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">galore_max_dim</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Maximum tensor dimension for GaLore
-projection.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">hf_output_dir</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">Directory for saving final model via
-<code>save_pretrained()</code>.</td>
-</tr>
-</tbody>
-</table>
+pause.<br />
+gpu_temp_critical_threshold_c &amp; float &amp; Informational logging
+marker for severe thermal events.<br />
+gpu_temp_poll_interval_seconds &amp; float &amp; Seconds between temp
+checks during cooldown wait.<br />
+use_galore &amp; bool &amp; Enable Gradient Low-Rank Projection for
+memory-efficient training.<br />
+galore_rank &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Low-rank projection dimension for GaLore.<br />
+galore_update_interval &amp; int <span class="math inline">\(\ge
+1\)</span> &amp; Steps between projection matrix recomputation.<br />
+galore_scale &amp; float <span class="math inline">\(\ge 0\)</span>
+&amp; Scaling factor for projected gradients.<br />
+galore_max_dim &amp; int <span class="math inline">\(\ge 1\)</span>
+&amp; Maximum tensor dimension for GaLore projection.<br />
+hf_output_dir &amp; string &amp; Directory for saving final model via
+<code>save_pretrained()</code>.<br />
+</p>
 </div>
 <h2 id="subsec:tokenizer-config">Tokenizer Configuration</h2>
 <p>The top-level <code>tokenizer</code> object is available to both
@@ -4394,89 +3533,43 @@ the embedding matrix always matches the tokenizer. In this mode
 <code>name_or_path</code> must be omitted.</p></li>
 </ul>
 <p>Table <a href="#tab:tokenizer-training" data-reference-type="ref"
-data-reference="tab:tokenizer-training">4</a> lists the
-<code>tokenizer.training</code> sub-object fields.</p>
-<div id="tab:tokenizer-training">
-<table>
-<caption><code>tokenizer.training.*</code> fields (required when
-<code>source=train_from_dataset</code>).</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Field</strong></th>
-<th style="text-align: left;"><strong>Type</strong></th>
-<th style="text-align: left;"><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Field</strong></td>
-<td style="text-align: left;"><strong>Type</strong></td>
-<td style="text-align: left;"><strong>Description</strong></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">algorithm</td>
-<td style="text-align: left;">enum (bpe, wordpiece, wordlevel,
-unigram)</td>
-<td style="text-align: left;">Tokenizer training algorithm.
-<code>bpe</code> (Byte Pair Encoding, GPT-2 style, default);
-<code>wordpiece</code> (original BERT); <code>wordlevel</code> (word
-lookup table); <code>unigram</code> (subword language model,
-auto-pruning).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vocab_size</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Target vocabulary size. Required for
+data-reference="tab:tokenizer-training">[tab:tokenizer-training]</a>
+lists the <code>tokenizer.training</code> sub-object fields.</p>
+<div class="longtable">
+<p>&gt;</p>
+<p>p<span>5.6cm</span>&gt;</p>
+<p>p<span>2.4cm</span>&gt;</p>
+<p>p<span>6.9cm</span></p>
+<p><strong>Field</strong> &amp; <strong>Type</strong> &amp;
+<strong>Description</strong><br />
+<strong>Field</strong> &amp; <strong>Type</strong> &amp;
+<strong>Description</strong><br />
+</p>
+<p>algorithm &amp; enum (bpe, wordpiece, wordlevel, unigram) &amp;
+Tokenizer training algorithm. <code>bpe</code> (Byte Pair Encoding,
+GPT-2 style, default); <code>wordpiece</code> (original BERT);
+<code>wordlevel</code> (word lookup table); <code>unigram</code>
+(subword language model, auto-pruning).<br />
+vocab_size &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Target vocabulary size. Required for
 <code>bpe</code>/<code>wordpiece</code>/<code>wordlevel</code>; optional
-for <code>unigram</code>.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">min_frequency</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-1\)</span></td>
-<td style="text-align: left;">Minimum token frequency to keep (default
-2).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">special_tokens</td>
-<td style="text-align: left;">array of string</td>
-<td style="text-align: left;">Special tokens registered in the tokenizer
-(default <code>[PAD]/[UNK]/[CLS]/[SEP]/[MASK]</code>).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">save_dir</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">Directory persisted via
-<code>save_pretrained()</code>.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">lowercase</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Lowercase all text before training
-(default <code>false</code>).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">strip_accents</td>
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">Strip diacritics before training (default
-<code>false</code>).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pre_tokenizer</td>
-<td style="text-align: left;">enum (whitespace, bytelevel, bert)</td>
-<td style="text-align: left;">Pre-tokenization strategy (default
-<code>whitespace</code>).</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">max_token_length</td>
-<td style="text-align: left;">int <span class="math inline">\(\ge
-0\)</span></td>
-<td style="text-align: left;">Per-token character cap; 0 disables the
-limit.</td>
-</tr>
-</tbody>
-</table>
+for <code>unigram</code>.<br />
+min_frequency &amp; int <span class="math inline">\(\ge 1\)</span> &amp;
+Minimum token frequency to keep (default 2).<br />
+special_tokens &amp; array of string &amp; Special tokens registered in
+the tokenizer (default
+<code>[PAD]/[UNK]/[CLS]/[SEP]/[MASK]</code>).<br />
+save_dir &amp; string &amp; Directory persisted via
+<code>save_pretrained()</code>.<br />
+lowercase &amp; bool &amp; Lowercase all text before training (default
+<code>false</code>).<br />
+strip_accents &amp; bool &amp; Strip diacritics before training (default
+<code>false</code>).<br />
+pre_tokenizer &amp; enum (whitespace, bytelevel, bert) &amp;
+Pre-tokenization strategy (default <code>whitespace</code>).<br />
+max_token_length &amp; int <span class="math inline">\(\ge 0\)</span>
+&amp; Per-token character cap; 0 disables the limit.<br />
+</p>
 </div>
 <h2 id="subsec:optimizer-config">Optimizer Configuration</h2>
 <p>The <code>training.optimizer</code> object has two fields:</p>
@@ -4519,140 +3612,53 @@ prefixed by the optimizer class name (e.g.,
 Suffixes</h3>
 <p>Table <a href="#tab:optimizer-specific-suffixes"
 data-reference-type="ref"
-data-reference="tab:optimizer-specific-suffixes">5</a> lists the
-additional global suffixes supported by each optimizer (prefixed by the
-optimizer name).</p>
-<div id="tab:optimizer-specific-suffixes">
-<table>
-<caption>Optimizer-specific global parameter suffixes. All keys are
-prefixed with the optimizer class name (e.g.,
-<code>sgd_momentum-momentum</code>).</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Optimizer</strong></th>
-<th style="text-align: left;"><strong>Specific Global
-Suffixes</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>Optimizer</strong></td>
-<td style="text-align: left;"><strong>Specific Global
-Suffixes</strong></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">sgd_momentum</td>
-<td style="text-align: left;"><code>momentum</code>,
-<code>nesterov</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">adamw</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">adafactor</td>
-<td style="text-align: left;"><code>beta2_decay</code>,
-<code>clip_threshold</code>, <code>eps1</code>, <code>eps2</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">galore_adamw</td>
-<td style="text-align: left;"><code>rank</code>,
-<code>update_proj_gap</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">prodigy</td>
-<td style="text-align: left;"><code>d_coef</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">lion</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">sophia</td>
-<td style="text-align: left;"><code>rho</code>,
-<code>update_k</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">muon</td>
-<td style="text-align: left;"><code>momentum</code>,
-<code>nesterov</code>, <code>ns_steps</code>, <code>ns_eps</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">turbo_muon</td>
-<td style="text-align: left;"><code>momentum</code>,
-<code>nesterov</code>, <code>ns_steps</code>, <code>ns_eps</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">radam</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">adan</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">adopt</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">ademamix</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mars_adamw</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">cautious_adamw</td>
-<td style="text-align: left;"><code>cautious_clip</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">lamb</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">schedulefree_adamw</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">shampoo</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">soap</td>
-<td style="text-align: left;">(none — shared suffixes only)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">anon</td>
-<td style="text-align: left;"><code>gamma</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">apollo</td>
-<td style="text-align: left;"><code>rank</code>,
-<code>update_proj_gap</code>, <code>scale</code>,
-<code>scale_type</code>, <code>proj_type</code>,
-<code>scale_front</code>, <code>disable_nl</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">apollo_mini</td>
-<td style="text-align: left;"><code>update_proj_gap</code>,
-<code>scale</code>, <code>proj_type</code>, <code>scale_front</code>,
-<code>disable_nl</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">q_apollo</td>
-<td style="text-align: left;"><code>rank</code>,
-<code>update_proj_gap</code>, <code>scale</code>,
-<code>scale_type</code>, <code>proj_type</code>,
+data-reference="tab:optimizer-specific-suffixes">[tab:optimizer-specific-suffixes]</a>
+lists the additional global suffixes supported by each optimizer
+(prefixed by the optimizer name).</p>
+<div class="longtable">
+<p>&gt;</p>
+<p>p<span>5.2cm</span>&gt;</p>
+<p>p<span>9.7cm</span></p>
+<p><strong>Optimizer</strong> &amp; <strong>Specific Global
+Suffixes</strong><br />
+<strong>Optimizer</strong> &amp; <strong>Specific Global
+Suffixes</strong><br />
+<br />
+</p>
+<p>sgd_momentum &amp; <code>momentum</code>, <code>nesterov</code><br />
+adamw &amp; (none — shared suffixes only)<br />
+adafactor &amp; <code>beta2_decay</code>, <code>clip_threshold</code>,
+<code>eps1</code>, <code>eps2</code><br />
+galore_adamw &amp; <code>rank</code>, <code>update_proj_gap</code><br />
+prodigy &amp; <code>d_coef</code><br />
+lion &amp; (none — shared suffixes only)<br />
+sophia &amp; <code>rho</code>, <code>update_k</code><br />
+muon &amp; <code>momentum</code>, <code>nesterov</code>,
+<code>ns_steps</code>, <code>ns_eps</code><br />
+turbo_muon &amp; <code>momentum</code>, <code>nesterov</code>,
+<code>ns_steps</code>, <code>ns_eps</code><br />
+radam &amp; (none — shared suffixes only)<br />
+adan &amp; (none — shared suffixes only)<br />
+adopt &amp; (none — shared suffixes only)<br />
+ademamix &amp; (none — shared suffixes only)<br />
+mars_adamw &amp; (none — shared suffixes only)<br />
+cautious_adamw &amp; <code>cautious_clip</code><br />
+lamb &amp; (none — shared suffixes only)<br />
+schedulefree_adamw &amp; (none — shared suffixes only)<br />
+shampoo &amp; (none — shared suffixes only)<br />
+soap &amp; (none — shared suffixes only)<br />
+anon &amp; <code>gamma</code><br />
+apollo &amp; <code>rank</code>, <code>update_proj_gap</code>,
+<code>scale</code>, <code>scale_type</code>, <code>proj_type</code>,
+<code>scale_front</code>, <code>disable_nl</code><br />
+apollo_mini &amp; <code>update_proj_gap</code>, <code>scale</code>,
+<code>proj_type</code>, <code>scale_front</code>,
+<code>disable_nl</code><br />
+q_apollo &amp; <code>rank</code>, <code>update_proj_gap</code>,
+<code>scale</code>, <code>scale_type</code>, <code>proj_type</code>,
 <code>scale_front</code>, <code>disable_nl</code>,
-<code>quant_bits</code></td>
-</tr>
-</tbody>
-</table>
+<code>quant_bits</code><br />
+</p>
 </div>
 <h2 id="subsec:sbert-config">SBERT Configuration</h2>
 <p>The <code>training.sbert</code> object configures Sentence-BERT
@@ -5614,7 +4620,9 @@ orthogonality-oriented updates.</p>
 Adaptive Optimizers</h2>
 <h4 id="sgd-with-momentum.">SGD with Momentum.</h4>
 <figure id="fig:opt-sgd-momentum">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/sgd-momentum.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of SGD with momentum: optional L2 weight decay,
 exponential momentum accumulation, and the fixed-step parameter
 update.</figcaption>
@@ -5664,7 +4672,9 @@ to implement.</p></li>
 </ul>
 <h4 id="adam-and-adamw.">Adam and AdamW.</h4>
 <figure id="fig:opt-adamw">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/adamw.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of AdamW: decoupled weight decay, first- and
 second-moment EMAs, bias correction, and the element-wise adaptive
 update.</figcaption>
@@ -5727,7 +4737,9 @@ independent of the adaptive scaling.</p></li>
 </ul>
 <h4 id="radam-rectified-adam.">RAdam (Rectified Adam).</h4>
 <figure id="fig:opt-radam">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/radam.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of RAdam: SMA-window rectification with an
 early-step fallback to momentum SGD.</figcaption>
 </figure>
@@ -5794,7 +4806,9 @@ Momentum and Variance Reduction (2024–2025)</h2>
 <h4 id="adan-adaptive-nesterov-momentum.">Adan (Adaptive Nesterov
 Momentum).</h4>
 <figure id="fig:opt-adan">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/adan.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Adan: Nesterov momentum estimation from the
 gradient difference, with three state buffers and a combined momentum
 step.</figcaption>
@@ -5854,7 +4868,9 @@ transformers).</p></li>
 <h4 id="adopt-adam-with-optimal-pruned-tuning.">ADOPT (Adam with Optimal
 Pruned Tuning).</h4>
 <figure id="fig:opt-adopt">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/adopt.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of ADOPT: the second moment from the previous step
 normalizes the current gradient before the first-moment
 update.</figcaption>
@@ -5909,7 +4925,9 @@ performance across vision, NLP, RL, and generative modeling.</p></li>
 <h4 id="ademamix-exponential-moving-average-mixture.">AdEMAMix
 (Exponential Moving Average Mixture).</h4>
 <figure id="fig:opt-ademamix">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/ademamix.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of AdEMAMix: parallel fast and slow gradient EMAs,
 mixed with a scheduled weight <span
 class="math inline">\(\alpha_t\)</span> before the adaptive
@@ -5974,7 +4992,9 @@ data-efficiency gain), suggesting reduced forgetting.</p></li>
 <h4 id="mars-make-adaptive-learning-rates-shine.">MARS (Make Adaptive
 learning Rates Shine).</h4>
 <figure id="fig:opt-mars">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/mars.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of MARS: a recursive variance-reduced gradient
 estimate feeding Adam-style first and second moments.</figcaption>
 </figure>
@@ -6034,7 +5054,9 @@ margins on GPT-2 pretraining.</p></li>
 <h4 id="cautious-optimizers-cautious-adamw-cautious-lion.">Cautious
 Optimizers (Cautious AdamW, Cautious Lion).</h4>
 <figure id="fig:opt-cautious">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/cautious.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Cautious AdamW: a consensus mask keeps only
 update coordinates where momentum and gradient agree.</figcaption>
 </figure>
@@ -6103,7 +5125,9 @@ Memory-Efficient, and Parameter-Free Optimizers</h2>
 id="lamb-layer-wise-adaptive-moments-optimizer-for-batch-training.">LAMB
 (Layer-wise Adaptive Moments optimizer for Batch training).</h4>
 <figure id="fig:opt-lamb">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/lamb.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of LAMB: per-layer Adam step rescaled by the trust
 ratio between weight and update norms.</figcaption>
 </figure>
@@ -6167,7 +5191,9 @@ batch.</p></li>
 </ul>
 <h4 id="schedule-free-adamw.">Schedule-Free AdamW.</h4>
 <figure id="fig:opt-schedulefree">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/schedulefree.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Schedule-Free AdamW: exploration stream <span
 class="math inline">\(z\)</span>, iterate average <span
 class="math inline">\(x\)</span>, and interpolation point <span
@@ -6238,7 +5264,9 @@ large-scale deep learning, and reinforcement learning.</p></li>
 </ul>
 <h4 id="adafactor.">Adafactor.</h4>
 <figure id="fig:opt-adafactor">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/adafactor.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Adafactor: factorized row/column second-moment
 accumulators, outer-product variance reconstruction, and RMS
 clipping.</figcaption>
@@ -6301,7 +5329,9 @@ than activations.</p></li>
 <h4 id="galore-gradient-low-rank-projection.">GaLore (Gradient Low-Rank
 Projection).</h4>
 <figure id="fig:opt-galore">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/galore.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of GaLore: periodic SVD projection of the gradient
 into a low-rank subspace, Adam in that subspace, and
 reconstruction.</figcaption>
@@ -6368,7 +5398,9 @@ results on billion-parameter models.</p></li>
 <h4 id="apollo-apollo-mini-and-q-apollo.">APOLLO, APOLLO-Mini, and
 Q-APOLLO.</h4>
 <figure id="fig:opt-apollo">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/apollo.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of the APOLLO family: Gaussian-projected moments,
 structured gradient scaling (channel-wise for APOLLO, scalar for
 APOLLO-Mini), and quantized state for Q-APOLLO.</figcaption>
@@ -6498,7 +5530,9 @@ id="anon-adaptivity-non-restricted-optimizer-with-novel-convergence-technique.">
 (Adaptivity Non-restricted Optimizer with Novel convergence
 technique).</h4>
 <figure id="fig:opt-anon">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/anon.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Anon: the IDU preconditioner refreshed at
 powers of two, with tunable adaptivity <span
 class="math inline">\(\gamma\)</span> and a bias-corrected momentum
@@ -6590,7 +5624,9 @@ problems and <span class="math inline">\(\mathcal{O}(\ln T /
 <h4 id="prodigy-approximating-the-distance-estimate.">Prodigy
 (Approximating the Distance Estimate).</h4>
 <figure id="fig:opt-prodigy">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/prodigy.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Prodigy: a cumulative signed-distance estimate
 that scales the adaptive step without a learning-rate
 schedule.</figcaption>
@@ -6652,7 +5688,9 @@ Geometric, and Orthogonality Optimizers</h2>
 <h4 id="shampoo-matrix-preconditioning-via-kronecker-products.">Shampoo
 (Matrix Preconditioning via Kronecker Products).</h4>
 <figure id="fig:opt-shampoo">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/shampoo.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Shampoo: Kronecker-factored Gram matrices,
 periodic eigendecomposition, and fourth-root preconditioning of the
 gradient.</figcaption>
@@ -6721,7 +5759,9 @@ convergence.</p></li>
 <h4 id="soap-shampoo-with-adam-in-eigenbasis.">SOAP (Shampoo with Adam
 in eigenbasis).</h4>
 <figure id="fig:opt-soap">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/soap.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of SOAP: Adam moments tracked in the Shampoo
 eigenbasis and rotated back to parameter space.</figcaption>
 </figure>
@@ -6788,7 +5828,9 @@ class="math inline">\(K\)</span> steps.</p></li>
 </ul>
 <h4 id="lion-evolved-sign-momentum.">Lion (EvoLved Sign Momentum).</h4>
 <figure id="fig:opt-lion">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/lion.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Lion: sign-of-momentum update with decoupled
 momentum accumulation and weight decay.</figcaption>
 </figure>
@@ -6839,7 +5881,9 @@ activation memory dominates.</p></li>
 id="sophia-second-order-hessian-information-with-optimized-approximation.">Sophia
 (Second-Order Hessian Information with Optimized Approximation).</h4>
 <figure id="fig:opt-sophia">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/sophia.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Sophia: diagonal Hutchinson Hessian estimate
 with clipped, curvature-aware element-wise steps.</figcaption>
 </figure>
@@ -6902,7 +5946,9 @@ second-pass fine-tuning.</p></li>
 <h4 id="muon-newton-schulz-orthogonalization.">Muon (Newton-Schulz
 Orthogonalization).</h4>
 <figure id="fig:opt-muon">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/muon.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Muon: Frobenius normalization followed by
 Newton-Schulz iterations that orthogonalize the update
 direction.</figcaption>
@@ -6958,7 +6004,9 @@ better-conditioned update geometry.</p></li>
 <h4 id="turbo-muon-aol-preconditioned-orthogonalization.">Turbo-Muon
 (AOL-Preconditioned Orthogonalization).</h4>
 <figure id="fig:opt-turbo-muon">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/turbo-muon.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of Turbo-Muon: almost-orthogonal preconditioning
 (AOL) before the Newton-Schulz iterations, reducing their
 count.</figcaption>
@@ -7003,7 +6051,9 @@ cost.</p></li>
 <h4 id="af-muon-adamw-free-tied-embedding-muon.">AF-Muon (AdamW-Free
 Tied-Embedding Muon).</h4>
 <figure id="fig:opt-af-muon">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/optimizers/af-muon.svg"
+alt="image" /></span></p>
 <figcaption>Step flow of AF-Muon: Muon’s spectral update for hidden
 matrices, a support-aware finite-cap clipped-row LMO for the tied
 vocabulary table, and RMS-normalized updates for one-dimensional
@@ -7371,7 +6421,9 @@ computational cost, memory footprint, and deployment simplicity.</p>
 Baselines: Standard and Sigmoid</h2>
 <h3 id="standard-softmax-attention">Standard Softmax Attention</h3>
 <figure id="fig:mixer-standard">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/standard.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of standard softmax attention: parallel Q/K/V
 projections, scaled dot-product scores, row-wise softmax, and output
 projection.</figcaption>
@@ -7416,7 +6468,9 @@ long contexts; KV cache dominates memory during generation.</p></li>
 </ul>
 <h3 id="sigmoid-attention">Sigmoid Attention</h3>
 <figure id="fig:mixer-sigmoid">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/sigmoid.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of sigmoid attention: an element-wise sigmoid
 replaces the row-wise softmax, so attention weights need not sum to
 one.</figcaption>
@@ -7463,7 +6517,9 @@ loss.</p></li>
 </ul>
 <h3 id="grouped-query-attention-gqa">Grouped-Query Attention (GQA)</h3>
 <figure id="fig:mixer-gqa">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gqa.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of grouped-query attention: keys and values are
 projected to fewer heads, expanded by repeat-interleave, and shared
 across each group of query heads.</figcaption>
@@ -7528,7 +6584,9 @@ choices.</p></li>
 Architectures</h2>
 <h3 id="retentive-networks-retnet">Retentive Networks (RetNet)</h3>
 <figure id="fig:mixer-retnet">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/retnet.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of RetNet: parallel Q/K/V projections feed a
 decayed state recurrence; the state carries across steps and the output
 reads it with the query.</figcaption>
@@ -7582,7 +6640,9 @@ bias; may truncate learned long-range patterns.</p></li>
 <h3 id="mamba-selective-state-space-models">Mamba: Selective State-Space
 Models</h3>
 <figure id="fig:mixer-mamba">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/mamba.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Mamba: a causal convolution feeds
 input-dependent <span class="math inline">\(\Delta\)</span>, <span
 class="math inline">\(B\)</span>, <span class="math inline">\(C\)</span>
@@ -7642,7 +6702,9 @@ attention.</p></li>
 Transformers: ODE Integration</h2>
 <h3 id="ode-transformer">ODE Transformer</h3>
 <figure id="fig:mixer-ode">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/ode.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of the ODE transformer block: the hidden state is
 integrated through one or more Euler/RK4 steps before the output is
 read.</figcaption>
@@ -7697,7 +6759,9 @@ stability.</p></li>
 </ul>
 <h2 id="test-time-memory-titans">Test-Time Memory: Titans</h2>
 <figure id="fig:mixer-titan">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/titan.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Titans test-time memory: dense Q/K/V attention
 runs over a local window while read and write gates update an
 associative memory that carries across steps.</figcaption>
@@ -7794,7 +6858,9 @@ bottleneck.</p>
 <h2 id="multi-head-latent-attention-mla">Multi-Head Latent Attention
 (MLA)</h2>
 <figure id="fig:mixer-mla">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/mla.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of multi-head latent attention: keys and values are
 down-projected to a low-rank latent, up-projected back, and attended
 with the query after RoPE.</figcaption>
@@ -7857,7 +6923,9 @@ latent rank is a fixed global budget shared across heads.</p></li>
 <h2 id="group-query-latent-attention-gqla">Group-Query Latent Attention
 (GQLA)</h2>
 <figure id="fig:mixer-gqla">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gqla.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of group-query latent attention: the shared latent
 cache is up-projected to key/value heads and combined with grouped
 queries.</figcaption>
@@ -7922,7 +6990,9 @@ path selection is a deployment-time heuristic.</p></li>
 <h2 id="multi-head-low-rank-attention-mlra">Multi-Head Low-Rank
 Attention (MLRA)</h2>
 <figure id="fig:mixer-mlra">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/mlra.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of multi-head low-rank attention: the latent is
 partitioned across sub-heads, each with its own up-projection, before
 attention.</figcaption>
@@ -7984,7 +7054,9 @@ MLA; inter-device all-reduce on output.</p></li>
 </ul>
 <h2 id="tucker-attention">Tucker Attention</h2>
 <figure id="fig:mixer-tucker">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/tucker.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Tucker attention: queries and key/values are
 projected through Tucker factors and reconstructed before the scaled dot
 product.</figcaption>
@@ -8051,7 +7123,9 @@ latency; rank selection is a per-task tuning problem.</p></li>
 <h2 id="interleaved-head-attention-iha">Interleaved Head Attention
 (IHA)</h2>
 <figure id="fig:mixer-iha">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/iha.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of interleaved-head attention: heads are
 interleaved into a latent key/value representation that is attended by
 the query.</figcaption>
@@ -8118,7 +7192,9 @@ class="math inline">\(H\)</span>.</p></li>
 <h2 id="grouped-head-latent-attention-gta">Grouped-head laTenT Attention
 (GTA)</h2>
 <figure id="fig:mixer-gta">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gta.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of grouped-head latent attention: a shared map
 produces the latent key/value state consumed by the grouped
 heads.</figcaption>
@@ -8178,7 +7254,9 @@ carefully.</p></li>
 <h2 id="multi-head-temporal-latent-attention-mtla">Multi-head Temporal
 Latent Attention (MTLA)</h2>
 <figure id="fig:mixer-mtla">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/mtla.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of multi-head temporal latent attention: a temporal
 compression stage produces the latent key/value state attended by the
 query.</figcaption>
@@ -8250,7 +7328,9 @@ and Synthesis</h2>
 <h2 id="compressed-convolutional-attention-cca">Compressed Convolutional
 Attention (CCA)</h2>
 <figure id="fig:mixer-cca">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/cca.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of compressed convolutional attention: a 1D
 convolution feeds a latent compression <span
 class="math inline">\(c\)</span>, which the query attends
@@ -8357,7 +7437,9 @@ bias; fused kernel needed for theoretical speedup.</p></li>
 id="compressed-convolutional-grouped-query-attention-ccgqa">Compressed
 Convolutional Grouped Query Attention (CCGQA)</h2>
 <figure id="fig:mixer-ccgqa">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/ccgqa.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of compressed convolutional grouped-query
 attention: the convolution latent supplies a grouped-query key/value
 expansion.</figcaption>
@@ -8443,7 +7525,9 @@ attention-style interpretation.</p>
 <h2 id="gaussian-mixture-attention-gma">Gaussian Mixture Attention
 (GMA)</h2>
 <figure id="fig:mixer-gma">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gma.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Gaussian-mixture attention: per-head Gaussian
 responsibilities route keys and values into a <span
 class="math inline">\(K\)</span>-slot memory that the query reads back,
@@ -8577,7 +7661,9 @@ comprehensive architectural comparisons.</p>
 <h2 id="sparse-transformer-factorized-strided-and-fixed-patterns">Sparse
 Transformer: Factorized Strided and Fixed Patterns</h2>
 <figure id="fig:mixer-sparse-transformer">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/sparse-transformer.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of the Sparse Transformer: a strided factorized
 pattern masks the score matrix before softmax.</figcaption>
 </figure>
@@ -8675,7 +7761,9 @@ practical efficiency.</p></li>
 id="longformer-sliding-window-dilation-and-global-tokens">Longformer:
 Sliding Window, Dilation, and Global Tokens</h2>
 <figure id="fig:mixer-longformer">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/longformer.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Longformer: sliding-window and global-token
 masks are applied to the score matrix before softmax.</figcaption>
 </figure>
@@ -8754,7 +7842,9 @@ patterns.</p></li>
 <h2 id="swa-with-attention-sinks-sliding-window-plus-a-sink-prefix">SWA
 with Attention Sinks: Sliding Window Plus a Sink Prefix</h2>
 <figure id="fig:mixer-swa">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/swa.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of SWA with attention sinks: the first <span
 class="math inline">\(s\)</span> sink tokens and a causal <span
 class="math inline">\(w-s\)</span> sliding window are unioned into a
@@ -8851,7 +7941,9 @@ content-adaptive selection.</p></li>
 <h2 id="bigbird-random-local-and-global-sparse-graph">BigBird: Random,
 Local, and Global Sparse Graph</h2>
 <figure id="fig:mixer-bigbird">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/bigbird.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of BigBird: local, random, and global adjacency
 masks the score matrix before softmax.</figcaption>
 </figure>
@@ -8937,7 +8029,9 @@ g\)</span> hyperparameters remains task-dependent.</p></li>
 Attention: Differentiable Top-<span class="math inline">\(k\)</span>
 Selection</h2>
 <figure id="fig:mixer-sparsek">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/sparsek.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of SparseK: a differentiable top-<span
 class="math inline">\(k\)</span> selector keeps only the highest-scoring
 keys before softmax.</figcaption>
@@ -9020,7 +8114,9 @@ efficiency on some hardware; scoring network adds overhead.</p></li>
 id="nsa-native-sparse-attention-hardware-aligned-hierarchical-branches">NSA
 (Native Sparse Attention): Hardware-Aligned Hierarchical Branches</h2>
 <figure id="fig:mixer-nsa">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/nsa.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of NSA: hierarchical block scoring and selection
 restrict the score matrix to selected blocks.</figcaption>
 </figure>
@@ -9132,7 +8228,9 @@ overhead.</p></li>
 <h2 id="fasa-frequency-aware-sparse-attention">FASA: Frequency-Aware
 Sparse Attention</h2>
 <figure id="fig:mixer-fasa">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/fasa.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of FASA: a frequency-aware prune stage (evaluation
 only) drops low-value key blocks before softmax.</figcaption>
 </figure>
@@ -9236,7 +8334,9 @@ evaluation.</p>
 <h2 id="spargeattn-two-stage-block-level-filtering">SpargeAttn:
 Two-Stage Block-Level Filtering</h2>
 <figure id="fig:mixer-sparge">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/sparge.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of SpargeAttn: a sparse predictor (evaluation only)
 prunes key blocks before softmax.</figcaption>
 </figure>
@@ -9332,7 +8432,9 @@ id="msa-minimax-sparse-attention-blockwise-sparse-attention-with-lightweight-ind
 (MiniMax Sparse Attention): Blockwise Sparse Attention with Lightweight
 Index Branch</h2>
 <figure id="fig:mixer-msa">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/msa.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of MSA: a block-sparse mask restricts the score
 matrix before softmax.</figcaption>
 </figure>
@@ -9448,7 +8550,9 @@ id="sparda-sparse-decoupled-attention-forecast-guided-lookahead-block-selection"
 (Sparse Decoupled Attention): Forecast-Guided Lookahead Block
 Selection</h2>
 <figure id="fig:mixer-sparda">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/sparda.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of SparDA: a forecast projection guides lookahead
 block selection before softmax.</figcaption>
 </figure>
@@ -9609,7 +8713,9 @@ published 2023–2026, analyzing their mathematical foundations, hardware
 efficiency characteristics, and empirical trade-offs.</p>
 <h2 id="gated-linear-attention-gla">1. Gated Linear Attention (GLA)</h2>
 <figure id="fig:mixer-gla">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gla.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of GLA: a sigmoid gate decays the recurrent state
 before the key/value outer product is added.</figcaption>
 </figure>
@@ -9696,44 +8802,28 @@ complexity <span class="math inline">\(\mathcal{O}(nLd^2/C)\)</span>
 where <span class="math inline">\(L\)</span> is the number of attention
 heads and <span class="math inline">\(C\)</span> is chunk size.</p>
 <h3 id="strengths-and-limitations">Strengths and Limitations</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Aspect</strong></th>
-<th style="text-align: left;"><strong>Strengths</strong></th>
-<th style="text-align: left;"><strong>Limitations</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">Computational efficiency</td>
-<td style="text-align: left;">Sub-quadratic training via chunkwise
+<div class="tabularx">
+<p><span>0.95</span><span>Xp<span>4cm</span>p<span>4cm</span></span>
+<strong>Aspect</strong> &amp; <strong>Strengths</strong> &amp;
+<strong>Limitations</strong><br />
+Computational efficiency &amp; Sub-quadratic training via chunkwise
 parallelism. Constant-memory inference <span
-class="math inline">\(O(d^2)\)</span>.</td>
-<td style="text-align: left;">Requires custom CUDA/Triton kernels; not
-available in all frameworks.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Context generalization</td>
-<td style="text-align: left;">Extends 2K-token training to 20K+ tokens
-with negligible perplexity degradation.</td>
-<td style="text-align: left;">Still underperforms softmax on
-retrieval-heavy benchmarks (needle-in-haystack).</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Selectivity</td>
-<td style="text-align: left;">Per-key-dimension data-dependent
-decay.</td>
-<td style="text-align: left;">Gate structure limits per-key-value
-selectivity; no direct control over which specific associations to
-erase.</td>
-</tr>
-</tbody>
-</table>
+class="math inline">\(O(d^2)\)</span>. &amp; Requires custom CUDA/Triton
+kernels; not available in all frameworks.<br />
+Context generalization &amp; Extends 2K-token training to 20K+ tokens
+with negligible perplexity degradation. &amp; Still underperforms
+softmax on retrieval-heavy benchmarks (needle-in-haystack).<br />
+Selectivity &amp; Per-key-dimension data-dependent decay. &amp; Gate
+structure limits per-key-value selectivity; no direct control over which
+specific associations to erase.<br />
+</p>
+</div>
 <h2 id="deltanet-error-correcting-linear-attention">2. DeltaNet:
 Error-Correcting Linear Attention</h2>
 <figure id="fig:mixer-deltanet">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/deltanet.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of DeltaNet: the beta gate applies an
 error-correcting delta rule to the recurrent state.</figcaption>
 </figure>
@@ -9812,44 +8902,29 @@ class="math inline">\(\mathbf{S}_{t}\)</span></p>
 </div>
 </div>
 <h3 id="strengths-and-limitations-1">Strengths and Limitations</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Aspect</strong></th>
-<th style="text-align: left;"><strong>Strengths</strong></th>
-<th style="text-align: left;"><strong>Limitations</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">Associative recall</td>
-<td style="text-align: left;">Perfect recall on Multi-Query Associative
+<div class="tabularx">
+<p><span>0.95</span><span>Xp<span>4cm</span>p<span>4cm</span></span>
+<strong>Aspect</strong> &amp; <strong>Strengths</strong> &amp;
+<strong>Limitations</strong><br />
+Associative recall &amp; Perfect recall on Multi-Query Associative
 Recall (MQAR) benchmark; error-correcting semantics naturally fit
-retrieval patterns.</td>
-<td style="text-align: left;">Without global forgetting, memory still
-crowds over extreme sequence lengths; requires periodic reset mechanisms
-for unbounded context.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Theory</td>
-<td style="text-align: left;">Grounded in online MSE optimization; clear
-connection to test-time training paradigm.</td>
-<td style="text-align: left;">Requires L2-normalized keys for numerical
-stability; double-width normalization adds overhead.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Throughput</td>
-<td style="text-align: left;">WY representation enables efficient
-chunkwise training.</td>
-<td style="text-align: left;">Slightly slower than Mamba2 per-token due
-to richer transition matrices (rank-1 instead of diagonal).</td>
-</tr>
-</tbody>
-</table>
+retrieval patterns. &amp; Without global forgetting, memory still crowds
+over extreme sequence lengths; requires periodic reset mechanisms for
+unbounded context.<br />
+Theory &amp; Grounded in online MSE optimization; clear connection to
+test-time training paradigm. &amp; Requires L2-normalized keys for
+numerical stability; double-width normalization adds overhead.<br />
+Throughput &amp; WY representation enables efficient chunkwise training.
+&amp; Slightly slower than Mamba2 per-token due to richer transition
+matrices (rank-1 instead of diagonal).<br />
+</p>
+</div>
 <h2 id="gated-deltanet-synthesis-of-gating-and-error-correction">3.
 Gated DeltaNet: Synthesis of Gating and Error Correction</h2>
 <figure id="fig:mixer-gated-deltanet">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gated-deltanet.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Gated DeltaNet: decay and write gates modulate
 the delta-rule state update.</figcaption>
 </figure>
@@ -9945,7 +9020,9 @@ transition matrices.</p>
 <h2 id="hgrn2-hierarchical-gating-with-outer-product-expansion">4.
 HGRN2: Hierarchical Gating with Outer-Product Expansion</h2>
 <figure id="fig:mixer-hgrn2">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/hgrn2.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of HGRN2: a hierarchical gate mixes the carried
 state with the key/value outer product.</figcaption>
 </figure>
@@ -10013,7 +9090,9 @@ flexibility than delta-rule variants.</p>
 <h2 id="forgetting-transformer-fox-gating-in-softmax-logit-space">5.
 Forgetting Transformer (FoX): Gating in Softmax Logit Space</h2>
 <figure id="fig:mixer-fox">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/fox.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of FoX: a learned forget gate becomes an additive
 log-bias on the score matrix.</figcaption>
 </figure>
@@ -10089,7 +9168,9 @@ with KV cache, limiting extreme sequence lengths.</p>
 <h2 id="gated-attention-post-sdpa-sigmoid-gating">6. Gated Attention
 (Post-SDPA Sigmoid Gating)</h2>
 <figure id="fig:mixer-gated-softmax">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gated-softmax.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of post-SDPA gated attention: a sigmoid gate scales
 the softmax output before the projection.</figcaption>
 </figure>
@@ -10162,7 +9243,9 @@ model scales from 800M to 110B parameters consistently.</p></li>
 <h2 id="gated-deltanet-2-decoupled-channel-wise-erase-and-write">7.
 Gated DeltaNet-2: Decoupled Channel-wise Erase and Write</h2>
 <figure id="fig:mixer-gated-deltanet2">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/gated-deltanet2.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Gated DeltaNet-2: decoupled channel-wise erase
 and write gates act inside the delta rule.</figcaption>
 </figure>
@@ -10330,7 +9413,9 @@ id="kimi-delta-attention-kda-channel-wise-decay-gating-for-the-delta-rule">8.
 Kimi Delta Attention (KDA): Channel-wise Decay Gating for the Delta
 Rule</h2>
 <figure id="fig:mixer-kda">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/kda.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of KDA: channel-wise decay and a scalar write gate
 modulate the delta-rule state update.</figcaption>
 </figure>
@@ -10512,37 +9597,20 @@ softmax models with minimal code changes; best for practitioners wanting
 immediate gains without major refactoring.</p></li>
 </ol>
 <h3 id="hardware-considerations">Hardware Considerations</h3>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: left;"><strong>Hardware Target</strong></th>
-<th style="text-align: left;"><strong>Recommended
-Architectures</strong></th>
-<th style="text-align: left;"><strong>Notes</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">GPU (H100/A100)</td>
-<td style="text-align: left;">Gated Softmax, FoX, Gated DeltaNet, Gated
-DeltaNet-2</td>
-<td style="text-align: left;">Mature softmax/linear implementations.
-GLA/DeltaNet require custom kernels.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">TPU (high memory)</td>
-<td style="text-align: left;">GLA, DeltaNet, Gated DeltaNet, Gated
-DeltaNet-2, HGRN2</td>
-<td style="text-align: left;">Hardware supports efficient matmuls;
-linear recurrent methods shine.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Mobile/Edge</td>
-<td style="text-align: left;">RetNet, lightweight Gated Softmax</td>
-<td style="text-align: left;">Constant-memory inference critical.</td>
-</tr>
-</tbody>
-</table>
+<div class="tabularx">
+<p><span>0.95</span><span>Xp<span>3.5cm</span>p<span>3.5cm</span></span>
+<strong>Hardware Target</strong> &amp; <strong>Recommended
+Architectures</strong> &amp; <strong>Notes</strong><br />
+GPU (H100/A100) &amp; Gated Softmax, FoX, Gated DeltaNet, Gated
+DeltaNet-2 &amp; Mature softmax/linear implementations. GLA/DeltaNet
+require custom kernels.<br />
+TPU (high memory) &amp; GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2,
+HGRN2 &amp; Hardware supports efficient matmuls; linear recurrent
+methods shine.<br />
+Mobile/Edge &amp; RetNet, lightweight Gated Softmax &amp;
+Constant-memory inference critical.<br />
+</p>
+</div>
 <h1 id="sec:annex-norm-bitnet-mod">Normalization, Quantization, Depth
 Routing, and Runtime Algorithms</h1>
 <p>This annex collects the implementation-level detail for normalization
@@ -11061,7 +10129,9 @@ router regularization.</p></li>
 </ul>
 <h2 id="engram-conditional-memory">Engram Conditional Memory</h2>
 <figure id="fig:mixer-engram">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/engram.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Engram conditional memory: a causal depthwise
 convolution supplies short-range context, N-gram hash lookups retrieve
 per-order embeddings, and the lookups are summed with the convolution
@@ -12896,7 +11966,9 @@ being <span class="math inline">\(\sim\)</span>20% smaller and <span
 class="math inline">\(\sim\)</span>30% cheaper per forward, and by +17
 points on CIFAR-100 at matched recipe.</p>
 <figure id="fig:mixer-ssog">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/ssog.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of SSOG: values pass through separable row and
 column Gaussian filter passes per atom, with optional content steering
 of the atom parameters.</figcaption>
@@ -13076,7 +12148,9 @@ class="math inline">\(L_t = \|x_t\|^2 + \lambda_t\)</span>.</p>
 <h3 id="falcon-1-scalar-nlms-regression">Falcon-1: Scalar NLMS
 Regression</h3>
 <figure id="fig:mixer-falcon1">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/falcon1.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Falcon-1: the prefix-aligned key/value pair
 drives a scalar NLMS delta-rule update of the fast-weight
 state.</figcaption>
@@ -13108,7 +12182,9 @@ after the positive-decay renormalization.</p>
 <h3 id="falcon-2-per-column-nlms-regression">Falcon-2: Per-Column NLMS
 Regression</h3>
 <figure id="fig:mixer-falcon2">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/falcon2.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Falcon-2: per-column NLMS step sizes update the
 fast-weight state channel by channel.</figcaption>
 </figure>
@@ -13131,7 +12207,9 @@ class="math inline">\(\Sigma = \sqrt{\tilde{\boldsymbol{\eta}}}\)</span>
 <h3 id="falcon-3-sliding-window-minibatch-regression">Falcon-3:
 Sliding-Window Minibatch Regression</h3>
 <figure id="fig:mixer-falcon3">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/falcon3.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Falcon-3: a sliding window of prefix-aligned
 pairs provides the spectral statistic and the minibatch
 write.</figcaption>
@@ -13174,12 +12252,16 @@ yields purely additive (Hebbian) writes with energy-normalized
 gains.</p>
 <h3 id="falcon-1a-and-falcon-2a">Falcon-1A and Falcon-2A</h3>
 <figure id="fig:mixer-falcon1a">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/falcon1a.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Falcon-1A: an energy-normalized additive
 (Hebbian) write with a derived decay.</figcaption>
 </figure>
 <figure id="fig:mixer-falcon2a">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/falcon2a.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Falcon-2A: per-column additive writes with a
 per-channel decay.</figcaption>
 </figure>
@@ -13202,7 +12284,9 @@ Falcon-2A).</p>
 <h3 id="falcon-3a-sliding-window-inner-product">Falcon-3A:
 Sliding-Window Inner-Product</h3>
 <figure id="fig:mixer-falcon3a">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/falcon3a.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of Falcon-3A: a sliding-window mean-energy
 statistic normalizes the additive window write.</figcaption>
 </figure>
@@ -14667,7 +13751,9 @@ and the 23 optimizer families.</p>
 <h2 id="conformer-convolution-augmented-attention">Conformer:
 Convolution-augmented Attention</h2>
 <figure id="fig:mixer-conformer">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/mixers/conformer.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of the Conformer block: a Macaron half-step
 feed-forward layer, multi-head self-attention with relative sinusoidal
 positional encodings, the convolution module (pointwise <span
@@ -15005,7 +14091,9 @@ data-reference="tab:audio-sizes">[tab:audio-sizes]</a>.</p>
 <h2 id="the-frankenstein_audio-model-class">The
 <code>frankenstein_audio</code> Model Class</h2>
 <figure id="fig:audio-frontend">
-
+<p><span><img loading="lazy" decoding="async"
+src="/frankenstein-transformer/paper/figures/audio_frontend.svg"
+alt="image" /></span></p>
 <figcaption>Dataflow of the audio frontend: waveform <span
 class="math inline">\(\to\)</span> 25 ms/10 ms framing <span
 class="math inline">\(\to\)</span> 80-bin log-mel (or spectrogram, or
@@ -15582,7 +14670,7 @@ head keeps <span class="math inline">\(3.94\)</span>M, leaving <span
 class="math inline">\(4.15\)</span>M total parameters—the paper’s own
 accounting, where the head is dropped only for deployment.</p>
 <p>Table <a href="#tab:eelbert-results" data-reference-type="ref"
-data-reference="tab:eelbert-results">14</a> summarises the reference
+data-reference="tab:eelbert-results">9</a> summarises the reference
 results reported by <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results">

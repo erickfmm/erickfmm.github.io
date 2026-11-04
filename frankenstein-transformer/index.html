@@ -557,6 +557,7 @@ pre {
 .paper-content .math display { display: block; margin: 12px 0; overflow-x: auto; }
 .paper-content .citation { color: var(--text-muted); font-size: 13px; }
 .paper-content figure { margin: 16px 0; text-align: center; }
+.paper-content figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; padding: 12px; background: #ffffff; border: 2px solid var(--border); border-radius: var(--radius); }
 .paper-content figcaption { font-size: 13px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
 .paper-content .paper-figure-placeholder { border: 1px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; margin: 16px 0; background: var(--surface); }
 .paper-content .paper-figure-caption { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
@@ -3170,8 +3171,8 @@ async function loadPaperContent() {
 // app theme and reference local-only MathJax paths), and prepends a PDF banner.
 function extractPaperBodyHtml(rawHtml, pdfUrl) {
   const bannerNote = lang === 'en'
-    ? '📄 <strong>Note:</strong> Diagrams (TikZ) are only available in the <a href="' + pdfUrl + '">PDF version</a>. Download the PDF to view all figures and algorithms.'
-    : '📄 <strong>Nota:</strong> Los diagramas (TikZ) solo están disponibles en la <a href="' + pdfUrl + '">versión PDF</a>. Descarga el PDF para ver todas las figuras y algoritmos.';
+    ? '📄 <strong>Figures</strong> are rendered inline (SVG). The <a href="' + pdfUrl + '">PDF version</a> is the typeset reference and still includes the algorithmic pseudocode.'
+    : '📄 Las <strong>figuras</strong> se muestran en línea (SVG). La <a href="' + pdfUrl + '">versión PDF</a> es la referencia tipográfica e incluye además el pseudocódigo de los algoritmos.';
   const banner = '<div class="paper-banner">' + bannerNote + '</div>';
 
   const trimmed = rawHtml.trimStart();

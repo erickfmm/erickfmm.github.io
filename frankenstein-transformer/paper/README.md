@@ -14,7 +14,9 @@ paper/
 │   ├── paper-es.tex
 │   └── paper-es.pdf    # compiled output
 ├── bibliography/       # *.bib referenced by \bibliography{../bibliography/...}
-├── flatten_tex.py      # inlines \input + .bbl into one .tex for pandoc
+├── figures/            # SVG figures generated from docs/paper/figures/*.mmd
+├── flatten_tex.py      # inlines \input + .bbl; --web swaps figure PDFs for SVG
+├── postprocess_html.py # marks the pandoc <img> output as lazy-loaded
 ├── paper-en.html       # pandoc output (English)  ← used by the web app
 ├── paper-es.html       # pandoc output (Spanish)  ← used by the web app
 └── README.md
@@ -32,6 +34,8 @@ paper/
   ```
 - `pandoc` (≥ 3.x).
 - Python 3 (stdlib only; no deps).
+- `pnpm` + a Chrome/Chromium binary, only to rebuild the Mermaid figures
+  (`docs/paper/figures/build-figures.sh`).
 
 ## Full rebuild
 
@@ -54,8 +58,10 @@ From this directory (`frankenstein-transformer/paper/`):
           pdflatex -interaction=nonstopmode paper-es.tex )
 
 # 2) Flatten each paper into a single self-contained .tex (inline \input + .bbl)
-python3 flatten_tex.py en/paper.tex     en/paper.bbl     /tmp/paper-en-flat.tex
-python3 flatten_tex.py es/paper-es.tex  es/paper-es.bbl  /tmp/paper-es-flat.tex
+#    --web unwraps \fitfigure (pandoc would drop it) and points every
+#    \includegraphics at the SVG copy under /frankenstein-transformer/paper/figures/.
+python3 flatten_tex.py en/paper.tex     en/paper.bbl     /tmp/paper-en-flat.tex --web
+python3 flatten_tex.py es/paper-es.tex  es/paper-es.bbl  /tmp/paper-es-flat.tex --web
 
 # 3) Convert to standalone HTML with MathJax + TOC
 pandoc /tmp/paper-en-flat.tex -f latex -t html5 \
@@ -65,12 +71,26 @@ pandoc /tmp/paper-en-flat.tex -f latex -t html5 \
 pandoc /tmp/paper-es-flat.tex -f latex -t html5 \
     --standalone --mathjax --toc --toc-depth=3 -V lang=es \
     -o paper-es.html
+
+# 4) Mark the 70+ inline figures as lazy-loaded
+python3 postprocess_html.py paper-en.html paper-es.html
+```
+
+The SVG figures themselves are generated in the main repo and copied here:
+
+```bash
+( cd ../../../docs/paper/figures && ./build-figures.sh svg )
+# then copy docs/paper/figures/**/*.svg ->
+#   frankenstein-transformer/paper/figures/**/*.svg
 ```
 
 ## Notes
 
-- TikZ diagrams do not render in the HTML output. The web app already shows a
-  banner telling readers to download the PDF for figures and algorithms.
+- Figures are inline SVG in the HTML. `\fitfigure` (an `\adjustbox` wrapper
+  pandoc does not understand) is unwrapped by `flatten_tex.py --web`; without
+  that flag pandoc silently drops every figure and leaves only the caption.
+- Algorithmic pseudocode (`algorithm`/`algpseudocode`) still does not render in
+  the HTML output; the banner points readers to the PDF for it.
 - The compiled PDFs are also served at `/frankenstein-transformer/paper/en.pdf`
   and `es.pdf` (the top-level copies kept in sync with `en/paper.pdf` and
   `es/paper-es.pdf`).
