@@ -210,7 +210,7 @@ Presentamos Frankenstein Transformer, un conjunto de herramientas CLI
 basado en configuración (<code>frankenstein-transformer</code>) que
 unifica la definición, el entrenamiento, el despliegue y la inferencia
 de modelos tras un único esquema YAML estricto. El conjunto de
-herramientas cubre cuarenta y cinco mezcladores de secuencia en nueve
+herramientas cubre cuarenta y siete mezcladores de secuencia en diez
 familias y veinticuatro familias de optimizadores con control de
 hiperparámetros por grupo de parámetros, y soporta clases de modelo
 encoder, decoder, Vision Transformer y audio para masked language
@@ -760,6 +760,19 @@ id="toc-pseudocódigo-algorítmico-17">Pseudocódigo Algorítmico</a></li>
 <li><a href="#características-clave-19"
 id="toc-características-clave-19">Características Clave</a></li>
 </ul></li>
+<li><a
+href="#lsa-atención-dispersa-latente-clustering-semántico-de-claves-con-selección-top-k"
+id="toc-lsa-atención-dispersa-latente-clustering-semántico-de-claves-con-selección-top-k">LSA
+(Atención Dispersa Latente): Clustering Semántico de Claves con
+Selección Top-k</a>
+<ul>
+<li><a href="#formulación-matemática-19"
+id="toc-formulación-matemática-19">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-18"
+id="toc-pseudocódigo-algorítmico-18">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-20"
+id="toc-características-clave-20">Características Clave</a></li>
+</ul></li>
 <li><a href="#espacio-de-diseño-y-criterios-de-selección"
 id="toc-espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
 Criterios de Selección</a></li>
@@ -1100,12 +1113,12 @@ Arquitectónico: Codificaciones Posicionales</a></li>
 <li><a href="#sec:annex-ssog" id="toc-sec:annex-ssog">SSOG: Atención
 Separable Sum of Gaussians</a>
 <ul>
-<li><a href="#formulación-matemática-19"
-id="toc-formulación-matemática-19">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-18"
-id="toc-pseudocódigo-algorítmico-18">Pseudocódigo Algorítmico</a></li>
-<li><a href="#características-clave-20"
-id="toc-características-clave-20">Características Clave</a></li>
+<li><a href="#formulación-matemática-20"
+id="toc-formulación-matemática-20">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-19"
+id="toc-pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-21"
+id="toc-características-clave-21">Características Clave</a></li>
 </ul></li>
 <li><a href="#sec:annex-fast-weight"
 id="toc-sec:annex-fast-weight">Atención de Peso Rápido para Aprendizaje
@@ -1258,10 +1271,10 @@ Ejecutivo</a></li>
 id="toc-conformer-atención-aumentada-con-convolución">Conformer:
 Atención Aumentada con Convolución</a>
 <ul>
-<li><a href="#formulación-matemática-20"
-id="toc-formulación-matemática-20">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-19"
-id="toc-pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</a></li>
+<li><a href="#formulación-matemática-21"
+id="toc-formulación-matemática-21">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-20"
+id="toc-pseudocódigo-algorítmico-20">Pseudocódigo Algorítmico</a></li>
 <li><a href="#mapeo-de-implementación-y-desviaciones"
 id="toc-mapeo-de-implementación-y-desviaciones">Mapeo de Implementación
 y Desviaciones</a></li>
@@ -1413,7 +1426,7 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cuarenta y seis mezcladores de secuencia en diez
+estricto que soporta cuarenta y siete mezcladores de secuencia en diez
 familias y veinticuatro familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
@@ -1831,7 +1844,7 @@ data-reference-type="ref" data-reference="sec:annex-mhc">22</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
-<p>El sistema implementa cuarenta y seis mezcladores de secuencia
+<p>El sistema implementa cuarenta y siete mezcladores de secuencia
 organizados en diez categorías funcionales que reflejan cómo cada método
 equilibra expresividad, costo computacional y memoria.</p>
 <ol>
@@ -1842,11 +1855,11 @@ enrutamiento global completo a costo cuadrático.</p></li>
 bloques tipo ODE y Titans mantienen estado para inferencia en tiempo
 constante mediante recurrencia, espacios de estados selectivos,
 profundidad continua o memoria en tiempo de prueba.</p></li>
-<li><p><strong>Patrones dispersos</strong> (10): Sparse Transformer,
+<li><p><strong>Patrones dispersos</strong> (11): Sparse Transformer,
 Longformer, SWA con sumideros de atención, BigBird, SparseK, NSA,
-SpargeAttn, FASA, MSA y SparDA reducen el costo cuadrático mediante
-dispersión estructurada, selección de tokens o poda sin
-entrenamiento.</p></li>
+SpargeAttn, FASA, MSA, SparDA y LSA reducen el costo cuadrático mediante
+dispersión estructurada, selección de tokens, poda sin entrenamiento o
+clustering semántico de claves.</p></li>
 <li><p><strong>Mecanismos con compuerta</strong> (8): GLA, DeltaNet,
 Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax y KDA
 introducen control dependiente de los datos sobre retención, olvido y
@@ -1881,17 +1894,18 @@ data-reference="sec:annex-17">30</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
-<figcaption>Taxonomía de los cuarenta y seis mezcladores de secuencia en
-diez categorías funcionales. Las líneas base densas ofrecen enrutamiento
-global completo a costo cuadrático; los métodos recurrentes comprimen el
-estado para inferencia en tiempo constante; las variantes dispersas
-restringen el patrón de atención; los mecanismos con compuerta modulan
-retención y olvido; los métodos latentes comprimen las representaciones
-clave–valor; la memoria condicional añade búsquedas de lectura/escritura
-en tiempo de prueba; la memoria indexada por token traslada capacidad de
-valores a tablas de búsqueda; los métodos de peso rápido formulan la
-transición de estado como una regla de aprendizaje en línea; los métodos
-geométricos codifican priors estructurados.</figcaption>
+<figcaption>Taxonomía de los cuarenta y siete mezcladores de secuencia
+en diez categorías funcionales. Las líneas base densas ofrecen
+enrutamiento global completo a costo cuadrático; los métodos recurrentes
+comprimen el estado para inferencia en tiempo constante; las variantes
+dispersas restringen el patrón de atención; los mecanismos con compuerta
+modulan retención y olvido; los métodos latentes comprimen las
+representaciones clave–valor; la memoria condicional añade búsquedas de
+lectura/escritura en tiempo de prueba; la memoria indexada por token
+traslada capacidad de valores a tablas de búsqueda; los métodos de peso
+rápido formulan la transición de estado como una regla de aprendizaje en
+línea; los métodos geométricos codifican priors
+estructurados.</figcaption>
 </figure>
 <h2 id="familias-densa-y-recurrente">Familias Densa y Recurrente</h2>
 <p>Las líneas base densas—softmax estándar <span class="citation"
@@ -1964,8 +1978,8 @@ probabilístico.</figcaption>
 </figure>
 <h2 id="extensiones-de-atención-dispersa">Extensiones de Atención
 Dispersa</h2>
-<p>El registro incluye diez bloques dispersos <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026"></span>.
+<p>El registro incluye once bloques dispersos <span class="citation"
+data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026 kubicek_lsa_2026"></span>.
 Dos métodos en tiempo de inferencia, <code>fasa_attn</code> y
 <code>sparge_attn</code>, aplican su heurística dispersa solo cuando el
 modelo está en modo evaluación: durante el entrenamiento la capa híbrida
@@ -1975,11 +1989,16 @@ class="math inline">\(\mathbf{q}/\mathbf{k}/\mathbf{v}/\mathbf{o}\)</span>,
 de modo que los pesos entrenados son exactamente los que lee la ruta
 dispersa en inferencia. <code>swa_attn</code> también es sin
 entrenamiento pero es un mixer entrenable normal, por lo que ejecuta su
-patrón de ventana tanto en entrenamiento como en inferencia. Las
-formulaciones, el pseudocódigo, las características por bloque y una
-tabla comparativa se recopilan en el Apéndice <a
-href="#sec:annex-sparse" data-reference-type="ref"
-data-reference="sec:annex-sparse">18</a>.</p>
+patrón de ventana tanto en entrenamiento como en inferencia. LSA es el
+selector semántico de la familia: las claves se agrupan y se clusterizan
+con Ward por bloque de 512 tokens, y cada consulta puntúa los centroides
+de buckets en caché en lugar de todas las claves, seleccionando los
+<span class="math inline">\(p\)</span> buckets mejores que se expanden a
+sus <span class="math inline">\(k\)</span> claves de largo alcance sobre
+sumideros y una ventana de un bloque. Las formulaciones, el
+pseudocódigo, las características por bloque y una tabla comparativa se
+recopilan en el Apéndice <a href="#sec:annex-sparse"
+data-reference-type="ref" data-reference="sec:annex-sparse">18</a>.</p>
 <figure id="fig:sparse-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/sparse-map.svg" alt="image" /></span></p>
 
 <figcaption>Decisiones de diseño en atención dispersa. Los métodos
@@ -2573,7 +2592,7 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las cuarenta y seis arquitecturas de mezclador implementadas abarcan
+<p>Las cuarenta y siete arquitecturas de mezclador implementadas abarcan
 las principales direcciones de investigación en modelado de secuencias,
 pero ciertos vacíos permanecen. El sistema carece de arquitecturas
 híbridas recientes como Griffin <span class="citation"
@@ -2672,7 +2691,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y seis mezcladores de secuencia y veinticuatro familias de
+cuarenta y siete mezcladores de secuencia y veinticuatro familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -2766,7 +2785,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>142</span> urlstyle</p>
+<p><span>143</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3044,6 +3063,11 @@ Neural Information Processing Systems (NeurIPS)</em>, 2017. URL
 Steffen Schotthöfer. Tucker attention: A generalization of approximate
 attention mechanisms, 2026. URL
 <code>https://arxiv.org/abs/2603.30033</code>.</p>
+<p>Ales Kubicek, Andrea Caciolai, Liangzu Peng, Sukrit Sumant, Benjamin
+Hoover, Fraser Greenlee, Ruairidh M. Battleday, Radim Urban, Torsten
+Hoefler, and James C. R. Whittington. Latent sparse attention: Towards
+subquadratic ultra-long context attention, 2026. URL
+<code>https://arxiv.org/abs/2610.42147</code>.</p>
 <p>Arash Lagzian, Paniz Halvachi, Junming Zhang, Zhouhan Lin, and Dianbo
 Liu. : An <span>AdamW</span>-free muon optimizer for tied-embedding
 models, 2026. URL <code>https://arxiv.org/abs/2610.01395</code>. Version
@@ -3683,7 +3707,7 @@ Debe dividir <code>hidden_size</code> exactamente.</td>
 <td style="text-align: left;">dims.layer_pattern</td>
 <td style="text-align: left;">array of enum (obligatorio)</td>
 <td style="text-align: left;">Secuencia ordenada de tipos de capa. La
-longitud debe igualar <code>num_layers</code>. 43 códigos de mezclador
+longitud debe igualar <code>num_layers</code>. 47 códigos de mezclador
 disponibles (ver Tabla <a href="#tab:layer-pattern"
 data-reference-type="ref"
 data-reference="tab:layer-pattern">13.2.1</a>).</td>
@@ -4080,6 +4104,64 @@ Por defecto: 64.</td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">attention.lsa.num_long_range</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Presupuesto de claves de largo alcance
+<span class="math inline">\(k\)</span> por consulta. Por defecto:
+2048.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">attention.lsa.num_buckets</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Buckets puntuados por consulta <span
+class="math inline">\(p\)</span>; se eleva para que <span
+class="math inline">\(p\cdot\)</span><code>pool_size</code> <span
+class="math inline">\(\ge k\)</span>. Por defecto: 512.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">attention.lsa.num_sinks</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Claves sumidero iniciales siempre
+atendidas. Por defecto: 4.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">attention.lsa.pool_size</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Claves sumadas por clave de pool antes del
+clustering Ward. Por defecto: 4.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">attention.lsa.cluster_block</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+2\)</span></td>
+<td style="text-align: left;">Tamaño de bloque de clustering; también la
+ventana <span class="math inline">\(n_w\)</span>. Por defecto: 512.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">attention.lsa.keys_per_bucket</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Claves medias por bucket; produce
+<code>cluster_block / keys_per_bucket</code> buckets por bloque. Por
+defecto: 8.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">attention.lsa.max_keys_per_bucket</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Límite de fusión por bucket. Por defecto:
+16.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">attention.engram.max_ngram_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 2\)</span></td>
@@ -4338,7 +4420,7 @@ vigente para las filas que le siguen. No hay claves de características
 planas en <code>model.*</code>.</p>
 <h3 id="tab:layer-pattern">Enumeración del Patrón de Capas</h3>
 <p>El array <code>model.dims.layer_pattern</code> acepta los siguientes
-43 códigos de mezclador. Cada elemento define una capa física en la pila
+47 códigos de mezclador. Cada elemento define una capa física en la pila
 del modelo. La Tabla <a href="#tab:layer-pattern-enum"
 data-reference-type="ref" data-reference="tab:layer-pattern-enum">3</a>
 enumera todos los tipos disponibles con su soporte de entrenamiento e
@@ -4537,13 +4619,20 @@ proyección Forecast</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">lsa_attn</td>
+<td style="text-align: left;">Latent Sparse Attention — clustering
+semántico de claves con selección top-k</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">kda_attn</td>
 <td style="text-align: left;">Kimi Delta Attention — decaimiento por
 canal + compuerta de escritura escalar</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">falcon1_attn / falcon2_attn /
 falcon3_attn</td>
 <td style="text-align: left;">Familia de regresión Falcon — regla delta
@@ -4551,7 +4640,7 @@ NLMS prefix-alineada (RAW)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">falcon1a_attn / falcon2a_attn /
 falcon3a_attn</td>
 <td style="text-align: left;">Familia de producto interno Falcon —
@@ -4559,69 +4648,69 @@ escrituras aditivas desplazadas con decaimiento por ridge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mla_attn</td>
 <td style="text-align: left;">Atención Latente Multi-Cabeza + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gqla_attn</td>
 <td style="text-align: left;">Atención Latente por Consultas Agrupadas —
 dos rutas de decodificación</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mlra_attn</td>
 <td style="text-align: left;">Atención Multi-Cabeza de Rango Bajo —
 latente particionable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">tucker_attn</td>
 <td style="text-align: left;">Atención Tucker — factorización de rango
 bajo generalizada</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">iha_attn</td>
 <td style="text-align: left;">Atención de Cabezas Entrelazadas —
 pseudo-cabezas entre cabezas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gta_attn</td>
 <td style="text-align: left;">Atención laTenT por Cabezas Agrupadas —
 mapa compartido + valores latentes</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mtla_attn</td>
 <td style="text-align: left;">Atención Latente Temporal Multi-Cabeza —
 fusión temporal KV</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">cca_attn</td>
 <td style="text-align: left;">Atención Convolucional Comprimida —
 atención en espacio latente + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ccgqa_attn</td>
 <td style="text-align: left;">Atención Convolucional Comprimida por
 Consultas Agrupadas — CCA + GQA en latente</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gma_attn</td>
 <td style="text-align: left;">Atención de Mezcla Gaussiana —
 enrutamiento latente probabilístico, <span
@@ -5411,7 +5500,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-46 mezcladores de secuencia en diez familias, 28 optimizadores, 6
+47 mezcladores de secuencia en diez familias, 28 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5547,6 +5636,14 @@ N_b + H_q \cdot d_h \cdot N \cdot k \cdot B_k)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> &amp; Prefetch anticipado
 guiado por pronóstico; dispersidad predictiva &amp; <span
 class="citation" data-cites="fu_sparda_2026"></span><br />
+lsa_attn &amp; Disperso &amp; <span
+class="math inline">\(\mathcal{O}(N^2/\bar{n}_b +
+N\,(k+n_w+n_{\text{sink}})\,d_h)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(N/\bar{n}_b +
+k+n_w+n_{\text{sink}})\)</span> &amp; Clustering Ward semántico de
+claves; selección top-<span class="math inline">\(k\)</span> de largo
+alcance; entrenable de forma nativa, sin parámetros extra &amp; <span
+class="citation" data-cites="kubicek_lsa_2026"></span><br />
 </p>
 <p><br />
 gla_attn &amp; Con compuerta &amp; <span
@@ -11344,9 +11441,188 @@ CPU–GPU y un selector base congelado; el beneficio anticipado depende de
 que la demanda de bloques de la siguiente capa sea predecible a partir
 del Pronóstico actual.</p></li>
 </ul>
+<h2
+id="lsa-atención-dispersa-latente-clustering-semántico-de-claves-con-selección-top-k">LSA
+(Atención Dispersa Latente): Clustering Semántico de Claves con
+Selección Top-k</h2>
+<figure id="fig:mixer-lsa"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/lsa.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de datos de N-LSA: las claves agrupadas se clusterizan
+con Ward en buckets; cada consulta puntúa los centroides, expande los
+mejores buckets en un conjunto top-<span
+class="math inline">\(k\)</span> de claves de largo alcance y atiende a
+sumideros + selección + ventana.</figcaption>
+</figure>
+<h3 id="formulación-matemática-19">Formulación Matemática</h3>
+<p>La Atención Dispersa Latente <span class="citation"
+data-cites="kubicek_lsa_2026"></span> reemplaza el escaneo por clave (o
+por bloque) de un indexador disperso por <strong>clustering
+semántico</strong>: las claves se agrupan por contenido en un espacio
+latente aprendido y cada consulta puntúa los centroides de los buckets
+en lugar de todas las claves. El paper define dos variantes entrenables:
+Distilled-LSA (D-LSA), que añade pequeñas proyecciones índice a un
+modelo preentrenado congelado, y <strong>Native-LSA (N-LSA)</strong>,
+entrenada desde cero solo con la pérdida del siguiente token. La
+implementación de este código sigue N-LSA.</p>
+<h4 id="clustering-semántico">Clustering semántico</h4>
+<p>: Cada clave índice se normaliza L2, <span
+class="math display">\[\hat{\mathbf{k}}_j = \frac{\mathbf{k}_j}{\lVert
+\mathbf{k}_j \rVert_2},\]</span> y cada <span
+class="math inline">\(n_{\text{pool}}\)</span> claves consecutivas se
+suman en una clave de pool, de modo que el clustering recorre <span
+class="math inline">\(T/n_{\text{pool}}\)</span> claves de pool en lugar
+de <span class="math inline">\(T\)</span> claves. Las claves se procesan
+en <em>bloques de clustering</em> de <span
+class="math inline">\(n_{\text{cluster}}\)</span> tokens consecutivos;
+una vez completo un bloque, sus claves de pool se fusionan de abajo
+hacia arriba con el criterio de Ward en <span class="math inline">\(m =
+n_{\text{cluster}}/\bar{n}_b\)</span> buckets cuyos centroides unitarios
+son <span class="math display">\[\mathbf{c}_b =
+\frac{\mathbf{k}^{\text{sum}}_b}{\lVert \mathbf{k}^{\text{sum}}_b
+\rVert_2},\]</span> donde <span
+class="math inline">\(\mathbf{k}^{\text{sum}}_b\)</span> es la suma de
+las claves del bucket <span class="math inline">\(b\)</span> y <span
+class="math inline">\(\bar{n}_b\)</span> el número medio de claves por
+bucket. En cada ronda se fusionan en paralelo todos los pares que son
+mutuamente el más barato; con la matriz de Gram <span
+class="math inline">\(G_{bb&#39;} = \mathbf{k}^{\text{sum}}_b \cdot
+\mathbf{k}^{\text{sum}}_{b&#39;}\)</span> el costo de fusión es <span
+class="math display">\[a_b = \sqrt{G_{bb}}, \qquad a_{b \cup b&#39;} =
+\sqrt{G_{bb} + G_{b&#39;b&#39;} + 2G_{bb&#39;}}, \qquad \Delta(b,b&#39;)
+= a_b + a_{b&#39;} - a_{b \cup b&#39;},\]</span> y una fusión se omite
+cuando el bucket combinado superaría <span
+class="math inline">\(n_{\max}^b\)</span> claves. La caché de buckets
+guarda cada centroide junto con las posiciones de sus claves.
+<strong>Una vez clusterizado un bloque, sus buckets nunca
+cambian</strong>, lo que hace exacta la decodificación incremental en
+esta implementación.</p>
+<h4 id="búsqueda-semántica">Búsqueda semántica</h4>
+<p>: Cada consulta se normaliza L2, <span
+class="math inline">\(\hat{\mathbf{q}}_i = \mathbf{q}_i/\lVert
+\mathbf{q}_i \rVert_2\)</span>, y puntúa los centroides de todos los
+buckets de los bloques de clustering anteriores al suyo. Para N-LSA la
+puntuación es la mejor similitud que cualquier cabeza de consulta da al
+centroide, <span class="math display">\[s_{i,b} = \max_h
+\hat{\mathbf{q}}_{i,h} \cdot \mathbf{c}_b,\]</span> de modo que una
+única lista de índices <span
+class="math inline">\(\mathcal{J}_i\)</span> es compartida por todas las
+cabezas de consulta. Los <span class="math inline">\(p\)</span> buckets
+mejores se expanden mejor-primero hasta seleccionar <span
+class="math inline">\(k\)</span> claves de <em>largo alcance</em>; la
+expansión siempre llena <span class="math inline">\(k\)</span> porque
+<span class="math inline">\(p\)</span> se elige de forma que <span
+class="math inline">\(p\, n_{\text{pool}} \ge k\)</span>, y las claves
+ya cubiertas por el prefijo sumidero o la ventana se omiten. Cada
+consulta atiende además a <span
+class="math inline">\(n_{\text{sink}}\)</span> claves sumidero y a las
+<span class="math inline">\(n_w = n_{\text{cluster}}\)</span> claves más
+recientes (su propio bloque aún no clusterizado), lo que da un conjunto
+<span class="math display">\[\mathcal{J}_i \subseteq
+\{\text{sumideros}\} \cup \{\text{top-}k \text{ claves de largo
+alcance}\} \cup \{\text{ventana del bloque propio}\}, \qquad
+|\mathcal{J}_i| \le n_{\text{sink}} + k + n_w .\]</span></p>
+<h4 id="atención">Atención</h4>
+<p>: La atención estándar de producto punto escalado se calcula solo
+sobre <span class="math inline">\(\mathcal{J}_i\)</span>, <span
+class="math display">\[z_{i,j} = \frac{\mathbf{q}_i \cdot
+\mathbf{k}_j}{\sqrt{d_h}}, \qquad
+\mathbf{o}_i = \mathrm{softmax}_{j \in \mathcal{J}_i}(z_{i,j})\,
+\mathbf{V}_{\mathcal{J}_i},\]</span> donde el softmax se renormaliza por
+cabeza sobre la selección compartida. N-LSA <strong>no añade
+parámetros</strong>, <strong>no usa codificación posicional</strong>
+(RoPE podría soportarse clusterizando solo la parte libre de RoPE de las
+claves) y <strong>detiene el gradiente a través de la
+selección</strong>: el clustering, la puntuación de centroides y la
+expansión se ejecutan sin gradientes, de modo que la pérdida del
+siguiente token entrena las proyecciones de atención solo a través de
+las claves a las que cada consulta atiende.</p>
+<h3 id="pseudocódigo-algorítmico-18">Pseudocódigo Algorítmico</h3>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Claves índice <span class="math inline">\(\mathbf{k}_j\)</span> de un
+bloque de clustering completo; tamaños <span
+class="math inline">\(n_{\text{cluster}}, n_{\text{pool}}, m,
+n_{\max}^b\)</span> Consultas <span
+class="math inline">\(\mathbf{q}_i\)</span>; presupuesto de sumideros
+<span class="math inline">\(n_{\text{sink}}\)</span>; presupuesto de
+largo alcance <span class="math inline">\(k\)</span>; ventana <span
+class="math inline">\(n_w = n_{\text{cluster}}\)</span> Caché de buckets
+con <span class="math inline">\(m\)</span> centroides y sus posiciones;
+salida <span class="math inline">\(\mathbf{Y}\)</span> <span
+class="math inline">\(\hat{\mathbf{k}}_j \gets \mathbf{k}_j / \lVert
+\mathbf{k}_j \rVert_2\)</span> para todas las claves del bloque <span
+class="math inline">\(\mathbf{k}^{\text{pool}} \gets\)</span> suma de
+sus <span class="math inline">\(n_{\text{pool}}\)</span> claves
+consecutivas <span class="math inline">\(\hat{\mathbf{k}}_j\)</span>
+iniciar un bucket <span class="math inline">\(b\)</span> por clave de
+pool: <span class="math inline">\(\mathbf{k}^{\text{sum}}_b \gets
+\mathbf{k}^{\text{pool}}\)</span>, <span class="math inline">\(|b| \gets
+n_{\text{pool}}\)</span> <span class="math inline">\(G \gets
+[\mathbf{k}^{\text{sum}}_b \cdot
+\mathbf{k}^{\text{sum}}_{b&#39;}]\)</span> <span
+class="math inline">\(\Delta(b,b&#39;) \gets \sqrt{G_{bb}} +
+\sqrt{G_{b&#39;b&#39;}} - \sqrt{G_{bb} + G_{b&#39;b&#39;} +
+2G_{bb&#39;}}\)</span> fusionar los pares mutuos más baratos con <span
+class="math inline">\(|b| + |b&#39;| \le n_{\max}^b\)</span>, como
+máximo tantos como buckets por encima de <span
+class="math inline">\(m\)</span> <span
+class="math inline">\(\mathbf{c}_b \gets \mathbf{k}^{\text{sum}}_b /
+\lVert \mathbf{k}^{\text{sum}}_b \rVert_2\)</span>; guardar <span
+class="math inline">\(\mathbf{c}_b\)</span> y las posiciones del bucket
+<span class="math inline">\(b\)</span> <span
+class="math inline">\(\hat{\mathbf{q}}_i \gets \mathbf{q}_i / \lVert
+\mathbf{q}_i \rVert_2\)</span> para todas las consultas <span
+class="math inline">\(s_{i,b} \gets \max_h \hat{\mathbf{q}}_{i,h} \cdot
+\mathbf{c}_b\)</span> sobre los buckets anteriores al bloque propio de
+la consulta seleccionar los <span class="math inline">\(p\)</span>
+buckets mejores; expandirlos mejor-primero en <span
+class="math inline">\(k\)</span> claves de largo alcance (omitir
+sumideros y ventana) <span class="math inline">\(\mathcal{J}_i \gets
+\{\text{sumideros}\} \cup \{\text{claves de largo alcance}\} \cup
+\{\text{ventana del bloque propio}\}\)</span> <span
+class="math inline">\(\mathbf{Y} \gets\)</span> atención sobre <span
+class="math inline">\(\mathcal{J}_i\)</span> con softmax por cabeza
+renormalizado sobre la selección compartida <span
+class="math inline">\(\mathbf{Y}\)</span></p>
+</div>
+</div>
+<h3 id="características-clave-20">Características Clave</h3>
+<ul>
+<li><p><strong>Complejidad</strong>: La búsqueda plana puntúa <span
+class="math inline">\(\mathcal{O}(T/\bar{n}_b)\)</span> centroides por
+consulta, es decir, <span
+class="math inline">\(\mathcal{O}(T^2/\bar{n}_b +
+T(k+n_w+n_{\text{sink}})d_h)\)</span> en prefill y <span
+class="math inline">\(\mathcal{O}(T/\bar{n}_b +
+k+n_w+n_{\text{sink}})\)</span> por token decodificado; la variante de
+árbol del paper hace el indexador <span
+class="math inline">\(\mathcal{O}(T \log T)\)</span>.</p></li>
+<li><p><strong>Entrenable</strong>: Sí, de forma nativa desde cero con
+la pérdida del siguiente token (N-LSA); la selección no es diferenciable
+y el gradiente se detiene a través de ella. Sin profesor, sin
+proyecciones índice, sin pérdida auxiliar—y <strong>sin parámetros
+extra</strong>.</p></li>
+<li><p><strong>Fortaleza</strong>: En el híbrido de 0.5B del paper,
+N-LSA iguala la pérdida de validación de la atención completa a 128k
+tokens (<span class="math inline">\(1.085\)</span> frente a <span
+class="math inline">\(1.085\)</span>; PISA <span
+class="math inline">\(1.100\)</span>, NSA <span
+class="math inline">\(1.117\)</span>, SWA <span
+class="math inline">\(1.154\)</span>) y entrena hasta <span
+class="math inline">\(1.6\times\)</span> más rápido por capa de atención
+a 128k. Como cada bloque de clustering es inmutable una vez completo, la
+decodificación en caché de este código es exacta, no una
+aproximación.</p></li>
+<li><p><strong>Limitación</strong>: El indexador plano sigue siendo
+cuadrático en la longitud de contexto (con una constante <span
+class="math inline">\(1/\bar{n}_b\)</span>); la búsqueda en árbol queda
+para trabajo futuro. La lista de índices única del paper asume una sola
+cabeza KV compartida (<span class="math inline">\(n_{kv}=1\)</span>), y
+N-LSA usa deliberadamente ausencia de codificación posicional.</p></li>
+</ul>
 <h2 id="espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
 Criterios de Selección</h2>
-<p>Los diez métodos de atención dispersa ocupan posiciones
+<p>Los once métodos de atención dispersa ocupan posiciones
 complementarias en un espacio de diseño multidimensional:</p>
 <ul>
 <li><p><strong>Patrones geométricos/fijos</strong> (Sparse Transformer,
@@ -11362,6 +11638,13 @@ complejidad de implementación.</p></li>
 <li><p><strong>Aceleración sin entrenamiento</strong> (FASA,
 SpargeAttn): Permiten aceleración directa de modelos existentes sin
 reentrenamiento, adecuados para sistemas desplegados.</p></li>
+<li><p><strong>Selección semántica</strong> (LSA): Agrupa las claves por
+contenido y guarda un centroide por bucket, de modo que el indexador
+recorre un pequeño múltiplo de <span
+class="math inline">\(T/\bar{n}_b\)</span> en lugar de <span
+class="math inline">\(T\)</span>; es el único miembro cuyas estadísticas
+por bloque son inmutables, lo que hace posible la decodificación exacta
+en caché.</p></li>
 <li><p><strong>Garantías teóricas</strong> (BigBird): Proporcionan
 demostraciones formales de completitud expresiva, importantes para
 comprender los márgenes de seguridad.</p></li>
@@ -11370,12 +11653,15 @@ comprender los márgenes de seguridad.</p></li>
 <ol>
 <li><p><strong>Entrenamiento de nuevos modelos</strong> donde los
 recursos lo permitan: NSA o SparseK para máxima aceleración de
-inferencia; BigBird para garantía teórica; SWA con sumideros como el
-baseline de bajo costo más fuerte.</p></li>
+inferencia; BigBird para garantía teórica; LSA cuando importen el
+clustering semántico y la decodificación exacta en caché a contexto
+ultra-largo; SWA con sumideros como el baseline de bajo costo más
+fuerte.</p></li>
 <li><p><strong>Comprensión de documentos de contexto largo</strong>: SWA
 con sumideros (ventana 256–512) para la mejor precisión por byte de
 caché KV; Longformer o FASA por simplicidad práctica; NSA para escala
-extrema.</p></li>
+extrema; LSA cuando el escaneo del indexador sea el cuello de
+botella.</p></li>
 <li><p><strong>Aceleración de modelos existentes</strong>: SWA con
 sumideros como baseline sin entrenamiento por defecto (superó a la
 mayoría de los retrofits de atención lineal en el estudio original);
@@ -14825,7 +15111,7 @@ separables de filtrado gaussiano por filas y columnas para cada átomo,
 con direccionamiento opcional de los parámetros del átomo por
 contenido.</figcaption>
 </figure>
-<h2 id="formulación-matemática-19">Formulación Matemática</h2>
+<h2 id="formulación-matemática-20">Formulación Matemática</h2>
 <p>Sea el raster row-major de una rejilla <span
 class="math inline">\(G_h \times G_w\)</span> los tokens. El peso de
 atención del token <span class="math inline">\(p\)</span> al token <span
@@ -14865,7 +15151,7 @@ anchos se reparametrizan como <span class="math inline">\(\sigma =
 \operatorname{softplus}(\omega) + \epsilon +
 \sigma_{\text{piso}}\)</span> para mantenerse estrictamente
 positivos.</p>
-<h2 id="pseudocódigo-algorítmico-18">Pseudocódigo Algorítmico</h2>
+<h2 id="pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</h2>
 <div class="algorithmic">
 <p><strong>Entrada:</strong> estado oculto <span class="math inline">\(x
 \in \mathbb{R}^{B \times N \times d}\)</span> como raster <span
@@ -14886,7 +15172,7 @@ a_x^{(r)} \big( a_y^{(r)} V \big)\)</span> <strong>Salida:</strong>
 <span class="math inline">\(\mathbf{Y} W_O\)</span> reorganizado a <span
 class="math inline">\((B, N, d)\)</span></p>
 </div>
-<h2 id="características-clave-20">Características Clave</h2>
+<h2 id="características-clave-21">Características Clave</h2>
 <ul>
 <li><p><strong>Complejidad de entrenamiento</strong>: <span
 class="math inline">\(\mathcal{O}(R \cdot N \sqrt{N} \cdot d)\)</span>
@@ -15416,8 +15702,8 @@ class="math display">\[\mathcal{O}\!\left(S^2 +
 \sum_{t=0}^{T-1}(S+t)\right) \;=\; \mathcal{O}\!\left(S^2 + TS +
 T^2\right).\]</span> La diferencia es la conocida entre re-codificar una
 conversación y continuarla.</p>
-<p>El subsistema cubre los cuarenta y cinco tipos de capa despachables.
-Veintisiete tienen ramas incrementales verificadas por paridad; el resto
+<p>El subsistema cubre los cuarenta y seis tipos de capa despachables.
+Veintiocho tienen ramas incrementales verificadas por paridad; el resto
 queda registrado con una justificación explícita, basada en el artículo,
 para ejecutarse sin caché (§<a href="#sec:kv-fallbacks"
 data-reference-type="ref" data-reference="sec:kv-fallbacks">28.4.5</a>).
@@ -16704,7 +16990,7 @@ herramientas la FFN compartida de <code>HybridLayer</code> ocupa la
 ranura <span class="math inline">\(\mathrm{FFN}_2\)</span> con un paso
 residual completo (anotación punteada).</figcaption>
 </figure>
-<h3 id="formulación-matemática-20">Formulación Matemática</h3>
+<h3 id="formulación-matemática-21">Formulación Matemática</h3>
 <p>Para una entrada de bloque <span class="math inline">\(x \in
 \mathbb{R}^{B \times n \times d}\)</span>, el bloque de referencia de la
 Fig. 1 de <span class="citation" data-cites="Gulati2020"></span> es
@@ -16810,7 +17096,7 @@ desplaza a <span class="math inline">\(z_t = \sum_{k=0}^{K-1} w_k
 \tilde{h}_{t-K+1+k}\)</span>, de modo que ninguna trama futura entra en
 la convolución; los modos encoder y ViT conservan el padding simétrico
 “same” del paper.</p>
-<h3 id="pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</h3>
+<h3 id="pseudocódigo-algorítmico-20">Pseudocódigo Algorítmico</h3>
 <div class="algorithm">
 <div class="algorithmic">
 <p>entrada de bloque <span class="math inline">\(x \in \mathbb{R}^{B
@@ -18059,7 +18345,7 @@ con 415 904, impulsada por el banco de memoria <code>engram</code>, que
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">85</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">86</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -18363,7 +18649,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">93</a>) es
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">94</a>) es
 el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -19406,7 +19692,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">112</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">113</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span

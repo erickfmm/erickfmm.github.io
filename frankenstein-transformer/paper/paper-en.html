@@ -207,7 +207,7 @@ that hinders reproducibility and makes published comparisons difficult
 to align. We present Frankenstein Transformer, a configuration-driven
 CLI toolkit (<code>frankenstein-transformer</code>) that unifies model
 definition, training, deployment, and inference behind a single strict
-YAML schema. The toolkit covers forty-five sequence mixers across nine
+YAML schema. The toolkit covers forty-seven sequence mixers across ten
 families and twenty-four optimizer families with per-parameter-group
 hyperparameter control, and supports encoder, decoder, Vision
 Transformer and audio model classes for masked language modeling, causal
@@ -749,6 +749,19 @@ id="toc-algorithmic-pseudocode-18">Algorithmic Pseudocode</a></li>
 <li><a href="#key-characteristics-19"
 id="toc-key-characteristics-19">Key Characteristics</a></li>
 </ul></li>
+<li><a
+href="#lsa-latent-sparse-attention-semantic-key-clustering-with-top-k-selection"
+id="toc-lsa-latent-sparse-attention-semantic-key-clustering-with-top-k-selection">LSA
+(Latent Sparse Attention): Semantic Key Clustering with Top-k
+Selection</a>
+<ul>
+<li><a href="#mathematical-formulation-20"
+id="toc-mathematical-formulation-20">Mathematical Formulation</a></li>
+<li><a href="#algorithmic-pseudocode-19"
+id="toc-algorithmic-pseudocode-19">Algorithmic Pseudocode</a></li>
+<li><a href="#key-characteristics-20"
+id="toc-key-characteristics-20">Key Characteristics</a></li>
+</ul></li>
 <li><a href="#design-space-and-selection-criteria"
 id="toc-design-space-and-selection-criteria">Design Space and Selection
 Criteria</a></li>
@@ -1076,12 +1089,12 @@ Profile: Positional Encodings</a></li>
 <li><a href="#sec:annex-ssog" id="toc-sec:annex-ssog">SSOG: Separable
 Sum of Gaussians Attention</a>
 <ul>
-<li><a href="#mathematical-formulation-20"
-id="toc-mathematical-formulation-20">Mathematical Formulation</a></li>
-<li><a href="#algorithmic-pseudocode-19"
-id="toc-algorithmic-pseudocode-19">Algorithmic Pseudocode</a></li>
-<li><a href="#key-characteristics-20"
-id="toc-key-characteristics-20">Key Characteristics</a></li>
+<li><a href="#mathematical-formulation-21"
+id="toc-mathematical-formulation-21">Mathematical Formulation</a></li>
+<li><a href="#algorithmic-pseudocode-20"
+id="toc-algorithmic-pseudocode-20">Algorithmic Pseudocode</a></li>
+<li><a href="#key-characteristics-21"
+id="toc-key-characteristics-21">Key Characteristics</a></li>
 </ul></li>
 <li><a href="#sec:annex-fast-weight"
 id="toc-sec:annex-fast-weight">Fast-Weight Attention for Continual
@@ -1230,10 +1243,10 @@ id="toc-executive-summary-1">Executive Summary</a></li>
 id="toc-conformer-convolution-augmented-attention">Conformer:
 Convolution-augmented Attention</a>
 <ul>
-<li><a href="#mathematical-formulation-21"
-id="toc-mathematical-formulation-21">Mathematical Formulation</a></li>
-<li><a href="#algorithmic-pseudocode-20"
-id="toc-algorithmic-pseudocode-20">Algorithmic Pseudocode</a></li>
+<li><a href="#mathematical-formulation-22"
+id="toc-mathematical-formulation-22">Mathematical Formulation</a></li>
+<li><a href="#algorithmic-pseudocode-21"
+id="toc-algorithmic-pseudocode-21">Algorithmic Pseudocode</a></li>
 <li><a href="#implementation-mapping-and-deviations"
 id="toc-implementation-mapping-and-deviations">Implementation Mapping
 and Deviations</a></li>
@@ -1379,8 +1392,9 @@ training choices as a single validated document. The project
 provides:</p>
 <ol>
 <li><p><strong>Schema-first design</strong>: a strict YAML contract
-supporting forty-six sequence mixers across ten families and twenty-four
-optimizer families, enforced before training begins.</p></li>
+supporting forty-seven sequence mixers across ten families and
+twenty-four optimizer families, enforced before training
+begins.</p></li>
 <li><p><strong>Architecture-agnostic training</strong>: one pipeline for
 dense baselines, recurrent and retentive blocks, sparse patterns, gated
 mechanisms, latent compression, conditional memory, fast-weight
@@ -1770,7 +1784,7 @@ data-reference-type="ref" data-reference="sec:annex-mhc">22</a>.</p>
 Implementation</h1>
 <h2 id="sec:attention-families">Attention and Sequence-Mixer
 Families</h2>
-<p>The system implements forty-six sequence mixers organized into ten
+<p>The system implements forty-seven sequence mixers organized into ten
 functional categories that reflect how each method balances
 expressivity, computational cost, and memory.</p>
 <ol>
@@ -1781,10 +1795,11 @@ routing at quadratic cost.</p></li>
 ODE-style blocks, and Titans maintain state for constant-time inference
 through recurrence, selective state spaces, continuous depth, or
 test-time memory.</p></li>
-<li><p><strong>Sparse patterns</strong> (10): Sparse Transformer,
+<li><p><strong>Sparse patterns</strong> (11): Sparse Transformer,
 Longformer, SWA with attention sinks, BigBird, SparseK, NSA, SpargeAttn,
-FASA, MSA, and SparDA reduce quadratic cost through structured sparsity,
-token selection, or training-free pruning.</p></li>
+FASA, MSA, SparDA, and LSA reduce quadratic cost through structured
+sparsity, token selection, training-free pruning, or semantic key
+clustering.</p></li>
 <li><p><strong>Gated mechanisms</strong> (8): GLA, DeltaNet, Gated
 DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, and KDA introduce
 data-dependent control over retention, forgetting, and update
@@ -1818,7 +1833,7 @@ data-reference="sec:annex-17">30</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
-<figcaption>Taxonomy of the forty-six sequence mixers across ten
+<figcaption>Taxonomy of the forty-seven sequence mixers across ten
 functional categories. Dense baselines provide full global routing at
 quadratic cost; recurrent methods compress state for constant-time
 inference; sparse variants restrict the attention pattern; gated
@@ -1890,8 +1905,8 @@ interleaving, temporal compression, cross-covariance formulation, and
 probabilistic routing.</figcaption>
 </figure>
 <h2 id="sparse-attention-extensions">Sparse Attention Extensions</h2>
-<p>The registry includes ten sparse blocks <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026"></span>.
+<p>The registry includes eleven sparse blocks <span class="citation"
+data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026 kubicek_lsa_2026"></span>.
 Two inference-time methods, <code>fasa_attn</code> and
 <code>sparge_attn</code>, apply their sparse heuristic only when the
 model is in evaluation mode: during training the enclosing hybrid layer
@@ -1900,9 +1915,15 @@ class="math inline">\(\mathbf{q}/\mathbf{k}/\mathbf{v}/\mathbf{o}\)</span>
 projections, so the trained weights are exactly the ones the sparse path
 reads at inference. <code>swa_attn</code> is also training-free but is a
 normal trainable mixer, so it runs its windowed pattern in both training
-and inference. Formulations, pseudocode, per-block characteristics, and
-a comparison table are collected in Appendix <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">18</a>.</p>
+and inference. LSA is the family’s semantic selector: keys are pooled
+and Ward-clustered per 512-token block, and each query scores the cached
+bucket centroids instead of every key, selecting top-<span
+class="math inline">\(p\)</span> buckets that expand into its <span
+class="math inline">\(k\)</span> long-range keys on top of sinks and a
+one-block window. Formulations, pseudocode, per-block characteristics,
+and a comparison table are collected in Appendix <a
+href="#sec:annex-sparse" data-reference-type="ref"
+data-reference="sec:annex-sparse">18</a>.</p>
 <figure id="fig:sparse-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/sparse-map.svg" alt="image" /></span></p>
 
 <figcaption>Sparse attention design choices. Methods reduce cost by
@@ -2463,7 +2484,7 @@ optimizer-specific groups, default values aligned with research best
 practices, and documentation strings for web interface rendering.</p>
 <h2 id="architectural-coverage-and-gaps">Architectural Coverage and
 Gaps</h2>
-<p>The forty-six implemented mixers span the major research directions
+<p>The forty-seven implemented mixers span the major research directions
 in sequence modeling, but certain gaps remain. The system lacks recent
 hybrid architectures such as Griffin <span class="citation"
 data-cites="soares_griffin_2024"></span> and Jamba <span
@@ -2552,7 +2573,7 @@ embedding.</p>
 <ol>
 <li><p><strong>Schema-First Design</strong>: A strict YAML-based
 configuration contract with validation and prefixed hyperparameter
-routing enabling reproducible experiments across forty-six sequence
+routing enabling reproducible experiments across forty-seven sequence
 mixers and twenty-four optimizer families.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
 Implementation spanning dense baselines, recurrent and retentive blocks,
@@ -2640,7 +2661,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>142</span> urlstyle</p>
+<p><span>143</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2918,6 +2939,11 @@ Neural Information Processing Systems (NeurIPS)</em>, 2017. URL
 Steffen Schotthöfer. Tucker attention: A generalization of approximate
 attention mechanisms, 2026. URL
 <code>https://arxiv.org/abs/2603.30033</code>.</p>
+<p>Ales Kubicek, Andrea Caciolai, Liangzu Peng, Sukrit Sumant, Benjamin
+Hoover, Fraser Greenlee, Ruairidh M. Battleday, Radim Urban, Torsten
+Hoefler, and James C. R. Whittington. Latent sparse attention: Towards
+subquadratic ultra-long context attention, 2026. URL
+<code>https://arxiv.org/abs/2610.42147</code>.</p>
 <p>Arash Lagzian, Paniz Halvachi, Junming Zhang, Zhouhan Lin, and Dianbo
 Liu. : An <span>AdamW</span>-free muon optimizer for tied-embedding
 models, 2026. URL <code>https://arxiv.org/abs/2610.01395</code>. Version
@@ -3539,7 +3565,7 @@ standard).</td>
 <td style="text-align: left;">dims.layer_pattern</td>
 <td style="text-align: left;">array of enum (required)</td>
 <td style="text-align: left;">Ordered sequence of layer types. Length
-must equal <code>num_layers</code>. 43 mixer codes available (see
+must equal <code>num_layers</code>. 47 mixer codes available (see
 Table <a href="#tab:layer-pattern" data-reference-type="ref"
 data-reference="tab:layer-pattern">13.2.1</a>).</td>
 </tr>
@@ -3935,6 +3961,62 @@ Default: 64.</td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">attention.lsa.num_long_range</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Long-range key budget <span
+class="math inline">\(k\)</span> selected per query. Default: 2048.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">attention.lsa.num_buckets</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Buckets scored per query <span
+class="math inline">\(p\)</span>; raised so <span
+class="math inline">\(p\cdot\)</span><code>pool_size</code> <span
+class="math inline">\(\ge k\)</span>. Default: 512.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">attention.lsa.num_sinks</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Always-attended leading sink keys.
+Default: 4.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">attention.lsa.pool_size</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Keys summed per pool key before Ward
+clustering. Default: 4.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">attention.lsa.cluster_block</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+2\)</span></td>
+<td style="text-align: left;">Cluster block size; also the window <span
+class="math inline">\(n_w\)</span>. Default: 512.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">attention.lsa.keys_per_bucket</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Average keys per bucket; yields
+<code>cluster_block / keys_per_bucket</code> buckets per block. Default:
+8.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">attention.lsa.max_keys_per_bucket</td>
+<td style="text-align: left;">int <span class="math inline">\(\ge
+1\)</span></td>
+<td style="text-align: left;">Merge cap per bucket. Default: 16.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">attention.engram.max_ngram_size</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 2\)</span></td>
@@ -4187,7 +4269,7 @@ for the rows that follow it. There are no flat feature keys at
 <code>model.*</code>.</p>
 <h3 id="tab:layer-pattern">Layer Pattern Enumeration</h3>
 <p>The <code>model.dims.layer_pattern</code> array accepts the following
-43 mixer codes. Each element defines one physical layer in the model
+47 mixer codes. Each element defines one physical layer in the model
 stack. Table <a href="#tab:layer-pattern-enum" data-reference-type="ref"
 data-reference="tab:layer-pattern-enum">3</a> lists all available types
 with their training and inference support.</p>
@@ -4383,13 +4465,20 @@ Forecast projection</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">lsa_attn</td>
+<td style="text-align: left;">Latent Sparse Attention — semantic key
+clustering with top-k selection</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">kda_attn</td>
 <td style="text-align: left;">Kimi Delta Attention — channel-wise decay
 + scalar write gate</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">falcon1_attn / falcon2_attn /
 falcon3_attn</td>
 <td style="text-align: left;">Falcon regression family — RAW
@@ -4397,7 +4486,7 @@ prefix-aligned NLMS delta rule</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">falcon1a_attn / falcon2a_attn /
 falcon3a_attn</td>
 <td style="text-align: left;">Falcon inner-product family — shifted
@@ -4405,69 +4494,69 @@ additive writes with ridge decay</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mla_attn</td>
 <td style="text-align: left;">Multi-Head Latent Attention + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gqla_attn</td>
 <td style="text-align: left;">Group-Query Latent Attention — two
 decoding paths</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mlra_attn</td>
 <td style="text-align: left;">Multi-Head Low-Rank Attention —
 partitionable latent</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">tucker_attn</td>
 <td style="text-align: left;">Tucker Attention — generalised low-rank
 factorisation</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">iha_attn</td>
 <td style="text-align: left;">Interleaved Head Attention — cross-head
 pseudo-heads</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gta_attn</td>
 <td style="text-align: left;">Grouped-head laTenT Attention — shared map
 + latent values</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mtla_attn</td>
 <td style="text-align: left;">Multi-head Temporal Latent Attention —
 temporal KV merge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">cca_attn</td>
 <td style="text-align: left;">Compressed Convolutional Attention —
 latent-space attention + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ccgqa_attn</td>
 <td style="text-align: left;">Compressed Convolutional Grouped Query
 Attention — CCA + GQA in latent</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gma_attn</td>
 <td style="text-align: left;">Gaussian Mixture Attention — probabilistic
 latent routing, <span class="math inline">\(\mathcal{O}(NK)\)</span>
@@ -4475,7 +4564,7 @@ linear-time</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ssog_attn</td>
 <td style="text-align: left;">Separable Sum of Gaussians — Gaussian
 field over relative position, near-linear <span
@@ -5249,7 +5338,7 @@ combination.</p></li>
 </ol>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
-implemented in the Frankenstein Transformer codebase: 46 sequence mixers
+implemented in the Frankenstein Transformer codebase: 47 sequence mixers
 across ten families, 28 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
@@ -5381,6 +5470,14 @@ N_b + H_q \cdot d_h \cdot N \cdot k \cdot B_k)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> &amp; Forecast-guided
 lookahead prefetch; predictive sparsity &amp; <span class="citation"
 data-cites="fu_sparda_2026"></span><br />
+lsa_attn &amp; Sparse &amp; <span
+class="math inline">\(\mathcal{O}(N^2/\bar{n}_b +
+N\,(k+n_w+n_{\text{sink}})\,d_h)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(N/\bar{n}_b +
+k+n_w+n_{\text{sink}})\)</span> &amp; Semantic Ward clustering of keys;
+top-<span class="math inline">\(k\)</span> long-range selection;
+natively trainable, no extra parameters &amp; <span class="citation"
+data-cites="kubicek_lsa_2026"></span><br />
 </p>
 <p><br />
 gla_attn &amp; Gated &amp; <span class="math inline">\(\mathcal{O}(L
@@ -10965,10 +11062,181 @@ and a frozen base selector; the lookahead benefit is contingent on
 next-layer block demand being predictable from the current
 Forecast.</p></li>
 </ul>
+<h2
+id="lsa-latent-sparse-attention-semantic-key-clustering-with-top-k-selection">LSA
+(Latent Sparse Attention): Semantic Key Clustering with Top-k
+Selection</h2>
+<figure id="fig:mixer-lsa"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/lsa.svg" alt="image" /></span></p>
+
+<figcaption>Dataflow of N-LSA: pooled keys are Ward-clustered into
+buckets; each query scores the centroids, expands the best buckets into
+a top-<span class="math inline">\(k\)</span> long-range key set, and
+attends to sinks + selection + window.</figcaption>
+</figure>
+<h3 id="mathematical-formulation-20">Mathematical Formulation</h3>
+<p>Latent Sparse Attention <span class="citation"
+data-cites="kubicek_lsa_2026"></span> replaces the per-key (or
+per-block) scan of a sparse indexer with <strong>semantic
+clustering</strong>: keys are clustered by content in a learned latent
+space, and each query scores the bucket centroids instead of every key.
+The paper defines two trainable variants: Distilled-LSA (D-LSA), which
+adds small index projections to a frozen pre-trained model, and
+<strong>Native-LSA (N-LSA)</strong>, trained from scratch on the
+next-token loss alone. The implementation in this codebase follows
+N-LSA.</p>
+<h4 id="semantic-clustering">Semantic clustering</h4>
+<p>: Each index key is first L2-normalised, <span
+class="math display">\[\hat{\mathbf{k}}_j = \frac{\mathbf{k}_j}{\lVert
+\mathbf{k}_j \rVert_2},\]</span> and every <span
+class="math inline">\(n_{\text{pool}}\)</span> consecutive keys are
+summed into one pool key, so clustering runs over <span
+class="math inline">\(T/n_{\text{pool}}\)</span> pool keys rather than
+<span class="math inline">\(T\)</span> keys. Keys are processed in
+<em>cluster blocks</em> of <span
+class="math inline">\(n_{\text{cluster}}\)</span> consecutive tokens;
+once a block is complete, its pool keys are merged bottom-up with Ward’s
+criterion into <span class="math inline">\(m =
+n_{\text{cluster}}/\bar{n}_b\)</span> buckets whose unit-norm centroids
+are <span class="math display">\[\mathbf{c}_b =
+\frac{\mathbf{k}^{\text{sum}}_b}{\lVert \mathbf{k}^{\text{sum}}_b
+\rVert_2},\]</span> where <span
+class="math inline">\(\mathbf{k}^{\text{sum}}_b\)</span> is the sum of
+the keys in bucket <span class="math inline">\(b\)</span> and <span
+class="math inline">\(\bar{n}_b\)</span> is the average number of keys
+per bucket. In every round all pairs that are each other’s cheapest
+merge are merged in parallel; with the Gram matrix <span
+class="math inline">\(G_{bb&#39;} = \mathbf{k}^{\text{sum}}_b \cdot
+\mathbf{k}^{\text{sum}}_{b&#39;}\)</span> the merge cost is <span
+class="math display">\[a_b = \sqrt{G_{bb}}, \qquad a_{b \cup b&#39;} =
+\sqrt{G_{bb} + G_{b&#39;b&#39;} + 2G_{bb&#39;}}, \qquad \Delta(b,b&#39;)
+= a_b + a_{b&#39;} - a_{b \cup b&#39;},\]</span> and a merge is skipped
+when the combined bucket would exceed <span
+class="math inline">\(n_{\max}^b\)</span> keys. The bucket cache stores
+every centroid together with the positions of its keys. <strong>Once a
+cluster block is clustered, its buckets never change</strong>, which is
+what makes incremental decoding exact in this implementation.</p>
+<h4 id="semantic-search">Semantic search</h4>
+<p>: Each query is L2-normalised, <span
+class="math inline">\(\hat{\mathbf{q}}_i = \mathbf{q}_i/\lVert
+\mathbf{q}_i \rVert_2\)</span>, and scores the centroids of every bucket
+in the cluster blocks before its own. For N-LSA the score is the best
+similarity any query head gives the centroid, <span
+class="math display">\[s_{i,b} = \max_h \hat{\mathbf{q}}_{i,h} \cdot
+\mathbf{c}_b,\]</span> so a single index list <span
+class="math inline">\(\mathcal{J}_i\)</span> is shared by every query
+head. The top-<span class="math inline">\(p\)</span> buckets are
+expanded best-first until <span class="math inline">\(k\)</span>
+<em>long-range</em> keys are selected; the expansion always fills <span
+class="math inline">\(k\)</span> because <span
+class="math inline">\(p\)</span> is chosen such that <span
+class="math inline">\(p\, n_{\text{pool}} \ge k\)</span>, and keys
+already covered by the sink prefix or the window are skipped. Every
+query additionally attends to <span
+class="math inline">\(n_{\text{sink}}\)</span> sink keys and the <span
+class="math inline">\(n_w = n_{\text{cluster}}\)</span> most recent keys
+(its own, not-yet-clustered block), giving a set <span
+class="math display">\[\mathcal{J}_i \subseteq \{\text{sinks}\} \cup
+\{\text{top-}k \text{ long-range keys}\} \cup \{\text{own-block
+window}\}, \qquad |\mathcal{J}_i| \le n_{\text{sink}} + k + n_w
+.\]</span></p>
+<h4 id="attention">Attention</h4>
+<p>: Standard scaled dot-product attention is computed only over <span
+class="math inline">\(\mathcal{J}_i\)</span>, <span
+class="math display">\[z_{i,j} = \frac{\mathbf{q}_i \cdot
+\mathbf{k}_j}{\sqrt{d_h}}, \qquad
+\mathbf{o}_i = \mathrm{softmax}_{j \in \mathcal{J}_i}(z_{i,j})\,
+\mathbf{V}_{\mathcal{J}_i},\]</span> where the softmax is renormalised
+per head over the shared selection. N-LSA <strong>adds no
+parameters</strong>, uses <strong>no positional encoding</strong> (RoPE
+could be supported by clustering only the RoPE-free part of the keys),
+and <strong>stops the gradient through the selection</strong>: the
+clustering, centroid scoring and expansion run without gradients, so the
+next-token loss trains the attention projections only through the keys
+each query attends to.</p>
+<h3 id="algorithmic-pseudocode-19">Algorithmic Pseudocode</h3>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Index keys <span class="math inline">\(\mathbf{k}_j\)</span> of a
+complete cluster block; sizes <span
+class="math inline">\(n_{\text{cluster}}, n_{\text{pool}}, m,
+n_{\max}^b\)</span> Queries <span
+class="math inline">\(\mathbf{q}_i\)</span>; sink budget <span
+class="math inline">\(n_{\text{sink}}\)</span>; long-range budget <span
+class="math inline">\(k\)</span>; window <span class="math inline">\(n_w
+= n_{\text{cluster}}\)</span> Bucket cache with <span
+class="math inline">\(m\)</span> centroids and their key positions;
+output <span class="math inline">\(\mathbf{Y}\)</span> <span
+class="math inline">\(\hat{\mathbf{k}}_j \gets \mathbf{k}_j / \lVert
+\mathbf{k}_j \rVert_2\)</span> for all keys in the block <span
+class="math inline">\(\mathbf{k}^{\text{pool}} \gets\)</span> sum of its
+<span class="math inline">\(n_{\text{pool}}\)</span> consecutive <span
+class="math inline">\(\hat{\mathbf{k}}_j\)</span> start one bucket <span
+class="math inline">\(b\)</span> per pool key: <span
+class="math inline">\(\mathbf{k}^{\text{sum}}_b \gets
+\mathbf{k}^{\text{pool}}\)</span>, <span class="math inline">\(|b| \gets
+n_{\text{pool}}\)</span> <span class="math inline">\(G \gets
+[\mathbf{k}^{\text{sum}}_b \cdot
+\mathbf{k}^{\text{sum}}_{b&#39;}]\)</span> <span
+class="math inline">\(\Delta(b,b&#39;) \gets \sqrt{G_{bb}} +
+\sqrt{G_{b&#39;b&#39;}} - \sqrt{G_{bb} + G_{b&#39;b&#39;} +
+2G_{bb&#39;}}\)</span> merge the cheapest mutual pairs with <span
+class="math inline">\(|b| + |b&#39;| \le n_{\max}^b\)</span>, at most as
+many as buckets above <span class="math inline">\(m\)</span> <span
+class="math inline">\(\mathbf{c}_b \gets \mathbf{k}^{\text{sum}}_b /
+\lVert \mathbf{k}^{\text{sum}}_b \rVert_2\)</span>; store <span
+class="math inline">\(\mathbf{c}_b\)</span> and the positions of bucket
+<span class="math inline">\(b\)</span> <span
+class="math inline">\(\hat{\mathbf{q}}_i \gets \mathbf{q}_i / \lVert
+\mathbf{q}_i \rVert_2\)</span> for all queries <span
+class="math inline">\(s_{i,b} \gets \max_h \hat{\mathbf{q}}_{i,h} \cdot
+\mathbf{c}_b\)</span> over the buckets before the query’s own block
+select the top-<span class="math inline">\(p\)</span> buckets; expand
+them best-first into <span class="math inline">\(k\)</span> long-range
+keys (skip sinks and the window) <span
+class="math inline">\(\mathcal{J}_i \gets \{\text{sinks}\} \cup
+\{\text{long-range keys}\} \cup \{\text{own-block window}\}\)</span>
+<span class="math inline">\(\mathbf{Y} \gets\)</span> attention over
+<span class="math inline">\(\mathcal{J}_i\)</span> with a per-head
+softmax renormalised over the shared selection <span
+class="math inline">\(\mathbf{Y}\)</span></p>
+</div>
+</div>
+<h3 id="key-characteristics-20">Key Characteristics</h3>
+<ul>
+<li><p><strong>Complexity</strong>: Flat search scores <span
+class="math inline">\(\mathcal{O}(T/\bar{n}_b)\)</span> centroids per
+query, i.e. <span class="math inline">\(\mathcal{O}(T^2/\bar{n}_b +
+T(k+n_w+n_{\text{sink}})d_h)\)</span> for prefill and <span
+class="math inline">\(\mathcal{O}(T/\bar{n}_b +
+k+n_w+n_{\text{sink}})\)</span> per decoded token; the tree variant of
+the paper makes the indexer <span class="math inline">\(\mathcal{O}(T
+\log T)\)</span>.</p></li>
+<li><p><strong>Trainable</strong>: Yes, natively from scratch on the
+next-token loss (N-LSA); the selection is non-differentiable and the
+gradient is stopped through it. No teacher, no index projections, no
+auxiliary loss—and <strong>no extra parameters</strong>.</p></li>
+<li><p><strong>Strength</strong>: In the paper’s 0.5B hybrid, N-LSA
+matches the full-attention validation loss at 128k tokens (<span
+class="math inline">\(1.085\)</span> against <span
+class="math inline">\(1.085\)</span>; PISA <span
+class="math inline">\(1.100\)</span>, NSA <span
+class="math inline">\(1.117\)</span>, SWA <span
+class="math inline">\(1.154\)</span>) while training up to <span
+class="math inline">\(1.6\times\)</span> faster per attention layer at
+128k. Because every cluster block is immutable once complete, cached
+decoding in this codebase is exact rather than an
+approximation.</p></li>
+<li><p><strong>Limitation</strong>: The flat indexer remains quadratic
+in context length (with a <span
+class="math inline">\(1/\bar{n}_b\)</span> constant); tree search is
+left to future work. The paper’s single index list assumes a single
+shared KV head (<span class="math inline">\(n_{kv}=1\)</span>), and
+N-LSA deliberately uses no positional encoding.</p></li>
+</ul>
 <h2 id="design-space-and-selection-criteria">Design Space and Selection
 Criteria</h2>
-<p>The ten sparse attention methods occupy complementary positions in a
-multidimensional design space:</p>
+<p>The eleven sparse attention methods occupy complementary positions in
+a multidimensional design space:</p>
 <ul>
 <li><p><strong>Geometric/fixed patterns</strong> (Sparse Transformer,
 Longformer): Simple to implement and analyze, but patterns do not adapt
@@ -10983,6 +11251,12 @@ implementation complexity.</p></li>
 <li><p><strong>Training-free acceleration</strong> (FASA, SpargeAttn):
 Enable drop-in speedup of existing models without retraining, suited for
 deployed systems.</p></li>
+<li><p><strong>Semantic selection</strong> (LSA): Clusters keys by
+content and caches one centroid per bucket, so the indexer scans a small
+multiple of <span class="math inline">\(T/\bar{n}_b\)</span> instead of
+<span class="math inline">\(T\)</span>; the only member whose per-block
+statistics are immutable, which makes exact cached decoding
+possible.</p></li>
 <li><p><strong>Theoretical guarantees</strong> (BigBird): Provide formal
 proofs of expressive completeness, important for understanding safety
 margins.</p></li>
@@ -10991,11 +11265,13 @@ margins.</p></li>
 <ol>
 <li><p><strong>New model training</strong> where resources permit: NSA
 or SparseK for maximal inference speedup; BigBird for theoretical
-assurance; SWA with sinks as the strongest low-cost baseline.</p></li>
+assurance; LSA when semantic clustering and exact cached decoding at
+ultra-long context matter; SWA with sinks as the strongest low-cost
+baseline.</p></li>
 <li><p><strong>Long-context document understanding</strong>: SWA with
 sinks (window 256–512) for the best accuracy per byte of KV cache;
-Longformer or FASA for practical simplicity; NSA for extreme
-scale.</p></li>
+Longformer or FASA for practical simplicity; NSA for extreme scale; LSA
+when the indexer scan itself dominates.</p></li>
 <li><p><strong>Accelerating existing models</strong>: SWA with sinks as
 the default training-free baseline (beat most linear-attention retrofits
 in the original study); FASA for RoPE-based LLMs; SpargeAttn for any
@@ -14332,7 +14608,7 @@ points on CIFAR-100 at matched recipe.</p>
 column Gaussian filter passes per atom, with optional content steering
 of the atom parameters.</figcaption>
 </figure>
-<h2 id="mathematical-formulation-20">Mathematical Formulation</h2>
+<h2 id="mathematical-formulation-21">Mathematical Formulation</h2>
 <p>Let tokens be the row-major raster of a <span
 class="math inline">\(G_h \times G_w\)</span> grid. The attention weight
 from token <span class="math inline">\(p\)</span> to token <span
@@ -14370,7 +14646,7 @@ field and learns how far to open each content tap. Widths are
 reparameterised as <span class="math inline">\(\sigma =
 \operatorname{softplus}(\omega) + \epsilon +
 \sigma_{\text{floor}}\)</span> to stay strictly positive.</p>
-<h2 id="algorithmic-pseudocode-19">Algorithmic Pseudocode</h2>
+<h2 id="algorithmic-pseudocode-20">Algorithmic Pseudocode</h2>
 <div class="algorithmic">
 <p><strong>Input:</strong> hidden state <span class="math inline">\(x
 \in \mathbb{R}^{B \times N \times d}\)</span> as a <span
@@ -14391,7 +14667,7 @@ a_x^{(r)} \big( a_y^{(r)} V \big)\)</span> <strong>Output:</strong>
 <span class="math inline">\(\mathbf{Y} W_O\)</span> reshaped to <span
 class="math inline">\((B, N, d)\)</span></p>
 </div>
-<h2 id="key-characteristics-20">Key Characteristics</h2>
+<h2 id="key-characteristics-21">Key Characteristics</h2>
 <ul>
 <li><p><strong>Training complexity</strong>: <span
 class="math inline">\(\mathcal{O}(R \cdot N \sqrt{N} \cdot d)\)</span>
@@ -14895,8 +15171,8 @@ class="math display">\[\mathcal{O}\!\left(S^2 +
 \sum_{t=0}^{T-1}(S+t)\right) \;=\; \mathcal{O}\!\left(S^2 + TS +
 T^2\right).\]</span> The difference is the familiar one between
 re-encoding a conversation and continuing it.</p>
-<p>The subsystem covers every one of the forty-five dispatchable layer
-types. Twenty-seven have parity-tested incremental branches; the
+<p>The subsystem covers every one of the forty-six dispatchable layer
+types. Twenty-eight have parity-tested incremental branches; the
 remainder are registered with an explicit, paper-based rationale for
 running uncached (§<a href="#sec:kv-fallbacks" data-reference-type="ref"
 data-reference="sec:kv-fallbacks">28.4.5</a>). Quantization and eviction
@@ -16118,7 +16394,7 @@ shared <code>HybridLayer</code> feed-forward network plays the <span
 class="math inline">\(\mathrm{FFN}_2\)</span> slot at a full residual
 step (dotted annotation).</figcaption>
 </figure>
-<h3 id="mathematical-formulation-21">Mathematical Formulation</h3>
+<h3 id="mathematical-formulation-22">Mathematical Formulation</h3>
 <p>For a block input <span class="math inline">\(x \in \mathbb{R}^{B
 \times n \times d}\)</span> the reference block of Fig. 1 of <span
 class="citation" data-cites="Gulati2020"></span> is <span
@@ -16221,7 +16497,7 @@ shifted to <span class="math inline">\(z_t = \sum_{k=0}^{K-1} w_k
 \tilde{h}_{t-K+1+k}\)</span>, so that no future frame enters the
 convolution; encoder and ViT modes keep the symmetric “same” padding of
 the paper.</p>
-<h3 id="algorithmic-pseudocode-20">Algorithmic Pseudocode</h3>
+<h3 id="algorithmic-pseudocode-21">Algorithmic Pseudocode</h3>
 <div class="algorithm">
 <div class="algorithmic">
 <p>block input <span class="math inline">\(x \in \mathbb{R}^{B \times n
@@ -17419,7 +17695,7 @@ the largest is <code>engram__conformer_attn</code> at
 which attaches a large key–value table to the attention block.</p>
 <p>The composition chart (Figure <a href="#fig:r2-params-composition"
 data-reference-type="ref"
-data-reference="fig:r2-params-composition">85</a>) is the most useful
+data-reference="fig:r2-params-composition">86</a>) is the most useful
 diagnostic of the section. The token embeddings and the output head are
 fixed costs of roughly 49k parameters each, so almost every difference
 between configurations is paid in the attention block and the FFN—the
@@ -17718,7 +17994,7 @@ the median clip ratio is 0.90.</figcaption>
 <h2 id="the-atimesb-atlas">The A<span
 class="math inline">\(\times\)</span>B Atlas</h2>
 <p>The atlas (Figure <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">93</a>) is
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">94</a>) is
 the centrepiece of the experiment: a matrix in which each cell is one
 hybrid pair, rows index the first mixer, columns index the second, and
 colour encodes the final loss. It is read in two directions. Column by
@@ -18741,7 +19017,7 @@ class="math inline">\(r = 1.00\)</span>), which is expected because the
 clip ratio is computed from the gradient norm, and neither correlates
 with quality.</p>
 <p>The correlation matrix of Figure <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">112</a> is
+data-reference-type="ref" data-reference="fig:r2-correlation">113</a> is
 computed over all 868 rows. Read that way, parameter count correlates
 with loss at <span class="math inline">\(-0.43\)</span> and with
 accuracy at <span class="math inline">\(+0.42\)</span>, apparently

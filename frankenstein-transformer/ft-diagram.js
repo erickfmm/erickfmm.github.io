@@ -37,6 +37,7 @@ var FTDiagram = (function () {
         ccgqa_attn: { c: 'attn', l: 'Compressed Conv GQA' },
         msa_attn: { c: 'sparse', l: 'MiniMax Sparse Attn' },
         sparda_attn: { c: 'sparse', l: 'SparDA Attn' },
+        lsa_attn: { c: 'sparse', l: 'LSA Attn' },
         kda_attn: { c: 'recur', l: 'Kimi Delta Attn' },
         gma_attn: { c: 'attn', l: 'Gaussian Mixture Attn' },
         ssog_attn: { c: 'field', l: 'SSOG Attn' },
@@ -327,6 +328,15 @@ var FTDiagram = (function () {
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'forecast proj', c: 'sparse', e: 'forecast', from: ['Q,K,V [B,n,H]'] },
             { n: 'sparse scores = QKᵀ', c: 'sparse', e: 'QKᵀ', from: ['Q,K,V [B,n,H]', 'forecast proj'] },
+            { n: 'softmax', c: 'sparse', e: 'softmax', from: ['sparse scores = QKᵀ'] },
+            { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
+        ],
+        lsa_attn: [
+            { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
+            { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
+            { n: 'Ward buckets c_b', c: 'sparse', e: 'cluster', from: ['Q,K,V [B,n,H]'] },
+            { n: 'top-p buckets → k keys', c: 'sparse', e: 'select', from: ['Q,K,V [B,n,H]', 'Ward buckets c_b'] },
+            { n: 'sparse scores = QKᵀ', c: 'sparse', e: 'QKᵀ', from: ['Q,K,V [B,n,H]', 'top-p buckets → k keys'] },
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['sparse scores = QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],

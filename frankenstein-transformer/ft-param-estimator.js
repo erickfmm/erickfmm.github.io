@@ -193,6 +193,9 @@ var FTParamEstimator = (function () {
         var fd = toNum(pick(m, 'attention.sparda.forecast_dim', 'sparda_forecast_dim', 64), 64);
         return 2 * H * H + 2 * (H * kv) + H * (nKv * fd); // q,k,v + forecast
       }
+      case 'lsa_attn':
+        // N-LSA adds no parameters: q,o full-width + k,v to KV width.
+        return 2 * H * H + 2 * (H * kv);
       // ---- Latent ----
       case 'mla_attn':
       case 'gqla_attn':
