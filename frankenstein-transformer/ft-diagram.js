@@ -4,6 +4,7 @@ var FTDiagram = (function () {
     var CATS = {
         standard_attn: { c: 'attn', l: 'Standard Attention' },
         sigmoid_attn: { c: 'attn', l: 'Sigmoid Attention' },
+        memory_attn: { c: 'mem', l: 'Memory Attention' },
         gated_softmax_attn: { c: 'attn', l: 'Gated Softmax Attn' },
         titan_attn: { c: 'attn', l: 'Titan Attention' },
         retnet: { c: 'recur', l: 'RetNet' },
@@ -56,6 +57,7 @@ var FTDiagram = (function () {
         eval: 'fill:#f85149,stroke:#da3633,color:#fff',
         field: 'fill:#39d2c0,stroke:#1e9e8f,color:#04302b',
         fastw: 'fill:#ff9492,stroke:#d44541,color:#1c0807',
+        mem: 'fill:#c7d2fe,stroke:#4338ca,color:#fff',
         emb: 'fill:#39d2c0,stroke:#2ab5a5,color:#fff',
         norm: 'fill:#768390,stroke:#57606a,color:#fff',
         ffn: 'fill:#6e7681,stroke:#484f58,color:#fff',
@@ -78,6 +80,7 @@ var FTDiagram = (function () {
         eval: 'fill:#fee2e2,stroke:#b91c1c,color:#111827',
         field: 'fill:#ccfbf1,stroke:#0f766e,color:#111827',
         fastw: 'fill:#ffe4e6,stroke:#9f1239,color:#111827',
+        mem: 'fill:#e0e7ff,stroke:#4338ca,color:#111827',
         emb: 'fill:#ccfbf1,stroke:#0d9488,color:#111827',
         norm: 'fill:#e5e7eb,stroke:#4b5563,color:#111827',
         ffn: 'fill:#e5e7eb,stroke:#374151,color:#111827',
@@ -115,6 +118,19 @@ var FTDiagram = (function () {
             { n: 'scores = QKᵀ/√d + b [B,nh,n]', c: 'attn', e: 'QKᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,H]'] },
             { n: 'A = σ(scores)', c: 'attn', e: 'sigmoid', from: ['scores = QKᵀ/√d + b [B,nh,n]'] },
             { n: 'O = A·V [B,n,H]', c: 'attn', e: 'A·V', from: ['A = σ(scores)', 'V = Wv·x [B,n,H]'] }
+        ],
+        memory_attn: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'token IDs s [B,n]', c: 'emb', id: 's' },
+            { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
+            { n: 'K = Wk·x [B,n,nKv·hd]', c: 'attn', e: 'Wk', from: ['x'] },
+            { n: 'E[s] [B,n,nKv·hd]', c: 'emb', e: 'lookup', from: ['token IDs s [B,n]'] },
+            { n: 'M = RMSNorm(E[s]) per KV head', c: 'norm', e: 'RMSNorm', from: ['E[s] [B,n,nKv·hd]'] },
+            { n: 'V = K + M (pre-RoPE)', c: 'attn', e: '+', from: ['K = Wk·x [B,n,nKv·hd]', 'M = RMSNorm(E[s]) per KV head'] },
+            { n: 'scores = QᵣKᵣᵀ/√d [B,nh,n]', c: 'attn', e: 'QᵣKᵣᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,nKv·hd]'] },
+            { n: 'softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = QᵣKᵣᵀ/√d [B,nh,n]'] },
+            { n: 'A = softmax · V', c: 'attn', e: 'A·V', from: ['softmax(scores)', 'V = K + M (pre-RoPE)'] },
+            { n: 'O = Wo·A [B,n,H]', c: 'mem', e: 'Wo', from: ['A = softmax · V'] }
         ],
         gated_softmax_attn: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
