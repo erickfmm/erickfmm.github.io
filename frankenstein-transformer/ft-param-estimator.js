@@ -124,6 +124,13 @@ var FTParamEstimator = (function () {
       }
       case 'gqa_attn':
         return H * H + 2 * (H * kv) + H * H;
+      // ---- Memory Attention (arXiv:2609.28399) ----
+      // q/k/out bias-free projections + per-layer token-ID memory table
+      // (vocab x kv) + per-KV-head RMSNorm gains (kv); no W_V.
+      case 'memory_attn': {
+        var memVocab = toNum(pick(m, 'dims.vocab_size', 'vocab_size', 50000), 50000);
+        return 2 * H * H + H * kv + memVocab * kv + kv;
+      }
       // ---- Recurrent / retentive ----
       case 'retnet':
       case 'retnet_attn':

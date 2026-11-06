@@ -1,4 +1,4 @@
-\begin{thebibliography}{141}
+\begin{thebibliography}{142}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -448,6 +448,11 @@ Alexia Jolicoeur-Martineau, Rhea~Sanjay Sukthanker, Pashmina Cameron, and Emy
   Gervais.
 \newblock Sliding window beats linear attention, 2026.
 \newblock URL \url{https://arxiv.org/abs/2608.28444}.
+
+\bibitem[Kang(2026)]{kang_memory_attention_2026}
+Jiale Kang.
+\newblock Memory attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2609.28399}.
 
 \bibitem[Kazemnejad et~al.(2023)Kazemnejad, Padhi, Natesan~Ramamurthy, Das, and
   Reddy]{kazemnejad_nope_2023}
