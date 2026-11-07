@@ -93,6 +93,14 @@ var FTParamEstimator = (function () {
       case 'fasa_attn':
       case 'iha_attn':
         return 4 * H * H;            // Q,K,V,O (bias=False everywhere)
+      // ---- Fast Conformer limited-context attention (arXiv:2305.05084) ----
+      // q/k/v/out = 4H^2; the optional separate global q/k/v set (§2.2) adds
+      // 3H^2. No global-token embeddings (globals are head positions).
+      case 'fastconformer_attn': {
+        var fcSep = toBool(pick(m, 'attention.fastconformer.global_attn_separate',
+                                'fastconformer_global_attn_separate', false), false);
+        return 4 * H * H + (fcSep ? 3 * H * H : 0);
+      }
       case 'gated_softmax_attn':
         return 5 * H * H;            // + gate_proj
       // ---- Conformer (arXiv:2005.08100) ----

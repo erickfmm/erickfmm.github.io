@@ -1,7 +1,7 @@
 \section{Tablas de Resumen Completas}
 \label{sec:annex-summary-tables}
 
-Este anexo proporciona una referencia completa de todos los componentes implementados en el código base de Frankenstein Transformer: 47 mezcladores de secuencia en diez familias, 28 optimizadores, 6 variantes de normalización, 43 funciones de activación y 4 métodos de embedding. Cada tabla es autocontenida y referencia la bibliografía.
+Este anexo proporciona una referencia completa de todos los componentes implementados en el código base de Frankenstein Transformer: 48 mezcladores de secuencia en diez familias, 28 optimizadores, 6 variantes de normalización, 43 funciones de activación y 4 métodos de embedding. Cada tabla es autocontenida y referencia la bibliografía.
 
 \subsection{Resumen de Mezcladores de Secuencia}
 
@@ -42,7 +42,7 @@ titan\_attn & Recurrente & $\mathcal{O}(c^2 + n f)$ & $\mathcal{O}(c^2 + 1)$ & A
 engram\_attn & Memoria & $\mathcal{O}(n \cdot N \cdot H)$ & $\mathcal{O}(1)$ lookup & Memoria condicional de N-gramas; recuperación escalable basada en hash & \citep{cheng2026conditionalmemoryscalablelookup} \\
 \midrule
 
-\multicolumn{6}{c}{\textbf{Disperso (11)}} \\
+\multicolumn{6}{c}{\textbf{Disperso (12)}} \\
 \midrule
 sparse\_transformer\_attn & Disperso & $\mathcal{O}(n \sqrt{n} \cdot d)$ & $\mathcal{O}(n)$ & Máscaras factorizadas estrideadas + fijas; patrón de dispersidad $\sqrt{n}$ & \citep{child_sparse_transformer_2019} \\
 longformer\_attn & Disperso & $\mathcal{O}(n \cdot w \cdot d)$ & $\mathcal{O}(n)$ & Ventana deslizante + dilatación + tokens globales; lineal en $n$ & \citep{beltagy_longformer_2020} \\
@@ -55,6 +55,7 @@ fasa\_attn & Disperso & $\mathcal{O}(t \cdot N_{\text{tip}} + N_{\text{fac}} \cd
 msa\_attn & Disperso & $\mathcal{O}(H_{\text{kv}} \cdot d_{\text{idx}} \cdot N^2 + H_q \cdot d_h \cdot N \cdot k \cdot B_k)$ & $\mathcal{O}(n)$ & Bloques dispersos con rama índice; desplegado a escala 109B & \citep{lai_minimax_2026} \\
 sparda\_attn & Disperso & $\mathcal{O}(H_{\text{kv}} \cdot d_f \cdot N \cdot N_b + H_q \cdot d_h \cdot N \cdot k \cdot B_k)$ & $\mathcal{O}(n)$ & Prefetch anticipado guiado por pronóstico; dispersidad predictiva & \citep{fu_sparda_2026} \\
 lsa\_attn & Disperso & $\mathcal{O}(N^2/\bar{n}_b + N\,(k+n_w+n_{\text{sink}})\,d_h)$ & $\mathcal{O}(N/\bar{n}_b + k+n_w+n_{\text{sink}})$ & Clustering Ward semántico de claves; selección top-$k$ de largo alcance; entrenable de forma nativa, sin parámetros extra & \citep{kubicek_lsa_2026} \\
+fastconformer\_attn & Disperso & $\mathcal{O}(n \cdot (w + g) \cdot d)$ & $\mathcal{O}(w + g)$ & Ventana de contexto limitado + token global anclado a la cabecera; proyecciones globales separadas opcionales; forma larga de memoria lineal & \citep{rekesh_fastconformer_2023} \\
 \midrule
 
 \multicolumn{6}{c}{\textbf{Con Compuerta (8)}} \\
@@ -79,7 +80,7 @@ falcon2a\_attn & Peso rápido & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ & Deca
 falcon3a\_attn & Peso rápido & $\mathcal{O}(L d^2)$ & $\mathcal{O}(d^2)$ + cola $\mathcal{O}(B)$ & Aditivo con ventana; mejor extrapolación de longitud & \citep{zhang_falcon_2026} \\
 \midrule
 
-\multicolumn{6}{c}{\textbf{Latente (9)}} \\
+\multicolumn{6}{c}{\textbf{Latente (10)}} \\
 \midrule
 mla\_attn & Latente & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(r_{\text{kv}} \cdot n)$ & KV latente de rango $r_{\text{kv}} \approx d/2$; estilo DeepSeek & \citep{mehta_mla_2025} \\
 gqla\_attn & Latente & $\mathcal{O}(n^2 d)$ & $\mathcal{O}(r_{\text{kv}} \cdot n)$ & Rutas de decodificación duales adaptativas al hardware; fusión GQA + latente & \citep{meng_gqla_2026} \\
@@ -91,6 +92,10 @@ mtla\_attn & Latente & $\mathcal{O}(n^2 d / m)$ & $\mathcal{O}(r_{\text{kv}} \cd
 cca\_attn & Latente & $\mathcal{O}(n^2 d / C)$ & $\mathcal{O}(\tilde{e} \cdot n)$ & Atención completa en latente comprimido; $C\times$ menos FLOPs & \citep{figliola_cca_2025} \\
 ccgqa\_attn & Latente & $\mathcal{O}(n^2 d / C_1)$ & $\mathcal{O}(\tilde{e}_{\text{kv}} \cdot n)$ & CCA + GQA desacoplada; mejor pérdida a $8\times$ reducción de caché & \citep{figliola_cca_2025} \\
 gma\_attn & Latente & $\mathcal{O}(nK d_r + nK d_v)$ & $\mathcal{O}(K)$/paso & Atención de Mezcla Gaussiana; enrutamiento latente probabilístico a través de $K$ componentes GMM aprendidos por cabeza; tiempo lineal para $K$ fijo; causal vía cumsums de prefijo & \citep{huang_gma_2026} \\
+\midrule
+
+\multicolumn{6}{c}{\textbf{Campo geométrico (1)}} \\
+\midrule
 ssog\_attn & Campo geométrico & $\mathcal{O}(R \cdot n\sqrt{n} \cdot d)$ & $\mathcal{O}(R \cdot n\sqrt{n} \cdot d)$/pasada & SSOG: campo Gaussiano separable sobre posición relativa; el contenido dirige (residuos acotados $\mu/\sigma/\lambda$ detrás de compuertas de arranque en frío), nunca puntúa; solo encoder & \citep{pisoni_ssog_2026} \\
 \midrule
 

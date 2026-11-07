@@ -1,4 +1,4 @@
-\begin{thebibliography}{143}
+\begin{thebibliography}{144}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -784,6 +784,15 @@ Nils Reimers and Iryna Gurevych.
 \newblock Sentence-{BERT}: Sentence embeddings using siamese {BERT}-networks,
   2019.
 \newblock URL \url{http://arxiv.org/abs/1908.10084}.
+
+\bibitem[Rekesh et~al.(2023)Rekesh, Koluguri, Kriman, Majumdar, Noroozi, Huang,
+  Hrinchuk, Puvvada, Kumar, Balam, and Ginsburg]{rekesh_fastconformer_2023}
+Dima Rekesh, Nithin~Rao Koluguri, Samuel Kriman, Somshubra Majumdar, Vahid
+  Noroozi, He~Huang, Oleksii Hrinchuk, Krishna Puvvada, Ankur Kumar, Jagadeesh
+  Balam, and Boris Ginsburg.
+\newblock Fast conformer with linearly scalable attention for efficient speech
+  recognition, 2023.
+\newblock URL \url{https://arxiv.org/abs/2305.05084}.
 
 \bibitem[Roy et~al.(2019)Roy, Manna, Bagui, et~al.]{roy2019lisht}
 Susmita Roy, Souvik Manna, Subhash Bagui, et~al.

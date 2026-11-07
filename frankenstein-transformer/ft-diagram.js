@@ -38,6 +38,7 @@ var FTDiagram = (function () {
         msa_attn: { c: 'sparse', l: 'MiniMax Sparse Attn' },
         sparda_attn: { c: 'sparse', l: 'SparDA Attn' },
         lsa_attn: { c: 'sparse', l: 'LSA Attn' },
+        fastconformer_attn: { c: 'sparse', l: 'FastConformer Attn' },
         kda_attn: { c: 'recur', l: 'Kimi Delta Attn' },
         gma_attn: { c: 'attn', l: 'Gaussian Mixture Attn' },
         ssog_attn: { c: 'field', l: 'SSOG Attn' },
@@ -338,6 +339,16 @@ var FTDiagram = (function () {
             { n: 'top-p buckets → k keys', c: 'sparse', e: 'select', from: ['Q,K,V [B,n,H]', 'Ward buckets c_b'] },
             { n: 'sparse scores = QKᵀ', c: 'sparse', e: 'QKᵀ', from: ['Q,K,V [B,n,H]', 'top-p buckets → k keys'] },
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['sparse scores = QKᵀ'] },
+            { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
+        ],
+        fastconformer_attn: [
+            { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
+            { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
+            { n: 'Qg,Kg,Vg [B,n,H] (optional)', c: 'sparse', e: 'Wg', from: ['x'] },
+            { n: 'local window w', c: 'sparse', e: 'local', from: ['x'] },
+            { n: 'head tokens g global', c: 'sparse', e: 'global', from: ['x'] },
+            { n: 'masked scores = (w+g)⊗QKᵀ', c: 'sparse', e: 'mask', from: ['Q,K,V [B,n,H]', 'local window w', 'head tokens g global', 'Qg,Kg,Vg [B,n,H] (optional)'] },
+            { n: 'softmax', c: 'sparse', e: 'softmax', from: ['masked scores = (w+g)⊗QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
         sparge_attn: [
