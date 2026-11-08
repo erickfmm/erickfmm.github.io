@@ -1973,7 +1973,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports thirty-four optimizer families in eight
+groups. The system supports thirty-six optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1981,10 +1981,10 @@ APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM); schedule-free and parameter-free
 methods (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3,
-ROOT, Muon², NorMuon, Conda, TUON); adaptivity-tunable optimizers
-(Anon); and evolutionary population-based hybrids (EvE, EA4LLM).
-Algorithms, pseudocode, and memory and complexity comparisons are
-collected in Appendix <a href="#sec:annex-optimizers"
+ROOT, Muon², NorMuon, Conda, TUON, NAMO, NAMO-D); adaptivity-tunable
+optimizers (Anon); and evolutionary population-based hybrids (EvE,
+EA4LLM). Algorithms, pseudocode, and memory and complexity comparisons
+are collected in Appendix <a href="#sec:annex-optimizers"
 data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
@@ -2677,7 +2677,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>147</span> urlstyle</p>
+<p><span>148</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3238,12 +3238,17 @@ Continuous self-attention models with neural <span>ODE</span> networks.
 Intelligence</em>, 35 (16): 14393–14401, 2021. ISSN 2374-3468,
 2159-5399. doi: 10.1609/aaai.v35i16.17692. URL
 <code>https://ojs.aaai.org/index.php/AAAI/article/view/17692</code>.</p>
+<p>Minxin Zhang, Yuxuan Liu, and Hayden Schaeffer. Adam improves muon:
+Adaptive moment estimation with orthogonalized momentum,
+2026<span>a</span>. URL
+<code>https://arxiv.org/abs/2602.17080</code>.</p>
 <p>Yichi Zhang, Yizhong Wang, et al. Accurate and training-free sparse
 attention accelerating any model inference, 2025. URL
 <code>https://arxiv.org/abs/2502.18137</code>.</p>
 <p>Yifan Zhang, Steve Ta, Jasper Zhang, Jichen Feng, Shuzhen Li, Yongxin
 Zhang, Yifeng Liu, Huizhuo Yuan, Mengdi Wang, Quanquan Gu, and Andrew
-Chi-Chih Yao. Fast weight attention for continual learning, 2026. URL
+Chi-Chih Yao. Fast weight attention for continual learning,
+2026<span>b</span>. URL
 <code>https://arxiv.org/abs/2608.27763</code>.</p>
 <p>Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
@@ -5418,7 +5423,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 48 sequence mixers
-across ten families, 34 optimizers, 6 normalization variants, 43
+across ten families, 36 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -5720,7 +5725,7 @@ class="citation" data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 34 supported optimizers with their memory footprint, per-step
+all 36 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5965,6 +5970,25 @@ momentum, wd, NS steps <span class="math inline">\(k\)</span>, refresh
 class="math inline">\(Q\)</span>, stack <span
 class="math inline">\(K\)</span> &amp; <span class="citation"
 data-cites="tang_tuon_2026"></span><br />
+NAMO &amp; Orthogonality + norm-based adaptive &amp; 2 (<span
+class="math inline">\(m\)</span>, scalar <span
+class="math inline">\(v\)</span>); + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr, <span
+class="math inline">\(\mu_1\)</span>, <span
+class="math inline">\(\mu_2\)</span>, eps, wd, NS steps <span
+class="math inline">\(k\)</span> &amp; <span class="citation"
+data-cites="zhang_namo_2026"></span><br />
+NAMO-D &amp; Orthogonality + diagonal adaptive &amp; 2 (<span
+class="math inline">\(m\)</span>, column <span
+class="math inline">\(v\)</span>); + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k + mn)\)</span> &amp; lr,
+<span class="math inline">\(\mu_1\)</span>, <span
+class="math inline">\(\mu_2\)</span>, eps, wd, NS steps <span
+class="math inline">\(k\)</span>, clamp <span
+class="math inline">\(c\)</span> &amp; <span class="citation"
+data-cites="zhang_namo_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -8948,6 +8972,232 @@ rates transfer.</p></li>
 projections), where prior tensor-aware optimizers fail to
 transfer.</p></li>
 </ul>
+<h4
+id="namo-norm-based-adaptive-moment-estimation-with-orthogonalized-momentum.">NAMO
+(Norm-Based Adaptive Moment Estimation with Orthogonalized
+Momentum).</h4>
+<p>NAMO <span class="citation" data-cites="zhang_namo_2026"></span>
+keeps Muon’s orthogonalized update direction and adds an Adam-type
+<strong>norm-based noise adaptation</strong> on top of it. Matrix
+orthogonalization is an unbounded operation that can amplify stochastic
+noise, so Muon’s effective stepsize does not shrink when gradients
+become noisy. NAMO tracks a single scalar EMA of the squared Frobenius
+norm of the gradient and rescales the whole orthogonalized update by the
+bias-corrected norm ratio <span class="math inline">\(\lVert\widehat
+M_t\rVert_F/(\sqrt{\widehat v_t}+\epsilon_t)\)</span> — an aggregated
+signal-to-noise statistic analogous to Adam’s coordinate-wise ratio.
+Because the scaling is a single scalar, the update direction stays
+exactly orthogonal, and the optimizer state grows by only one scalar per
+matrix over Muon. For a hidden-layer weight matrix <span
+class="math inline">\(W \in \mathbb{R}^{m\times n}\)</span> with
+learning rate <span class="math inline">\(\eta\)</span>, momenta <span
+class="math inline">\(\mu_1,\mu_2 \in [0,1)\)</span>, stability constant
+<span class="math inline">\(\epsilon\)</span> and decoupled weight decay
+<span class="math inline">\(\lambda\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \mu_1 M_{t-1} + (1-\mu_1) G_t &amp;&amp; \text{(momentum)} \\
+v_t &amp;= \mu_2 v_{t-1} + (1-\mu_2)\,\lVert G_t\rVert_F^2 &amp;&amp;
+\text{(scalar norm EMA)} \\
+O_t &amp;= \mathrm{NS}_K(M_t) &amp;&amp; \text{(orthogonalization)} \\
+\alpha_t &amp;= \frac{\sqrt{1-\mu_2^t}}{1-\mu_1^t}\cdot\frac{\lVert
+M_t\rVert_F}{\sqrt{v_t}+\epsilon}
+   = \frac{\lVert\widehat M_t\rVert_F}{\sqrt{\widehat v_t}+\epsilon_t},
+   \qquad \epsilon_t := \frac{\epsilon}{\sqrt{1-\mu_2^t}} &amp;&amp;
+\text{(adaptive stepsize)} \\
+W_t &amp;= W_{t-1} - \eta\,\alpha_t\,\bigl(O_t + \lambda W_{t-1}\bigr)
+&amp;&amp; \text{(update)}
+\end{aligned}\]</span> with the same quintic Newton–Schulz coefficients
+<span class="math inline">\((a,b,c)=(3.4445,-4.7750,2.0315)\)</span> as
+Muon. Under nuclear-norm smoothness and bounded-variance noise, NAMO
+attains the optimal deterministic rate <span
+class="math inline">\(\mathcal{O}(T^{-1/2})\)</span>, and its stochastic
+bound decomposes into an optimization term <span
+class="math inline">\(\mathcal{O}(T^{-1/4})\)</span> plus a variance
+term <span
+class="math inline">\(\mathcal{O}(\sqrt{\sigma}\,b^{-1/4}T^{-1/8})\)</span>,
+recovering the optimal <span
+class="math inline">\(\mathcal{O}(T^{-1/4})\)</span> once the batch size
+satisfies <span class="math inline">\(b=\Omega(\sigma^2
+T^{1/2})\)</span>.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parameters <span class="math inline">\(\theta\)</span>, learning rate
+<span class="math inline">\(\eta\)</span>, momenta <span
+class="math inline">\(\mu_1,\mu_2\)</span>, NS iters <span
+class="math inline">\(K\)</span>, stability constant <span
+class="math inline">\(\epsilon\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \mu_1 M +
+(1-\mu_1) G\)</span> <span class="math inline">\(v \gets \mu_2 v +
+(1-\mu_2)\,\lVert G\rVert_F^2\)</span> <span class="math inline">\(O
+\gets \mathrm{NS}_K(M)\)</span> <span class="math inline">\(\alpha \gets
+\frac{\sqrt{1-\mu_2^t}}{1-\mu_1^t}\cdot\frac{\lVert
+M\rVert_F}{\sqrt{v}+\epsilon}\)</span> <span class="math inline">\(W
+\gets W - \eta\,\alpha\,(O + \lambda W)\)</span> <span
+class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
+\beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>On GPT-2 pretraining over OpenWebText (124M/355M, 2000-step linear
+warmup then constant LR), NAMO reaches validation losses of
+3.0351/2.9516 versus 3.0643/2.9914 for AdamW and 3.0435/2.9684 for Muon,
+with optimal learning rates <span
+class="math inline">\(\eta=0.012/0.007\)</span> (roughly <span
+class="math inline">\(9\times\)</span> AdamW’s) at <span
+class="math inline">\(\mu_1=0.95\)</span>, <span
+class="math inline">\(\mu_2=0.99\)</span>, <span
+class="math inline">\(\lambda=0.01\)</span>, and it remains stable over
+a wider learning-rate grid than both baselines. In this implementation
+the global <code>namo-betas</code> suffix is <span
+class="math inline">\((\mu_1,\mu_2)\)</span> (default <span
+class="math inline">\([0.95,0.99]\)</span>),
+<code>ns_steps</code>/<code>ns_eps</code> configure Newton–Schulz, the
+shared per-group <code>eps</code> is <span
+class="math inline">\(\alpha_t\)</span>’s <span
+class="math inline">\(\epsilon\)</span>, the shared <code>wd</code> is
+decoupled and scaled by <span class="math inline">\(\alpha_t\)</span> as
+in the paper’s update, and the shared
+<code>betas</code>/<code>eps</code> configure the AdamW fallback for the
+embeddings/pos/head groups and every non-2-D parameter. The reference
+release additionally exposes Nesterov momentum, an effective-stepsize
+clamp and a <span class="math inline">\(0.2\sqrt{\max(m,n)}\)</span>
+shape scaling; Algorithm 1 of the paper defines none of these, so this
+module follows the paper.</p>
+<h4 id="cons.-32">Cons.</h4>
+<ul>
+<li><p>A single scalar stepsize carries no per-neuron information; the
+paper itself addresses this with the diagonal extension NAMO-D.</p></li>
+<li><p>The update is not RMS-aligned, so Adam learning-rate schedules do
+not transfer unchanged: the paper’s optima are roughly <span
+class="math inline">\(9\times\)</span> AdamW’s.</p></li>
+<li><p>The theory assumes exact orthogonalization while practice uses
+<span class="math inline">\(K{=}5\)</span> Newton–Schulz iterations, and
+the empirical evidence is limited to GPT-2-scale pretraining.</p></li>
+</ul>
+<h4 id="pros.-32">Pros.</h4>
+<ul>
+<li><p>First principled integration of orthogonalized momentum with
+Adam-type noise adaptation, with optimal deterministic and
+noise-adaptive stochastic convergence rates.</p></li>
+<li><p>The scalar scaling preserves orthogonality exactly, and the
+effective stepsize shrinks automatically under noise or near
+stationarity.</p></li>
+<li><p>Zero additional memory over Muon and negligible per-step
+overhead; outperforms AdamW and Muon on GPT-2 (124M/355M) over a wider
+stable learning-rate range.</p></li>
+</ul>
+<h4 id="namo-d-diagonal-extension-of-namo.">NAMO-D (Diagonal Extension
+of NAMO).</h4>
+<p>NAMO-D <span class="citation" data-cites="zhang_namo_2026"></span>
+replaces NAMO’s single adaptive scalar with a diagonal matrix that
+right-multiplies the orthogonalized momentum, so every neuron receives
+its own adaptive stepsize. Column-wise scaling aligns with the near
+block-diagonal Hessian of neural networks and yields finer-grained noise
+adaptation, but it no longer preserves strict orthogonality of the
+update direction. With the column-norm operator <span
+class="math inline">\([N^c(M)]_j := \lVert M_{:,j}\rVert\)</span> for
+<span class="math inline">\(j=1,\dots,n\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \mu_1 M_{t-1} + (1-\mu_1) G_t &amp;&amp; \text{(momentum)} \\
+[v_t]_j &amp;= \mu_2 [v_{t-1}]_j + (1-\mu_2)\,\lVert [G_t]_{:,j}\rVert^2
+&amp;&amp; \text{(column norm EMA)} \\
+d_t &amp;= \frac{\sqrt{1-\mu_2^t}}{1-\mu_1^t}\,N^c(M_t) \oslash
+\bigl(\sqrt{v_t}+\epsilon\bigr) &amp;&amp; \text{(column stepsizes)} \\
+\bar d_t &amp;= \lVert d_t\rVert_1/n, \qquad
+\tilde d_t = \min\bigl\{\max\{d_t, c\,\bar d_t \mathbf 1\}, (\bar
+d_t/c)\,\mathbf 1\bigr\} &amp;&amp; \text{(clamp)} \\
+O_t &amp;= \mathrm{NS}_K(M_t), \qquad
+W_t = W_{t-1} - \eta\,\bigl(O_t + \lambda
+W_{t-1}\bigr)\operatorname{diag}(\tilde d_t) &amp;&amp; \text{(update)}
+\end{aligned}\]</span> By Lemma 7 of the paper the entries satisfy <span
+class="math inline">\(\lVert d_t\rVert_\infty \le
+\sqrt{(1-\mu_1)/(1-\mu_2)}\)</span>, and the clamp bounds the diagonal’s
+condition number by <span class="math inline">\(1/c^2\)</span>. The
+additional state over NAMO is one vector of length <span
+class="math inline">\(n\)</span> per matrix; NAMO-D keeps the same
+optimal deterministic <span
+class="math inline">\(\mathcal{O}(T^{-1/2})\)</span> and noise-adaptive
+stochastic rates as NAMO (Theorems 5–6). The extra clamping constant
+<span class="math inline">\(c\)</span> balances the two competing goals:
+small <span class="math inline">\(c\)</span> clamps harder toward the
+average and keeps the direction close to orthogonal, while larger <span
+class="math inline">\(c\)</span> allows more neuron-wise variation.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parameters <span class="math inline">\(\theta\)</span>, learning rate
+<span class="math inline">\(\eta\)</span>, momenta <span
+class="math inline">\(\mu_1,\mu_2\)</span>, NS iters <span
+class="math inline">\(K\)</span>, stability constant <span
+class="math inline">\(\epsilon\)</span>, clamp <span
+class="math inline">\(c\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \mu_1 M +
+(1-\mu_1) G\)</span> <span class="math inline">\(v \gets \mu_2 v +
+(1-\mu_2)\,N^c(G)\odot N^c(G)\)</span> <span class="math inline">\(d
+\gets \frac{\sqrt{1-\mu_2^t}}{1-\mu_1^t}\,N^c(M) \oslash
+(\sqrt{v}+\epsilon)\)</span> <span class="math inline">\(\bar d \gets
+\lVert d\rVert_1/n\)</span>; <span class="math inline">\(\tilde d \gets
+\min(\max(d, c\bar d\mathbf 1), (\bar d/c)\mathbf 1)\)</span> <span
+class="math inline">\(O \gets \mathrm{NS}_K(M)\)</span> <span
+class="math inline">\(W \gets W - \eta\,(O + \lambda
+W)\operatorname{diag}(\tilde d)\)</span> <span class="math inline">\(P
+\gets \operatorname{AdamW}(P, \nabla f(P); \eta, \beta_1, \beta_2,
+\epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>The paper fixes <span class="math inline">\(c=0.1\)</span> for GPT-2
+(124M) and sweeps <span
+class="math inline">\(c\in\{0.12,0.40,0.75,0.90\}\)</span> for GPT-2
+(355M), selecting <span class="math inline">\(c=0.9\)</span>; the
+reference implementation defaults to <span
+class="math inline">\(0.75\)</span>. NAMO-D reaches validation losses of
+3.0246 and 2.9507 on GPT-2 (124M/355M), improving on NAMO’s
+3.0351/2.9516, at optimal learning rates <span
+class="math inline">\(\eta=0.009\)</span> with the same <span
+class="math inline">\(\mu_1=0.95\)</span>, <span
+class="math inline">\(\mu_2=0.99\)</span> and <span
+class="math inline">\(\lambda=0.01\)</span>. In this implementation the
+global <code>namo_d-betas</code> suffix is <span
+class="math inline">\((\mu_1,\mu_2)\)</span> (default <span
+class="math inline">\([0.95,0.99]\)</span>), <code>namo_d-clamp</code>
+is <span class="math inline">\(c\)</span> (default <span
+class="math inline">\(0.1\)</span>),
+<code>ns_steps</code>/<code>ns_eps</code> configure Newton–Schulz, the
+shared per-group <code>eps</code> is the denominator <span
+class="math inline">\(\epsilon\)</span>, the shared <code>wd</code> is
+decoupled and right-multiplied by the diagonal, and the shared
+<code>betas</code>/<code>eps</code> configure the AdamW fallback. As
+with NAMO, the official release’s Nesterov momentum, effective-stepsize
+clamp and <span class="math inline">\(0.2\sqrt{\max(m,n)}\)</span> shape
+scaling are not part of Algorithm 2 and are not implemented.</p>
+<h4 id="cons.-33">Cons.</h4>
+<ul>
+<li><p>The update no longer preserves strict orthogonality: the diagonal
+scaling trades the structural guarantee for finer-grained noise
+adaptation.</p></li>
+<li><p>The clamp constant <span class="math inline">\(c\)</span> is a
+new hyperparameter whose optimum varies with model scale (<span
+class="math inline">\(0.1\)</span> at 124M, <span
+class="math inline">\(0.9\)</span> at 355M), requiring a sweep.</p></li>
+<li><p>One extra <span class="math inline">\(\mathbb{R}^n\)</span> state
+per matrix over NAMO, and the theory still assumes exact
+orthogonalization.</p></li>
+</ul>
+<h4 id="pros.-33">Pros.</h4>
+<ul>
+<li><p>Neuron-wise adaptation matches the near block-diagonal Hessian of
+neural networks and improves on NAMO on both GPT-2 sizes.</p></li>
+<li><p>The clamp bounds the diagonal’s condition number by <span
+class="math inline">\(1/c^2\)</span>, keeping the scaled direction
+well-conditioned under heavy-tailed or noisy gradients.</p></li>
+<li><p>Optimal deterministic and noise-adaptive stochastic convergence
+rates carry over from NAMO, with the same Newton–Schulz cost and hybrid
+AdamW routing.</p></li>
+</ul>
 <h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
 Population-Based Hybrids</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -9111,7 +9361,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-32">Cons.</h4>
+<h4 id="cons.-34">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -9133,7 +9383,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-32">Pros.</h4>
+<h4 id="pros.-34">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -9266,7 +9516,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-33">Cons.</h4>
+<h4 id="cons.-35">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -9292,7 +9542,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-33">Pros.</h4>
+<h4 id="pros.-35">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B
