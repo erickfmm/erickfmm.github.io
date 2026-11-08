@@ -1,4 +1,4 @@
-\begin{thebibliography}{145}
+\begin{thebibliography}{146}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -921,6 +921,14 @@ Hongyu Wang, Shuming Ma, Li~Dong, Shaohan Huang, Huaijie Wang, Lingxiao Ma, Fan
   Yang, Ruiping Wang, Yi~Wu, and Furu Wei.
 \newblock {BitNet}: Scaling 1-bit transformers for large language models, 2023.
 \newblock URL \url{http://arxiv.org/abs/2310.11453}.
+
+\bibitem[Wang et~al.(2025)Wang, Zhou, Dong, Li, Li, Zhou, Lao, Fang, and
+  Lin]{wang_conda_2025}
+Junjie Wang, Pan Zhou, Yiming Dong, Huan Li, Jia Li, Xun Zhou, Qicheng Lao,
+  Cong Fang, and Zhouchen Lin.
+\newblock Conda: Column-normalized adam for training large language models
+  faster, 2025.
+\newblock URL \url{https://arxiv.org/abs/2509.24218}.
 
 \bibitem[Wang et~al.(2026)Wang, Liu, et~al.]{wang_fasa_2026}
 Zhe Wang, Ming Liu, et~al.

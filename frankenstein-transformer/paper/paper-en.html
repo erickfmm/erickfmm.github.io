@@ -1973,7 +1973,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports thirty-two optimizer families in eight
+groups. The system supports thirty-three optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1981,7 +1981,7 @@ APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM); schedule-free and parameter-free
 methods (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3,
-ROOT, Muon², NorMuon); adaptivity-tunable optimizers (Anon); and
+ROOT, Muon², NorMuon, Conda); adaptivity-tunable optimizers (Anon); and
 evolutionary population-based hybrids (EvE, EA4LLM). Algorithms,
 pseudocode, and memory and complexity comparisons are collected in
 Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2676,7 +2676,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>145</span> urlstyle</p>
+<p><span>146</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3166,6 +3166,10 @@ stabilizing shampoo using adam, 2024. URL
 Lingxiao Ma, Fan Yang, Ruiping Wang, Yi Wu, and Furu Wei. : Scaling
 1-bit transformers for large language models, 2023. URL
 <code>http://arxiv.org/abs/2310.11453</code>.</p>
+<p>Junjie Wang, Pan Zhou, Yiming Dong, Huan Li, Jia Li, Xun Zhou,
+Qicheng Lao, Cong Fang, and Zhouchen Lin. Conda: Column-normalized adam
+for training large language models faster, 2025. URL
+<code>https://arxiv.org/abs/2509.24218</code>.</p>
 <p>Zhe Wang, Ming Liu, et al. Fasa: Frequency-aware sparse attention,
 2026. URL <code>https://arxiv.org/abs/2602.03152</code>.</p>
 <p>Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement
@@ -5409,7 +5413,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 48 sequence mixers
-across ten families, 28 optimizers, 6 normalization variants, 43
+across ten families, 33 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -5711,7 +5715,7 @@ class="citation" data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 32 supported optimizers with their memory footprint, per-step
+all 33 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5931,6 +5935,19 @@ class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
 momentum, <span class="math inline">\(\beta_2\)</span>, eps, wd, NS
 steps <span class="math inline">\(k\)</span> &amp; <span
 class="citation" data-cites="li_normuon_2025"></span><br />
+Conda &amp; Orthogonality + column-wise adaptive &amp; 3 (<span
+class="math inline">\(m\)</span>, <span
+class="math inline">\(v_{\mathrm{proj}}\)</span>, basis <span
+class="math inline">\(P\)</span>); + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(mn\,r)\)</span>, <span
+class="math inline">\(r=\min(m,n)\)</span>; SVD every <span
+class="math inline">\(T\)</span> steps &amp; lr, <span
+class="math inline">\(\beta_1\)</span>, <span
+class="math inline">\(\beta_2\)</span>, eps, wd, gap <span
+class="math inline">\(T\)</span>, scale <span
+class="math inline">\(\alpha\)</span> &amp; <span class="citation"
+data-cites="wang_conda_2025"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -8617,6 +8634,139 @@ class="math inline">\(m(n+1)\)</span> versus <span
 class="math inline">\(mn\)</span>), roughly halving Adam’s optimizer
 state, and the per-step overhead is a few percent.</p></li>
 </ul>
+<h4 id="conda-column-normalized-adam.">Conda (Column-Normalized
+Adam).</h4>
+<p>Conda <span class="citation" data-cites="wang_conda_2025"></span>
+keeps Adam’s coordinate-wise adaptivity and adds a <strong>milder,
+column-specific spectral normalization</strong>. The authors first
+reformulate Muon as a first/second-moment method whose second moment is
+the row-constant matrix <span
+class="math inline">\(\mathrm{diag}(\mathbf{\Sigma}_t)\mathbf{1}^\top\)</span>:
+Muon normalizes every column of the update by the same <span
+class="math inline">\(1/\sigma_i\)</span> factors, which over-amplifies
+directions with tiny singular values. Conda instead constrains the
+second moment to the same subspace as the first moment by projecting the
+stochastic gradient, tracking an element-wise EMA of the <em>squared
+projected gradients</em>, and dividing the projected first moment by its
+square root. For a weight matrix <span class="math inline">\(W \in
+\mathbb{R}^{m \times n}\)</span> with <span class="math inline">\(m \le
+n\)</span>, learning rate <span class="math inline">\(\eta\)</span>,
+decay rates <span class="math inline">\(\beta_1,\beta_2\)</span>,
+subspace refresh period <span class="math inline">\(T\)</span>, scale
+factor <span class="math inline">\(\alpha\)</span> and stability
+constant <span class="math inline">\(\epsilon\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \beta_1 M_{t-1} + (1-\beta_1) G_t \\
+\bar U_t &amp;=
+\begin{cases}
+\mathrm{SVD}(M_t), &amp; t \bmod T = 0, \\
+\bar U_{t-1}, &amp; \text{otherwise},
+\end{cases} \\
+M&#39;_t &amp;= \bar U_t^\top M_t, \qquad
+N_t = \beta_2 N_{t-1} + (1-\beta_2)\big(\bar U_t^\top G_t\big)^2, \\
+\widehat M_t &amp;= \frac{M&#39;_t}{1-\beta_1^t}, \qquad
+\widehat N_t = \frac{N_t}{1-\beta_2^t}, \\
+W_t &amp;= W_{t-1} - \eta\,\alpha\,\bar U_t\,
+      \frac{\widehat M_t}{\sqrt{\widehat N_t} + \epsilon}.
+\end{aligned}\]</span> For <span class="math inline">\(m &gt; n\)</span>
+the right singular basis <span class="math inline">\(V_t\)</span>
+replaces <span class="math inline">\(\bar U_t\)</span> (<span
+class="math inline">\(M&#39;_t = M_t V_t\)</span>, <span
+class="math inline">\(N_t\)</span> tracks <span
+class="math inline">\((G_t V_t)^2\)</span>, and the update is <span
+class="math inline">\((\widehat M_t/\sqrt{\widehat
+N_t})\,V_t^\top\)</span>), exactly as in the released reference
+implementation. The SVD is the only super-linear step and runs once
+every <span class="math inline">\(T\)</span> steps (<span
+class="math inline">\(T=2000\)</span> in the paper’s pretraining runs,
+<span class="math inline">\(T=200\)</span> in its LoRA runs); the
+wall-clock overhead is negligible for <span class="math inline">\(T \ge
+100\)</span>.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parameters <span class="math inline">\(\theta\)</span>, learning rate
+<span class="math inline">\(\eta\)</span>, <span
+class="math inline">\(\beta_1,\beta_2\)</span>, refresh period <span
+class="math inline">\(T\)</span>, scale <span
+class="math inline">\(\alpha\)</span>, <span
+class="math inline">\(\epsilon\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \beta_1 M
++ (1-\beta_1) G\)</span> <span class="math inline">\(U,\Sigma,V^\top
+\gets \mathrm{SVD}(M)\)</span>; <span class="math inline">\(\bar U \gets
+U\)</span> if <span class="math inline">\(m\le n\)</span> else <span
+class="math inline">\(V\)</span> <span
+class="math inline">\(G_{\mathrm{proj}} \gets \bar U^\top G\)</span>;
+<span class="math inline">\(M_{\mathrm{proj}} \gets \bar U^\top
+M\)</span> <span class="math inline">\(N \gets \beta_2 N + (1-\beta_2)\,
+G_{\mathrm{proj}}^2\)</span> <span
+class="math inline">\(M_{\mathrm{proj}} \gets
+M_{\mathrm{proj}}/(1-\beta_1^t)\)</span>; <span class="math inline">\(N
+\gets N/(1-\beta_2^t)\)</span> <span class="math inline">\(W \gets
+(1-\eta\lambda) W - \eta\,\alpha\,\bar U\,
+M_{\mathrm{proj}}/(\sqrt{N}+\epsilon)\)</span> <span
+class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
+\beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>On LLaMA 60M–1B pretraining Conda reaches validation perplexities of
+28.32, 21.38, 16.44 and 13.59, against 34.06/25.08/18.80/15.56 for AdamW
+and 29.89/22.15/16.51/14.17 for Muon, i.e. 2–2.5<span
+class="math inline">\(\times\)</span> AdamW’s convergence speed in steps
+and wall-clock time; it also leads on GPT-2 (125M/355M: 17.40/13.92) and
+on LoRA commonsense fine-tuning. Unlike AdamW and Muon it remains stable
+at learning rates up to <span
+class="math inline">\(2\times10^{-2}\)</span>, and the ablations show
+robustness to <span class="math inline">\(T \in [2, 20000]\)</span>,
+<span class="math inline">\(\beta_1 \in \{0.9, 0.95\}\)</span> and <span
+class="math inline">\(\beta_2 \in \{0.95,\ldots,0.999\}\)</span>.
+Optimizer memory stays within 0.03–1.3 GB of AdamW from 60M to 1B. In
+this implementation the <code>update_proj_gap</code> suffix is <span
+class="math inline">\(T\)</span> (default 2000), <code>scale</code> is
+<span class="math inline">\(\alpha\)</span> (default 1.0; the paper’s
+pretraining uses 0.25), <code>correct_bias</code> toggles the <span
+class="math inline">\(1-\beta^t\)</span> corrections, and the shared
+per-group <code>betas</code>/<code>eps</code> are <span
+class="math inline">\((\beta_1,\beta_2)\)</span> (the paper uses
+0.9/0.99) and <span class="math inline">\(\epsilon\)</span>; the shared
+<code>wd</code> is decoupled. Every 2-D parameter takes the Conda path
+regardless of group — there is no embedding/pos/head exclusion as in
+Muon — while every non-2-D parameter is trained with decoupled
+AdamW.</p>
+<h4 id="cons.-30">Cons.</h4>
+<ul>
+<li><p>The SVD is a per-matrix cost spike every <span
+class="math inline">\(T\)</span> steps; at <span
+class="math inline">\(T=2\)</span> it raises LLaMA-60M wall-clock
+training time from 2h49min to 4h37min.</p></li>
+<li><p>The second moment must live in the same subspace as the first:
+the unprojected Adam estimator is unstable at scale and fails to
+converge on LLaMA-1B.</p></li>
+<li><p>Optimizer state is Adam-sized (full <span
+class="math inline">\(m\times n\)</span> first moment) plus the
+projection basis; the memory advantage over AdamW is small, not the
+<span class="math inline">\(O(nr)\)</span> of GaLore.</p></li>
+<li><p>Evaluated only up to 1B parameters and without
+Mixture-of-Experts; the paper flags both as future work.</p></li>
+</ul>
+<h4 id="pros.-30">Pros.</h4>
+<ul>
+<li><p>Combines Adam’s coordinate-wise adaptivity with improved spectral
+conditioning in a single update rule, consistently beating AdamW, Muon,
+SOAP and Adafactor.</p></li>
+<li><p>The column-wise normalizer is milder than Muon’s uniform <span
+class="math inline">\(1/\sigma_i\)</span> scaling and preserves the
+relative order of singular values, avoiding overshoot in small-singular
+directions.</p></li>
+<li><p>A single hyperparameter set transfers across 60M–1B, and training
+is stable at learning rates 10–20<span
+class="math inline">\(\times\)</span> larger than AdamW’s.</p></li>
+<li><p>Memory and per-step cost stay close to AdamW for <span
+class="math inline">\(T \gg 1\)</span>; the lazy SVD makes the subspace
+refresh nearly free in wall-clock terms.</p></li>
+</ul>
 <h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
 Population-Based Hybrids</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -8780,7 +8930,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-30">Cons.</h4>
+<h4 id="cons.-31">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -8802,7 +8952,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-30">Pros.</h4>
+<h4 id="pros.-31">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -8935,7 +9085,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-31">Cons.</h4>
+<h4 id="cons.-32">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -8961,7 +9111,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-31">Pros.</h4>
+<h4 id="pros.-32">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B
