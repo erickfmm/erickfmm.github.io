@@ -1973,7 +1973,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports thirty-three optimizer families in eight
+groups. The system supports thirty-four optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1981,10 +1981,11 @@ APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM); schedule-free and parameter-free
 methods (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3,
-ROOT, Muon², NorMuon, Conda); adaptivity-tunable optimizers (Anon); and
-evolutionary population-based hybrids (EvE, EA4LLM). Algorithms,
-pseudocode, and memory and complexity comparisons are collected in
-Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
+ROOT, Muon², NorMuon, Conda, TUON); adaptivity-tunable optimizers
+(Anon); and evolutionary population-based hybrids (EvE, EA4LLM).
+Algorithms, pseudocode, and memory and complexity comparisons are
+collected in Appendix <a href="#sec:annex-optimizers"
+data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
@@ -2676,7 +2677,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>146</span> urlstyle</p>
+<p><span>147</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3143,6 +3144,10 @@ transformer for large language models, 2023. URL
 <code>https://arxiv.org/abs/2307.08621</code>. Version Number: 4.</p>
 <p>Yutao Sun et al. Attention residuals. URL
 <code>http://arxiv.org/abs/2603.15031</code>.</p>
+<p>Anda Tang, Xuanlin Yang, Junjie Wang, and Zhouchen Lin. Tuon: A
+tensor-aware optimizer utilizing tensor-svd and polarization for large
+language model pretraining, 2026. URL
+<code>https://arxiv.org/abs/2610.35130</code>.</p>
 <p>Shohei Taniguchi, Keno Harada, Gouki Minegishi, Yuta Oshima,
 Seong Cheol Jeong, Go Nagahara, Tomoshi Iiyama, Masahiro Suzuki, Yusuke
 Iwasawa, and Yutaka Matsuo. : Modified adam can converge with any <span
@@ -5413,7 +5418,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 48 sequence mixers
-across ten families, 33 optimizers, 6 normalization variants, 43
+across ten families, 34 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -5715,7 +5720,7 @@ class="citation" data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 33 supported optimizers with their memory footprint, per-step
+all 34 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5948,6 +5953,18 @@ class="math inline">\(\beta_2\)</span>, eps, wd, gap <span
 class="math inline">\(T\)</span>, scale <span
 class="math inline">\(\alpha\)</span> &amp; <span class="citation"
 data-cites="wang_conda_2025"></span><br />
+TUON &amp; Orthogonality (tensor, cross-layer) &amp; 1 (<span
+class="math inline">\(m\)</span> per slice); + <span
+class="math inline">\(K{\times}K\)</span> basis per stack (refresh <span
+class="math inline">\(T\)</span>); + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(Kmn\cdot\min(m,n) + K^2 mn)\)</span>;
+eigh every <span class="math inline">\(T\)</span> steps &amp; lr,
+momentum, wd, NS steps <span class="math inline">\(k\)</span>, refresh
+<span class="math inline">\(T\)</span>, transform <span
+class="math inline">\(Q\)</span>, stack <span
+class="math inline">\(K\)</span> &amp; <span class="citation"
+data-cites="tang_tuon_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -8767,6 +8784,170 @@ class="math inline">\(\times\)</span> larger than AdamW’s.</p></li>
 class="math inline">\(T \gg 1\)</span>; the lazy SVD makes the subspace
 refresh nearly free in wall-clock terms.</p></li>
 </ul>
+<h4 id="tuon-tensor-aware-optimization-via-t-svd-and-polarization.">TUON
+(Tensor-Aware Optimization via T-SVD and Polarization).</h4>
+<p>TUON <span class="citation" data-cites="tang_tuon_2026"></span> lifts
+Muon’s layer-wise orthogonalization to <strong>cross-layer
+tensors</strong> using a transform-based tensor algebra derived from the
+Tensor-SVD. Layer-wise polar maps discard cross-layer correlations,
+while unfolding-based tensor optimizers (TEON) suffer dimension
+imbalance and cross-layer misalignment and degrade beyond two stacked
+layers or QKV-only modules. TUON instead <em>mixes then separates</em>:
+for one compatible group of <span class="math inline">\(K\)</span>
+same-shape matrices with stacked momentum <span
+class="math inline">\(\mathcal{M}_t \in \mathbb{R}^{m \times n \times
+K}\)</span>: <span class="math display">\[\begin{aligned}
+\mathcal{M}_t &amp;= \beta \mathcal{M}_{t-1} + (1-\beta)\, \mathcal{G}_t
+  &amp;&amp; \text{(momentum tensor, Alg.~1 line 2)} \\
+C_t &amp;= \mathsf{M}_t \mathsf{M}_t^{\top} \in \mathbb{R}^{K \times K},
+\qquad
+C_t = U_t \Lambda_t U_t^{\top}, \qquad Q_t = U_t^{\top}
+  &amp;&amp; \text{(layer Gram + eigendecomposition, lines 3--5)} \\
+\widetilde{\mathcal{M}}_t &amp;= \mathcal{M}_t \times_3 Q_t, \qquad
+\widetilde{P}_{t,j} =
+\operatorname{polar}\!\big(\widetilde{\mathcal{M}}_{t,j}\big)
+  &amp;&amp; \text{(transform + slice polarization, lines 6--9)} \\
+\mathcal{P}_t &amp;= \widetilde{\mathcal{P}}_t \times_3 Q_t^{H}
+  &amp;&amp; \text{(inverse transform, line 10)} \\
+W_{t+1} &amp;= (1 - \eta_t \lambda)\, W_t - \eta_t \gamma_t
+\mathcal{P}_t, \qquad
+\gamma_t = \frac{s}{\operatorname{RMS}(\mathcal{P}_t) + \epsilon}
+  &amp;&amp; \text{(RMS-scaled update, line 11)}
+\end{aligned}\]</span> where <span
+class="math inline">\(\mathsf{M}_t\)</span> is the mode-3 unfolding
+(<span class="math inline">\(k\)</span>-th row <span
+class="math inline">\(=
+\operatorname{vec}(\mathcal{M}_t^{(k)})^{\top}\)</span>), the mode-3
+product mixes slices as <span
+class="math inline">\(\widetilde{\mathcal{M}}_{t,j} = \sum_k (Q_t)_{jk}
+\mathcal{M}_t^{(k)}\)</span>, <span
+class="math inline">\(\operatorname{RMS}(\mathcal{P}_t) =
+\sqrt{(mnK)^{-1} \sum_{i,j,k} |\mathcal{P}_t(i,j,k)|^2}\)</span>, and
+the target stack RMS is <span class="math inline">\(s =
+1/\sqrt{\max(m,n)}\)</span> (the rank–energy identity: full-rank slices
+give <span class="math inline">\(\operatorname{RMS} =
+1/\sqrt{\max(m,n)}\)</span>, so <span class="math inline">\(\gamma_t
+\approx 1\)</span> and per-matrix update magnitudes match Muon). The
+default transform <strong>DecorQ</strong> takes the eigenvectors of the
+layer Gram matrix (<span class="math inline">\(Q_t =
+U_t^{\top}\)</span>) and is refreshed every <span
+class="math inline">\(T\)</span> steps (default 200); it diagonalizes
+the transformed Gram, so the transformed slices are mutually
+Frobenius-orthogonal and each polar map acts in its own subspace — the
+coupled <span class="math inline">\(K\)</span>-layer problem decouples
+into <span class="math inline">\(K\)</span> independent single-channel
+problems. Fixed unitary transforms (DCT, Haar, DFT) are valid but impose
+a prior mismatched to layer statistics; in the paper’s ablation DecorQ
+(2.7598) beats DFT (2.7631), Haar (2.7635), static DecorQ (2.7658) and
+DCT (2.8100) on Qwen3-4B. Slice polarization uses the same quintic
+Newton–Schulz iteration as Muon, <span class="math inline">\((a,b,c) =
+(3.4445, -4.7750, 2.0315)\)</span> with <span class="math inline">\(J =
+5\)</span> steps after a Frobenius normalization and a
+transpose-when-tall.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Compatible matrices <span
+class="math inline">\(\{W^{(k)}\}_{k=1}^{K}\)</span>, learning rate
+<span class="math inline">\(\eta\)</span>, momentum <span
+class="math inline">\(\beta\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span>, NS iters <span
+class="math inline">\(J\)</span>, refresh interval <span
+class="math inline">\(T\)</span>, RMS <span
+class="math inline">\(\epsilon\)</span> Updated parameters <span
+class="math inline">\(\mathcal{G} \gets \operatorname{stack}_3(\nabla
+f(W^{(1)}), \ldots, \nabla f(W^{(K)}))\)</span> <span
+class="math inline">\(\mathcal{M} \gets \beta \mathcal{M} + (1-\beta)\,
+\mathcal{G}\)</span> <span class="math inline">\(C \gets
+\mathsf{M}\mathsf{M}^{\top}\)</span>; <span class="math inline">\(C = U
+\Lambda U^{\top}\)</span>; <span class="math inline">\(Q \gets
+U^{\top}\)</span> <span class="math inline">\(\widetilde{\mathcal{M}}
+\gets \mathcal{M} \times_3 Q\)</span> <span
+class="math inline">\(\widetilde{P}_{:, :, j} \gets
+\mathrm{NS}_J(\widetilde{\mathcal{M}}_{:, :, j})\)</span> <span
+class="math inline">\(\mathcal{P} \gets \widetilde{\mathcal{P}} \times_3
+Q^{H}\)</span> <span class="math inline">\(\gamma \gets s /
+(\operatorname{RMS}(\mathcal{P}) + \epsilon)\)</span> <span
+class="math inline">\(W \gets (1-\eta\lambda) W - \eta \gamma
+\mathcal{P}\)</span></p>
+</div>
+</div>
+<p>This implementation maps the paper’s “one compatible group” to each
+<em>(parameter group, matrix shape)</em> bucket: same-shape hidden 2-D
+matrices of a group are stacked along the layer mode in registration
+order (<code>stack: full</code>); <code>stack: pairs</code> restricts
+the stack to consecutive pairs (<span
+class="math inline">\(K=2\)</span>). The <code>transform</code> suffix
+selects <span class="math inline">\(Q\)</span> (<code>decorq</code>
+default; <code>dct</code>/<code>haar</code>/<code>dft</code> fixed
+transforms), <code>momentum</code> is <span
+class="math inline">\(\beta\)</span>, <code>refresh_interval</code> is
+<span class="math inline">\(T\)</span>,
+<code>ns_steps</code>/<code>ns_eps</code> drive the Newton–Schulz
+iteration, and <code>rms_eps</code> is the <span
+class="math inline">\(\epsilon\)</span> of <span
+class="math inline">\(\gamma_t\)</span>. For <span
+class="math inline">\(K=1\)</span> the transform cancels exactly and
+TUON reduces to Muon (paper Prop. 2); following the hybrid recipe of
+Muon, only hidden-layer 2-D matrices take the TUON path — embedding
+tables, learned positional encodings, output heads and every non-matrix
+parameter are trained with decoupled AdamW using the group-level
+learning rate, weight decay, <span class="math inline">\(\beta_1,
+\beta_2\)</span> and <span class="math inline">\(\epsilon\)</span>
+settings. Theory: TUON is steepest descent under the <span
+class="math inline">\(Q\)</span>-transformed tensor spectral norm (dual
+norm pair <span class="math inline">\(\|\cdot\|_{Q,Ts}\)</span> / <span
+class="math inline">\(\|\cdot\|_{Q,Tn}\)</span>), its update equals the
+tensor polar factor of a T-product T-SVD, no unitary layer transform
+distorts the Muon geometry by more than <span
+class="math inline">\(\sqrt{K}\)</span>, and at equal operator radius
+the TUON oracle is never weaker than TEON’s and up to <span
+class="math inline">\(\sqrt{K}\)</span> stronger, with an <span
+class="math inline">\(O(T^{-1/2})\)</span> convergence certificate.
+Empirically TUON beats Muon and TEON on all of GPT-124M/350M and
+Qwen-0.6B/4B (validation loss 2.9357/2.6925/2.8887/2.7598), is the only
+method that improves from <span class="math inline">\(K{=}2\)</span> to
+<span class="math inline">\(K{=}\mathrm{full}\)</span> stacking on all
+four models, transfers from QKV to QKVO+MLP, and costs 0.2–1.1%
+step-time over TEON and at most 12.5% over AdamW; per-iteration
+complexity is <span class="math inline">\(\mathcal{O}(Kmn\min(m,n) + K^2
+mn)\)</span>, the same dominant term as Muon.</p>
+<h4 id="cons.-31">Cons.</h4>
+<ul>
+<li><p>Cross-layer mixing assumes the stacked matrices are genuinely
+compatible; this implementation stacks by exact shape within a parameter
+group, which is the closest faithful realization available from the
+unnamed factory param lists.</p></li>
+<li><p>The Gram/eigendecomposition adds <span
+class="math inline">\(\mathcal{O}(K^2 mn)\)</span> per step and a <span
+class="math inline">\(K \times K\)</span> cached basis per bucket;
+negligible for <span class="math inline">\(K \ll \min(m, n)\)</span>,
+but a per-bucket cost that Muon does not pay.</p></li>
+<li><p><span class="math inline">\(\beta\)</span> is required by
+Algorithm 1 but its default value is not stated in the paper; this
+implementation inherits the repo Muon-family convention (<span
+class="math inline">\(0.95\)</span>).</p></li>
+<li><p>The <code>dft</code> transform runs the Newton–Schulz iteration
+over complex slices (Hermitian Gram); the real part is taken after the
+inverse transform, justified by the conjugate symmetry of the DFT of a
+real stack.</p></li>
+</ul>
+<h4 id="pros.-31">Pros.</h4>
+<ul>
+<li><p>Exploits cross-layer structure that layer-wise Muon discards,
+with a convergence guarantee and exact steepest-descent interpretation
+under the induced tensor norm.</p></li>
+<li><p>DecorQ is data-dependent and refreshed every <span
+class="math inline">\(T\)</span> steps; stacking <span
+class="math inline">\(K{=}\mathrm{full}\)</span> <em>improves</em> with
+depth instead of degrading as unfolding methods do.</p></li>
+<li><p>Memory stays at Muon’s level (one momentum buffer per matrix plus
+a <span class="math inline">\(K \times K\)</span> basis), and the RMS
+stack scaling keeps updates at Muon’s magnitude so existing learning
+rates transfer.</p></li>
+<li><p>Applies uniformly beyond QKV (attention, MLP and output
+projections), where prior tensor-aware optimizers fail to
+transfer.</p></li>
+</ul>
 <h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
 Population-Based Hybrids</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -8930,7 +9111,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-31">Cons.</h4>
+<h4 id="cons.-32">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -8952,7 +9133,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-31">Pros.</h4>
+<h4 id="pros.-32">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -9085,7 +9266,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-32">Cons.</h4>
+<h4 id="cons.-33">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -9111,7 +9292,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-32">Pros.</h4>
+<h4 id="pros.-33">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B

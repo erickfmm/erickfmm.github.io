@@ -2053,7 +2053,7 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta treinta y tres familias de optimizadores en ocho
+sistema soporta treinta y cuatro familias de optimizadores en ocho
 categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
 momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
@@ -2062,7 +2062,7 @@ programación y sin parámetros (Schedule-Free AdamW, Prodigy) con
 escalado para lotes grandes (LAMB); métodos conscientes de la curvatura
 y de segundo orden (Sophia, Shampoo, SOAP); métodos orientados a
 geometría (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3, ROOT, Muon²,
-NorMuon, Conda); optimizadores de adaptividad ajustable (Anon); y
+NorMuon, Conda, TUON); optimizadores de adaptividad ajustable (Anon); y
 métodos evolutivos poblacionales (EvE, EA4LLM). Los algoritmos, el
 pseudocódigo y las comparaciones de memoria y complejidad se recopilan
 en el Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2802,7 +2802,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>146</span> urlstyle</p>
+<p><span>147</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3269,6 +3269,10 @@ transformer for large language models, 2023. URL
 <code>https://arxiv.org/abs/2307.08621</code>. Version Number: 4.</p>
 <p>Yutao Sun et al. Attention residuals. URL
 <code>http://arxiv.org/abs/2603.15031</code>.</p>
+<p>Anda Tang, Xuanlin Yang, Junjie Wang, and Zhouchen Lin. Tuon: A
+tensor-aware optimizer utilizing tensor-svd and polarization for large
+language model pretraining, 2026. URL
+<code>https://arxiv.org/abs/2610.35130</code>.</p>
 <p>Shohei Taniguchi, Keno Harada, Gouki Minegishi, Yuta Oshima,
 Seong Cheol Jeong, Go Nagahara, Tomoshi Iiyama, Masahiro Suzuki, Yusuke
 Iwasawa, and Yutaka Matsuo. : Modified adam can converge with any <span
@@ -5576,7 +5580,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-48 mezcladores de secuencia en diez familias, 33 optimizadores, 6
+48 mezcladores de secuencia en diez familias, 34 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5889,7 +5893,7 @@ class="citation" data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 33 optimizadores soportados con su huella de memoria, costo
+los 34 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -6124,6 +6128,18 @@ class="math inline">\(\beta_2\)</span>, eps, wd, hueco <span
 class="math inline">\(T\)</span>, escala <span
 class="math inline">\(\alpha\)</span> &amp; <span class="citation"
 data-cites="wang_conda_2025"></span><br />
+TUON &amp; Ortogonalidad (tensorial, entre capas) &amp; 1 (<span
+class="math inline">\(m\)</span> por slice); + base <span
+class="math inline">\(K{\times}K\)</span> por pila (refresco <span
+class="math inline">\(T\)</span>); + <span
+class="math inline">\(v\)</span> en el respaldo AdamW &amp; <span
+class="math inline">\(\mathcal{O}(Kmn\cdot\min(m,n) + K^2 mn)\)</span>;
+eigh cada <span class="math inline">\(T\)</span> pasos &amp; lr,
+momentum, wd, pasos NS <span class="math inline">\(k\)</span>, refresco
+<span class="math inline">\(T\)</span>, transformada <span
+class="math inline">\(Q\)</span>, pila <span
+class="math inline">\(K\)</span> &amp; <span class="citation"
+data-cites="tang_tuon_2026"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Adaptativo de bajo rango &amp; 2 bajo rango + proy &amp;
@@ -9065,6 +9081,176 @@ class="math inline">\(\times\)</span> mayores que las de AdamW.</p></li>
 el refresco del subespacio sea casi gratuito en tiempo de
 reloj.</p></li>
 </ul>
+<h4
+id="tuon-optimización-consciente-de-tensores-vía-t-svd-y-polarización.">TUON
+(Optimización Consciente de Tensores vía T-SVD y Polarización).</h4>
+<p>TUON <span class="citation" data-cites="tang_tuon_2026"></span> eleva
+la ortogonalización por capa de Muon a <strong>tensores entre
+capas</strong> mediante un álgebra tensorial basada en transformaciones,
+derivada del Tensor-SVD. Los mapas polares por capa descartan las
+correlaciones entre capas, mientras que los optimizadores tensoriales
+basados en despliegue (TEON) sufren desequilibrio de dimensiones y
+desalineación entre capas, y degradan más allá de dos capas apiladas o
+de los módulos QKV. TUON en cambio <em>mezcla y luego separa</em>: para
+un grupo compatible de <span class="math inline">\(K\)</span> matrices
+de la misma forma con momentum apilado <span
+class="math inline">\(\mathcal{M}_t \in \mathbb{R}^{m \times n \times
+K}\)</span>: <span class="math display">\[\begin{aligned}
+\mathcal{M}_t &amp;= \beta \mathcal{M}_{t-1} + (1-\beta)\, \mathcal{G}_t
+  &amp;&amp; \text{(tensor de momentum, Alg.~1 línea 2)} \\
+C_t &amp;= \mathsf{M}_t \mathsf{M}_t^{\top} \in \mathbb{R}^{K \times K},
+\qquad
+C_t = U_t \Lambda_t U_t^{\top}, \qquad Q_t = U_t^{\top}
+  &amp;&amp; \text{(Gram de capas + autodescomposición, líneas 3--5)} \\
+\widetilde{\mathcal{M}}_t &amp;= \mathcal{M}_t \times_3 Q_t, \qquad
+\widetilde{P}_{t,j} =
+\operatorname{polar}\!\big(\widetilde{\mathcal{M}}_{t,j}\big)
+  &amp;&amp; \text{(transformación + polarización por slice, líneas
+6--9)} \\
+\mathcal{P}_t &amp;= \widetilde{\mathcal{P}}_t \times_3 Q_t^{H}
+  &amp;&amp; \text{(transformación inversa, línea 10)} \\
+W_{t+1} &amp;= (1 - \eta_t \lambda)\, W_t - \eta_t \gamma_t
+\mathcal{P}_t, \qquad
+\gamma_t = \frac{s}{\operatorname{RMS}(\mathcal{P}_t) + \epsilon}
+  &amp;&amp; \text{(actualización escalada por RMS, línea 11)}
+\end{aligned}\]</span> donde <span
+class="math inline">\(\mathsf{M}_t\)</span> es el despliegue por modo 3
+(la <span class="math inline">\(k\)</span>-ésima fila es <span
+class="math inline">\(\operatorname{vec}(\mathcal{M}_t^{(k)})^{\top}\)</span>),
+el producto por modo 3 mezcla los slices como <span
+class="math inline">\(\widetilde{\mathcal{M}}_{t,j} = \sum_k (Q_t)_{jk}
+\mathcal{M}_t^{(k)}\)</span>, <span
+class="math inline">\(\operatorname{RMS}(\mathcal{P}_t) =
+\sqrt{(mnK)^{-1} \sum_{i,j,k} |\mathcal{P}_t(i,j,k)|^2}\)</span> y el
+RMS objetivo de la pila es <span class="math inline">\(s =
+1/\sqrt{\max(m,n)}\)</span> (identidad rango–energía: slices de rango
+completo dan <span class="math inline">\(\operatorname{RMS} =
+1/\sqrt{\max(m,n)}\)</span>, de modo que <span
+class="math inline">\(\gamma_t
+\approx 1\)</span> y la magnitud de la actualización por matriz coincide
+con Muon). La transformación por defecto <strong>DecorQ</strong> toma
+los autovectores de la matriz de Gram de capas (<span
+class="math inline">\(Q_t = U_t^{\top}\)</span>) y se refresca cada
+<span class="math inline">\(T\)</span> pasos (200 por defecto);
+diagonaliza la Gram transformada, por lo que los slices transformados
+son mutuamente ortogonales en Frobenius y cada mapa polar actúa en su
+propio subespacio: el problema acoplado de <span
+class="math inline">\(K\)</span> capas se desacopla en <span
+class="math inline">\(K\)</span> problemas de un solo canal. Las
+transformaciones unitarias fijas (DCT, Haar, DFT) son válidas pero
+imponen un prior ajeno a la estadística de las capas; en la ablación del
+artículo DecorQ (2.7598) supera a DFT (2.7631), Haar (2.7635), DecorQ
+estático (2.7658) y DCT (2.8100) en Qwen3-4B. La polarización por slice
+usa la misma iteración quíntica de Newton–Schulz que Muon, <span
+class="math inline">\((a,b,c) = (3.4445, -4.7750,
+2.0315)\)</span> con <span class="math inline">\(J = 5\)</span> pasos
+tras una normalización Frobenius y una transposición cuando la matriz es
+alta.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Matrices compatibles <span
+class="math inline">\(\{W^{(k)}\}_{k=1}^{K}\)</span>, tasa de
+aprendizaje <span class="math inline">\(\eta\)</span>, momentum <span
+class="math inline">\(\beta\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span>, iteraciones NS <span
+class="math inline">\(J\)</span>, intervalo de refresco <span
+class="math inline">\(T\)</span>, <span
+class="math inline">\(\epsilon\)</span> del RMS Parámetros actualizados
+<span class="math inline">\(\mathcal{G} \gets
+\operatorname{stack}_3(\nabla f(W^{(1)}), \ldots, \nabla
+f(W^{(K)}))\)</span> <span class="math inline">\(\mathcal{M} \gets \beta
+\mathcal{M} + (1-\beta)\, \mathcal{G}\)</span> <span
+class="math inline">\(C \gets \mathsf{M}\mathsf{M}^{\top}\)</span>;
+<span class="math inline">\(C = U \Lambda U^{\top}\)</span>; <span
+class="math inline">\(Q \gets U^{\top}\)</span> <span
+class="math inline">\(\widetilde{\mathcal{M}} \gets \mathcal{M} \times_3
+Q\)</span> <span class="math inline">\(\widetilde{P}_{:, :, j} \gets
+\mathrm{NS}_J(\widetilde{\mathcal{M}}_{:, :, j})\)</span> <span
+class="math inline">\(\mathcal{P} \gets \widetilde{\mathcal{P}} \times_3
+Q^{H}\)</span> <span class="math inline">\(\gamma \gets s /
+(\operatorname{RMS}(\mathcal{P}) + \epsilon)\)</span> <span
+class="math inline">\(W \gets (1-\eta\lambda) W - \eta \gamma
+\mathcal{P}\)</span></p>
+</div>
+</div>
+<p>Esta implementación mapea el «grupo compatible» del artículo a cada
+cubeta <em>(grupo de parámetros, forma de matriz)</em>: las matrices 2-D
+ocultas de la misma forma de un grupo se apilan por el modo de capas en
+orden de registro (<code>stack: full</code>); <code>stack: pairs</code>
+restringe la pila a pares consecutivos (<span
+class="math inline">\(K=2\)</span>). El sufijo <code>transform</code>
+selecciona <span class="math inline">\(Q\)</span> (<code>decorq</code>
+por defecto; <code>dct</code>/<code>haar</code>/<code>dft</code> fijas),
+<code>momentum</code> es <span class="math inline">\(\beta\)</span>,
+<code>refresh_interval</code> es <span class="math inline">\(T\)</span>,
+<code>ns_steps</code>/<code>ns_eps</code> dirigen Newton–Schulz y
+<code>rms_eps</code> es el <span class="math inline">\(\epsilon\)</span>
+de <span class="math inline">\(\gamma_t\)</span>. Con <span
+class="math inline">\(K=1\)</span> la transformación se cancela
+exactamente y TUON se reduce a Muon (Prop. 2 del artículo); siguiendo la
+receta híbrida de Muon, solo las matrices 2-D de capas ocultas toman la
+ruta TUON: las tablas de embeddings, los encoding posicionales
+aprendidos, los heads de salida y todo parámetro no matricial se
+entrenan con AdamW desacoplado usando el learning rate, weight decay,
+<span class="math inline">\(\beta_1, \beta_2\)</span> y <span
+class="math inline">\(\epsilon\)</span> del grupo. Teoría: TUON es
+descenso máximo bajo la norma espectral tensorial transformada por <span
+class="math inline">\(Q\)</span> (par dual <span
+class="math inline">\(\|\cdot\|_{Q,Ts}\)</span> / <span
+class="math inline">\(\|\cdot\|_{Q,Tn}\)</span>), su actualización es el
+factor polar tensorial de una T-SVD de producto-T, ninguna
+transformación unitaria de capas distorsiona la geometría de Muon en más
+de <span class="math inline">\(\sqrt{K}\)</span>, y a radio de operador
+común el oráculo de TUON nunca es más débil que el de TEON y puede ser
+hasta <span class="math inline">\(\sqrt{K}\)</span> más fuerte, con un
+certificado de convergencia <span
+class="math inline">\(O(T^{-1/2})\)</span>. Empíricamente TUON supera a
+Muon y TEON en GPT-124M/350M y Qwen-0.6B/4B (pérdida de validación
+2.9357/2.6925/2.8887/2.7598), es el único método que mejora al pasar de
+<span class="math inline">\(K{=}2\)</span> a <span
+class="math inline">\(K{=}\mathrm{full}\)</span> en los cuatro modelos,
+se transfiere de QKV a QKVO+MLP, y cuesta 0,2–1,1% de tiempo de paso
+sobre TEON y a lo sumo 12,5% sobre AdamW; la complejidad por iteración
+es <span class="math inline">\(\mathcal{O}(Kmn\min(m,n) + K^2
+mn)\)</span>, el mismo término dominante que Muon.</p>
+<h4 id="contras.-31">Contras.</h4>
+<ul>
+<li><p>La mezcla entre capas asume matrices genuinamente compatibles;
+esta implementación apila por forma exacta dentro de un grupo de
+parámetros, la realización fiel más cercana disponible a partir de las
+listas de parámetros sin nombre de la factoría.</p></li>
+<li><p>La Gram/autodescomposición añade <span
+class="math inline">\(\mathcal{O}(K^2 mn)\)</span> por paso y una base
+<span class="math inline">\(K \times K\)</span> por cubeta; despreciable
+para <span class="math inline">\(K \ll \min(m, n)\)</span>, pero es un
+costo por cubeta que Muon no paga.</p></li>
+<li><p><span class="math inline">\(\beta\)</span> es requerido por el
+Algoritmo 1 pero su valor por defecto no aparece en el artículo; esta
+implementación hereda la convención de la familia Muon del repositorio
+(<span class="math inline">\(0.95\)</span>).</p></li>
+<li><p>La transformación <code>dft</code> ejecuta Newton–Schulz sobre
+slices complejos (Gram hermítica); se toma la parte real tras la
+transformación inversa, justificado por la simetría conjugada de la DFT
+de una pila real.</p></li>
+</ul>
+<h4 id="ventajas.-31">Ventajas.</h4>
+<ul>
+<li><p>Explota la estructura entre capas que el Muon por capa descarta,
+con garantía de convergencia e interpretación exacta de descenso máximo
+bajo la norma tensorial inducida.</p></li>
+<li><p>DecorQ depende de los datos y se refresca cada <span
+class="math inline">\(T\)</span> pasos; apilar <span
+class="math inline">\(K{=}\mathrm{full}\)</span> <em>mejora</em> con la
+profundidad en lugar de degradar como ocurre con los métodos de
+despliegue.</p></li>
+<li><p>La memoria se mantiene al nivel de Muon (un búfer de momentum por
+matriz más una base <span class="math inline">\(K \times K\)</span>) y
+el escalado RMS de la pila conserva la magnitud de Muon, por lo que los
+learning rates existentes se transfieren.</p></li>
+<li><p>Se aplica uniformemente más allá de QKV (atención, MLP y
+proyecciones de salida), donde los optimizadores tensoriales previos no
+se transfieren.</p></li>
+</ul>
 <h2 id="híbridos-evolutivos-y-poblacionales">Híbridos Evolutivos y
 Poblacionales</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -9231,7 +9417,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="contras.-31">Contras.</h4>
+<h4 id="contras.-32">Contras.</h4>
 <ul>
 <li><p>Quedan aproximadamente un punto de exactitud (MNIST) y 9–11% de
 pérdida relativa (ajuste fino LoRA) por detrás de Adam a presupuesto de
@@ -9254,7 +9440,7 @@ no está soportada y el bucle SBERT (<code>fit</code> de
 sentence-transformers) no puede alojarlo; la mutación polinomial es un
 costo puro a escala de red y está desactivada por defecto.</p></li>
 </ul>
-<h4 id="ventajas.-31">Ventajas.</h4>
+<h4 id="ventajas.-32">Ventajas.</h4>
 <ul>
 <li><p>Mejor-observado monótono por construcción en objetivos
 deterministas (selección voraz de aceptar solo si es estrictamente
@@ -9396,7 +9582,7 @@ class="math inline">\(\theta \gets \theta + \alpha g /
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-32">Contras.</h4>
+<h4 id="contras.-33">Contras.</h4>
 <ul>
 <li><p>Requiere <span class="math inline">\(N\)</span> evaluaciones
 forward por paso (30 en el artículo), por lo que la eficiencia de
@@ -9424,7 +9610,7 @@ independiente de <span class="math inline">\(\sigma\)</span> y de la
 escala del gradiente, <span class="math inline">\(\alpha\)</span> debe
 ajustarse por tarea en lugar de transferirse desde Adam.</p></li>
 </ul>
-<h4 id="ventajas.-32">Ventajas.</h4>
+<h4 id="ventajas.-33">Ventajas.</h4>
 <ul>
 <li><p>Estado del optimizador nulo: sin momentos y sin copias de
 población, por lo que el artículo mide 60,01 frente a 137,61 GB en 8B y

@@ -1,4 +1,4 @@
-\begin{thebibliography}{146}
+\begin{thebibliography}{147}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -878,6 +878,12 @@ Yutao Sun, Li~Dong, Shaohan Huang, Shuming Ma, Yuqing Xia, Jilong Xue, Jianyong
 Yutao Sun et~al.
 \newblock Attention residuals.
 \newblock URL \url{http://arxiv.org/abs/2603.15031}.
+
+\bibitem[Tang et~al.(2026)Tang, Yang, Wang, and Lin]{tang_tuon_2026}
+Anda Tang, Xuanlin Yang, Junjie Wang, and Zhouchen Lin.
+\newblock Tuon: A tensor-aware optimizer utilizing tensor-svd and polarization
+  for large language model pretraining, 2026.
+\newblock URL \url{https://arxiv.org/abs/2610.35130}.
 
 \bibitem[Taniguchi et~al.(2024)Taniguchi, Harada, Minegishi, Oshima, Jeong,
   Nagahara, Iiyama, Suzuki, Iwasawa, and Matsuo]{taniguchi_adopt_2024}
