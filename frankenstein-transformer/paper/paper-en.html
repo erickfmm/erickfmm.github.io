@@ -1973,7 +1973,7 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports thirty-one optimizer families in eight
+groups. The system supports thirty-two optimizer families in eight
 categories: classical baselines (SGD with momentum, AdamW, RAdam);
 momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS, Cautious
 AdamW); memory-efficient and low-rank methods (Adafactor, GaLore, Lion,
@@ -1981,10 +1981,10 @@ APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM); schedule-free and parameter-free
 methods (Schedule-Free AdamW, Prodigy) with large-batch scaling (LAMB);
 curvature-aware and second-order methods (Sophia, Shampoo, SOAP);
 geometry-oriented methods (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3,
-ROOT, Muon²); adaptivity-tunable optimizers (Anon); and evolutionary
-population-based hybrids (EvE, EA4LLM). Algorithms, pseudocode, and
-memory and complexity comparisons are collected in Appendix <a
-href="#sec:annex-optimizers" data-reference-type="ref"
+ROOT, Muon², NorMuon); adaptivity-tunable optimizers (Anon); and
+evolutionary population-based hybrids (EvE, EA4LLM). Algorithms,
+pseudocode, and memory and complexity comparisons are collected in
+Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
 data-reference="sec:annex-optimizers">15</a>.</p>
 <figure id="fig:optimizer-routing"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-routing.svg" alt="image" /></span></p>
 
@@ -2676,7 +2676,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>144</span> urlstyle</p>
+<p><span>145</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2975,6 +2975,9 @@ doi: 10.48550/arXiv.2101.09957. URL
 <p>Mike Lewis, Shruti Bhosale, Tim Dettmers, Douwe Kiela, and Luke
 Zettlemoyer. Base layers: Simplifying training of large, sparse models,
 2021. URL <code>https://arxiv.org/abs/2103.16716</code>.</p>
+<p>Zichong Li, Liming Liu, Chen Liang, Weizhu Chen, and Tuo Zhao.
+Normuon: Making muon more efficient and scalable, 2025. URL
+<code>https://arxiv.org/abs/2510.05491</code>.</p>
 <p>Kaizhao Liang, Lizhang Chen, Bo Liu, and Qiang Liu. Cautious
 optimizers: Improving training with one line of code, 2024. URL
 <code>https://arxiv.org/abs/2411.16085</code>. Version Number: 4.</p>
@@ -5708,7 +5711,7 @@ class="citation" data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 31 supported optimizers with their memory footprint, per-step
+all 32 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -5920,6 +5923,14 @@ class="math inline">\(\beta_1\)</span>, <span
 class="math inline">\(\beta_2\)</span>, eps, wd, NS steps <span
 class="math inline">\(k\)</span>, factored &amp; <span class="citation"
 data-cites="liu_muon2_2026"></span><br />
+NorMuon &amp; Orthogonality + neuron-wise adaptive &amp; 2 (<span
+class="math inline">\(m\)</span>, row <span
+class="math inline">\(v\)</span>); + <span
+class="math inline">\(v\)</span> on the AdamW fallback &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot k)\)</span> &amp; lr,
+momentum, <span class="math inline">\(\beta_2\)</span>, eps, wd, NS
+steps <span class="math inline">\(k\)</span> &amp; <span
+class="citation" data-cites="li_normuon_2025"></span><br />
 </p>
 <p><br />
 APOLLO &amp; Low-rank adaptive &amp; 2 low-rank + proj &amp; <span
@@ -8486,6 +8497,126 @@ class="math inline">\(^2\)</span>-F, which keeps memory within <span
 class="math inline">\(\sim\)</span>0.3% of Muon while preserving most of
 the benefit.</p></li>
 </ul>
+<h4 id="normuon-neuron-wise-normalized-muon.">NorMuon (Neuron-wise
+Normalized Muon).</h4>
+<p>NorMuon <span class="citation" data-cites="li_normuon_2025"></span>
+keeps Muon’s orthogonalized update and adds a <strong>neuron-wise
+(row-wise) adaptive learning rate</strong> on top of it. Muon’s
+Newton–Schulz iteration equalizes the singular values of the update, but
+the <span class="math inline">\(L_2\)</span> norm of the individual
+neuron rows remains highly non-uniform: some neurons receive
+disproportionately large updates while others are barely trained.
+NorMuon tracks the mean squared magnitude of each row of the
+<em>orthogonalized</em> direction in a second-moment EMA, divides every
+neuron row by its RMS, and rescales the whole update to Adam’s empirical
+update scale so existing learning-rate schedules transfer unchanged. For
+a hidden-layer weight matrix <span class="math inline">\(W \in
+\mathbb{R}^{m \times n}\)</span> with learning rate <span
+class="math inline">\(\eta\)</span>: <span
+class="math display">\[\begin{aligned}
+M_t &amp;= \beta_1 M_{t-1} + (1-\beta_1) G_t &amp;&amp; \text{(momentum,
+line 5)} \\
+O_t &amp;= \mathrm{NS}_5(M_t) &amp;&amp; \text{(orthogonalization, line
+6)} \\
+v_t &amp;= \beta_2 v_{t-1} +
+(1-\beta_2)\,\mathrm{mean}_{\mathrm{cols}}(O_t \odot O_t) &amp;&amp;
+\text{(neuron EMA, line 7)} \\
+V_t &amp;= \mathrm{ExpandRows}(v_t), \qquad \widehat{O}_t = O_t \oslash
+\big(\sqrt{V_t} + \epsilon\big) &amp;&amp; \text{(row normalization,
+lines 8--9)} \\
+\hat\eta &amp;= \frac{0.2\,\eta\,\sqrt{mn}}{\lVert \widehat{O}_t
+\rVert_F}, \qquad
+W_{t+1} = W_t - \eta\lambda W_t - \hat\eta\,\widehat{O}_t &amp;&amp;
+\text{(update, lines 10--11)}
+\end{aligned}\]</span> with <span class="math inline">\(v_t \in
+\mathbb{R}^m\)</span> (one scalar per neuron) and the same quintic
+Newton–Schulz coefficients <span
+class="math inline">\((a,b,c)=(3.4445,-4.7750,2.0315)\)</span> as Muon.
+The per-neuron statistic costs <span class="math inline">\(m\)</span>
+scalars against the <span class="math inline">\(m \times n\)</span>
+first moment, so optimizer state is <span
+class="math inline">\(m(n+1)\)</span> — within a <span
+class="math inline">\(1/n\)</span> factor of Muon and roughly half of
+Adam’s <span class="math inline">\(2mn\)</span>. On 1.1B and 5.4B
+pretraining NorMuon needs 21.74% and 13.91% fewer steps than AdamW to
+reach the same validation loss; on Modded-NanoGPT (124M/350M) it reaches
+Muon’s loss with 6% and 15% fewer iterations, at a 2.9%
+training-step-time overhead over AdamW and 21.19 GB of optimizer state
+versus 40.56 GB for AdamW at 5.4B.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Initial parameters <span class="math inline">\(\theta\)</span>,
+learning rate <span class="math inline">\(\eta\)</span>, <span
+class="math inline">\(\beta_1, \beta_2\)</span>, NS iters <span
+class="math inline">\(K\)</span>, row-normalization <span
+class="math inline">\(\epsilon\)</span>, weight decay <span
+class="math inline">\(\lambda\)</span> Updated parameters <span
+class="math inline">\(\theta_T\)</span> <span class="math inline">\(G
+\gets \nabla f(W)\)</span> <span class="math inline">\(M \gets \beta_1 M
++ (1-\beta_1) G\)</span> <span class="math inline">\(O \gets
+\mathrm{NS}_K(M)\)</span> <span class="math inline">\(v \gets \beta_2 v
++ (1-\beta_2)\,\mathrm{mean}_{\mathrm{cols}}(O \odot O)\)</span> <span
+class="math inline">\(\widehat{O} \gets O \oslash
+(\sqrt{\mathrm{ExpandRows}(v)} + \epsilon\mathbf{1})\)</span> <span
+class="math inline">\(\hat\eta \gets 0.2\,\eta\,\sqrt{mn} /
+(\|\widehat{O}\|_F + \epsilon)\)</span> <span class="math inline">\(W
+\gets (1-\eta\lambda)\,W - \hat\eta\,\widehat{O}\)</span> <span
+class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
+\beta_1, \beta_2, \epsilon, \lambda)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<p>Following the hybrid recipe of Muon, only hidden-layer 2-D matrices
+take the NorMuon path; embedding tables, learned positional encodings,
+output heads and every non-matrix parameter are trained with decoupled
+AdamW using the group-level learning rate, weight decay, <span
+class="math inline">\(\beta_1, \beta_2\)</span> and <span
+class="math inline">\(\epsilon\)</span> settings. This implementation
+maps the paper’s parameters to the registry as follows: the
+<code>momentum</code> suffix is <span
+class="math inline">\(\beta_1\)</span>, the shared per-group
+<code>betas[1]</code> is <span class="math inline">\(\beta_2\)</span>,
+the shared per-group <code>eps</code> is <span
+class="math inline">\(\epsilon\)</span>, and
+<code>ns_steps</code>/<code>ns_eps</code> drive the Newton–Schulz
+iteration. Because NS5 starts with a Frobenius normalization, the
+paper’s <span class="math inline">\((1-\beta_1)\)</span> momentum
+scaling and this repository’s standard momentum accumulation produce
+identical updates. The paper’s second contribution, Algorithm 2,
+distributes the orthogonalization across FSDP2 ranks (round-robin
+parameter assignment, gather/NS5/scatter, shard-local row normalization)
+to avoid replicated work; that deployment strategy is orthogonal to the
+update rule and is not implemented here.</p>
+<h4 id="cons.-29">Cons.</h4>
+<ul>
+<li><p>One extra per-row state vector per matrix parameter (stored in
+float32); small next to the <span class="math inline">\(m \times
+n\)</span> momentum, but non-zero.</p></li>
+<li><p>The normalization must follow orthogonalization: the paper’s
+“NorMuon (Front)” ablation, which applies it before NS5, is slightly
+worse.</p></li>
+<li><p><span class="math inline">\(\epsilon\)</span> is placed outside
+the root (<span class="math inline">\(\sqrt{V_t}+\epsilon\)</span>),
+following Algorithm 2; Algorithm 1’s rendering of line 9 is
+typographically ambiguous.</p></li>
+<li><p>The neuron-wise statistics do not replace the AdamW fallback:
+embeddings, pos, heads and non-2-D tensors still carry full first/second
+moments.</p></li>
+</ul>
+<h4 id="pros.-29">Pros.</h4>
+<ul>
+<li><p>Combines Muon’s low condition number with AdamW-like uniform
+per-neuron update norms, consistently outperforming both on 124M–5.4B
+pretraining.</p></li>
+<li><p>The <span
+class="math inline">\(0.2\eta\sqrt{mn}/\lVert\widehat{O}\rVert_F\)</span>
+rescaling targets RMS <span class="math inline">\(0.2\eta\)</span>, so
+Adam learning-rate schedules apply without retuning.</p></li>
+<li><p>Memory stays close to Muon (<span
+class="math inline">\(m(n+1)\)</span> versus <span
+class="math inline">\(mn\)</span>), roughly halving Adam’s optimizer
+state, and the per-step overhead is a few percent.</p></li>
+</ul>
 <h2 id="evolutionary-and-population-based-hybrids">Evolutionary and
 Population-Based Hybrids</h2>
 <h4 id="eve-evolutionary-explorer.">EvE (Evolutionary Explorer).</h4>
@@ -8649,7 +8780,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-29">Cons.</h4>
+<h4 id="cons.-30">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -8671,7 +8802,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-29">Pros.</h4>
+<h4 id="pros.-30">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -8804,7 +8935,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-30">Cons.</h4>
+<h4 id="cons.-31">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -8830,7 +8961,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-30">Pros.</h4>
+<h4 id="pros.-31">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B

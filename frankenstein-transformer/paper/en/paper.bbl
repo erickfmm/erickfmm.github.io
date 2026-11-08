@@ -1,4 +1,4 @@
-\begin{thebibliography}{144}
+\begin{thebibliography}{145}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -556,6 +556,11 @@ Johannes Lederer.
 Mike Lewis, Shruti Bhosale, Tim Dettmers, Douwe Kiela, and Luke Zettlemoyer.
 \newblock Base layers: Simplifying training of large, sparse models, 2021.
 \newblock URL \url{https://arxiv.org/abs/2103.16716}.
+
+\bibitem[Li et~al.(2025)Li, Liu, Liang, Chen, and Zhao]{li_normuon_2025}
+Zichong Li, Liming Liu, Chen Liang, Weizhu Chen, and Tuo Zhao.
+\newblock Normuon: Making muon more efficient and scalable, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.05491}.
 
 \bibitem[Liang et~al.(2024)Liang, Chen, Liu, and Liu]{liang_cautious_2024}
 Kaizhao Liang, Lizhang Chen, Bo~Liu, and Qiang Liu.
