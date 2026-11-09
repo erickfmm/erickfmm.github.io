@@ -4,82 +4,46 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Experimentos: Frankenstein Transformer -->
-  <url>
-    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/</loc>
-    <lastmod>2026-11-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/chartmaker.html</loc>
-    <lastmod>2026-11-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Página principal -->
   <url>
     <loc>https://erickfmm.github.io/</loc>
-    <lastmod>2026-02-12</lastmod>
+    <lastmod>2026-11-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- Sección: Sobre mí -->
   <url>
-    <loc>https://erickfmm.github.io/#sobre</loc>
-    <lastmod>2026-02-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Sección: Experiencia -->
-  <url>
-    <loc>https://erickfmm.github.io/#experiencia</loc>
-    <lastmod>2026-02-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Sección: Educación -->
-  <url>
-    <loc>https://erickfmm.github.io/#educacion</loc>
-    <lastmod>2026-02-12</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Sección: Proyectos -->
-  <url>
-    <loc>https://erickfmm.github.io/#proyectos</loc>
-    <lastmod>2026-02-12</lastmod>
+    <loc>https://erickfmm.github.io/en/</loc>
+    <lastmod>2026-11-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Sección: Publicaciones -->
   <url>
-    <loc>https://erickfmm.github.io/#publicaciones</loc>
-    <lastmod>2026-02-12</lastmod>
-    <changefreq>yearly</changefreq>
+    <loc>https://erickfmm.github.io/anmetal/</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Sección: Hugging Face -->
   <url>
-    <loc>https://erickfmm.github.io/#huggingface</loc>
-    <lastmod>2026-02-12</lastmod>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/</loc>
+    <lastmod>2026-11-09</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.7</priority>
   </url>
 
-  <!-- Sección: Contacto -->
   <url>
-    <loc>https://erickfmm.github.io/#contacto</loc>
-    <lastmod>2026-02-12</lastmod>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/chartmaker.html</loc>
+    <lastmod>2026-11-09</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.6</priority>
   </url>
 
 </urlset>

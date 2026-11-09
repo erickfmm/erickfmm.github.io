@@ -1,149 +1,199 @@
-# Erick Francisco Merino Menares - AI Engineer Portfolio
+# Erick Francisco Merino Menares — AI Engineer Portfolio
 
-## Descripción
-Portafolio profesional de Erick Francisco Merino Menares, AI Engineer especializado en desarrollo backend, análisis de datos e inteligencia artificial aplicada a la educación.
+> AI Engineer focused on applied artificial intelligence, backend development, data engineering
+> and data governance for education and production systems. Based in Santiago, Chile.
+> Languages: Spanish (native), English (technical).
 
-## Sobre el Profesional
-- **Nombre**: Erick Francisco Merino Menares
-- **Rol**: AI Engineer · Backend · Ciencia de Datos · Gobernanza de Datos · Machine Learning
-- **Ubicación**: Santiago de Chile
-- **Email**: erickfmm@gmail.com
+Last updated: 2026-11-09
+
+## Canonical links
+- Portfolio (Spanish): https://erickfmm.github.io/
+- Portfolio (English): https://erickfmm.github.io/en/
+- CV PDF (Spanish): https://erickfmm.github.io/cv.pdf
+- CV PDF (English): https://erickfmm.github.io/cv-en.pdf
+- GitHub: https://github.com/erickfmm
+- LinkedIn: https://www.linkedin.com/in/erickfmm/
+- Hugging Face: https://huggingface.co/erickfmm
+- Email: erickfmm@gmail.com
+- Location: PAC, Santiago, Chile
+
+## Metrics
+- 28 public repositories on GitHub
+- 11 datasets published on Hugging Face
+- 2 models published on Hugging Face
+- 9 years across academia and professional practice
+- 5 journal publications and 3 conference publications
+
+---
+
+# Español
+
+## Perfil
+Ingeniero Civil Informático con mención en Gestión y Diseño de Bases de Datos y Diplomado en Data Science.
+Trabaja en gestión de proyectos de software, desarrollo backend con IA, análisis de datos con Python
+y gobernanza de datos para el sector público.
 
 ## Especialización
-- Procesamiento del Lenguaje Natural (NLP)
-- Large Language Models (LLM)
-- Retrieval-Augmented Generation (RAG)
-- Modelos BERT y T5
-- Backend Development (Python, Django, FastAPI, Flask)
-- Data Engineering
-- Gobernanza de datos (TOGAF y DAMA)
+- Large Language Models (LLM) y Retrieval-Augmented Generation (RAG)
+- Modelos BERT y T5; Sentence Transformers y embeddings en español
+- Backend: Python, Django, FastAPI, Flask
+- Data Engineering y calidad de datos
+- Gobernanza de datos con TOGAF, DAMA y Archimate
+- Analítica educativa y aprendizaje multimodal
 
-## Experiencia Actual
-Profesional de Centro de Innovación en el Ministerio de Educación (MINEDUC) de Chile desde 2022, trabajando en:
-- Desarrollo web del sistema de verificación del Estándar de Datos para la Educación
-- Gobernanza de datos para el Sistema de Aseguramiento de la Calidad
-- Pruebas de concepto con IA (LLM, RAG, BERT, T5)
-- Gestión de proyectos tecnológicos
+## Experiencia
+### Ministerio de Educación de Chile (MINEDUC) — 2022 a presente
+Profesional de Centro de Innovación, Santiago.
+- Desarrollo y mantenimiento web del sistema de verificación del Estándar de Datos para la Educación (Libro de Clases Digital).
+- Gobernanza de datos para el Sistema de Aseguramiento de la Calidad (TOGAF, DAMA); mapas de procesos y sistemas en Archimate.
+- Gestión de proyectos: propuestas, fichas DIPRES, análisis y formulación de requerimientos, bases de licitación y verificación de hitos.
+- Pruebas de concepto con IA: LLM, RAG, BERT, T5 y otros modelos.
+
+### Universidad de Valparaíso — 2016 a 2018
+Ayudante de Investigación, Valparaíso.
+- Herramienta de Análisis del Aprendizaje Multimodal con Kinect v2.
+- Clasificación de posturas continuas, reconocimiento de hablante y cálculo de distancias recorridas.
+
+### Otras experiencias
+- Universidad de Valparaíso — Practicante (2.ª práctica), 2018: front-end HTML/CSS/JS para MailCenter y apoyo a publicaciones.
+- Universidad de Valparaíso — Ayudante STEM, 2017: soporte a labor docente.
+- AltaVoz — Practicante (1.ª práctica), 2016: aplicación de ejemplo en CMS Prontus y rediseño de interfaz.
 
 ## Educación
-- Diploma de Postítulo en Data Science - Universidad de Valparaíso (2023) - Distinción Máxima
-- Ingeniería Civil Informática - Universidad de Valparaíso (2019) - Distinción Máxima
-- Mención en Gestión y Diseño de Bases de Datos
+- Diploma de Postítulo en Data Science — Universidad de Valparaíso, 2023. Distinción Máxima (6.1).
+- Ingeniería Civil Informática — Universidad de Valparaíso, 2019. Mención en Gestión y Diseño de Bases de Datos. Distinción Máxima (6.22).
 
-## Proyectos Destacados
+## Proyectos
+### Frankenstein Transformer
+Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers
+(Mixture of Experts, BitNet 1.58, Titan Memory y más) mediante YAML/JSON.
+- Más de 30 mixers de atención, varias normas y más de 20 optimizadores.
+- Config Builder: https://erickfmm.github.io/frankenstein-transformer/index.html
+- Paper: https://erickfmm.github.io/frankenstein-transformer/paper/paper-es.html
+- GitHub: https://github.com/erickfmm/frankenstein-transformer
+- PyPI: https://pypi.org/project/frankenstein-transformer/
 
-### Frankenstein Transformer (⭐ Proyecto Estrella)
-Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers. Permite configurar y entrenar modelos con Mixture of Experts (MoE), BitNet 1.58, Titan Memory y más mediante archivos de configuración YAML/JSON. Diseñada para facilitar la investigación en NLP.
-- **Config Builder (Interactivo)**: https://erickfmm.github.io/frankenstein-transformer/index.html
-- **Resultados del Experimento 2 (868 configuraciones, 56 gráficos)**: https://erickfmm.github.io/frankenstein-transformer/charts/
-- **Constructor de gráficos (estilo Tableau)**: https://erickfmm.github.io/frankenstein-transformer/charts/chartmaker.html
-- GitHub: https://github.com/erickfmm/transformer-encoder-frankestein
-- Paper oficial: https://jaigp.org/paper/38/markdown
-- Tecnologías: Python, Library, CLI, Config-Driven, Transformers, Research
-- Estado: Activo - Paper publicado en JAIGP.org
+### DashAI Frankenstein
+Plugin de Frankenstein Transformer para DashAI.
+- GitHub: https://github.com/erickfmm/frankenstein-transformer/tree/main/dashai-frankenstein
+- PyPI: https://pypi.org/project/dashai-frankenstein/
+- Estado: en desarrollo.
+
+### ANMetaL
+Biblioteca de metaheurísticas y optimización numérica con visualizaciones: PSO, DE, CMA-ES, Black Hole y más.
+- Demo: https://erickfmm.github.io/anmetal/index.html
+- GitHub: https://github.com/erickfmm/ANMetaL
+- PyPI: https://pypi.org/project/anmetal/
+- Port JavaScript/TypeScript en desarrollo (anmetal-js).
 
 ### Awesome NLP / LLM en Español
-Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM en español.
+Listado curado de recursos, datasets, modelos y cursos de NLP y LLM en español.
 - GitHub: https://github.com/erickfmm/Awesome-NLP-LLM-Spanish-Espa-ol
-- Tipo: Curación de recursos para la comunidad
-
-### ANMetaL (Destacado)
-Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas. Incluye algoritmos como PSO, DE, CMA-ES, Black Hole, y más con visualizaciones interactivas.
-- **Demo web**: https://erickfmm.github.io/anmetal
-- **Repositorio principal (Python)**: https://github.com/erickfmm/ANMetaL
-- **Rama JS/TS (en desarrollo)**: La rama `js` está tomando fuerza y próximamente se publicará como repo separado **anmetal-js** con implementación en JavaScript/TypeScript para uso en navegador y Node.js.
-- Tecnologías: Python, JavaScript/TypeScript (próximamente), Optimización, Visualización, Metaheurísticas
-- Estado: Activo - Investigación y desarrollo continuo
 
 ### Markdown to Audio
 Convierte libros en Markdown a audiolibros multicapítulo con motores TTS en español.
 - GitHub: https://github.com/erickfmm/markdown-to-audio
-- Tecnologías: Python, TTS, Audio Processing
 
 ### Translate & Process Datasets
 Scripts para traducir, filtrar y preparar datasets para su publicación en Hugging Face.
 - GitHub: https://github.com/erickfmm/translate-and-process-datasets
-- Tecnologías: Python, Data Engineering, Hugging Face
 
 ### Autogenerator of PPT
-Generador automático de presentaciones educativas desde YAML (pptx y PDF).
+Generador automático de presentaciones educativas desde YAML en PPTX y PDF.
 - GitHub: https://github.com/erickfmm/autogenerator-of-ppt
-- Tecnologías: Python, EdTech, Automation
+
+## Publicaciones
+### Revistas
+1. A new EEG software that supports emotion recognition by using an autonomous approach — Neural Computing and Applications (2020).
+2. Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics — IEEE Access (2018).
+3. Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations — Journal of Universal Computer Science (2018).
+4. Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review — Journal of Universal Computer Science (2018).
+5. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition — Computational Intelligence and Neuroscience (2018).
+
+### Conferencias
+1. Evolução das posturas corporais de estudantes em apresentações de seminários — Brazilian Symposium on Computers in Education (2018).
+2. Using Multimodal Data to Find Patterns in Student Presentations — LACLO 2018 (2019).
+3. Developing a Dashboard to Support the Analysis of Multimodal Educational Data — Congreso Chileno de TICS para la Educación (2018).
 
 ## Hugging Face
 Perfil: https://huggingface.co/erickfmm
 
-### Modelos Publicados
-- Mix TinyLlama 3x1B GGUF (3B params): https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF
-- mrbert-es-sbert-ft (En entrenamiento): Finetuning de mRBERT con Sentence Transformers para embeddings en español - https://huggingface.co/erickfmm/mrbert-es-sbert-ft
+### Modelos
+- Mix TinyLlama 3x1B GGUF — https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF
+- mrbert-es-sbert-ft — https://huggingface.co/erickfmm/mrbert-es-sbert-ft
 
-### Datasets Publicados (11 datasets)
-- QQP Triplets (ES): 216 filas de triplets de similaridad traducidos al español
-- PAQ Pairs (ES): 6,563 filas de pares pregunta-respuesta traducidos
-- Wiktionary Spanish All Forms: ~760K formas de lematización y morfología
-- Wiktionary Spanish Dictionary: definiciones y significados en español
-- Y más datasets para embeddings y NLP en español
+### Datasets destacados
+- QQP Triplets (ES), 216 filas.
+- PAQ Pairs (ES), 6,563 filas.
+- Wiktionary Spanish Forms and Lemmas, 760K filas.
+- Wiktionary Spanish Dictionary, 195K definiciones.
+- Multilingual Sentence Pairs STS, 2M filas.
+- RedPajama ES HQ v3.5, 17.6M filas.
+- Total: 11 datasets publicados.
 
-## Stack Tecnológico
+## Stack
+- Lenguajes: Python (avanzado), C# (básico), JavaScript (básico)
+- Bases de datos: PostgreSQL, MongoDB, Qdrant
+- Backend y ML: Django, FastAPI, Flask, Scikit-Learn, SciPy, Matplotlib, Seaborn, spaCy, Keras, LangChain, Pydantic, Transformers, Sentence-Transformers
+- Herramientas: Docker, Tableau, Google Looker, Power BI, OpenMetadata, Gephi
 
-### Lenguajes de Programación
-- Python (Avanzado)
-- C# (Básico)
-- JavaScript (Básico)
+---
 
-### Bases de Datos
-- PostgreSQL
-- MongoDB
-- Qdrant (Vector DB)
+# English
 
-### Frameworks Backend
-- Django
-- FastAPI
-- Flask
+## Profile
+Computer Science Engineer with a specialization in database management and design and a
+Postgraduate Diploma in Data Science. Works across software project management, AI-assisted
+backend development, Python data analysis and public-sector data governance.
 
-### Machine Learning & AI
-- Scikit-Learn
-- LangChain
-- Transformers (Hugging Face)
-- Sentence-Transformers
+## Focus areas
+- Large Language Models (LLMs) and Retrieval-Augmented Generation (RAG)
+- BERT and T5 models; Sentence Transformers and Spanish embeddings
+- Backend: Python, Django, FastAPI, Flask
+- Data engineering and data quality
+- Data governance with TOGAF, DAMA and Archimate
+- Learning analytics and multimodal learning
 
-### Herramientas
-- Docker
-- Tableau
-- PowerBI
-- OpenMetadata
+## Experience
+### Chilean Ministry of Education (MINEDUC) — 2022 to present
+Innovation Center Professional, Santiago.
+- Web development and maintenance for the Education Data Standard verification system (Digital Class Book).
+- Data governance for the Quality Assurance System (TOGAF, DAMA); process and system maps in Archimate.
+- Project management: proposals, DIPRES forms, requirements analysis, tender support and milestone verification.
+- AI proofs of concept with LLMs, RAG, BERT, T5 and related models.
 
-## Publicaciones Científicas
+### Universidad de Valparaíso — 2016 to 2018
+Research Assistant, Valparaíso.
+- Multimodal learning analytics tool built with Kinect v2.
+- Continuous posture classification, speaker recognition and distance travelled per person.
 
+## Education
+- Postgraduate Diploma in Data Science — Universidad de Valparaíso, 2023. Highest Distinction (6.1).
+- Computer Science Engineering — Universidad de Valparaíso, 2019. Specialization in Database Management and Design. Highest Distinction (6.22).
+
+## Selected projects
+- Frankenstein Transformer — config-driven Python library and CLI for experimental Transformer architectures. Published on PyPI.
+- DashAI Frankenstein — Frankenstein Transformer plugin for DashAI. In development; published on PyPI.
+- ANMetaL — metaheuristics and numerical optimization library with advanced visualizations. Published on PyPI.
+- Awesome NLP / LLM in Spanish — curated resource list.
+- Markdown to Audio — Markdown books to multi-chapter audiobooks with Spanish TTS.
+- Translate & Process Datasets — dataset translation, filtering and Hugging Face preparation.
+- Autogenerator of PPT — YAML to educational PPTX/PDF generator.
+
+## Publications
 ### Journals
-1. Development of a Software that Supports Multimodal Learning Analytics (2018)
-2. Mathematics Learning through Computational Thinking Activities (2018)
-3. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition (2018)
-4. A new EEG software that supports emotion recognition by using an autonomous approach (2020)
+1. A new EEG software that supports emotion recognition by using an autonomous approach — Neural Computing and Applications (2020).
+2. Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics — IEEE Access (2018).
+3. Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations — Journal of Universal Computer Science (2018).
+4. Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review — Journal of Universal Computer Science (2018).
+5. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition — Computational Intelligence and Neuroscience (2018).
 
-### Conferencias
-1. Evolução das posturas corporais de estudantes (2018)
-2. Using Multimodal Data to Find Patterns in Student Presentations (2019)
-3. Developing a Dashboard to Support the Analysis of Multimodal Educational Data (2018)
+### Conferences
+1. Evolução das posturas corporais de estudantes em apresentações de seminários — Brazilian Symposium on Computers in Education (2018).
+2. Using Multimodal Data to Find Patterns in Student Presentations — LACLO 2018 (2019).
+3. Developing a Dashboard to Support the Analysis of Multimodal Educational Data — Congreso Chileno de TICS para la Educación (2018).
 
-## Enlaces Principales
-- Portfolio: https://erickfmm.github.io
-- **Config Builder (Frankestein Transformer)**: https://erickfmm.github.io/frankenstein-transformer/index.html
-- **ANMetaL (Metaheurísticas y optimización)**: https://erickfmm.github.io/anmetal
-- GitHub: https://github.com/erickfmm (28 repositorios públicos)
-- LinkedIn: https://www.linkedin.com/in/erickfmm/
-- Hugging Face: https://huggingface.co/erickfmm
-- CV en PDF: https://github.com/erickfmm/cv/blob/master/output/cv_spanish/cv.pdf
-
-## Estadísticas
-- 28 repositorios públicos en GitHub
-- 11 datasets en Hugging Face
-- 2 modelos publicados
-- 9 años entre academia y práctica
-
-## Idiomas
-- Español (Nativo)
-- Inglés (Técnico)
-
-## Palabras Clave
-AI Engineer, Inteligencia Artificial, Machine Learning, NLP, Large Language Models, LLM, RAG, BERT, T5, Transformers, Python, Backend Development, Data Engineering, Gobernanza de Datos, Educación, EdTech, Hugging Face, Deep Learning, Data Science, PostgreSQL, MongoDB, Django, FastAPI, LangChain, Chile, Santiago
+## Keywords
+AI Engineer, Applied AI, Machine Learning, NLP, Large Language Models, LLM, RAG, BERT, T5,
+Transformers, Sentence Transformers, Python, Backend Development, Data Engineering,
+Data Governance, TOGAF, DAMA, Education, EdTech, Hugging Face, PyPI, Chile, Santiago.

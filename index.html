@@ -1,52 +1,50 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CL">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Erick Francisco Merino Menares | AI Engineer</title>
-  <meta name="description" content="Portafolio de Erick Francisco Merino Menares, AI Engineer. Experiencia en IA, backend, datos y educación." />
-  
+  <title>Erick Francisco Merino Menares | AI Engineer · Backend · Datos</title>
+  <meta name="description" content="Portafolio de Erick Francisco Merino Menares, AI Engineer. Sistemas de IA aplicada, LLM, RAG, backend, datos y gobernanza para educación y producción." />
+
   <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="alternate icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.svg" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.svg" />
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon.svg" />
-  
-  <!-- SEO Meta Tags -->
-  <meta name="keywords" content="AI Engineer, Inteligencia Artificial, Machine Learning, NLP, Large Language Models, LLM, RAG, BERT, T5, Transformers, Python, Backend Development, Data Engineering, Hugging Face, Deep Learning, Data Science, Santiago Chile" />
+
+  <!-- SEO / idioma -->
   <meta name="author" content="Erick Francisco Merino Menares" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://erickfmm.github.io/" />
-  
-  <!-- Open Graph / Facebook -->
+  <link rel="alternate" hreflang="es" href="https://erickfmm.github.io/" />
+  <link rel="alternate" hreflang="en" href="https://erickfmm.github.io/en/" />
+  <link rel="alternate" hreflang="x-default" href="https://erickfmm.github.io/" />
+  <link rel="alternate" type="text/plain" href="llms.txt" title="Contexto para LLMs" />
+
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CL" />
   <meta property="og:url" content="https://erickfmm.github.io/" />
   <meta property="og:title" content="Erick Francisco Merino Menares | AI Engineer" />
-  <meta property="og:description" content="AI Engineer especializado en desarrollo backend, análisis de datos e inteligencia artificial aplicada a la educación. 28 repos en GitHub, 12 datasets en Hugging Face." />
-  <meta property="og:image" content="/imagen_cara.jfif" />
-  <meta property="og:locale" content="es_CL" />
-  
+  <meta property="og:description" content="IA aplicada, LLM, RAG, backend y gobernanza de datos para educación y producción." />
+  <meta property="og:image" content="https://erickfmm.github.io/imagen_cara.jfif" />
+  <meta property="og:image:alt" content="Retrato de Erick Francisco Merino Menares" />
+
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://erickfmm.github.io/" />
   <meta name="twitter:title" content="Erick Francisco Merino Menares | AI Engineer" />
-  <meta name="twitter:description" content="AI Engineer especializado en desarrollo backend, análisis de datos e inteligencia artificial aplicada a la educación." />
-  <meta name="twitter:image" content="/imagen_cara.jfif" />
-  
-  <!-- Schema.org for Google -->
+  <meta name="twitter:description" content="IA aplicada, LLM, RAG, backend y gobernanza de datos para educación y producción." />
+  <meta name="twitter:image" content="https://erickfmm.github.io/imagen_cara.jfif" />
+
+  <!-- Schema.org -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Erick Francisco Merino Menares",
     "url": "https://erickfmm.github.io",
-    "sameAs": [
-      "https://github.com/erickfmm",
-      "https://www.linkedin.com/in/erickfmm/",
-      "https://huggingface.co/erickfmm"
-    ],
     "jobTitle": "AI Engineer",
+    "description": "AI Engineer especializado en IA aplicada, backend y gobernanza de datos para educación.",
     "worksFor": {
       "@type": "Organization",
       "name": "Ministerio de Educación de Chile"
@@ -64,65 +62,64 @@
     },
     "email": "erickfmm@gmail.com",
     "telephone": "+56961830057",
+    "sameAs": [
+      "https://github.com/erickfmm",
+      "https://www.linkedin.com/in/erickfmm/",
+      "https://huggingface.co/erickfmm"
+    ],
+    "knowsLanguage": ["es", "en"],
     "knowsAbout": [
       "Artificial Intelligence",
       "Machine Learning",
       "Natural Language Processing",
       "Large Language Models",
+      "Retrieval-Augmented Generation",
       "Python",
       "Backend Development",
-      "Data Engineering"
+      "Data Engineering",
+      "Data Governance"
     ]
   }
   </script>
-  
-  <!-- PWA Manifest -->
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#4f46e5" />
+  <meta name="theme-color" content="#05060f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="erickfmm Portfolio" />
-  
-  <link rel="stylesheet" href="styles.css" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <noscript>
+    <style>
+      @media (max-width: 960px) {
+        .mobile-nav-toggle { display: none; }
+        .mobile-nav-panel[hidden] { display: block; }
+      }
+    </style>
+  </noscript>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
-  <div class="bg-glow"></div>
-  <svg class="icon-sprite" aria-hidden="true" focusable="false">
-    <symbol id="icon-spark" viewBox="0 0 24 24">
-      <path d="M12 2l1.9 4.7L19 8.6l-4.7 1.9L12 16l-1.9-5.5L5 8.6l5.1-1.9L12 2z" />
-    </symbol>
-    <symbol id="icon-rocket" viewBox="0 0 24 24">
-      <path d="M14.5 3.5c3.5 1.1 6 4.3 6 8.1v.9l-4.2.6-2.5 2.5-.6 4.2h-.9c-3.8 0-7-2.5-8.1-6l5.1-5.1 5.2-5.2z" />
-      <path d="M6 18l-2 4 4-2 1.6-3.6L6 18z" />
-    </symbol>
-    <symbol id="icon-brain" viewBox="0 0 24 24">
-      <path d="M9.5 4.2C7.6 4.2 6 5.8 6 7.7v.3c-1.2.6-2 1.9-2 3.3 0 1.7 1 3.1 2.6 3.7.2 2.4 2.2 4.3 4.6 4.3h.6c1 0 1.8-.8 1.8-1.8V6.1c0-1-1-1.9-2.1-1.9z" />
-      <path d="M14.5 4.2c1.9 0 3.5 1.6 3.5 3.5v.3c1.2.6 2 1.9 2 3.3 0 1.7-1 3.1-2.6 3.7-.2 2.4-2.2 4.3-4.6 4.3h-.6c-1 0-1.8-.8-1.8-1.8V6.1c0-1 1-1.9 2.1-1.9z" />
-    </symbol>
-    <symbol id="icon-hub" viewBox="0 0 24 24">
-      <path d="M7 6h10a3 3 0 0 1 0 6H7a3 3 0 0 1 0-6z" />
-      <path d="M7 12h10a3 3 0 0 1 0 6H7a3 3 0 0 1 0-6z" />
-    </symbol>
-  </svg>
+
   <header class="site-header">
     <div class="container nav">
-      <div class="brand">
-        <span class="dot"></span>
+      <a class="brand" href="./" aria-label="Inicio, Erick Francisco Merino Menares">
+        <span class="dot" aria-hidden="true"></span>
         <span>erickfmm</span>
-      </div>
+      </a>
       <button
         class="mobile-nav-toggle"
         type="button"
         aria-expanded="false"
         aria-controls="mobile-nav-panel"
         aria-label="Abrir menú de navegación"
-      >
-        Menú
-      </button>
+        data-open-label="Abrir menú de navegación"
+        data-close-label="Cerrar menú de navegación"
+      >Menú</button>
       <nav class="nav-links" aria-label="Navegación principal">
         <a href="#sobre">Sobre mí</a>
         <a href="#experiencia">Experiencia</a>
@@ -133,8 +130,8 @@
         <a href="#contacto">Contacto</a>
       </nav>
       <div class="nav-cta">
-        <a class="button ghost" href="https://github.com/erickfmm" target="_blank" rel="noreferrer" aria-label="GitHub, abre en una pestaña nueva">GitHub</a>
-        <a class="button" href="cv.pdf" target="_blank" rel="noreferrer" aria-label="Ver CV en PDF, abre en una pestaña nueva">Ver CV PDF</a>
+        <a class="lang-switch" href="en/" hreflang="en" lang="en" aria-label="Ver versión en inglés">EN</a>
+        <a class="button small ghost" href="cv.pdf" target="_blank" rel="noreferrer" aria-label="Abrir CV en PDF, abre en una pestaña nueva">CV PDF</a>
       </div>
     </div>
     <nav id="mobile-nav-panel" class="mobile-nav-panel" aria-label="Navegación principal móvil" hidden>
@@ -146,198 +143,196 @@
         <a href="#publicaciones">Publicaciones</a>
         <a href="#huggingface">Hugging Face</a>
         <a href="#contacto">Contacto</a>
+        <a href="en/" hreflang="en" lang="en">English version</a>
       </div>
     </nav>
   </header>
 
   <main id="main-content" tabindex="-1">
     <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-text">
-          <p class="eyebrow">Ingeniería en IA · Back-end · Datos</p>
-          <h1>Erick Francisco Merino Menares</h1>
-          <p class="subtitle">Ingeniero Civil Informático</p>
-          <p class="headline">Funcionario Innovación Tecnológica en MINEDUC (CIM) | Desarrollo, IA y Educación</p>
-          <p class="summary">
-            Titulado como Informático con mención en bases de datos, apasionado por investigación, educación, desarrollo,
-            lenguajes de programación e Inteligencia Artificial. Me desempeño en Gestión de Proyectos, Desarrollo Back-End
-            usando IA y Análisis de Datos con tecnología Python. En constante aprendizaje y con ganas de extender mis capacidades.
-          </p>
-          <div class="hero-actions">
-            <a class="button" href="mailto:erickfmm@gmail.com?subject=Consulta%20desde%20portafolio">Escríbeme</a>
-            <a class="button ghost" href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer" aria-label="LinkedIn, abre en una pestaña nueva">LinkedIn</a>
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-text">
+            <p class="telemetry"><span class="status-dot" aria-hidden="true"></span> Disponible para colaborar · Santiago, CL</p>
+            <h1>Erick Francisco<br />Merino Menares</h1>
+            <p class="hero-role">AI Engineer · Backend · Datos · Educación</p>
+            <p class="hero-lede">
+              Diseño, implemento y opero sistemas de IA aplicada para educación y gobierno de datos.
+              Trabajo con LLM, RAG, embeddings y arquitecturas backend orientadas a producción.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="mailto:erickfmm@gmail.com?subject=Consulta%20desde%20portafolio">Hablemos</a>
+              <a class="button ghost" href="cv.pdf" target="_blank" rel="noreferrer" aria-label="Abrir CV en PDF, abre en una pestaña nueva">Descargar CV</a>
+            </div>
+            <p class="hero-contact-line">
+              <a href="mailto:erickfmm@gmail.com">erickfmm@gmail.com</a>
+              <span>+56 9 6183 0057</span>
+            </p>
           </div>
-           <p class="hero-contact-line">PAC, Santiago de Chile · erickfmm@gmail.com</p>
-        </div>
-        <div class="hero-card reveal">
-          <img class="profile" src="/imagen_cara.jfif" alt="Foto de perfil de Erick Francisco Merino Menares" />
-          <div class="card-body">
-            <div class="badge"><svg class="icon"><use href="#icon-brain"></use></svg>Ingeniería en IA</div>
-            <h3>Especialización</h3>
-            <ul>
-              <li>LLM, RAG, BERT, T5</li>
+
+          <aside class="identity-panel reveal" aria-label="Perfil profesional">
+            <div class="identity-top">
+              <span>Operador // 001</span>
+              <strong>Online</strong>
+            </div>
+            <img class="profile" src="imagen_cara.jfif" width="108" height="108" alt="Foto de perfil de Erick Francisco Merino Menares" />
+            <h2>Erick Merino</h2>
+            <p class="identity-sub">Ingeniero Civil Informático · Diplomado en Data Science</p>
+            <ul class="identity-list">
+              <li>LLM · RAG · BERT · T5</li>
               <li>Backend y Data Engineering</li>
-              <li>Gobernanza de datos (TOGAF · DAMA)</li>
+              <li>Gobernanza de datos TOGAF · DAMA</li>
             </ul>
             <div class="socials">
-              <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer" aria-label="GitHub, abre en una pestaña nueva">GitHub</a>
-              <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer" aria-label="LinkedIn, abre en una pestaña nueva">LinkedIn</a>
-              <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer" aria-label="Hugging Face, abre en una pestaña nueva">Hugging Face</a>
+              <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer">LinkedIn</a>
+              <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">Hugging Face</a>
             </div>
+          </aside>
+        </div>
+
+        <div class="metrics" role="group" aria-label="Métricas profesionales">
+          <div class="metric">
+            <strong class="counter" data-target="28">28</strong>
+            <span>repos públicos</span>
+          </div>
+          <div class="metric">
+            <strong class="counter" data-target="11">11</strong>
+            <span>datasets HF</span>
+          </div>
+          <div class="metric">
+            <strong class="counter" data-target="2">2</strong>
+            <span>modelos publicados</span>
+          </div>
+          <div class="metric">
+            <strong class="counter" data-target="9">9</strong>
+            <span>años academia + práctica</span>
           </div>
         </div>
-        <div class="hero-featured-links reveal" style="justify-content: center; margin-top: 1.5rem;">
-          <a class="button featured" href="frankenstein-transformer/index.html" target="_blank" rel="noreferrer" aria-label="Arma tu propio transformer con Frankestein Transformer">
-            <svg class="icon"><use href="#icon-rocket"></use></svg>Arma tu propio transformer
-          </a>
-          <a class="button featured ghost" href="anmetal/index.html" target="_blank" rel="noreferrer" aria-label="Visualización de metaheurísticas poblacionales con ANMetaL">
-            <svg class="icon"><use href="#icon-brain"></use></svg>Visualización de metaheurísticas poblacionales
-          </a>
-        </div>
-      </div>
-      <div class="container stats">
-        <div class="stat reveal">
-          <span class="counter" data-target="28">0</span>
-          <small>repos públicos en GitHub</small>
-        </div>
-        <div class="stat reveal">
-          <span class="counter" data-target="12">0</span>
-           <small>datasets en Hugging Face</small>
-        </div>
-        <div class="stat reveal">
-          <span class="counter" data-target="3">0</span>
-           <small>modelos publicados</small>
-        </div>
-        <div class="stat reveal">
-          <span class="counter" data-target="9">0</span>
-          <small>años entre academia y práctica</small>
-        </div>
-      </div>
-      <div class="container proof-banner reveal">
-        <div class="hype-content">
-          <span class="hype-pill"><svg class="icon"><use href="#icon-spark"></use></svg>ENFOQUE DE TRABAJO</span>
-          <div>
-            <h3>IA aplicada con foco en educación y producción</h3>
-            <p>Combino investigación, desarrollo back-end y gobierno de datos para construir soluciones útiles, auditables y listas para operación real.</p>
-          </div>
-        </div>
-        <a class="button ghost" href="#proyectos">Ver proyectos</a>
-        <a class="button" href="#contacto">
-          <svg class="icon"><use href="#icon-rocket"></use></svg>Ver contacto
-        </a>
       </div>
     </section>
 
     <section id="sobre" class="section">
       <div class="container">
         <div class="section-head">
-          <h2>Sobre mí</h2>
-          <p>AI Engineer con foco en soluciones educativas, gobierno de datos y sistemas inteligentes listos para producción.</p>
+          <span class="section-kicker">// Perfil</span>
+          <h2>IA aplicada con criterio de producción</h2>
+          <p>Combino investigación, desarrollo backend y gobierno de datos para construir soluciones útiles, auditables y listas para operar.</p>
         </div>
         <div class="grid-3">
-          <div class="card reveal">
-            <h3>Resumen Profesional</h3>
-            <p>Gestión de proyectos de software, análisis y formulación de requerimientos, y pruebas de concepto con modelos de IA.</p>
-          <p>Trabajo continuo en investigación aplicada, desarrollo back-end y analítica avanzada con Python.</p>
+          <div class="panel reveal">
+            <h3>Resumen profesional</h3>
+            <p>
+              Titulado como Informático con mención en bases de datos. Me desempeño en gestión de proyectos,
+              desarrollo back-end con IA y análisis de datos con Python.
+            </p>
+            <p>
+              Experiencia en formulación de requerimientos, pruebas de concepto con modelos de lenguaje y
+              gobernanza de datos para el sector público.
+            </p>
           </div>
-          <div class="card reveal">
-            <h3>Habilidades</h3>
-            <ul class="tag-list">
-              <li>Python (Avanzado)</li>
-              <li>C# (Básico)</li>
-              <li>JavaScript (Básico)</li>
-              <li>PostgreSQL</li>
-              <li>MongoDB</li>
-              <li>Qdrant</li>
-              <li>Django</li>
-              <li>FastAPI</li>
-              <li>Flask</li>
-              <li>Scikit-Learn</li>
-              <li>LangChain</li>
-              <li>Transformers</li>
-              <li>Sentence-Transformers</li>
-              <li>Docker</li>
-              <li>Tableau</li>
-              <li>PowerBI</li>
-              <li>OpenMetaData</li>
-            </ul>
+          <div class="panel reveal">
+            <h3>Stack principal</h3>
+            <div class="stack-groups">
+              <p><strong>Lenguajes:</strong> Python (avanzado), C# (básico), JavaScript (básico)</p>
+              <p><strong>Datos:</strong> PostgreSQL, MongoDB, Qdrant</p>
+              <p><strong>Backend y ML:</strong> Django, FastAPI, Flask, Scikit-Learn, SciPy, LangChain, Transformers, Sentence-Transformers</p>
+              <p><strong>Herramientas:</strong> Docker, Tableau, Google Looker, Power BI, OpenMetadata, Gephi</p>
+            </div>
           </div>
-          <div class="card reveal">
-            <h3>En aprendizaje continuo</h3>
-            <ul class="timeline">
-              <li><strong>2026</strong> · Procesamiento del Lenguaje Natural Moderno en Python (Udemy)</li>
-              <li><strong>2025</strong> · Microservicios: cómo migrar de monolitos a microservicios (Udemy)</li>
-              <li><strong>2024</strong> · Diseño, Gestión y Evaluación de Proyectos Públicos</li>
-              <li><strong>2024</strong> · Data Mesh - quick intro for complete beginners</li>
+          <div class="panel reveal">
+            <h3>Aprendizaje continuo</h3>
+            <ul class="identity-list">
+              <li><strong>2026</strong> · NLP moderno en Python (Udemy, 10 h)</li>
+              <li><strong>2025</strong> · Microservicios: de monolitos a microservicios (Udemy, 2 h)</li>
+              <li><strong>2024</strong> · Diseño, gestión y evaluación de proyectos públicos (30 h)</li>
+              <li><strong>2024</strong> · Data Mesh: introducción para principiantes (2.5 h)</li>
             </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="experiencia" class="section alt">
+    <section id="experiencia" class="section section--alt">
       <div class="container">
         <div class="section-head">
+          <span class="section-kicker">// Trayectoria</span>
           <h2>Experiencia</h2>
-          <p>Trayectoria combinando IA, gobierno de datos y educación.</p>
+          <p>IA, gobierno de datos y educación: del análisis de requerimientos a la operación de sistemas.</p>
         </div>
-        <div class="timeline-grid">
-          <div class="timeline-card reveal">
-            <div class="timeline-header">
+        <div class="log">
+          <article class="log-entry reveal">
+            <div class="log-meta">
+              <strong>2022 — Presente</strong>
+              Santiago, Chile
+            </div>
+            <div class="log-body">
               <h3>Ministerio de Educación (MINEDUC)</h3>
-              <span>2022 - Presente · Santiago, Chile</span>
+              <p class="log-role">Profesional de Centro de Innovación</p>
+              <ul>
+                <li>Mantenimiento y desarrollo web del sistema de verificación del Estándar de Datos para la Educación (Libro de Clases Digital).</li>
+                <li>Gobernanza de datos para el Sistema de Aseguramiento de la Calidad con TOGAF y DAMA; mapas de procesos y sistemas en Archimate.</li>
+                <li>Gestión de proyectos de software: propuesta, fichas DIPRES, análisis y formulación de requerimientos, bases de licitación y verificación de hitos.</li>
+                <li>Desarrollo de pruebas de concepto con modelos de IA: LLM, RAG, BERT, T5, entre otros.</li>
+              </ul>
             </div>
-            <p class="role">Profesional de Centro de Innovación</p>
-            <ul>
-              <li>Mantenimiento y desarrollo web del sistema de verificación del Estándar de Datos para la Educación.</li>
-              <li>Gobernanza de datos para el Sistema de Aseguramiento de la Calidad (TOGAF y DAMA).</li>
-              <li>Gestión de proyectos y validación de hitos.</li>
-              <li>Pruebas de concepto con IA (LLM, RAG, BERT, T5).</li>
-            </ul>
-          </div>
-          <div class="timeline-card reveal">
-            <div class="timeline-header">
+          </article>
+          <article class="log-entry reveal">
+            <div class="log-meta">
+              <strong>2016 — 2018</strong>
+              Valparaíso, Chile
+            </div>
+            <div class="log-body">
               <h3>Universidad de Valparaíso</h3>
-              <span>2016 - 2018 · Valparaíso, Chile</span>
+              <p class="log-role">Ayudante de Investigación</p>
+              <ul>
+                <li>Desarrollo de una herramienta de Análisis del Aprendizaje Multimodal con Kinect v2.</li>
+                <li>Clasificación de posturas continuas y reconocimiento de quién habla.</li>
+                <li>Cálculo de distancias recorridas por persona.</li>
+              </ul>
             </div>
-            <p class="role">Ayudante de Investigación</p>
-            <ul>
-              <li>Desarrollo de herramienta de Análisis del Aprendizaje Multimodal con Kinectv2.</li>
-              <li>Clasificación de posturas y reconocimiento de quién habla.</li>
-            </ul>
-          </div>
-          <div class="timeline-card reveal">
-            <div class="timeline-header">
+          </article>
+          <article class="log-entry reveal">
+            <div class="log-meta">
+              <strong>2018</strong>
+              Valparaíso, Chile
+            </div>
+            <div class="log-body">
               <h3>Universidad de Valparaíso</h3>
-              <span>2017 · Valparaíso, Chile</span>
+              <p class="log-role">Practicante (2.ª práctica)</p>
+              <ul>
+                <li>Programación del front-end (HTML, CSS, JS) para la nueva versión de MailCenter.</li>
+                <li>Participación en publicaciones sobre analítica educativa y reconocimiento de emociones con EEG.</li>
+              </ul>
             </div>
-            <p class="role">Ayudante STEM</p>
-            <ul>
-              <li>Soporte a labor docente.</li>
-            </ul>
-          </div>
-          <div class="timeline-card reveal">
-            <div class="timeline-header">
+          </article>
+          <article class="log-entry reveal">
+            <div class="log-meta">
+              <strong>2017</strong>
+              Valparaíso, Chile
+            </div>
+            <div class="log-body">
               <h3>Universidad de Valparaíso</h3>
-              <span>2018 · Valparaíso, Chile</span>
+              <p class="log-role">Ayudante STEM</p>
+              <ul>
+                <li>Soporte a labor docente.</li>
+              </ul>
             </div>
-            <p class="role">Practicante (2a Práctica)</p>
-            <ul>
-              <li>Programación del master Front-End (HTML, CSS, JS) para nueva versión de MailCenter.</li>
-              <li>Participación en publicaciones científicas.</li>
-            </ul>
-          </div>
-          <div class="timeline-card reveal">
-            <div class="timeline-header">
+          </article>
+          <article class="log-entry reveal">
+            <div class="log-meta">
+              <strong>2016</strong>
+              Viña del Mar, Chile
+            </div>
+            <div class="log-body">
               <h3>AltaVoz</h3>
-              <span>2016 · Viña del Mar, Chile</span>
+              <p class="log-role">Practicante (1.ª práctica)</p>
+              <ul>
+                <li>Desarrollo de una aplicación de ejemplo en el CMS Prontus.</li>
+                <li>Rediseño de la interfaz web del administrador de proyectos.</li>
+              </ul>
             </div>
-            <p class="role">Practicante (1a Práctica)</p>
-            <ul>
-              <li>Desarrollo de aplicación de ejemplo en CMS Prontus.</li>
-              <li>Rediseño de interfaz web del administrador de proyectos.</li>
-            </ul>
-          </div>
+          </article>
         </div>
       </div>
     </section>
@@ -345,92 +340,136 @@
     <section id="educacion" class="section">
       <div class="container">
         <div class="section-head">
+          <span class="section-kicker">// Formación</span>
           <h2>Educación</h2>
-          <p>Formación académica con foco en Data Science y sistemas de información.</p>
+          <p>Formación en ingeniería, bases de datos y ciencia de datos.</p>
         </div>
         <div class="grid-2">
-          <div class="card reveal">
+          <div class="panel reveal">
             <h3>Diploma de Postítulo en Data Science</h3>
-            <p><strong>Universidad de Valparaíso</strong> · 2023</p>
-            <p>Duración 6 meses. Aprobado con Distinción Máxima (6.1).</p>
+            <p><strong>Universidad de Valparaíso</strong> · 2023 · 6 meses</p>
+            <p>Aprobado con Distinción Máxima (6.1).</p>
           </div>
-          <div class="card reveal">
+          <div class="panel reveal">
             <h3>Ingeniería Civil Informática</h3>
-            <p><strong>Universidad de Valparaíso</strong> · 2019-04-10</p>
+            <p><strong>Universidad de Valparaíso</strong> · 2019</p>
             <p>Mención en Gestión y Diseño de Bases de Datos. Titulado con Distinción Máxima (6.22).</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="proyectos" class="section alt">
+    <section id="proyectos" class="section section--alt">
       <div class="container">
         <div class="section-head">
-          <h2>Proyectos principales en GitHub</h2>
-          <p>Investigación aplicada, herramientas de IA y automatización.</p>
+          <span class="section-kicker">// Build log</span>
+          <h2>Proyectos</h2>
+          <p>Herramientas open source, automatización e investigación aplicada.</p>
         </div>
-        <div class="projects">
-          <article class="project-card featured reveal">
-            <h3>🌟 Frankestein Transformer</h3>
-            <p>Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers. Permite configurar y entrenar modelos con MoE, BitNet 1.58, Titan Memory y más mediante archivos YAML/JSON. Incluye soporte de visión con Vision Transformer (ViT) para clasificación, segmentación y predicción de parches. Diseñada para facilitar la investigación en NLP y CV.</p>
-            <div class="callout">
-              <svg class="icon"><use href="#icon-rocket"></use></svg>
-              <div>
-                <strong>Paper de Investigación</strong>
-                <p>Lee el paper completo sobre la arquitectura y filosofía de la librería</p>
-              </div>
+        <div class="project-grid">
+          <article class="project-card project-card--featured reveal">
+            <div class="project-top">
+              <h3>Frankenstein Transformer</h3>
+              <span class="status-pill">PyPI · Activo</span>
             </div>
+            <p>
+              Librería Python y CLI config-driven para entrenar arquitecturas experimentales de Transformers.
+              Permite configurar y entrenar modelos con Mixture of Experts, BitNet 1.58, Titan Memory y más
+              mediante archivos YAML/JSON.
+            </p>
+            <ul>
+              <li>Más de 30 mixers de atención, varias normas y más de 20 optimizadores.</li>
+              <li>Config Builder interactivo, paper y resultados de experimentos publicados en el sitio.</li>
+              <li>Publicado en PyPI como <strong>frankenstein-transformer</strong>.</li>
+            </ul>
             <div class="project-tags">
-              <span>Python</span><span>Library</span><span>CLI</span><span>Config-Driven</span><span>Research</span><span>NLP</span><span>Vision (ViT)</span>
+              <span>Python</span><span>CLI</span><span>Config-driven</span><span>NLP</span><span>PyPI</span>
             </div>
             <div class="project-links">
               <a href="frankenstein-transformer/index.html" target="_blank" rel="noreferrer">Config Builder</a>
-              <a href="https://github.com/erickfmm/transformer-encoder-frankestein" target="_blank" rel="noreferrer">Ver repositorio</a>
               <a href="frankenstein-transformer/paper/paper-es.html" target="_blank" rel="noreferrer">Leer paper</a>
+              <a href="https://github.com/erickfmm/frankenstein-transformer" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="https://pypi.org/project/frankenstein-transformer/" target="_blank" rel="noreferrer">PyPI</a>
             </div>
           </article>
+
           <article class="project-card reveal">
-            <h3>Awesome NLP / LLM en Español</h3>
-            <p>Listado curado de recursos, datasets, modelos y cursos relacionados a NLP y LLM en español.</p>
-            <div class="project-tags">
-              <span>Curación</span><span>NLP</span><span>Comunidad</span>
+            <div class="project-top">
+              <h3>DashAI Frankenstein</h3>
+              <span class="status-pill">En desarrollo</span>
             </div>
-            <a href="https://github.com/erickfmm/Awesome-NLP-LLM-Spanish-Espa-ol" target="_blank" rel="noreferrer">Ver repositorio</a>
+            <p>Plugin de Frankenstein Transformer para DashAI: integra las arquitecturas experimentales en el ecosistema de DashAI.</p>
+            <div class="project-tags"><span>Plugin</span><span>DashAI</span><span>Python</span></div>
+            <div class="project-links">
+              <a href="https://github.com/erickfmm/frankenstein-transformer/tree/main/dashai-frankenstein" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="https://pypi.org/project/dashai-frankenstein/" target="_blank" rel="noreferrer">PyPI</a>
+            </div>
           </article>
-           <article class="project-card reveal">
-             <h3>ANMetaL</h3>
-             <p>Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas. Incluye PSO, DE, CMA-ES, Black Hole y más. La rama <code>js</code> está en desarrollo activo y pronto se publicará como <strong>anmetal-js</strong>, un repo separado con implementación en JavaScript/TypeScript para uso en navegador y Node.js.</p>
-             <div class="project-tags">
-               <span>Optimización</span><span>Python</span><span>Visualización</span><span>JS/TS (próximamente)</span>
-             </div>
-             <div class="project-links">
-               <a href="https://erickfmm.github.io/anmetal" target="_blank" rel="noreferrer">Ver demo</a>
-               <a href="https://github.com/erickfmm/ANMetaL" target="_blank" rel="noreferrer">Ver repositorio</a>
-             </div>
-           </article>
+
           <article class="project-card reveal">
-            <h3>Markdown to Audio</h3>
+            <div class="project-top">
+              <h3>ANMetaL</h3>
+              <span class="status-pill">PyPI · Activo</span>
+            </div>
+            <p>Biblioteca de metaheurísticas y optimización numérica con visualizaciones avanzadas: PSO, DE, CMA-ES, Black Hole y más.</p>
+            <ul>
+              <li>Demo web interactiva en erickfmm.github.io/anmetal.</li>
+              <li>Port a JavaScript/TypeScript en desarrollo (anmetal-js).</li>
+            </ul>
+            <div class="project-tags"><span>Optimización</span><span>Python</span><span>Visualización</span></div>
+            <div class="project-links">
+              <a href="anmetal/index.html" target="_blank" rel="noreferrer">Demo</a>
+              <a href="https://github.com/erickfmm/ANMetaL" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="https://pypi.org/project/anmetal/" target="_blank" rel="noreferrer">PyPI</a>
+            </div>
+          </article>
+
+          <article class="project-card reveal">
+            <div class="project-top">
+              <h3>Awesome NLP / LLM en Español</h3>
+              <span class="status-pill">Curaduría</span>
+            </div>
+            <p>Listado curado de recursos, datasets, modelos y cursos de NLP y LLM en español.</p>
+            <div class="project-tags"><span>NLP</span><span>Comunidad</span><span>Open source</span></div>
+            <div class="project-links">
+              <a href="https://github.com/erickfmm/Awesome-NLP-LLM-Spanish-Espa-ol" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+          </article>
+
+          <article class="project-card reveal">
+            <div class="project-top">
+              <h3>Markdown to Audio</h3>
+              <span class="status-pill">Herramienta</span>
+            </div>
             <p>Convierte libros en Markdown a audiolibros multicapítulo con motores TTS en español.</p>
-            <div class="project-tags">
-              <span>TTS</span><span>Python</span><span>Audio</span>
+            <div class="project-tags"><span>TTS</span><span>Python</span><span>Audio</span></div>
+            <div class="project-links">
+              <a href="https://github.com/erickfmm/markdown-to-audio" target="_blank" rel="noreferrer">GitHub</a>
             </div>
-            <a href="https://github.com/erickfmm/markdown-to-audio" target="_blank" rel="noreferrer">Ver repositorio</a>
           </article>
+
           <article class="project-card reveal">
-            <h3>Translate & Process Datasets</h3>
+            <div class="project-top">
+              <h3>Translate &amp; Process Datasets</h3>
+              <span class="status-pill">Data</span>
+            </div>
             <p>Scripts para traducir, filtrar y preparar datasets para su publicación en Hugging Face.</p>
-            <div class="project-tags">
-              <span>Data Engineering</span><span>HF</span><span>Python</span>
+            <div class="project-tags"><span>Data Engineering</span><span>HF</span><span>Python</span></div>
+            <div class="project-links">
+              <a href="https://github.com/erickfmm/translate-and-process-datasets" target="_blank" rel="noreferrer">GitHub</a>
             </div>
-            <a href="https://github.com/erickfmm/translate-and-process-datasets" target="_blank" rel="noreferrer">Ver repositorio</a>
           </article>
+
           <article class="project-card reveal">
-            <h3>Autogenerator of PPT</h3>
-            <p>Generador automático de presentaciones educativas desde YAML (pptx y PDF).</p>
-            <div class="project-tags">
-              <span>EdTech</span><span>Automation</span><span>Python</span>
+            <div class="project-top">
+              <h3>Autogenerator of PPT</h3>
+              <span class="status-pill">EdTech</span>
             </div>
-            <a href="https://github.com/erickfmm/autogenerator-of-ppt" target="_blank" rel="noreferrer">Ver repositorio</a>
+            <p>Generador automático de presentaciones educativas desde YAML en PPTX y PDF.</p>
+            <div class="project-tags"><span>Automatización</span><span>Python</span><span>EdTech</span></div>
+            <div class="project-links">
+              <a href="https://github.com/erickfmm/autogenerator-of-ppt" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
           </article>
         </div>
       </div>
@@ -439,44 +478,95 @@
     <section id="publicaciones" class="section">
       <div class="container">
         <div class="section-head">
-          <h2>Publicaciones destacadas</h2>
-          <p>Investigación en aprendizaje multimodal, EEG y analítica educativa.</p>
+          <span class="section-kicker">// Research</span>
+          <h2>Publicaciones</h2>
+          <p>Investigación en aprendizaje multimodal, analítica educativa y reconocimiento de emociones con EEG.</p>
         </div>
         <div class="grid-2">
-          <div class="card reveal">
-            <h3>Journals</h3>
-            <ul class="timeline">
-              <li>Development of a Software that Supports Multimodal Learning Analytics (2018).</li>
-              <li>Mathematics Learning through Computational Thinking Activities (2018).</li>
-              <li>Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition (2018).</li>
-              <li>A new EEG software that supports emotion recognition by using an autonomous approach (2020).</li>
-            </ul>
+          <div class="panel pub-group reveal">
+            <h3>Revistas</h3>
+            <ol class="pub-list">
+              <li>
+                <span class="pub-year">2020</span>
+                <div>
+                  <p>A new EEG software that supports emotion recognition by using an autonomous approach</p>
+                  <small>Neural Computing and Applications</small>
+                </div>
+              </li>
+              <li>
+                <span class="pub-year">2018</span>
+                <div>
+                  <p>Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics</p>
+                  <small>IEEE Access</small>
+                </div>
+              </li>
+              <li>
+                <span class="pub-year">2018</span>
+                <div>
+                  <p>Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations</p>
+                  <small>Journal of Universal Computer Science</small>
+                </div>
+              </li>
+              <li>
+                <span class="pub-year">2018</span>
+                <div>
+                  <p>Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review</p>
+                  <small>Journal of Universal Computer Science</small>
+                </div>
+              </li>
+              <li>
+                <span class="pub-year">2018</span>
+                <div>
+                  <p>Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition</p>
+                  <small>Computational Intelligence and Neuroscience</small>
+                </div>
+              </li>
+            </ol>
           </div>
-          <div class="card reveal">
+          <div class="panel pub-group reveal">
             <h3>Conferencias</h3>
-            <ul class="timeline">
-              <li>Evolução das posturas corporais de estudantes (2018).</li>
-              <li>Using Multimodal Data to Find Patterns in Student Presentations (2019).</li>
-              <li>Developing a Dashboard to Support the Analysis of Multimodal Educational Data (2018).</li>
-            </ul>
+            <ol class="pub-list">
+              <li>
+                <span class="pub-year">2018</span>
+                <div>
+                  <p>Evolução das posturas corporais de estudantes em apresentações de seminários</p>
+                  <small>Brazilian Symposium on Computers in Education</small>
+                </div>
+              </li>
+              <li>
+                <span class="pub-year">2019</span>
+                <div>
+                  <p>Using Multimodal Data to Find Patterns in Student Presentations</p>
+                  <small>LACLO 2018</small>
+                </div>
+              </li>
+              <li>
+                <span class="pub-year">2018</span>
+                <div>
+                  <p>Developing a Dashboard to Support the Analysis of Multimodal Educational Data</p>
+                  <small>Congreso Chileno de TICS para la Educación</small>
+                </div>
+              </li>
+            </ol>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="huggingface" class="section alt">
+    <section id="huggingface" class="section section--alt">
       <div class="container">
         <div class="section-head">
-          <h2>Hugging Face · Datasets & Modelos</h2>
-          <p>Datasets en español y modelos publicados en el Hub.</p>
+          <span class="section-kicker">// Modelos y datos</span>
+          <h2>Hugging Face</h2>
+          <p>Modelos y datasets en español para NLP, embeddings y experimentación.</p>
         </div>
         <div class="grid-2">
-          <div class="card reveal">
+          <div class="panel reveal">
             <h3>Modelos</h3>
             <ul class="link-list">
               <li>
                 <a href="https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF" target="_blank" rel="noreferrer">Mix TinyLlama 3x1B GGUF</a>
-                <span>Modelo cuantizado GGUF (3B params).</span>
+                <span>Modelo cuantizado GGUF de 3B parámetros.</span>
               </li>
               <li>
                 <a href="https://huggingface.co/erickfmm/mrbert-es-sbert-ft" target="_blank" rel="noreferrer">mrbert-es-sbert-ft</a>
@@ -484,16 +574,16 @@
               </li>
             </ul>
           </div>
-          <div class="card reveal">
+          <div class="panel reveal">
             <h3>Datasets</h3>
             <ul class="link-list">
               <li>
                 <a href="https://huggingface.co/datasets/erickfmm/embedding-data__QQP_triplets__translated_to_spanish" target="_blank" rel="noreferrer">QQP Triplets (ES)</a>
-                <span>216 filas · triplets de similaridad semántica traducidos al español.</span>
+                <span>216 filas · triplets de similaridad semántica en español.</span>
               </li>
               <li>
                 <a href="https://huggingface.co/datasets/erickfmm/embedding-data__PAQ_pairs__translated_to_spanish" target="_blank" rel="noreferrer">PAQ Pairs (ES)</a>
-                <span>Pares QA traducidos al español para entrenamiento de embeddings.</span>
+                <span>6,563 filas · pares pregunta-respuesta para entrenar embeddings.</span>
               </li>
               <li>
                 <a href="https://huggingface.co/datasets/erickfmm/wiktionary-spanish-all-forms-and-its-original-form" target="_blank" rel="noreferrer">Wiktionary Formas y Lemas</a>
@@ -515,8 +605,8 @@
           </div>
         </div>
         <div class="cta-strip reveal">
-          <p>Explora más colecciones y recursos en mi perfil de Hugging Face.</p>
-          <a class="button" href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer"><svg class="icon"><use href="#icon-hub"></use></svg>Ver perfil</a>
+          <p>Explora más colecciones, modelos y datasets en el perfil de Hugging Face.</p>
+          <a class="button small" href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">Ver perfil</a>
         </div>
       </div>
     </section>
@@ -524,26 +614,27 @@
     <section id="contacto" class="section">
       <div class="container">
         <div class="section-head">
-          <h2>Contacto</h2>
-          <p>¿Tienes un proyecto de IA o datos en mente? Conversemos.</p>
+          <span class="section-kicker">// Contacto</span>
+          <h2>Conversemos</h2>
+          <p>Si tienes un proyecto de IA, datos o educación en mente, escríbeme.</p>
         </div>
         <div class="contact-grid">
-          <div class="card reveal">
+          <div class="panel reveal">
             <h3>Conecta conmigo</h3>
-             <ul class="contact-list">
-               <li><strong>Email:</strong> <a href="mailto:erickfmm@gmail.com">erickfmm@gmail.com</a></li>
-                <li><strong>Sitio web:</strong> <a href="https://erickfmm.github.io" rel="noreferrer">erickfmm.github.io</a></li>
-               <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer" aria-label="Perfil de LinkedIn, abre en una pestaña nueva">linkedin.com/in/erickfmm</a></li>
-               <li><strong>GitHub:</strong> <a href="https://github.com/erickfmm" target="_blank" rel="noreferrer" aria-label="Perfil de GitHub, abre en una pestaña nueva">github.com/erickfmm</a></li>
-               <li><strong>Hugging Face:</strong> <a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer" aria-label="Perfil de Hugging Face, abre en una pestaña nueva">huggingface.co/erickfmm</a></li>
+            <ul class="contact-list">
+              <li><strong>Email</strong><a href="mailto:erickfmm@gmail.com">erickfmm@gmail.com</a></li>
+              <li><strong>Sitio web</strong><a href="https://erickfmm.github.io">erickfmm.github.io</a></li>
+              <li><strong>LinkedIn</strong><a href="https://www.linkedin.com/in/erickfmm/" target="_blank" rel="noreferrer">linkedin.com/in/erickfmm</a></li>
+              <li><strong>GitHub</strong><a href="https://github.com/erickfmm" target="_blank" rel="noreferrer">github.com/erickfmm</a></li>
+              <li><strong>Hugging Face</strong><a href="https://huggingface.co/erickfmm" target="_blank" rel="noreferrer">huggingface.co/erickfmm</a></li>
             </ul>
           </div>
-          <div class="card reveal">
+          <div class="panel panel--accent reveal">
             <h3>Próximo paso</h3>
-            <p>Si quieres conversar sobre un proyecto, escríbeme por correo o revisa mi CV en PDF.</p><br />
-            <div class="hero-actions">
+            <p>Escríbeme con un resumen del proyecto, el contexto y el resultado que buscas. Respondo por correo.</p>
+            <div class="contact-actions">
               <a class="button" href="mailto:erickfmm@gmail.com?subject=Consulta%20desde%20portafolio">Enviar correo</a>
-              <a class="button ghost" href="cv.pdf" target="_blank" rel="noreferrer" aria-label="Abrir CV en PDF, abre en una pestaña nueva">Abrir CV PDF</a>
+              <a class="button ghost" href="cv.pdf" target="_blank" rel="noreferrer" aria-label="Abrir CV en PDF, abre en una pestaña nueva">Abrir CV</a>
             </div>
           </div>
         </div>
@@ -553,11 +644,11 @@
 
   <footer class="site-footer">
     <div class="container">
-      <span>© <span id="year"></span> Erick Francisco Merino Menares</span>
-      <span>Hecho con ❤️ para IA, datos y educación.</span>
+      <span>© <span id="year"></span> Erick Francisco Merino Menares · Santiago, CL</span>
+      <span class="mono">SYS // erickfmm.github.io · ES</span>
     </div>
   </footer>
 
-  <script src="portfolio.js"></script>
+  <script src="portfolio.js" defer></script>
 </body>
 </html>
