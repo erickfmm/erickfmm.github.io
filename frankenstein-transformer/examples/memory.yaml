@@ -12,30 +12,30 @@ model:
     num_kv_heads: 32
     dropout: 0.0
     layer_pattern:
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
-    - memory_attn
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
+    - memory
     mode: decoder
   norm:
     type: rms_norm
@@ -99,5 +99,5 @@ training:
   grad_clip_max_norm: 1.0
   max_nan_retries: 3
   gradient_log_interval: 10
-  csv_log_path: training_metrics_memory_attn.csv
+  csv_log_path: training_metrics_memory.csv
   telemetry_log_interval: 5

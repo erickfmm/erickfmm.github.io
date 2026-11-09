@@ -2,52 +2,51 @@ var FTDiagram = (function () {
     'use strict';
 
     var CATS = {
-        standard_attn: { c: 'attn', l: 'Standard Attention' },
-        sigmoid_attn: { c: 'attn', l: 'Sigmoid Attention' },
-        memory_attn: { c: 'mem', l: 'Memory Attention' },
-        gated_softmax_attn: { c: 'attn', l: 'Gated Softmax Attn' },
-        titan_attn: { c: 'attn', l: 'Titan Attention' },
+        standard: { c: 'attn', l: 'Standard Attention' },
+        sigmoid: { c: 'attn', l: 'Sigmoid Attention' },
+        memory: { c: 'mem', l: 'Memory Attention' },
+        gated_softmax: { c: 'attn', l: 'Gated Softmax Attn' },
+        titan: { c: 'attn', l: 'Titan Attention' },
         retnet: { c: 'recur', l: 'RetNet' },
-        retnet_attn: { c: 'recur', l: 'RetNet Attn' },
         mamba: { c: 'ssm', l: 'Mamba SSM' },
         ode: { c: 'ode', l: 'ODE Block' },
-        gla_attn: { c: 'attn', l: 'GLA Attention' },
-        deltanet_attn: { c: 'recur', l: 'DeltaNet Attn' },
-        gated_deltanet_attn: { c: 'recur', l: 'Gated DeltaNet' },
-        gated_deltanet2_attn: { c: 'recur', l: 'Gated DeltaNet-2' },
-        hgrn2_attn: { c: 'recur', l: 'HGRN2' },
-        fox_attn: { c: 'attn', l: 'FoX Attention' },
-        nsa_attn: { c: 'sparse', l: 'Native Sparse Attn' },
-        engram_attn: { c: 'attn', l: 'Engram Attn' },
-        longformer_attn: { c: 'sparse', l: 'Longformer Attn' },
-        bigbird_attn: { c: 'sparse', l: 'BigBird Attn' },
-        sparse_transformer_attn: { c: 'sparse', l: 'Sparse Transformer' },
-        sparsek_attn: { c: 'sparse', l: 'SparseK Attn' },
-        sparge_attn: { c: 'eval', l: 'SpargeAttn' },
-        fasa_attn: { c: 'eval', l: 'FASA' },
-        gqa_attn: { c: 'attn', l: 'Grouped-Query Attn' },
-        mla_attn: { c: 'attn', l: 'Multi-Head Latent Attn' },
-        gqla_attn: { c: 'attn', l: 'Group-Query Latent Attn' },
-        mlra_attn: { c: 'attn', l: 'Multi-Head Low-Rank Attn' },
-        tucker_attn: { c: 'attn', l: 'Tucker Attn' },
-        iha_attn: { c: 'attn', l: 'Interleaved Head Attn' },
-        gta_attn: { c: 'attn', l: 'Grouped-head laTenT Attn' },
-        mtla_attn: { c: 'attn', l: 'Temporal Latent Attn' },
-        cca_attn: { c: 'attn', l: 'Compressed Conv Attn' },
-        ccgqa_attn: { c: 'attn', l: 'Compressed Conv GQA' },
-        msa_attn: { c: 'sparse', l: 'MiniMax Sparse Attn' },
-        sparda_attn: { c: 'sparse', l: 'SparDA Attn' },
-        lsa_attn: { c: 'sparse', l: 'LSA Attn' },
-        fastconformer_attn: { c: 'sparse', l: 'FastConformer Attn' },
-        kda_attn: { c: 'recur', l: 'Kimi Delta Attn' },
-        gma_attn: { c: 'attn', l: 'Gaussian Mixture Attn' },
-        ssog_attn: { c: 'field', l: 'SSOG Attn' },
-        falcon1_attn: { c: 'fastw', l: 'Falcon-1 (scalar NLMS)' },
-        falcon2_attn: { c: 'fastw', l: 'Falcon-2 (per-col NLMS)' },
-        falcon3_attn: { c: 'fastw', l: 'Falcon-3 (window NLMS)' },
-        falcon1a_attn: { c: 'fastw', l: 'Falcon-1A (additive)' },
-        falcon2a_attn: { c: 'fastw', l: 'Falcon-2A (per-col add.)' },
-        falcon3a_attn: { c: 'fastw', l: 'Falcon-3A (window add.)' }
+        gla: { c: 'attn', l: 'GLA Attention' },
+        deltanet: { c: 'recur', l: 'DeltaNet Attn' },
+        gated_deltanet: { c: 'recur', l: 'Gated DeltaNet' },
+        gated_deltanet2: { c: 'recur', l: 'Gated DeltaNet-2' },
+        hgrn2: { c: 'recur', l: 'HGRN2' },
+        fox: { c: 'attn', l: 'FoX Attention' },
+        nsa: { c: 'sparse', l: 'Native Sparse Attn' },
+        engram: { c: 'attn', l: 'Engram Attn' },
+        longformer: { c: 'sparse', l: 'Longformer Attn' },
+        bigbird: { c: 'sparse', l: 'BigBird Attn' },
+        sparse_transformer: { c: 'sparse', l: 'Sparse Transformer' },
+        sparsek: { c: 'sparse', l: 'SparseK Attn' },
+        sparge: { c: 'eval', l: 'SpargeAttn' },
+        fasa: { c: 'eval', l: 'FASA' },
+        gqa: { c: 'attn', l: 'Grouped-Query Attn' },
+        mla: { c: 'attn', l: 'Multi-Head Latent Attn' },
+        gqla: { c: 'attn', l: 'Group-Query Latent Attn' },
+        mlra: { c: 'attn', l: 'Multi-Head Low-Rank Attn' },
+        tucker: { c: 'attn', l: 'Tucker Attn' },
+        iha: { c: 'attn', l: 'Interleaved Head Attn' },
+        gta: { c: 'attn', l: 'Grouped-head laTenT Attn' },
+        mtla: { c: 'attn', l: 'Temporal Latent Attn' },
+        cca: { c: 'attn', l: 'Compressed Conv Attn' },
+        ccgqa: { c: 'attn', l: 'Compressed Conv GQA' },
+        msa: { c: 'sparse', l: 'MiniMax Sparse Attn' },
+        sparda: { c: 'sparse', l: 'SparDA Attn' },
+        lsa: { c: 'sparse', l: 'LSA Attn' },
+        fastconformer: { c: 'sparse', l: 'FastConformer Attn' },
+        kda: { c: 'recur', l: 'Kimi Delta Attn' },
+        gma: { c: 'attn', l: 'Gaussian Mixture Attn' },
+        ssog: { c: 'field', l: 'SSOG Attn' },
+        falcon1: { c: 'fastw', l: 'Falcon-1 (scalar NLMS)' },
+        falcon2: { c: 'fastw', l: 'Falcon-2 (per-col NLMS)' },
+        falcon3: { c: 'fastw', l: 'Falcon-3 (window NLMS)' },
+        falcon1a: { c: 'fastw', l: 'Falcon-1A (additive)' },
+        falcon2a: { c: 'fastw', l: 'Falcon-2A (per-col add.)' },
+        falcon3a: { c: 'fastw', l: 'Falcon-3A (window add.)' }
     };
 
     var STYLES = {
@@ -102,7 +101,7 @@ var FTDiagram = (function () {
     // Mermaid edges that make the dataflow explicit and tensors connected.
     var SUBSTRUCT = {
         // Dense: three parallel projections Q,K,V → scores ← softmax → O.
-        standard_attn: [
+        standard: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,n,H]', c: 'attn', e: 'Wk', from: ['x'] },
@@ -112,7 +111,7 @@ var FTDiagram = (function () {
             { n: 'A = softmax · V', c: 'attn', e: 'A·V', from: ['softmax(scores)', 'V = Wv·x [B,n,H]'] },
             { n: 'O = Wo·A [B,n,H]', c: 'attn', e: 'Wo', from: ['A = softmax · V'] }
         ],
-        sigmoid_attn: [
+        sigmoid: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,n,H]', c: 'attn', e: 'Wk', from: ['x'] },
@@ -121,7 +120,7 @@ var FTDiagram = (function () {
             { n: 'A = σ(scores)', c: 'attn', e: 'sigmoid', from: ['scores = QKᵀ/√d + b [B,nh,n]'] },
             { n: 'O = A·V [B,n,H]', c: 'attn', e: 'A·V', from: ['A = σ(scores)', 'V = Wv·x [B,n,H]'] }
         ],
-        memory_attn: [
+        memory: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'token IDs s [B,n]', c: 'emb', id: 's' },
             { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
@@ -134,7 +133,7 @@ var FTDiagram = (function () {
             { n: 'A = softmax · V', c: 'attn', e: 'A·V', from: ['softmax(scores)', 'V = K + M (pre-RoPE)'] },
             { n: 'O = Wo·A [B,n,H]', c: 'mem', e: 'Wo', from: ['A = softmax · V'] }
         ],
-        gated_softmax_attn: [
+        gated_softmax: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,n,H]', c: 'attn', e: 'Wk', from: ['x'] },
@@ -144,7 +143,7 @@ var FTDiagram = (function () {
             { n: 'gate g = σ(Wg·x)', c: 'attn', e: 'Wg', from: ['x'] },
             { n: 'O = g · (Wo·softmax·V)', c: 'attn', e: 'gate·out', from: ['softmax(scores)', 'V = Wv·x [B,n,H]', 'gate g = σ(Wg·x)'] }
         ],
-        gqa_attn: [
+        gqa: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,n,Hkv]', c: 'attn', e: 'Wk (shared)', from: ['x'] },
@@ -163,7 +162,6 @@ var FTDiagram = (function () {
             { n: 'Sₜ = γ⊗Sₜ₋₁ + KᵀV', c: 'recur', e: 'update', from: ['decay γ + cumsum', 'Sₜ₋₁ [rH,H]'], loop: 'Sprev' },
             { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = γ⊗Sₜ₋₁ + KᵀV', 'Q,K,V = W·x [B,n,rH]'] }
         ],
-        retnet_attn: 'retnet',
         mamba: [
             { n: 'x [B,n,H]', c: 'ssm', id: 'x' },
             { n: 'conv1d (causal)', c: 'ssm', e: 'conv', from: ['x'] },
@@ -179,7 +177,7 @@ var FTDiagram = (function () {
             { n: 'f(θ) step 2 …', c: 'ode', e: 'step', from: ['f(θ) step 1'] },
             { n: 'xₜ [B,n,H]', c: 'ode', e: 'integrate', from: ['f(θ) step 2 …'] }
         ],
-        gla_attn: [
+        gla: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
             { n: 'gate αₜ = σ(Wα·x)^(1/τ)', c: 'attn', e: 'Wα', from: ['x'] },
@@ -187,7 +185,7 @@ var FTDiagram = (function () {
             { n: 'Sₜ = αₜ⊗Sₜ₋₁ + V·Kᵀ', c: 'attn', e: 'update', from: ['Q,K,V = W·x [B,n,H]', 'gate αₜ = σ(Wα·x)^(1/τ)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
             { n: 'O = Q·Sₜ [B,n,H]', c: 'attn', e: 'read', from: ['Sₜ = αₜ⊗Sₜ₋₁ + V·Kᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
-        deltanet_attn: [
+        deltanet: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
             { n: 'βₜ = σ(Wβ·x)', c: 'recur', e: 'Wβ', from: ['x'] },
@@ -195,7 +193,7 @@ var FTDiagram = (function () {
             { n: 'Sₜ = Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', c: 'recur', e: 'delta rule', from: ['Q,K,V = W·x [B,n,H]', 'βₜ = σ(Wβ·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
             { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
-        gated_deltanet_attn: [
+        gated_deltanet: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
             { n: 'decay αₜ = f(Wα·x)', c: 'recur', e: 'Wα', from: ['x'] },
@@ -204,7 +202,7 @@ var FTDiagram = (function () {
             { n: 'Sₜ = αₜ·Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', c: 'recur', e: 'update', from: ['Q,K,V = W·x [B,n,H]', 'decay αₜ = f(Wα·x)', 'write βₜ = σ(Wβ·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
             { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = αₜ·Sₜ₋₁(I − βₜkₜkₜᵀ) + βₜvₜkₜᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
-        gated_deltanet2_attn: [
+        gated_deltanet2: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
             { n: 'erase bₜ = σ(Wb·x) [dk]', c: 'recur', e: 'Wb', from: ['x'] },
@@ -214,7 +212,7 @@ var FTDiagram = (function () {
             { n: 'Sₜ = (I − kₜ(bₜ⊙kₜ)ᵀ)·Dₜ·Sₜ₋₁ + kₜ(wₜ⊙vₜ)ᵀ', c: 'recur', e: 'update', from: ['Q,K,V = W·x [B,n,H]', 'erase bₜ = σ(Wb·x) [dk]', 'write wₜ = σ(Ww·x) [dv]', 'decay Dₜ = Diag(αₜ)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
             { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = (I − kₜ(bₜ⊙kₜ)ᵀ)·Dₜ·Sₜ₋₁ + kₜ(wₜ⊙vₜ)ᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
-        hgrn2_attn: [
+        hgrn2: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
             { n: 'gate gₜ = b+(1−b)σ(Wg·x)', c: 'recur', e: 'Wg', from: ['x'] },
@@ -222,7 +220,7 @@ var FTDiagram = (function () {
             { n: 'Sₜ = gₜ⊗Sₜ₋₁ + V·Kᵀ', c: 'recur', e: 'outer', from: ['Q,K,V = W·x [B,n,H]', 'gate gₜ = b+(1−b)σ(Wg·x)', 'Sₜ₋₁ [dk,dv]'], loop: 'Sprev' },
             { n: 'O = Q·Sₜ [B,n,H]', c: 'recur', e: 'read', from: ['Sₜ = gₜ⊗Sₜ₋₁ + V·Kᵀ', 'Q,K,V = W·x [B,n,H]'] }
         ],
-        fox_attn: [
+        fox: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
             { n: 'forget fₜ = σ(Wf·x)', c: 'attn', e: 'Wf', from: ['x'] },
@@ -234,7 +232,7 @@ var FTDiagram = (function () {
         // KDA (Kimi Delta Attention, arXiv:2510.26692): gated delta-rule
         // recurrence with channel-wise decay Dₜ = Diag(exp(a − softplus(δ)))
         // applied before the delta edit; scalar write gate βₜ; oₜ = Sₜᵀqₜ.
-        kda_attn: [
+        kda: [
             { n: 'x [B,n,H]', c: 'recur', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'recur', e: 'Wqkv', from: ['x'] },
             { n: 'decay Dₜ = exp(a−softplus(δ)) [dk]', c: 'recur', e: 'channel', from: ['x'] },
@@ -247,7 +245,7 @@ var FTDiagram = (function () {
         // K-slot latent memory (no N x N matrix). O(NK) for fixed K.
         // Responsibilities are softmax-normalized posteriors; the read is
         // normalized by Z = Σₜ respₖ (annex-3: O = Γq·M/(Γq·Z+ε)).
-        gma_attn: [
+        gma: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Wq·x [B,nh,dr]', c: 'attn', e: 'Wq', from: ['x'] },
             { n: 'K = Wk·x [B,nh,dr]', c: 'attn', e: 'Wk', from: ['x'] },
@@ -262,7 +260,7 @@ var FTDiagram = (function () {
         // SSOG: separable sum of R Gaussian atoms per head over a 2D token
         // raster. The N x N matrix never exists; two 1D filter passes per
         // atom give O(R·N·√N·d). Content steering (lookat) optional.
-        ssog_attn: [
+        ssog: [
             { n: 'x [B,gh·gw,H] raster', c: 'field', id: 'x' },
             { n: 'V = Wv·x [B,gh,gw,nh,hd]', c: 'field', e: 'Wv', from: ['x [B,gh·gw,H] raster'] },
             { n: 'atoms μ,σ,λ [nh,R,5]', c: 'field', id: 'atoms' },
@@ -273,7 +271,7 @@ var FTDiagram = (function () {
             { n: 'O = Wo·y [B,n,H]', c: 'field', e: 'Wo', from: ['y = field·V [B,n,nh,hd]'] }
         ],
         // Sparse: Q,K,V + mask/selector + blocked scores.
-        sparse_transformer_attn: [
+        sparse_transformer: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'strided pattern p', c: 'sparse', e: 'pattern', from: ['x'] },
@@ -281,7 +279,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['masked scores = p⊗QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        longformer_attn: [
+        longformer: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'sliding window w', c: 'sparse', e: 'local', from: ['x'] },
@@ -290,7 +288,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['masked scores = (w+g)⊗QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        bigbird_attn: [
+        bigbird: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'local + random graph', c: 'sparse', e: 'graph', from: ['x'] },
@@ -299,7 +297,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['masked scores = graph⊗QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        sparsek_attn: [
+        sparsek: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'top-k selector', c: 'sparse', e: 'top-k', from: ['Q,K,V [B,n,H]'] },
@@ -307,7 +305,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['top-k scores = QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        nsa_attn: [
+        nsa: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'block scoring', c: 'sparse', e: 'score', from: ['Q,K,V [B,n,H]'] },
@@ -316,7 +314,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['sparse scores = QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        msa_attn: [
+        msa: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'block-sparse mask', c: 'sparse', e: 'mask', from: ['x'] },
@@ -324,7 +322,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['masked scores = mask⊗QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        sparda_attn: [
+        sparda: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'forecast proj', c: 'sparse', e: 'forecast', from: ['Q,K,V [B,n,H]'] },
@@ -332,7 +330,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['sparse scores = QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        lsa_attn: [
+        lsa: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'Ward buckets c_b', c: 'sparse', e: 'cluster', from: ['Q,K,V [B,n,H]'] },
@@ -341,7 +339,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['sparse scores = QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        fastconformer_attn: [
+        fastconformer: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
             { n: 'Qg,Kg,Vg [B,n,H] (optional)', c: 'sparse', e: 'Wg', from: ['x'] },
@@ -351,7 +349,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['masked scores = (w+g)⊗QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        sparge_attn: [
+        sparge: [
             { n: 'x [B,n,H]', c: 'eval', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'eval', e: 'Wqkv', from: ['x'] },
             { n: 'sparse predictor (eval)', c: 'eval', e: 'predict', from: ['Q,K,V [B,n,H]'] },
@@ -359,7 +357,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'eval', e: 'softmax', from: ['pruned scores'] },
             { n: 'O = Wo·softmax·V', c: 'eval', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
-        fasa_attn: [
+        fasa: [
             { n: 'x [B,n,H]', c: 'eval', id: 'x' },
             { n: 'Q,K,V [B,n,H]', c: 'eval', e: 'Wqkv', from: ['x'] },
             { n: 'freq-aware prune (eval)', c: 'eval', e: 'frequency', from: ['Q,K,V [B,n,H]'] },
@@ -368,7 +366,7 @@ var FTDiagram = (function () {
             { n: 'O = Wo·softmax·V', c: 'eval', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
         ],
         // Latent: down-project KV → latent → up-project → attention.
-        mla_attn: [
+        mla: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'c_KV = W_down·x [B,n,r]', c: 'attn', e: 'W_down', from: ['x'] },
             { n: 'K,V = W_up·c_KV [B,n,H]', c: 'attn', e: 'W_up', from: ['c_KV = W_down·x [B,n,r]'] },
@@ -378,8 +376,8 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'K,V = W_up·c_KV [B,n,H]'] }
         ],
-        gqla_attn: 'mla_attn',
-        mlra_attn: [
+        gqla: 'mla',
+        mlra: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'c_KV = W_down·x', c: 'attn', e: 'W_down', from: ['x'] },
             { n: 'partition L sub-heads', c: 'attn', e: 'split', from: ['c_KV = W_down·x'] },
@@ -389,7 +387,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'Kᵢ,Vᵢ = W_up^(i)·cᵢ'] }
         ],
-        tucker_attn: [
+        tucker: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q = Tucker_q(x) [qr]', c: 'attn', e: 'q_rank', from: ['x'] },
             { n: 'K,V = Tucker_kv(x) [kr]', c: 'attn', e: 'kv_rank', from: ['x'] },
@@ -398,7 +396,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'reconstruct Q,K,V [B,n,H]'] }
         ],
-        iha_attn: [
+        iha: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'interleave heads', c: 'attn', e: 'interleave', from: ['x'] },
             { n: 'latent K,V', c: 'attn', e: 'latent', from: ['interleave heads'] },
@@ -407,7 +405,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'latent K,V'] }
         ],
-        gta_attn: [
+        gta: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'shared map', c: 'attn', e: 'map', from: ['x'] },
             { n: 'latent K,V', c: 'attn', e: 'latent', from: ['shared map'] },
@@ -416,7 +414,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'latent K,V'] }
         ],
-        mtla_attn: [
+        mtla: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'temporal compress', c: 'attn', e: 'temporal', from: ['x'] },
             { n: 'latent K,V', c: 'attn', e: 'latent', from: ['temporal compress'] },
@@ -425,7 +423,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'latent K,V'] }
         ],
-        cca_attn: [
+        cca: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: '1D conv', c: 'attn', e: 'conv', from: ['x'] },
             { n: 'c = W_down·conv(x) [r]', c: 'attn', e: 'W_down', from: ['1D conv'] },
@@ -434,7 +432,7 @@ var FTDiagram = (function () {
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['latent attn = Q·c'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'c = W_down·conv(x) [r]'] }
         ],
-        ccgqa_attn: [
+        ccgqa: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: '1D conv', c: 'attn', e: 'conv', from: ['x'] },
             { n: 'c = W_down·conv(x) [r]', c: 'attn', e: 'W_down', from: ['1D conv'] },
@@ -452,7 +450,7 @@ var FTDiagram = (function () {
         // (Falcon-1A/2A/3A): outer-product write. Ridge shrinkage enters
         // multiplicatively as (1−ηₜλₜ) (or per-column Diag). The read
         // after writing is oₜ = Sₜᵀ·φ(qₜ) (Fig. 3 of the paper).
-        falcon1_attn: [
+        falcon1: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
             { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
@@ -463,7 +461,7 @@ var FTDiagram = (function () {
             { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = (1−ηₜλₜ)Sₜ₋₁ + ηₜ·xₜ·rₜᵀ', 'Q,K,V = W·x + shortconv'] },
             { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
-        falcon2_attn: [
+        falcon2: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
             { n: 'gates βₜ [dv], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
@@ -474,7 +472,7 @@ var FTDiagram = (function () {
             { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = Sₜ₋₁(I − λₜDiag(ηₜ)) + xₜ(ηₜ⊙rₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
             { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
-        falcon3_attn: [
+        falcon3: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
             { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
@@ -486,7 +484,7 @@ var FTDiagram = (function () {
             { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = (1−ηₜλₜ)Sₜ₋₁ + (ηₜ/Bₜ)Σⱼxⱼrⱼᵀ', 'Q,K,V = W·x + shortconv'] },
             { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
-        falcon1a_attn: [
+        falcon1a: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
             { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
@@ -497,7 +495,7 @@ var FTDiagram = (function () {
             { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = γₜSₜ₋₁ + ηₜ·xₜ·vₜᵀ; γₜ=1−min(ηₜλₜ,1−ε)', 'Q,K,V = W·x + shortconv'] },
             { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
-        falcon2a_attn: [
+        falcon2a: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
             { n: 'gates βₜ [dv], λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
@@ -508,7 +506,7 @@ var FTDiagram = (function () {
             { n: 'oₜ = Sₜᵀ·φ(qₜ) (read-after-write)', c: 'fastw', e: 'read', from: ['Sₜ = Sₜ₋₁·Diag(γₜ) + xₜ(ηₜ⊙vₜ)ᵀ', 'Q,K,V = W·x + shortconv'] },
             { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
-        falcon3a_attn: [
+        falcon3a: [
             { n: 'x [B,n,H]', c: 'fastw', id: 'x' },
             { n: 'Q,K,V = W·x + shortconv', c: 'fastw', e: 'Wqkv', from: ['x'] },
             { n: 'gates βₜ, λ̄ₜ = Wg·x', c: 'fastw', e: 'Wg', from: ['x'] },
@@ -521,7 +519,7 @@ var FTDiagram = (function () {
             { n: 'O = Wo·oₜ [B,n,H]', c: 'fastw', e: 'Wo', from: ['oₜ = Sₜᵀ·φ(qₜ) (read-after-write)'] }
         ],
         // Memory: dense QKV/O + memory bank read/write.
-        titan_attn: [
+        titan: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
             { n: 'memory M [slots,dim]', c: 'attn', id: 'M' },
@@ -531,7 +529,7 @@ var FTDiagram = (function () {
             { n: 'attn over M + ctx', c: 'attn', e: 'QKᵀ', from: ['Q,K,V = W·x [B,n,H]', 'retrieved ctx ← M'] },
             { n: 'O = Wo·out [B,n,H]', c: 'attn', e: 'Wo', from: ['attn over M + ctx'] }
         ],
-        engram_attn: [
+        engram: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
             { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
             { n: 'memory bank M', c: 'attn', id: 'M' },
@@ -545,7 +543,7 @@ var FTDiagram = (function () {
     function resolveSub(t) {
         var s = SUBSTRUCT[t];
         if (typeof s === 'string') return resolveSub(s);
-        return s || SUBSTRUCT.standard_attn;
+        return s || SUBSTRUCT.standard;
     }
 
     var _id = 0;
@@ -775,7 +773,7 @@ var FTDiagram = (function () {
         var tr = cfg.training || {};
         var mc = cfg.model_class || '';
         var dec = mc === 'frankenstein_text_decoder' || pick(m, 'dims.mode', 'mode', '') === 'decoder';
-        var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard_attn']);
+        var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard']);
         if (typeof pat === 'string') pat = [pat];
         var nL = pick(m, 'dims.num_layers', 'num_layers', 1);
         var loops = pick(m, 'dims.num_loops', 'num_loops', 1);
@@ -901,7 +899,7 @@ var FTDiagram = (function () {
                 var lb = lblOf(t);
                 var det = '';
                 if (fam === 'recur') {
-                    var headsForLayer = (t === 'retnet' || t === 'retnet_attn') ? rH : nH;
+                    var headsForLayer = t === 'retnet' ? rH : nH;
                     det = '<br/>' + headsForLayer + ' heads';
                 } else if (fam === 'attn' || fam === 'sparse') {
                     det = '<br/>' + nH + ' heads';

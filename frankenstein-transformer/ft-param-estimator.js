@@ -82,26 +82,26 @@ var FTParamEstimator = (function () {
     var r;                            // latent rank (per-variant below)
     switch (t) {
       // ---- Dense ----
-      case 'sigmoid_attn':
+      case 'sigmoid':
         return 4 * H * H + nH;      // Q,K,V,O (bias-free) + per-head logit bias b
-      case 'standard_attn':
-      case 'titan_attn':
-      case 'sparse_transformer_attn':
-      case 'longformer_attn':
-      case 'bigbird_attn':
-      case 'sparge_attn':
-      case 'fasa_attn':
-      case 'iha_attn':
+      case 'standard':
+      case 'titan':
+      case 'sparse_transformer':
+      case 'longformer':
+      case 'bigbird':
+      case 'sparge':
+      case 'fasa':
+      case 'iha':
         return 4 * H * H;            // Q,K,V,O (bias=False everywhere)
       // ---- Fast Conformer limited-context attention (arXiv:2305.05084) ----
       // q/k/v/out = 4H^2; the optional separate global q/k/v set (§2.2) adds
       // 3H^2. No global-token embeddings (globals are head positions).
-      case 'fastconformer_attn': {
+      case 'fastconformer': {
         var fcSep = toBool(pick(m, 'attention.fastconformer.global_attn_separate',
                                 'fastconformer_global_attn_separate', false), false);
         return 4 * H * H + (fcSep ? 3 * H * H : 0);
       }
-      case 'gated_softmax_attn':
+      case 'gated_softmax':
         return 5 * H * H;            // + gate_proj
       // ---- Conformer (arXiv:2005.08100) ----
       // Repository integration: the mixer owns only the macaron FFN1, the
@@ -115,7 +115,7 @@ var FTParamEstimator = (function () {
       //   conv.depthwise     Conv1d(H→H, k, groups=H, bias=False) → H·k
       //   conv.norm          BatchNorm1d/GroupNorm/LayerNorm → 2H
       //   conv.pointwise_out Conv1d(H→H, k=1) → H² + H
-      case 'conformer_attn': {
+      case 'conformer': {
         var cfK = toNum(pick(m, 'attention.conformer.kernel_size', 'conformer_kernel_size', 32), 32);
         var cfMacaron = toBool(pick(m, 'attention.conformer.macaron', 'conformer_macaron', true), true);
         var cfP = 2 * H * H + 2 * (H * kv);
@@ -130,36 +130,35 @@ var FTParamEstimator = (function () {
         cfP += H * H + H;            // pointwise_out
         return cfP;
       }
-      case 'gqa_attn':
+      case 'gqa':
         return H * H + 2 * (H * kv) + H * H;
       // ---- Memory Attention (arXiv:2609.28399) ----
       // q/k/out bias-free projections + per-layer token-ID memory table
       // (vocab x kv) + per-KV-head RMSNorm gains (kv); no W_V.
-      case 'memory_attn': {
+      case 'memory': {
         var memVocab = toNum(pick(m, 'dims.vocab_size', 'vocab_size', 50000), 50000);
         return 2 * H * H + H * kv + memVocab * kv + kv;
       }
       // ---- Recurrent / retentive ----
       case 'retnet':
-      case 'retnet_attn':
         return 5 * H * H + 2 * H;    // Q,K,V,G,O + GroupNorm(2H)
       case 'ode':
         return 4 * H * H + 2 * H;    // packed QKV + O + norm
-      case 'gla_attn': {
+      case 'gla': {
         var lr = toNum(pick(m, 'attention.gla.gate_low_rank', 'gla_gate_low_rank', 16), 16);
         return 5 * H * H + (H * lr) + (lr * H + H) + 2 * H; // gk_proj low-rank + norm
       }
-      case 'deltanet_attn':
+      case 'deltanet':
         return 5 * H * H + (H * nH + nH) + 2 * H; // beta_proj + norm
-      case 'gated_deltanet_attn':
+      case 'gated_deltanet':
         return 5 * H * H + 2 * (H * nH + nH) + 2 * H; // alpha+beta + norm
-      case 'gated_deltanet2_attn':
+      case 'gated_deltanet2':
         return 5 * H * H + 2 * (H * (H + 1)) + 2 * H + 2 * H; // erase+write (biased) + norm + log_decay_base/delta (channel decay)
-      case 'hgrn2_attn':
+      case 'hgrn2':
         return 5 * H * H + H * (H + 1) + 2 * H; // forget_proj (biased) + norm
-      case 'fox_attn':
+      case 'fox':
         return 4 * H * H + (H * nH + nH); // f_proj (biased)
-      case 'kda_attn':
+      case 'kda':
         return 5 * H * H + (H * nH + nH) + 2 * H + 2 * H; // beta_proj + norm + log_decay_base/delta (channel decay)
       // ---- Fast-weight (Falcon family, arXiv:2608.27763) ----
       // q,k,v,out (4H², bias-free) + 3 depth-wise causal short convs
@@ -167,17 +166,17 @@ var FTParamEstimator = (function () {
       // proj H·outDim+outDim (outDim = H for the per-column Falcon-2/2A,
       // nH otherwise; skipped when beta_mode=static) and ridge proj
       // H·nH+nH (skipped when lambda_mode=static). No QK-norm weights.
-      case 'falcon1_attn':
-      case 'falcon1a_attn':
-      case 'falcon2_attn':
-      case 'falcon2a_attn':
-      case 'falcon3_attn':
-      case 'falcon3a_attn': {
+      case 'falcon1':
+      case 'falcon1a':
+      case 'falcon2':
+      case 'falcon2a':
+      case 'falcon3':
+      case 'falcon3a': {
         var fBeta = String(pick(m, 'attention.falcon.beta_mode', 'falcon_beta_mode', 'ctx_eta') || 'ctx_eta').toLowerCase();
         var fLam = String(pick(m, 'attention.falcon.lambda_mode', 'falcon_lambda_mode', 'ctx') || 'ctx').toLowerCase();
         var fConv = toBool(pick(m, 'attention.falcon.short_conv', 'falcon_short_conv', true), true);
         var fKern = toNum(pick(m, 'attention.falcon.conv_kernel', 'falcon_conv_kernel', 4), 4);
-        var outDim = (t === 'falcon2_attn' || t === 'falcon2a_attn') ? H : nH;
+        var outDim = (t === 'falcon2' || t === 'falcon2a') ? H : nH;
         var pF = 4 * H * H;
         if (fConv) pF += 3 * H * fKern;
         if (fBeta === 'ctx_beta' || fBeta === 'ctx_eta') pF += H * outDim + outDim;
@@ -187,47 +186,47 @@ var FTParamEstimator = (function () {
       case 'mamba':
         return H * (H + 1);          // in_proj Linear(H,H) biased
       // ---- Sparse ----
-      case 'sparsek_attn':
+      case 'sparsek':
         return 4 * H * H + (H * H + H) + (H + 1); // score_net MLP (64→64→1 fixed)
-      case 'nsa_attn': {
+      case 'nsa': {
         var bs = toNum(pick(m, 'attention.nsa.block_size', 'nsa_block_size', 128), 128);
         return 4 * H * H + 2 * (bs * hd * hd + hd) + (hd * 3 + 3); // compress + gate
       }
-      case 'msa_attn': {
+      case 'msa': {
         var idx = toNum(pick(m, 'attention.msa.index_dim', 'msa_index_dim', 64), 64);
         return 2 * H * H + 2 * (H * kv) + H * (nKv * idx) + H * idx; // q,k,v,out + q_idx,k_idx
       }
-      case 'sparda_attn': {
+      case 'sparda': {
         var fd = toNum(pick(m, 'attention.sparda.forecast_dim', 'sparda_forecast_dim', 64), 64);
         return 2 * H * H + 2 * (H * kv) + H * (nKv * fd); // q,k,v + forecast
       }
-      case 'lsa_attn':
+      case 'lsa':
         // N-LSA adds no parameters: q,o full-width + k,v to KV width.
         return 2 * H * H + 2 * (H * kv);
       // ---- Latent ----
-      case 'mla_attn':
-      case 'gqla_attn':
-        r = toNum(pick(m, 'attention.' + t.replace('_attn', '') + '.latent_rank', t.replace('_attn', '') + '_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
+      case 'mla':
+      case 'gqla':
+        r = toNum(pick(m, 'attention.' + t + '.latent_rank', t + '_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return 2 * H * H + 3 * (H * r); // Q,O full + dkv,uk,uv
-      case 'mlra_attn': {
+      case 'mlra': {
         r = toNum(pick(m, 'attention.mlra.latent_rank', 'mlra_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         var nlh = toNum(pick(m, 'attention.mlra.num_latent_heads', 'mlra_num_latent_heads', 4), 4);
         var sub = Math.floor(r / nlh), subOut = Math.floor(H / nlh);
         return 2 * H * H + H * r + 2 * (nlh * sub * subOut); // Q,O + dkv + per-head up
       }
-      case 'mtla_attn':
+      case 'mtla':
         r = toNum(pick(m, 'attention.mtla.latent_rank', 'mtla_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return 2 * H * H + 3 * (H * r) + (r * r + r); // Q,O + dkv,uk,uv + merge (biased)
-      case 'tucker_attn': {
+      case 'tucker': {
         var qR = toNum(pick(m, 'attention.tucker.query_rank', 'tucker_query_rank', H), H);
         var kR = toNum(pick(m, 'attention.tucker.key_rank', 'tucker_key_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         var vR = toNum(pick(m, 'attention.tucker.value_rank', 'tucker_value_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return (H * qR + qR * H) + (H * kR + kR * H) + (H * vR + vR * H) + H * H; // factor+core per Q,K,V + O
       }
-      case 'gta_attn':
+      case 'gta':
         r = toNum(pick(m, 'attention.gta.value_latent_rank', 'gta_value_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return 3 * H * H + 2 * (H * r); // Q,K,O + dv,uv
-      case 'cca_attn': {
+      case 'cca': {
         r = toNum(pick(m, 'attention.cca.latent_rank', 'cca_latent_rank', Math.max(1, Math.floor(H / 4))), Math.max(1, Math.floor(H / 4)));
         var ncl = toNum(pick(m, 'attention.cca.num_conv_layers', 'cca_num_conv_layers', 2), 2);
         var ks = toNum(pick(m, 'attention.cca.conv_kernel_seq', 'cca_conv_kernel_seq', 4), 4);
@@ -239,7 +238,7 @@ var FTParamEstimator = (function () {
         if (ncl >= 2) p += Math.floor(packed / (2 * nH)) * packed * kc; // grouped conv
         return p + 1;                                 // temp scalar
       }
-      case 'ccgqa_attn': {
+      case 'ccgqa': {
         var qLat = toNum(pick(m, 'attention.ccgqa.query_latent_rank', 'ccgqa_query_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         var kvLat = toNum(pick(m, 'attention.ccgqa.kv_latent_rank', 'ccgqa_kv_latent_rank', Math.max(1, Math.floor(H / 8))), Math.max(1, Math.floor(H / 8)));
         var nkv2 = toNum(pick(m, 'attention.ccgqa.num_kv_heads', 'ccgqa_num_kv_heads', Math.max(1, Math.floor(nH / 4))), Math.max(1, Math.floor(nH / 4)));
@@ -254,12 +253,12 @@ var FTParamEstimator = (function () {
         return p2 + 1;
       }
       // ---- Probabilistic / field ----
-      case 'gma_attn': {
+      case 'gma': {
         var K = toNum(pick(m, 'attention.gma.num_components', 'gma_num_components', 8), 8);
         var dr = toNum(pick(m, 'attention.gma.routing_dim', 'gma_routing_dim', hd), hd);
         return 4 * H * H + nH * (2 * K * dr + K); // Q,K,V,O + mu,omega,alpha
       }
-      case 'ssog_attn': {
+      case 'ssog': {
         var R = toNum(pick(m, 'attention.ssog.num_atoms', 'ssog_num_atoms', 4), 4);
         var lookat = toBool(pick(m, 'attention.ssog.lookat', 'ssog_lookat', true), true);
         var p3 = 2 * H * H + nH * 5 * R + 4; // V,O + atoms + temp + 3 gate scalars
@@ -270,7 +269,7 @@ var FTParamEstimator = (function () {
         return p3;
       }
       // ---- Memory ----
-      case 'engram_attn': {
+      case 'engram': {
         var maxN = toNum(pick(m, 'attention.engram.max_ngram_size', 'engram_max_ngram_size', 3), 3);
         var hpg = toNum(pick(m, 'attention.engram.n_heads_per_ngram', 'engram_n_heads_per_ngram', 4), 4);
         var edh = toNum(pick(m, 'attention.engram.embed_dim_per_head', 'engram_embed_dim_per_head', 32), 32);
@@ -365,7 +364,7 @@ var FTParamEstimator = (function () {
     var nH = toNum(pick(m, 'dims.num_heads', 'num_heads', 16), 16);
     var nKv = toNum(pick(m, 'dims.num_kv_heads', 'num_kv_heads', 1), 1);
     var loops = toNum(pick(m, 'dims.num_loops', 'num_loops', 2), 2);
-    var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard_attn']);
+    var pat = pick(m, 'dims.layer_pattern', 'layer_pattern', ['standard']);
     if (typeof pat === 'string') pat = [pat];
 
     var normType = pick(m, 'norm.type', 'norm_type', 'dynamic_tanh');
@@ -391,7 +390,7 @@ var FTParamEstimator = (function () {
     var bitnetOn = toBool(pick(m, 'bitnet.enabled', 'use_bitnet', true), true);
 
     var expanded = [];
-    for (var i = 0; i < nL; i++) expanded.push(pat[i % pat.length] || 'standard_attn');
+    for (var i = 0; i < nL; i++) expanded.push(pat[i % pat.length] || 'standard');
 
     // ---- Embedding / patch embedding ----
     var emb = 0;
