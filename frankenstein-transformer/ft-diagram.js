@@ -17,6 +17,7 @@ var FTDiagram = (function () {
         gated_deltanet2: { c: 'recur', l: 'Gated DeltaNet-2' },
         hgrn2: { c: 'recur', l: 'HGRN2' },
         fox: { c: 'attn', l: 'FoX Attention' },
+        fpa: { c: 'attn', l: 'First Passage Attention' },
         nsa: { c: 'sparse', l: 'Native Sparse Attn' },
         engram: { c: 'attn', l: 'Engram Attn' },
         longformer: { c: 'sparse', l: 'Longformer Attn' },
@@ -239,6 +240,17 @@ var FTDiagram = (function () {
             { n: 'scores = QKᵀ/√d + D', c: 'attn', e: 'add bias', from: ['Q,K,V = W·x [B,n,H]', 'log-bias Dᵢⱼ = Σₗ log fₗ'] },
             { n: 'softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d + D'] },
             { n: 'O = Wo·softmax·V', c: 'attn', e: 'Wo', from: ['softmax(scores)', 'Q,K,V = W·x [B,n,H]'] }
+        ],
+        fpa: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'Q,K,V = W·x [B,n,H]', c: 'attn', e: 'Wqkv', from: ['x'] },
+            { n: 'δ,g,h = Wf·x + bf (3 scalars/head)', c: 'attn', e: 'Wf+b', from: ['x'] },
+            { n: 'walk Wₜ = Σδ; φ = W+g, ψ = W+h', c: 'attn', e: 'cumsum', from: ['δ,g,h = Wf·x + bf (3 scalars/head)'] },
+            { n: 'range-min φ̄ₜₛ = min_{s<u≤t} φᵤ', c: 'attn', e: 'suffix min', from: ['walk Wₜ = Σδ; φ = W+g, ψ = W+h'] },
+            { n: 'bias bₜₛ = β·min(0, φ̄ₜₛ − ψₛ)', c: 'attn', e: 'β (per head)', from: ['range-min φ̄ₜₛ = min_{s<u≤t} φᵤ'] },
+            { n: 'scores = QKᵀ/√d + b', c: 'attn', e: 'add bias', from: ['Q,K,V = W·x [B,n,H]', 'bias bₜₛ = β·min(0, φ̄ₜₛ − ψₛ)'] },
+            { n: 'softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d + b'] },
+            { n: 'O = Wo·(softmax·V) [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax(scores)', 'Q,K,V = W·x [B,n,H]'] }
         ],
         // KDA (Kimi Delta Attention, arXiv:2510.26692): gated delta-rule
         // recurrence with channel-wise decay Dₜ = Diag(exp(a − softplus(δ)))

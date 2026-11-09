@@ -210,7 +210,7 @@ Presentamos Frankenstein Transformer, un conjunto de herramientas CLI
 basado en configuración (<code>frankenstein-transformer</code>) que
 unifica la definición, el entrenamiento, el despliegue y la inferencia
 de modelos tras un único esquema YAML estricto. El conjunto de
-herramientas cubre cuarenta y ocho mezcladores de secuencia en diez
+herramientas cubre cuarenta y nueve mezcladores de secuencia en diez
 familias y veinticuatro familias de optimizadores con control de
 hiperparámetros por grupo de parámetros, y soporta clases de modelo
 encoder, decoder, Vision Transformer y audio para masked language
@@ -890,6 +890,16 @@ id="toc-fundamento-matemático-7">Fundamento Matemático</a></li>
 id="toc-rendimiento-empírico-y-compromisos-1">Rendimiento Empírico y
 Compromisos</a></li>
 </ul></li>
+<li><a href="#first-passage-attention-fpa-olvido-por-extremos-de-camino"
+id="toc-first-passage-attention-fpa-olvido-por-extremos-de-camino">9.
+First Passage Attention (FPA): Olvido por Extremos de Camino</a>
+<ul>
+<li><a href="#fundamento-matemático-8"
+id="toc-fundamento-matemático-8">Fundamento Matemático</a></li>
+<li><a href="#rendimiento-empírico-y-compromisos-2"
+id="toc-rendimiento-empírico-y-compromisos-2">Rendimiento Empírico y
+Compromisos</a></li>
+</ul></li>
 <li><a href="#principio-unificado-de-compuerta"
 id="toc-principio-unificado-de-compuerta">Principio Unificado de
 Compuerta</a></li>
@@ -1441,7 +1451,7 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cuarenta y ocho mezcladores de secuencia en diez
+estricto que soporta cuarenta y nueve mezcladores de secuencia en diez
 familias y veinticuatro familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
@@ -1859,7 +1869,7 @@ data-reference-type="ref" data-reference="sec:annex-mhc">22</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
-<p>El sistema implementa cuarenta y ocho mezcladores de secuencia
+<p>El sistema implementa cuarenta y nueve mezcladores de secuencia
 organizados en diez categorías funcionales que reflejan cómo cada método
 equilibra expresividad, costo computacional y memoria.</p>
 <ol>
@@ -1875,10 +1885,10 @@ Longformer, SWA con sumideros de atención, BigBird, SparseK, NSA,
 SpargeAttn, FASA, MSA, SparDA, LSA y Fast Conformer reducen el costo
 cuadrático mediante dispersión estructurada, selección de tokens, poda
 sin entrenamiento o clustering semántico de claves.</p></li>
-<li><p><strong>Mecanismos con compuerta</strong> (8): GLA, DeltaNet,
-Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax y KDA
-introducen control dependiente de los datos sobre retención, olvido y
-fuerza de actualización.</p></li>
+<li><p><strong>Mecanismos con compuerta</strong> (9): GLA, DeltaNet,
+Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, KDA y First
+Passage Attention (FPA) introducen control dependiente de los datos
+sobre retención, olvido y fuerza de actualización.</p></li>
 <li><p><strong>Compresión latente</strong> (10): MLA, GQLA, MLRA,
 Tucker, IHA, GTA, MTLA, CCA, CCGQA y GMA comprimen el estado clave–valor
 en cuellos de botella de bajo rango o enrutan mediante una memoria
@@ -1909,17 +1919,18 @@ data-reference="sec:annex-17">30</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
-<figcaption>Taxonomía de los cuarenta y ocho mezcladores de secuencia en
-diez categorías funcionales. Las líneas base densas ofrecen enrutamiento
-global completo a costo cuadrático; los métodos recurrentes comprimen el
-estado para inferencia en tiempo constante; las variantes dispersas
-restringen el patrón de atención; los mecanismos con compuerta modulan
-retención y olvido; los métodos latentes comprimen las representaciones
-clave–valor; la memoria condicional añade búsquedas de lectura/escritura
-en tiempo de prueba; la memoria indexada por token traslada capacidad de
-valores a tablas de búsqueda; los métodos de peso rápido formulan la
-transición de estado como una regla de aprendizaje en línea; los métodos
-geométricos codifican priors estructurados.</figcaption>
+<figcaption>Taxonomía de los cuarenta y nueve mezcladores de secuencia
+en diez categorías funcionales. Las líneas base densas ofrecen
+enrutamiento global completo a costo cuadrático; los métodos recurrentes
+comprimen el estado para inferencia en tiempo constante; las variantes
+dispersas restringen el patrón de atención; los mecanismos con compuerta
+modulan retención y olvido; los métodos latentes comprimen las
+representaciones clave–valor; la memoria condicional añade búsquedas de
+lectura/escritura en tiempo de prueba; la memoria indexada por token
+traslada capacidad de valores a tablas de búsqueda; los métodos de peso
+rápido formulan la transición de estado como una regla de aprendizaje en
+línea; los métodos geométricos codifican priors
+estructurados.</figcaption>
 </figure>
 <h2 id="familias-densa-y-recurrente">Familias Densa y Recurrente</h2>
 <p>Las líneas base densas—softmax estándar <span class="citation"
@@ -2031,11 +2042,16 @@ valor.</figcaption>
 </figure>
 <h2 id="atención-con-compuerta-y-de-peso-rápido">Atención con Compuerta
 y de Peso Rápido</h2>
-<p>La familia con compuerta contiene ocho bloques <span class="citation"
-data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025"></span>.
+<p>La familia con compuerta contiene nueve bloques <span
+class="citation"
+data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025 liu_first_passage_2026"></span>.
 La compuerta controla qué información sobrevive, ya sea en las
 actualizaciones de estado recurrente (GLA, variantes de DeltaNet, HGRN2,
-KDA) o en la ruta de atención completa (FoX, Gated Softmax). Las
+KDA) o en la ruta de atención completa (FoX, Gated Softmax, FPA). FPA
+reemplaza la suma de camino de una compuerta de olvido por un mínimo de
+rango de un campo aprendido, de modo que un token posterior puede borrar
+claves más nuevas preservando las más antiguas: las claves vivas forman
+una pila y FoX es su caso especial de caminata no creciente. Las
 formulaciones, el pseudocódigo y una tabla comparativa se recopilan en
 el Apéndice <a href="#sec:annex-gated" data-reference-type="ref"
 data-reference="sec:annex-gated">19</a>.</p>
@@ -2617,7 +2633,7 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las cuarenta y ocho arquitecturas de mezclador implementadas abarcan
+<p>Las cuarenta y nueve arquitecturas de mezclador implementadas abarcan
 las principales direcciones de investigación en modelado de secuencias,
 pero ciertos vacíos permanecen. El sistema carece de arquitecturas
 híbridas recientes como Griffin <span class="citation"
@@ -2716,7 +2732,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y ocho mezcladores de secuencia y veinticuatro familias de
+cuarenta y nueve mezcladores de secuencia y veinticuatro familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -2810,7 +2826,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>149</span> urlstyle</p>
+<p><span>150</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3135,6 +3151,8 @@ Multi-head low-rank attention, 2026<span>a</span>. URL
 gradient-free approach to large language model optimization via
 evolutionary algorithms, 2025. URL
 <code>https://arxiv.org/abs/2510.10603</code>.</p>
+<p>Yuxuan Liu. First passage attention, 2026. URL
+<code>https://arxiv.org/abs/2610.22714</code>.</p>
 <p>Zirui Liu, Jiayi Yuan, Hongye Jin, Shaochen Zhong, Zhaozhuo Xu,
 Vladimir Braverman, Beidi Chen, and Xia Hu. : A tuning-free asymmetric
 2bit quantization for <span>KV</span> cache, 2024. URL
@@ -3843,8 +3861,8 @@ transformer consecutivas. Por defecto: 2.</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
 <td style="text-align: left;">Cabezas de retención para capas
-<code>retnet</code>/<code>retnet</code>. Debe dividir
-<code>hidden_size</code>. Por defecto: 8.</td>
+<code>retnet</code>. Debe dividir <code>hidden_size</code>. Por defecto:
+8.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -5600,7 +5618,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-48 mezcladores de secuencia en diez familias, 36 optimizadores, 6
+49 mezcladores de secuencia en diez familias, 36 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5790,6 +5808,11 @@ class="math inline">\(\mathcal{O}(L)\)</span> KV &amp; Sesgo de recencia
 en espacio de logits; compatible con FlashAttn &amp; <span
 class="citation"
 data-cites="lin_forgetting_transformer_2025"></span><br />
+fpa &amp; Con compuerta &amp; <span
+class="math inline">\(\mathcal{O}(L^2 d)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(L)\)</span> KV &amp; Sesgo de olvido
+por extremos de camino (mínimo de rango); contiene a FoX &amp; <span
+class="citation" data-cites="liu_first_passage_2026"></span><br />
 gated_softmax &amp; Con compuerta &amp; <span
 class="math inline">\(\mathcal{O}(L^2 d)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(L)\)</span> KV &amp; Compuerta
@@ -13732,29 +13755,337 @@ canal.</td>
 </tbody>
 </table>
 </div>
+<h2 id="first-passage-attention-fpa-olvido-por-extremos-de-camino">9.
+First Passage Attention (FPA): Olvido por Extremos de Camino</h2>
+<figure id="fig:mixer-fpa-es"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/fpa.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de datos de FPA: un mapa lineal produce el incremento
+<span class="math inline">\(\delta\)</span> por cabeza y los
+desplazamientos <span class="math inline">\(g,h\)</span>; la caminata
+<span class="math inline">\(W\)</span> es su suma prefija, el campo es
+<span class="math inline">\(\phi=W+g\)</span>, el nivel de clave es
+<span class="math inline">\(\psi=W+h\)</span>, y el sesgo es <span
+class="math inline">\(\beta\)</span> veces la caída más profunda del
+campo por debajo del nivel en el tramo posterior a cada
+clave.</figcaption>
+</figure>
+<h3 id="fundamento-matemático-8">Fundamento Matemático</h3>
+<p>First Passage Attention <span class="citation"
+data-cites="liu_first_passage_2026"></span> conserva la atención softmax
+de Vaswani et al. <span class="citation"
+data-cites="vaswani_attention_2017"></span> pero reemplaza la
+<em>suma</em> de camino de las compuertas de olvido de FoX por un
+<em>extremo</em> de camino. Una cabeza causal de dimensión <span
+class="math inline">\(d\)</span> con consultas <span
+class="math inline">\(\mathbf{q}_t\)</span>, claves <span
+class="math inline">\(\mathbf{k}_s\)</span> y valores <span
+class="math inline">\(\mathbf{v}_s\)</span> calcula <span
+class="math display">\[\mathbf{o}_t=\sum_{s\le
+t}w_{ts}\mathbf{v}_s,\qquad w_{ts}\propto e^{\ell_{ts}},\qquad
+\ell_{ts}=\frac{\mathbf{q}_t^\top\mathbf{k}_s}{\sqrt{d}}+b_{ts},\]</span>
+donde el <strong>sesgo de primer paso</strong> es <span
+class="math display">\[b_{ts}=\beta\min\Bigl(0,\ \min_{s&lt;u\le
+t}\phi_u-\psi_s\Bigr),\qquad b_{tt}=0,\]</span> con una fuerza positiva
+aprendida <span class="math inline">\(\beta\)</span> por cabeza, un
+campo escalar <span class="math inline">\(\phi_u\)</span> en cada
+posición y un nivel escalar <span class="math inline">\(\psi_s\)</span>
+por clave. Escribimos <span
+class="math inline">\(\bar{\phi}_{ts}=\min_{s&lt;u\le t}\phi_u\)</span>
+para el mínimo de rango. Una clave está <em>viva</em> en el tiempo <span
+class="math inline">\(t\)</span> cuando <span
+class="math inline">\(b_{ts}=0\)</span> y <em>muerta</em> en caso
+contrario; el sesgo de una clave muerta es <span
+class="math inline">\(-\beta\)</span> veces la profundidad <span
+class="math inline">\(\psi_s-\bar{\phi}_{ts}\)</span> de su caída más
+profunda. La muerte es permanente: <span
+class="math inline">\(b_{t&#39;s}\le b_{ts}\)</span> para todo <span
+class="math inline">\(t&#39;&gt;t\)</span> (Proposición 2.3(a)), de modo
+que el decodificador puede descartar una clave muerta cuando su sesgo
+cruza un umbral.</p>
+<p>Cada cabeza deriva los tres escalares por posición de la entrada de
+la capa <span class="math inline">\(\mathbf{x}_t\)</span> mediante un
+único mapa lineal, con una caminata <span
+class="math inline">\(W_t\)</span> y el campo/nivel <span
+class="math display">\[W_t=\sum_{u\le t}\delta_u,\qquad
+\phi_u=W_u+g_u,\qquad \psi_s=W_s+h_s .\]</span> Los incrementos <span
+class="math inline">\(\delta\)</span> mueven la referencia de toda
+comparación posterior, mientras que <span
+class="math inline">\(g\)</span> y <span
+class="math inline">\(h\)</span> permiten que un token hunda o fije un
+nivel sin moverla. Una capa de ancho <span
+class="math inline">\(D\)</span> con <span
+class="math inline">\(H\)</span> cabezas gana por tanto <span
+class="math inline">\(3H(D+1)+H\)</span> parámetros — <span
+class="math inline">\(27{,}696\)</span> por capa con <span
+class="math inline">\(D=768\)</span>, <span
+class="math inline">\(H=12\)</span>, es decir <span
+class="math inline">\(332{,}352\)</span> en doce capas, y <span
+class="math inline">\(+1{,}56\%\)</span> sobre claves y valores en la
+caché.</p>
+<h4 id="casos-especiales-proposición-2.2.">Casos especiales (Proposición
+2.2).</h4>
+<p>La parametrización lineal contiene varias familias:</p>
+<ul>
+<li><p>(a) Si <span class="math inline">\(g=h=0\)</span>, entonces <span
+class="math inline">\(b_{ts}=-\beta L_{ts}\)</span> con <span
+class="math inline">\(L_{ts}=\max\bigl(0,\max_{s&lt;u\le
+t}(W_s-W_u)\bigr)\)</span>, el regulador de una cola que arranca vacía
+en el tiempo <span class="math inline">\(s\)</span> (la <em>forma de
+pila</em>).</p></li>
+<li><p>(b) Si además <span class="math inline">\(\delta_u\le 0\)</span>
+para todo <span class="math inline">\(u\)</span>, entonces <span
+class="math inline">\(b_{ts}=\sum_{s&lt;u\le t}\log f_u\)</span> con
+<span class="math inline">\(f_u=e^{\beta\delta_u}\in(0,1]\)</span> —
+<strong>exactamente FoX</strong> con compuertas de olvido <span
+class="math inline">\(f_u\)</span>. Una caminata que sube es lo que
+permite a FPA conservar una clave antigua mientras elimina otras más
+nuevas, algo que ninguna compuerta de olvido puede hacer.</p></li>
+<li><p>(c) Si <span class="math inline">\(\delta=0\)</span>, <span
+class="math inline">\(h=0\)</span>, <span class="math inline">\(g\le
+0\)</span> y <span class="math inline">\(\beta=1\)</span>, entonces
+<span class="math inline">\(b_{ts}=\min_{s&lt;u\le t}g_u\)</span>, un
+sesgo de cuello de botella.</p></li>
+<li><p>(d) Si <span class="math inline">\(\delta_u=-1\)</span>, <span
+class="math inline">\(g=0\)</span> y <span
+class="math inline">\(\psi_s=W_s-e_s\)</span> con <span
+class="math inline">\(e_s\ge 0\)</span>, entonces <span
+class="math inline">\(b_{ts}=\beta\min(0,e_s-(t-s))\)</span>, la regla
+de expiración de Expire-Span.</p></li>
+</ul>
+<p>En la forma de pila los niveles de las claves vivas no decrecen con
+el tiempo de escritura, y una caída elimina un sufijo temporal de las
+claves vivas: el conjunto vivo evoluciona como una <strong>pila</strong>
+(Proposición 2.3(b)).</p>
+<h4 id="profundidad-no-duración.">Profundidad, no duración.</h4>
+<p>Selective Attention resta una suma de selecciones por par, así que su
+supresión crece con el número de pasos intermedios y confunde la
+<em>profundidad</em> de un evento con su <em>duración</em>. El sesgo de
+FPA es <span class="math inline">\(-\beta\)</span> veces la caída más
+profunda y no cambia cuando una caída no más profunda que la máxima se
+mantiene más tiempo o se inserta (Proposición 3.4); entre las
+agregaciones de caídas, las funciones del máximo son las únicas con esta
+invariancia de duración (Proposición 3.4(iii)).</p>
+<h4 id="entrenamiento-straight-through.">Entrenamiento
+(straight-through).</h4>
+<p>El sesgo es lineal por tramos en el campo y en los niveles, y del
+lado cerrado del mínimo exterior no pasa gradiente al campo; en
+ejecuciones piloto ese mínimo podía cerrarse para todas las claves de
+una cabeza al inicio del entrenamiento. FPA entrena por tanto con un
+estimador directo: la pasada hacia adelante toma el mínimo de rango duro
+y la pasada hacia atrás toma, en su lugar, el gradiente del mínimo suave
+<span class="math inline">\(-\tau\log\sum_{s&lt;u\le
+t}e^{-\phi_u/\tau}\)</span> con <span
+class="math inline">\(\tau=1\)</span>. El mínimo exterior actúa sobre el
+valor duro, y la evaluación usa el sesgo duro sin cambios.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Entrada normalizada <span
+class="math inline">\(\mathbf{x}\in\mathbb{R}^{n\times D}\)</span>;
+cabezas <span class="math inline">\(H\)</span>; fuerza <span
+class="math inline">\(\beta\)</span>; temperatura <span
+class="math inline">\(\tau\)</span> Salida <span
+class="math inline">\(\mathbf{O}\in\mathbb{R}^{n\times D}\)</span> <span
+class="math inline">\(\mathbf{Q},\mathbf{K},\mathbf{V}\gets
+W_q\mathbf{x},\,W_k\mathbf{x},\,W_v\mathbf{x}\)</span> <span
+class="math inline">\((\boldsymbol{\delta},\mathbf{g},\mathbf{h})\gets
+W_f\mathbf{x}+ \mathbf{b}_f\)</span> <span
+class="math inline">\(W_t\gets\sum_{u\le t}\delta_u\)</span>;<span
+class="math inline">\(\phi_u\gets W_u+g_u\)</span>;<span
+class="math inline">\(\psi_s\gets W_s+h_s\)</span> <span
+class="math inline">\(\bar{\phi}_{ts}\gets\min_{s&lt;u\le
+t}\phi_u\)</span> <span
+class="math inline">\(b_{ts}\gets\beta\min(0,\bar{\phi}_{ts}-\psi_s)\)</span>;<span
+class="math inline">\(b_{tt}\gets 0\)</span> <span
+class="math inline">\(\mathbf{A}\gets\mathrm{softmax}\bigl(\mathbf{Q}\mathbf{K}^\top/\sqrt{d}+\mathbf{B}\bigr)\)</span>;<span
+class="math inline">\(\mathbf{O}\gets W_o(\mathbf{A}\mathbf{V})\)</span>
+<span class="math inline">\(\mathbf{O}\)</span></p>
+</div>
+</div>
+<h4 id="costo-y-decodificación-exacta.">Costo y decodificación
+exacta.</h4>
+<p>En un cómputo por bloques de tamaño <span
+class="math inline">\(B\)</span>, el sesgo entre un bloque de consultas
+y un bloque de claves anterior sólo necesita los mínimos de sufijo de
+<span class="math inline">\(\phi\)</span> dentro del bloque de claves,
+el mínimo sobre los bloques estrictamente intermedios y los mínimos de
+prefijo de <span class="math inline">\(\phi\)</span> dentro del bloque
+de consultas: <span class="math inline">\(\mathcal{O}(B^2)\)</span>
+operaciones por par de bloques, como un sesgo elemento a elemento al
+estilo de FoX, más <span class="math inline">\(\mathcal{O}(T/B)\)</span>
+mínimos de bloque (Proposición 2.4(a)). En decodificación autorregresiva
+<span
+class="math inline">\(\bar{\phi}_{ts}=\min(\bar{\phi}_{t-1,s},\phi_t)\)</span>
+para <span class="math inline">\(s&lt;t-1\)</span> y <span
+class="math inline">\(\bar{\phi}_{t,t-1}=\phi_t\)</span>, así que cada
+paso actualiza la fila de sesgo en <span
+class="math inline">\(\mathcal{O}(t)\)</span> y guarda <em>dos escalares
+por clave y cabeza cacheadas</em> (Proposición 2.4(b)) — una rama
+incremental KV exacta, implementada en este repositorio como extras del
+slot.</p>
+<h3 id="rendimiento-empírico-y-compromisos-2">Rendimiento Empírico y
+Compromisos</h3>
+<p>El artículo entrena cuatro decodificadores de 110M parámetros (12
+capas, ancho 768, 12 cabezas de dimensión 64, SwiGLU-2048, RMSNorm,
+contexto 2048, 2.7B tokens de SlimPajama) que difieren sólo en la
+atención. FPA (sin codificación posicional) iguala o supera a FoX en
+perplejidad y extrapola más lejos:</p>
+<div id="tab:fpa-lm-es">
+<table>
+<caption>Modelos de lenguaje de 110M (pérdidas en nats por token;
+precisiones de passkey y RULER) <span class="citation"
+data-cites="liu_first_passage_2026"></span>. FPA recupera todas las
+passkeys hasta longitudes <span class="math inline">\(8\times\)</span>
+su contexto de entrenamiento, incluso con la caché comprimida a cerca de
+un cuarto.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Método</strong></th>
+<th style="text-align: center;"><strong>SlimPajama</strong></th>
+<th style="text-align: center;"><strong>WikiText-103</strong></th>
+<th style="text-align: center;"><strong>PG-19 2k–4k</strong></th>
+<th style="text-align: center;"><strong>Passkey 8k–16k</strong></th>
+<th style="text-align: center;"><strong>RULER 8k</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FPA</td>
+<td style="text-align: center;"><strong>2.8640</strong></td>
+<td style="text-align: center;"><strong>3.1001</strong></td>
+<td style="text-align: center;"><strong>3.282</strong></td>
+<td style="text-align: center;"><strong>1.00</strong></td>
+<td style="text-align: center;"><strong>0.202</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FoX</td>
+<td style="text-align: center;">2.8832</td>
+<td style="text-align: center;">3.1425</td>
+<td style="text-align: center;">3.316</td>
+<td style="text-align: center;">0.20</td>
+<td style="text-align: center;">0.117</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Selective Attention</td>
+<td style="text-align: center;">2.8686</td>
+<td style="text-align: center;">3.1197</td>
+<td style="text-align: center;">3.805</td>
+<td style="text-align: center;">0.04</td>
+<td style="text-align: center;">0.008</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Softmax + RoPE</td>
+<td style="text-align: center;">2.8908</td>
+<td style="text-align: center;">3.1374</td>
+<td style="text-align: center;">5.064</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.002</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>El costo se acerca al de la atención estándar: una capa FPA tarda
+<span class="math inline">\(0{,}97\times\)</span> el tiempo de ida y
+vuelta de SDPA de PyTorch y <span
+class="math inline">\(1{,}50\times\)</span> el de FoX, cuyo sesgo no
+necesita mínimo de rango; con lote 1 y longitud 8192 la decodificación
+tarda 22<span>,</span>0 ms por token frente a 20<span>,</span>2 ms de
+FoX y 23<span>,</span>9 ms de softmax. Como el sesgo de una clave nunca
+vuelve a subir, un decodificador puede descartar una clave cuando su
+sesgo cae bajo un umbral: con <span
+class="math inline">\(\theta=10\)</span> el modelo FPA pierde <span
+class="math inline">\(0{,}00044\)</span> nats a longitud 2048 y conserva
+el 34% de sus claves (26% a 8192), y sigue recuperando todas las
+passkeys a 8192 y 16<span>,</span>384 tokens con 24–27% de su caché.</p>
+<div id="tab:fpa-tradeoffs-es">
+<table>
+<caption>Compromisos de FPA <span class="citation"
+data-cites="liu_first_passage_2026"></span>. El repositorio integra la
+cabeza causal de forma exacta; el modo encoder simetriza el mínimo de
+rango del tramo abierto (el artículo define sólo la cabeza
+causal).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Aspecto</strong></th>
+<th style="text-align: left;"><strong>Fortaleza</strong></th>
+<th style="text-align: left;"><strong>Limitación</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Expresividad</td>
+<td style="text-align: left;">Una cabeza constante-dimensional realiza
+todo conjunto vivo inducido por caídas; las cabezas softmax con sesgos
+posicionales o compuertas por token necesitan dimensión de cabeza lineal
+en el número de claves (Teorema 3.1).</td>
+<td style="text-align: left;">En el límite duro Selective Attention y
+DCP realizan los mismos conjuntos vivos; la separación está en el sesgo
+escalar por posición y en profundidad frente a duración.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Selectividad</td>
+<td style="text-align: left;">Un token posterior puede borrar una clave
+más nueva preservando las antiguas (el conjunto vivo es una pila); FoX
+es el caso especial de caminata no creciente.</td>
+<td style="text-align: left;">Requiere el gradiente del mínimo suave
+directo; de lo contrario el mínimo interior puede cerrarse temprano en
+el entrenamiento.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Costo</td>
+<td style="text-align: left;"><span
+class="math inline">\(0{,}97\times\)</span> el tiempo de entrenamiento
+de SDPA; dos escalares extra por clave y cabeza cacheadas (<span
+class="math inline">\(+1{,}56\%\)</span>); decodificación exacta <span
+class="math inline">\(\mathcal{O}(t)\)</span>; las claves muertas son
+expulsables hasta <span class="math inline">\(\sim\)</span>26–34% de la
+caché con pérdida despreciable.</td>
+<td style="text-align: left;">La atención cuadrática permanece; el
+kernel Triton fusionado del artículo no se reproduce aquí (la
+implementación de referencia materializa el sesgo <span
+class="math inline">\(T\times T\)</span>).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Evidencia</td>
+<td style="text-align: left;">El LM de 110M iguala a FoX en perplejidad
+y recupera passkeys a <span class="math inline">\(8\times\)</span>–<span
+class="math inline">\(16\times\)</span> la longitud de entrenamiento;
+las sondas preregistradas de una capa concuerdan con la teoría.</td>
+<td style="text-align: left;">Una semilla por modelo de 110M; un sesgo
+en la primera capa perjudicó el recuerdo asociativo multiconsulta salvo
+que se eliminara.</td>
+</tr>
+</tbody>
+</table>
+</div>
 <h2 id="principio-unificado-de-compuerta">Principio Unificado de
 Compuerta</h2>
-<p>Las ocho arquitecturas comparten un principio común: <strong>la
+<p>Las nueve arquitecturas comparten un principio común: <strong>la
 compuerta es un mecanismo para controlar el flujo de información y la
 retención selectiva de memoria</strong>. Las decisiones de diseño
 específicas divergen a lo largo de varias dimensiones:</p>
 <ol>
 <li><p><strong>Ubicación de la compuerta</strong>: Actualizaciones de
 estado recurrente (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2,
-HGRN2) versus espacio de logits/salida softmax (FoX, Gated Softmax,
+HGRN2) versus espacio de logits/salida softmax (FoX, Gated Softmax, FPA,
 RetNet).</p></li>
 <li><p><strong>Granularidad de control</strong>: Por dimensión (GLA,
 HGRN2 diagonal), por clave (DeltaNet), por token (FoX), por cabeza
-(Gated Softmax) o borrado/escritura canalizados decouplados (Gated
-DeltaNet-2).</p></li>
+(Gated Softmax), borrado/escritura canalizados decouplados (Gated
+DeltaNet-2), o un nivel por clave comparado con un campo por cabeza
+(FPA).</p></li>
 <li><p><strong>Dependencia de datos</strong>: Completamente dependiente
 de datos (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, FoX, Gated
-Softmax) versus esquemas fijos (RetNet con decaimiento
+Softmax, FPA) versus esquemas fijos (RetNet con decaimiento
 exponencial).</p></li>
+<li><p><strong>Agregación a lo largo del camino clave–consulta</strong>:
+Sin término de camino (Gated Softmax), una suma de log-compuertas de
+olvido (FoX), o un mínimo de rango de un campo aprendido (FPA) — las
+sumas acumulan duración, los extremos dependen sólo de la caída más
+profunda.</p></li>
 <li><p><strong>Compensación de expresividad</strong>: Eficiencia
 recurrente lineal (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2,
 HGRN2, RetNet) versus expresividad completa de softmax (FoX, Gated
-Softmax).</p></li>
+Softmax, FPA).</p></li>
 </ol>
 <h2 id="implementación-y-orientación-práctica">Implementación y
 Orientación Práctica</h2>
@@ -13787,6 +14118,11 @@ desea reemplazar softmax.</p></li>
 softmax existentes con cambios mínimos de código; mejor para
 profesionales que desean ganancias inmediatas sin una reestructuración
 importante.</p></li>
+<li><p><strong>FPA</strong>: Contextos largos y secuencias estructuradas
+donde un evento posterior invalida tokens recientes pero no los más
+antiguos (delimitadores, retrocesos, reasignaciones); cuando se requiere
+calidad softmax y decodificación KV exacta y es aceptable un pequeño
+estado escalar por cabeza.</p></li>
 </ol>
 <h3 id="consideraciones-de-hardware">Consideraciones de Hardware</h3>
 <table>
@@ -16082,11 +16418,10 @@ todos los mezcladores latentes (<code>mla</code>, <code>gqla</code>,
 solo en el par de puntuación; los valores se construyen desde las claves
 sin rotar).</p></li>
 <li><p><strong>False</strong> (mezcladores recurrentes/de decaimiento):
-<code>retnet</code>, <code>retnet</code>, <code>mamba</code>,
-<code>ode</code>, <code>gla</code>, <code>deltanet</code>,
-<code>gated_deltanet</code>, <code>gated_deltanet2</code>,
-<code>hgrn2</code>, <code>fox</code>, <code>kda</code>,
-<code>mtla</code>.</p></li>
+<code>retnet</code>, <code>mamba</code>, <code>ode</code>,
+<code>gla</code>, <code>deltanet</code>, <code>gated_deltanet</code>,
+<code>gated_deltanet2</code>, <code>hgrn2</code>, <code>fox</code>,
+<code>fpa</code>, <code>kda</code>, <code>mtla</code>.</p></li>
 </ul>
 <p>El valor por defecto <code>False</code> para mezcladores
 recurrentes/de decaimiento refleja que estas arquitecturas incorporan su
@@ -16813,10 +17148,10 @@ class="math display">\[\mathcal{O}\!\left(S^2 +
 \sum_{t=0}^{T-1}(S+t)\right) \;=\; \mathcal{O}\!\left(S^2 + TS +
 T^2\right).\]</span> La diferencia es la conocida entre re-codificar una
 conversación y continuarla.</p>
-<p>El subsistema cubre los cuarenta y ocho tipos de capa despachables.
-Treinta tienen ramas incrementales verificadas por paridad; el resto
-queda registrado con una justificación explícita, basada en el artículo,
-para ejecutarse sin caché (§<a href="#sec:kv-fallbacks"
+<p>El subsistema cubre los cuarenta y nueve tipos de capa despachables.
+Treinta y uno tienen ramas incrementales verificadas por paridad; el
+resto queda registrado con una justificación explícita, basada en el
+artículo, para ejecutarse sin caché (§<a href="#sec:kv-fallbacks"
 data-reference-type="ref" data-reference="sec:kv-fallbacks">28.4.5</a>).
 La cuantización y la expulsión son ortogonales a la matemática del
 mezclador: los códecs transforman tensores en <em>escritura</em> y las
@@ -17099,6 +17434,21 @@ token cacheado y evalúa una sola fila de <span
 class="math inline">\(D\)</span> contra la columna cacheada <span
 class="citation"
 data-cites="lin_forgetting_transformer_2025"></span>.</p></li>
+<li><p><strong>Atención de primer paso.</strong> El sesgo de logits es
+<span class="math inline">\(\beta\min(0,\min_{s&lt;u\le
+t}\phi_u-\psi_s)\)</span>, un mínimo de rango de un campo <span
+class="math inline">\(\phi\)</span> por token por debajo del nivel <span
+class="math inline">\(\psi\)</span> de la clave. La caché guarda
+<em>dos</em> escalares por token y cabeza como extras (<span
+class="math inline">\(\phi_u\)</span> y <span
+class="math inline">\(\psi_s\)</span>); la decodificación actualiza
+<span
+class="math inline">\(\bar{\phi}_{t,s}=\min(\bar{\phi}_{t-1,s},\phi_t)\)</span>
+en <span class="math inline">\(O(t)\)</span> y evalúa una fila de sesgo
+contra los niveles cacheados, lo que es exacto (Proposición 2.4(b)). Las
+claves muertas (sesgo bajo un umbral) nunca reviven, así que son
+expulsables <span class="citation"
+data-cites="liu_first_passage_2026"></span>.</p></li>
 <li><p><strong>Titans.</strong> La capa implementada es la ventana de
 atención; el módulo de memoria queda fuera de la ruta cacheada. Se
 aplica el append/read estándar <span class="citation"
@@ -17980,8 +18330,8 @@ Mixers de atención &amp; <code>standard</code>, <code>titan</code>,
 <code>gqla</code>, <code>mlra</code>, <code>tucker</code>,
 <code>iha</code>, <code>gta</code>, <code>mtla</code>, <code>cca</code>,
 <code>ccgqa</code>, <code>gma</code>); con compuerta
-(<code>gated_softmax</code>, <code>fox</code>); dispersos
-(<code>fasa</code>, <code>sparge</code>, <code>msa</code>,
+(<code>gated_softmax</code>, <code>fox</code>, <code>fpa</code>);
+dispersos (<code>fasa</code>, <code>sparge</code>, <code>msa</code>,
 <code>nsa</code>, <code>bigbird</code>, <code>longformer</code>,
 <code>sparse_transformer</code>, <code>sparsek</code>, <code>swa</code>,
 <code>sparda</code>); sustituto denso de los mixers sin
@@ -19053,7 +19403,7 @@ no atada conserva <span class="math inline">\(3.94\)</span>M, dejando
 contabilidad del paper, donde la cabeza se descarta solo para el
 despliegue.</p>
 <p>La Tabla <a href="#tab:eelbert-results-es" data-reference-type="ref"
-data-reference="tab:eelbert-results-es">16</a> resume los resultados de
+data-reference="tab:eelbert-results-es">18</a> resume los resultados de
 referencia reportados por <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results-es">
@@ -19255,7 +19605,7 @@ Nada de esta cadena necesita GPU.</figcaption>
 <h2 id="el-libro-de-etapas-de-la-ronda-2">El libro de etapas de la
 ronda 2</h2>
 <p>La Tabla <a href="#tab:stage-ledger" data-reference-type="ref"
-data-reference="tab:stage-ledger">17</a> reproduce el libro. El
+data-reference="tab:stage-ledger">19</a> reproduce el libro. El
 entrenamiento domina tanto el conteo de registros como el coste:
 1<span>,</span>039 intentos, de los cuales 868 tuvieron éxito y 171
 fallaron, con una mediana de 68 minutos y un P90 de 84 minutos por
@@ -19464,7 +19814,7 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">88</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">89</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -19509,10 +19859,10 @@ de evaluación, un token afortunado o desafortunado reescribe el ranking.
 Por eso se reportan ambas señales a lo largo del apéndice, y las tablas
 de inferencia deben leerse como control de fallos catastróficos y no
 como clasificación. La Tabla <a href="#tab:r2-top-loss"
-data-reference-type="ref" data-reference="tab:r2-top-loss">18</a> lista
+data-reference-type="ref" data-reference="tab:r2-top-loss">20</a> lista
 los diez mejores pares por pérdida final y la Tabla <a
 href="#tab:r2-top-acc" data-reference-type="ref"
-data-reference="tab:r2-top-acc">19</a> los diez mejores por precisión de
+data-reference="tab:r2-top-acc">21</a> los diez mejores por precisión de
 validación; las dos tablas no comparten ningún par.</p>
 <div id="tab:r2-top-loss">
 <table>
@@ -19768,7 +20118,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">96</a>) es
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">97</a>) es
 el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -19803,7 +20153,7 @@ entrenan.</figcaption>
 <h4 id="qué-segundo-mezclador-elegir.">Qué segundo mezclador
 elegir.</h4>
 <p>La Tabla <a href="#tab:r2-best-b" data-reference-type="ref"
-data-reference="tab:r2-best-b">20</a> ordena los segundos mezcladores
+data-reference="tab:r2-best-b">22</a> ordena los segundos mezcladores
 por pérdida final media en todos los pares que los contienen. La columna
 <em>Pares</em> es el tamaño de muestra detrás de cada media y debe
 leerse junto con ella: una media de un solo par (por ejemplo
@@ -20094,7 +20444,7 @@ validación.</figcaption>
 ronda: 23 optimizadores, el mismo esqueleto de 210k y un rango de
 pérdida final de solo 10,10–10,77 nats (Tabla <a
 href="#tab:r2-optimizers" data-reference-type="ref"
-data-reference="tab:r2-optimizers">22</a>). <code>q_apollo</code> gana
+data-reference="tab:r2-optimizers">24</a>). <code>q_apollo</code> gana
 con 10,098 y <code>galore_adamw</code> cierra la tabla con 10,772, pero
 una docena de optimizadores aterrizan exactamente en 10,404—la corrida
 es demasiado corta para que la elección del optimizador se separe del
@@ -20274,13 +20624,13 @@ pagan el sobrecoste visible.</figcaption>
 <h4 id="normalización-y-codificación-posicional.">Normalización y
 codificación posicional.</h4>
 <p>Entre las normalizaciones (Tabla <a href="#tab:r2-norms"
-data-reference-type="ref" data-reference="tab:r2-norms">23</a>),
+data-reference-type="ref" data-reference="tab:r2-norms">25</a>),
 <code>flash_norm</code> gana con claridad con 9,749 nats—medio nat por
 delante del segundo, un margen grande según los estándares de esta
 ronda—, mientras que <code>prms_norm</code> y <code>rms_norm</code>
 quedan atrás. En las codificaciones posicionales (Tabla <a
 href="#tab:r2-pe" data-reference-type="ref"
-data-reference="tab:r2-pe">24</a>), la familia PAPE
+data-reference="tab:r2-pe">26</a>), la familia PAPE
 (<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
 barre el podio y RoPE clásico queda a media tabla. Ambos resultados
 sirven de calibración: “moderno” no es automáticamente mejor en una
@@ -20437,7 +20787,7 @@ y RoPE clásico queda a media tabla a esta escala.</figcaption>
 </figure>
 <h4 id="conmutadores-estructurales.">Conmutadores estructurales.</h4>
 <p>Los conmutadores estructurales (Tabla <a href="#tab:r2-trans"
-data-reference-type="ref" data-reference="tab:r2-trans">25</a>) se
+data-reference-type="ref" data-reference="tab:r2-trans">27</a>) se
 separan más que los optimizadores—evidencia de que, a esta escala, la
 arquitectura es una palanca más fuerte que la regla de actualización.
 Las tres victorias son los embeddings factorizados (9,623), la FFN
@@ -20810,7 +21160,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">115</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">116</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span

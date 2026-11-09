@@ -91,6 +91,11 @@ var FTParamEstimator = (function () {
         var caLearn = toBool(pick(m, 'attention.ca.learned_gain', 'ca_learned_gain', true), true);
         return 4 * H * H + (caLearn ? nH : 0);
       }
+      // ---- First Passage Attention (arXiv:2610.22714) ----
+      // Q,K,V,O (bias-free) = 4H²; field projection H→3·nH WITH bias
+      // (paper Table 15) = 3·nH·(H+1); learned per-head strength β = nH.
+      case 'fpa':
+        return 4 * H * H + 3 * nH * (H + 1) + nH;
       case 'standard':
       case 'titan':
       case 'sparse_transformer':

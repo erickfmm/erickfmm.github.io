@@ -1,4 +1,4 @@
-\begin{thebibliography}{149}
+\begin{thebibliography}{150}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -604,6 +604,11 @@ WenTao Liu, Siyu Song, Hao Hao, and Aimin Zhou.
 \newblock Ea4llm: A gradient-free approach to large language model optimization
   via evolutionary algorithms, 2025.
 \newblock URL \url{https://arxiv.org/abs/2510.10603}.
+
+\bibitem[Liu(2026)]{liu_first_passage_2026}
+Yuxuan Liu.
+\newblock First passage attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2610.22714}.
 
 \bibitem[Liu et~al.(2024)Liu, Yuan, Jin, Zhong, Xu, Braverman, Chen, and
   Hu]{kivi_liu_2024}

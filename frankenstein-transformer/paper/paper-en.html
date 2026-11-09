@@ -207,7 +207,7 @@ that hinders reproducibility and makes published comparisons difficult
 to align. We present Frankenstein Transformer, a configuration-driven
 CLI toolkit (<code>frankenstein-transformer</code>) that unifies model
 definition, training, deployment, and inference behind a single strict
-YAML schema. The toolkit covers forty-eight sequence mixers across ten
+YAML schema. The toolkit covers forty-nine sequence mixers across ten
 families and twenty-four optimizer families with per-parameter-group
 hyperparameter control, and supports encoder, decoder, Vision
 Transformer and audio model classes for masked language modeling, causal
@@ -871,6 +871,16 @@ id="toc-mathematical-foundation-7">Mathematical Foundation</a></li>
 id="toc-empirical-performance-and-trade-offs-2">Empirical Performance
 and Trade-offs</a></li>
 </ul></li>
+<li><a href="#first-passage-attention-fpa-forgetting-by-path-extrema"
+id="toc-first-passage-attention-fpa-forgetting-by-path-extrema">9. First
+Passage Attention (FPA): Forgetting by Path Extrema</a>
+<ul>
+<li><a href="#mathematical-foundation-8"
+id="toc-mathematical-foundation-8">Mathematical Foundation</a></li>
+<li><a href="#empirical-performance-and-trade-offs-3"
+id="toc-empirical-performance-and-trade-offs-3">Empirical Performance
+and Trade-offs</a></li>
+</ul></li>
 <li><a href="#unified-gating-principle"
 id="toc-unified-gating-principle">Unified Gating Principle</a></li>
 <li><a href="#implementation-and-practical-guidance"
@@ -1406,7 +1416,7 @@ training choices as a single validated document. The project
 provides:</p>
 <ol>
 <li><p><strong>Schema-first design</strong>: a strict YAML contract
-supporting forty-eight sequence mixers across ten families and
+supporting forty-nine sequence mixers across ten families and
 twenty-four optimizer families, enforced before training
 begins.</p></li>
 <li><p><strong>Architecture-agnostic training</strong>: one pipeline for
@@ -1798,7 +1808,7 @@ data-reference-type="ref" data-reference="sec:annex-mhc">22</a>.</p>
 Implementation</h1>
 <h2 id="sec:attention-families">Attention and Sequence-Mixer
 Families</h2>
-<p>The system implements forty-eight sequence mixers organized into ten
+<p>The system implements forty-nine sequence mixers organized into ten
 functional categories that reflect how each method balances
 expressivity, computational cost, and memory.</p>
 <ol>
@@ -1814,10 +1824,10 @@ Longformer, SWA with attention sinks, BigBird, SparseK, NSA, SpargeAttn,
 FASA, MSA, SparDA, LSA, and Fast Conformer reduce quadratic cost through
 structured sparsity, token selection, training-free pruning, or semantic
 key clustering.</p></li>
-<li><p><strong>Gated mechanisms</strong> (8): GLA, DeltaNet, Gated
-DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, and KDA introduce
-data-dependent control over retention, forgetting, and update
-strength.</p></li>
+<li><p><strong>Gated mechanisms</strong> (9): GLA, DeltaNet, Gated
+DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, KDA, and First
+Passage Attention (FPA) introduce data-dependent control over retention,
+forgetting, and update strength.</p></li>
 <li><p><strong>Latent compression</strong> (10): MLA, GQLA, MLRA,
 Tucker, IHA, GTA, MTLA, CCA, CCGQA, and GMA compress key–value state
 into low-rank bottlenecks or route through a Gaussian-mixture latent
@@ -1847,7 +1857,7 @@ data-reference="sec:annex-17">30</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
-<figcaption>Taxonomy of the forty-eight sequence mixers across ten
+<figcaption>Taxonomy of the forty-nine sequence mixers across ten
 functional categories. Dense baselines provide full global routing at
 quadratic cost; recurrent methods compress state for constant-time
 inference; sparse variants restrict the attention pattern; gated
@@ -1953,12 +1963,15 @@ high-value tokens or blocks.</figcaption>
 </figure>
 <h2 id="gated-and-fast-weight-attention">Gated and Fast-Weight
 Attention</h2>
-<p>The gated family contains eight blocks <span class="citation"
-data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025"></span>.
+<p>The gated family contains nine blocks <span class="citation"
+data-cites="yang_gla_2023 yang_deltanet_2024 yang_gated_deltanet_2024 hatamizadeh_gated_deltanet2_2026 qin_hgrn2_2024 lin_forgetting_transformer_2025 qiu_gated_attention_2025 kimi_kda_2025 liu_first_passage_2026"></span>.
 Gating controls what information survives, either in recurrent state
 updates (GLA, DeltaNet variants, HGRN2, KDA) or in the full attention
-path (FoX, Gated Softmax). Formulations, pseudocode, and a comparison
-table are collected in Appendix <a href="#sec:annex-gated"
+path (FoX, Gated Softmax, FPA). FPA replaces the path sum of a forget
+gate with a range minimum of a learned field, so a later token can erase
+newer keys while preserving older ones: the alive keys form a stack, and
+FoX is its non-rising-walk special case. Formulations, pseudocode, and a
+comparison table are collected in Appendix <a href="#sec:annex-gated"
 data-reference-type="ref" data-reference="sec:annex-gated">19</a>.</p>
 <p>Fast-weight attention recasts the recurrent update as an online
 continual-learning rule; the six Falcon variants <span class="citation"
@@ -2507,7 +2520,7 @@ optimizer-specific groups, default values aligned with research best
 practices, and documentation strings for web interface rendering.</p>
 <h2 id="architectural-coverage-and-gaps">Architectural Coverage and
 Gaps</h2>
-<p>The forty-eight implemented mixers span the major research directions
+<p>The forty-nine implemented mixers span the major research directions
 in sequence modeling, but certain gaps remain. The system lacks recent
 hybrid architectures such as Griffin <span class="citation"
 data-cites="soares_griffin_2024"></span> and Jamba <span
@@ -2596,7 +2609,7 @@ embedding.</p>
 <ol>
 <li><p><strong>Schema-First Design</strong>: A strict YAML-based
 configuration contract with validation and prefixed hyperparameter
-routing enabling reproducible experiments across forty-eight sequence
+routing enabling reproducible experiments across forty-nine sequence
 mixers and twenty-four optimizer families.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
 Implementation spanning dense baselines, recurrent and retentive blocks,
@@ -2684,7 +2697,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>149</span> urlstyle</p>
+<p><span>150</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3009,6 +3022,8 @@ Multi-head low-rank attention, 2026<span>a</span>. URL
 gradient-free approach to large language model optimization via
 evolutionary algorithms, 2025. URL
 <code>https://arxiv.org/abs/2510.10603</code>.</p>
+<p>Yuxuan Liu. First passage attention, 2026. URL
+<code>https://arxiv.org/abs/2610.22714</code>.</p>
 <p>Zirui Liu, Jiayi Yuan, Hongye Jin, Shaochen Zhong, Zhaozhuo Xu,
 Vladimir Braverman, Beidi Chen, and Xia Hu. : A tuning-free asymmetric
 2bit quantization for <span>KV</span> cache, 2024. URL
@@ -3697,9 +3712,8 @@ transformer layers. Default: 2.</td>
 <td style="text-align: left;">attention.retnet.heads</td>
 <td style="text-align: left;">int <span class="math inline">\(\ge
 1\)</span></td>
-<td style="text-align: left;">Retention heads for
-<code>retnet</code>/<code>retnet</code> layers. Must divide
-<code>hidden_size</code>. Default: 8.</td>
+<td style="text-align: left;">Retention heads for <code>retnet</code>
+layers. Must divide <code>hidden_size</code>. Default: 8.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -4482,179 +4496,186 @@ bias in logits</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">fpa</td>
+<td style="text-align: left;">First Passage Attention with a
+range-minimum forget bias</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">nsa</td>
 <td style="text-align: left;">Native Sparse Attention
 (three-branch)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">engram</td>
 <td style="text-align: left;">N-gram conditional memory lookup</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gqa</td>
 <td style="text-align: left;">Grouped-Query Attention with configurable
 KV heads</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">longformer</td>
 <td style="text-align: left;">Longformer: sliding windows + global
 tokens</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">bigbird</td>
 <td style="text-align: left;">BigBird: local + random + global
 attention</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">sparse_transformer</td>
 <td style="text-align: left;">Sparse Transformer: factorized
 patterns</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparsek</td>
 <td style="text-align: left;">SparseK: differentiable top-k KV
 selection</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">sparge</td>
 <td style="text-align: left;">SpargeAttn — two-stage block pruning;
 dense training, sparse inference</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">fasa</td>
 <td style="text-align: left;">FASA — frequency-aware token selection;
 dense training, sparse inference</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">msa</td>
 <td style="text-align: left;">MiniMax Sparse Attention — block-sparse on
 GQA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparda</td>
 <td style="text-align: left;">SparDA — decoupled sparse attention with
 Forecast projection</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">lsa</td>
 <td style="text-align: left;">Latent Sparse Attention — semantic key
 clustering with top-k selection</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">fastconformer</td>
 <td style="text-align: left;">Fast Conformer — limited-context window +
 head-pinned global token</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">kda</td>
 <td style="text-align: left;">Kimi Delta Attention — channel-wise decay
 + scalar write gate</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">falcon1 / falcon2 / falcon3</td>
 <td style="text-align: left;">Falcon regression family — RAW
 prefix-aligned NLMS delta rule</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">falcon1a / falcon2a / falcon3a</td>
 <td style="text-align: left;">Falcon inner-product family — shifted
 additive writes with ridge decay</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mla</td>
 <td style="text-align: left;">Multi-Head Latent Attention + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gqla</td>
 <td style="text-align: left;">Group-Query Latent Attention — two
 decoding paths</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mlra</td>
 <td style="text-align: left;">Multi-Head Low-Rank Attention —
 partitionable latent</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">tucker</td>
 <td style="text-align: left;">Tucker Attention — generalised low-rank
 factorisation</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">iha</td>
 <td style="text-align: left;">Interleaved Head Attention — cross-head
 pseudo-heads</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gta</td>
 <td style="text-align: left;">Grouped-head laTenT Attention — shared map
 + latent values</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mtla</td>
 <td style="text-align: left;">Multi-head Temporal Latent Attention —
 temporal KV merge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">cca</td>
 <td style="text-align: left;">Compressed Convolutional Attention —
 latent-space attention + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ccgqa</td>
 <td style="text-align: left;">Compressed Convolutional Grouped Query
 Attention — CCA + GQA in latent</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gma</td>
 <td style="text-align: left;">Gaussian Mixture Attention — probabilistic
 latent routing, <span class="math inline">\(\mathcal{O}(NK)\)</span>
@@ -4662,7 +4683,7 @@ linear-time</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ssog</td>
 <td style="text-align: left;">Separable Sum of Gaussians — Gaussian
 field over relative position, near-linear <span
@@ -5436,7 +5457,7 @@ combination.</p></li>
 </ol>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
-implemented in the Frankenstein Transformer codebase: 48 sequence mixers
+implemented in the Frankenstein Transformer codebase: 49 sequence mixers
 across ten families, 36 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
@@ -5629,6 +5650,11 @@ d^2)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(d^2)\)</span> &amp; Channel-wise decay
 + scalar write; Kimi Linear design &amp; <span class="citation"
 data-cites="kimi_kda_2025"></span><br />
+fpa &amp; Gated &amp; <span class="math inline">\(\mathcal{O}(L^2
+d)\)</span> &amp; <span class="math inline">\(\mathcal{O}(L)\)</span> KV
+&amp; Path-extremum (range-min) forget bias; contains FoX; two extra
+scalars per cached key/head &amp; <span class="citation"
+data-cites="liu_first_passage_2026"></span><br />
 </p>
 <p><br />
 falcon1 &amp; Fast-weight &amp; <span
@@ -13236,26 +13262,318 @@ reduction to Gated DeltaNet loses channel selectivity.</td>
 </tbody>
 </table>
 </div>
+<h2 id="first-passage-attention-fpa-forgetting-by-path-extrema">9. First
+Passage Attention (FPA): Forgetting by Path Extrema</h2>
+<figure id="fig:mixer-fpa"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/fpa.svg" alt="image" /></span></p>
+
+<figcaption>Dataflow of FPA: one linear map yields the per-head
+increment <span class="math inline">\(\delta\)</span> and the offsets
+<span class="math inline">\(g,h\)</span>; the walk <span
+class="math inline">\(W\)</span> is their prefix sum, the field is <span
+class="math inline">\(\phi=W+g\)</span>, the key level is <span
+class="math inline">\(\psi=W+h\)</span>, and the bias is <span
+class="math inline">\(\beta\)</span> times the deepest dip of the field
+below the level over the span after each key.</figcaption>
+</figure>
+<h3 id="mathematical-foundation-8">Mathematical Foundation</h3>
+<p>First Passage Attention <span class="citation"
+data-cites="liu_first_passage_2026"></span> keeps the softmax attention
+of Vaswani et al. <span class="citation"
+data-cites="vaswani_attention_2017"></span> but replaces FoX’s path
+<em>sum</em> of forget gates with a path <em>extremum</em>. A causal
+head of dimension <span class="math inline">\(d\)</span> with queries
+<span class="math inline">\(\mathbf{q}_t\)</span>, keys <span
+class="math inline">\(\mathbf{k}_s\)</span> and values <span
+class="math inline">\(\mathbf{v}_s\)</span> computes <span
+class="math display">\[\mathbf{o}_t=\sum_{s\le
+t}w_{ts}\mathbf{v}_s,\qquad w_{ts}\propto e^{\ell_{ts}},\qquad
+\ell_{ts}=\frac{\mathbf{q}_t^\top\mathbf{k}_s}{\sqrt{d}}+b_{ts},\]</span>
+where the <strong>first-passage bias</strong> is <span
+class="math display">\[b_{ts}=\beta\min\Bigl(0,\ \min_{s&lt;u\le
+t}\phi_u-\psi_s\Bigr),\qquad b_{tt}=0,\]</span> with a learned positive
+strength <span class="math inline">\(\beta\)</span> per head, a scalar
+field <span class="math inline">\(\phi_u\)</span> at every position and
+a scalar level <span class="math inline">\(\psi_s\)</span> for every
+key. We write <span
+class="math inline">\(\bar{\phi}_{ts}=\min_{s&lt;u\le t}\phi_u\)</span>
+for the range minimum. A key is <em>alive</em> at time <span
+class="math inline">\(t\)</span> when <span
+class="math inline">\(b_{ts}=0\)</span>, and <em>dead</em> otherwise; a
+dead key’s bias is <span class="math inline">\(-\beta\)</span> times the
+depth <span class="math inline">\(\psi_s-\bar{\phi}_{ts}\)</span> of its
+deepest dip. Death is permanent: <span
+class="math inline">\(b_{t&#39;s}\le b_{ts}\)</span> for all <span
+class="math inline">\(t&#39;&lt;t\)</span> (Proposition 2.3(a)), so the
+decoder can drop a dead key once its bias passes a threshold.</p>
+<p>Each head derives the three scalars per position from the layer input
+<span class="math inline">\(\mathbf{x}_t\)</span> through one linear
+map, with a walk <span class="math inline">\(W_t\)</span> and the
+field/level <span class="math display">\[W_t=\sum_{u\le
+t}\delta_u,\qquad \phi_u=W_u+g_u,\qquad \psi_s=W_s+h_s .\]</span> The
+increments <span class="math inline">\(\delta\)</span> move the
+reference of every later comparison, while <span
+class="math inline">\(g\)</span> and <span
+class="math inline">\(h\)</span> let a token dip or set a level without
+moving it. A layer of width <span class="math inline">\(D\)</span> with
+<span class="math inline">\(H\)</span> heads therefore gains <span
+class="math inline">\(3H(D+1)+H\)</span> parameters — <span
+class="math inline">\(27{,}696\)</span> per layer at <span
+class="math inline">\(D=768\)</span>, <span
+class="math inline">\(H=12\)</span>, i.e. <span
+class="math inline">\(332{,}352\)</span> over twelve layers, and <span
+class="math inline">\(+1.56\%\)</span> over keys and values in the
+cache.</p>
+<h4 id="special-cases-proposition-2.2.">Special cases (Proposition
+2.2).</h4>
+<p>The linear parameterisation contains several families:</p>
+<ul>
+<li><p>(a) If <span class="math inline">\(g=h=0\)</span>, then <span
+class="math inline">\(b_{ts}=-\beta L_{ts}\)</span> with <span
+class="math inline">\(L_{ts}=\max\bigl(0,\max_{s&lt;u\le
+t}(W_s-W_u)\bigr)\)</span>, the regulator of a queue that starts empty
+at time <span class="math inline">\(s\)</span> (the <em>stack
+form</em>).</p></li>
+<li><p>(b) If in addition <span class="math inline">\(\delta_u\le
+0\)</span> for all <span class="math inline">\(u\)</span>, then <span
+class="math inline">\(b_{ts}=\sum_{s&lt;u\le t}\log f_u\)</span> with
+<span class="math inline">\(f_u=e^{\beta\delta_u}\in(0,1]\)</span> —
+<strong>exactly FoX</strong> with forget gates <span
+class="math inline">\(f_u\)</span>. A rising walk is what lets FPA keep
+an old key while removing newer ones, which no forget gate can
+do.</p></li>
+<li><p>(c) If <span class="math inline">\(\delta=0\)</span>, <span
+class="math inline">\(h=0\)</span>, <span class="math inline">\(g\le
+0\)</span> and <span class="math inline">\(\beta=1\)</span>, then <span
+class="math inline">\(b_{ts}=\min_{s&lt;u\le t}g_u\)</span>, a
+bottleneck bias.</p></li>
+<li><p>(d) If <span class="math inline">\(\delta_u=-1\)</span>, <span
+class="math inline">\(g=0\)</span> and <span
+class="math inline">\(\psi_s=W_s-e_s\)</span> with <span
+class="math inline">\(e_s\ge 0\)</span>, then <span
+class="math inline">\(b_{ts}=\beta\min(0,e_s-(t-s))\)</span>, the expiry
+rule of Expire-Span.</p></li>
+</ul>
+<p>In the stack form the levels of the alive keys do not decrease with
+the time of writing, and a dip kills a suffix in time of the alive keys:
+the alive set evolves as a <strong>stack</strong> (Proposition
+2.3(b)).</p>
+<h4 id="depth-not-duration.">Depth, not duration.</h4>
+<p>Selective Attention subtracts a sum of per-pair selections, so its
+suppression grows with the number of intervening steps, confounding the
+<em>depth</em> of an event with its <em>duration</em>. FPA’s bias is
+<span class="math inline">\(-\beta\)</span> times the deepest dip and is
+unchanged when a dip no deeper than the deepest is held longer or
+inserted (Proposition 3.4); among aggregations of dips, functions of the
+maximum are the only ones with this duration invariance (Proposition
+3.4(iii)).</p>
+<h4 id="training-straight-through.">Training (straight-through).</h4>
+<p>The bias is piecewise linear in the field and the levels, and on the
+closed side of the outer minimum it passes no gradient to the field; in
+pilot runs that minimum could close for every key of a head early in
+training. FPA therefore trains with a straight-through estimator: the
+forward pass takes the hard range minimum and the backward pass takes,
+in its place, the gradient of the soft minimum <span
+class="math inline">\(-\tau\log\sum_{s&lt;u\le
+t}e^{-\phi_u/\tau}\)</span> with <span
+class="math inline">\(\tau=1\)</span>. The outer minimum acts on the
+hard value, and evaluation uses the hard bias unchanged.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Normalised input <span
+class="math inline">\(\mathbf{x}\in\mathbb{R}^{n\times D}\)</span>;
+heads <span class="math inline">\(H\)</span>; strength <span
+class="math inline">\(\beta\)</span>; temperature <span
+class="math inline">\(\tau\)</span> Output <span
+class="math inline">\(\mathbf{O}\in\mathbb{R}^{n\times D}\)</span> <span
+class="math inline">\(\mathbf{Q},\mathbf{K},\mathbf{V}\gets
+W_q\mathbf{x},\,W_k\mathbf{x},\,W_v\mathbf{x}\)</span> <span
+class="math inline">\((\boldsymbol{\delta},\mathbf{g},\mathbf{h})\gets
+W_f\mathbf{x}+ \mathbf{b}_f\)</span> <span
+class="math inline">\(W_t\gets\sum_{u\le t}\delta_u\)</span>;<span
+class="math inline">\(\phi_u\gets W_u+g_u\)</span>;<span
+class="math inline">\(\psi_s\gets W_s+h_s\)</span> <span
+class="math inline">\(\bar{\phi}_{ts}\gets\min_{s&lt;u\le
+t}\phi_u\)</span> <span
+class="math inline">\(b_{ts}\gets\beta\min(0,\bar{\phi}_{ts}-\psi_s)\)</span>;<span
+class="math inline">\(b_{tt}\gets 0\)</span> <span
+class="math inline">\(\mathbf{A}\gets\mathrm{softmax}\bigl(\mathbf{Q}\mathbf{K}^\top/\sqrt{d}+\mathbf{B}\bigr)\)</span>;<span
+class="math inline">\(\mathbf{O}\gets W_o(\mathbf{A}\mathbf{V})\)</span>
+<span class="math inline">\(\mathbf{O}\)</span></p>
+</div>
+</div>
+<h4 id="cost-and-exact-decoding.">Cost and exact decoding.</h4>
+<p>In a blocked computation with block size <span
+class="math inline">\(B\)</span>, the bias between a query block and an
+earlier key block needs only the suffix minima of <span
+class="math inline">\(\phi\)</span> within the key block, the minimum
+over the blocks strictly between, and the prefix minima of <span
+class="math inline">\(\phi\)</span> within the query block: <span
+class="math inline">\(O(B^2)\)</span> operations per pair of blocks, as
+an element-wise bias such as FoX’s, plus <span
+class="math inline">\(O(T/B)\)</span> block minima (Proposition 2.4(a)).
+In autoregressive decoding <span
+class="math inline">\(\bar{\phi}_{ts}=\min(\bar{\phi}_{t-1,s},\phi_t)\)</span>
+for <span class="math inline">\(s&lt;t-1\)</span> and <span
+class="math inline">\(\bar{\phi}_{t,t-1}=\phi_t\)</span>, so each step
+updates the bias row in <span class="math inline">\(O(t)\)</span> and
+stores <em>two scalars per cached key and head</em> (Proposition 2.4(b))
+— an exact plain-KV incremental branch, implemented in this repository
+as slot extras.</p>
+<h3 id="empirical-performance-and-trade-offs-3">Empirical Performance
+and Trade-offs</h3>
+<p>The paper trains four 110M-parameter decoders (12 layers, width 768,
+12 heads of dimension 64, SwiGLU-2048, RMSNorm, context 2048, 2.7B
+SlimPajama tokens) that differ only in attention. FPA (without
+positional encoding) matches or beats FoX in perplexity and extrapolates
+further:</p>
+<div id="tab:fpa-lm">
+<table>
+<caption>110M language models (losses in nats per token; passkey and
+RULER accuracies) <span class="citation"
+data-cites="liu_first_passage_2026"></span>. FPA retrieves every passkey
+at lengths up to <span class="math inline">\(8\times\)</span> its
+training context, even when its cache is compressed to about a
+quarter.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Method</strong></th>
+<th style="text-align: center;"><strong>SlimPajama</strong></th>
+<th style="text-align: center;"><strong>WikiText-103</strong></th>
+<th style="text-align: center;"><strong>PG-19 2k–4k</strong></th>
+<th style="text-align: center;"><strong>Passkey 8k–16k</strong></th>
+<th style="text-align: center;"><strong>RULER 8k</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FPA</td>
+<td style="text-align: center;"><strong>2.8640</strong></td>
+<td style="text-align: center;"><strong>3.1001</strong></td>
+<td style="text-align: center;"><strong>3.282</strong></td>
+<td style="text-align: center;"><strong>1.00</strong></td>
+<td style="text-align: center;"><strong>0.202</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FoX</td>
+<td style="text-align: center;">2.8832</td>
+<td style="text-align: center;">3.1425</td>
+<td style="text-align: center;">3.316</td>
+<td style="text-align: center;">0.20</td>
+<td style="text-align: center;">0.117</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Selective Attention</td>
+<td style="text-align: center;">2.8686</td>
+<td style="text-align: center;">3.1197</td>
+<td style="text-align: center;">3.805</td>
+<td style="text-align: center;">0.04</td>
+<td style="text-align: center;">0.008</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Softmax + RoPE</td>
+<td style="text-align: center;">2.8908</td>
+<td style="text-align: center;">3.1374</td>
+<td style="text-align: center;">5.064</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.002</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The cost is close to standard attention: one FPA layer takes <span
+class="math inline">\(0.97\times\)</span> the forward-plus-backward time
+of PyTorch SDPA and <span class="math inline">\(1.50\times\)</span> that
+of FoX, whose bias needs no range minimum; at batch size 1 and length
+8192 decoding takes 22.0 ms per token against 20.2 ms for FoX and
+23.9 ms for softmax. Because the bias of a key never rises again, a
+decoder can drop a key once its bias falls below a threshold: at <span
+class="math inline">\(\theta=10\)</span> the FPA model loses <span
+class="math inline">\(0.00044\)</span> nats at length 2048 and keeps 34%
+of its keys (26% at 8192), and it still retrieves every passkey at 8192
+and 16<span>,</span>384 tokens with 24–27% of its cache.</p>
+<div id="tab:fpa-tradeoffs">
+<table>
+<caption>FPA trade-offs <span class="citation"
+data-cites="liu_first_passage_2026"></span>. The repository integrates
+the causal head exactly; encoder mode symmetrises the open-span range
+minimum (the paper defines only the causal head).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Aspect</strong></th>
+<th style="text-align: left;"><strong>Strength</strong></th>
+<th style="text-align: left;"><strong>Limitation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Expressivity</td>
+<td style="text-align: left;">One constant-dimension head realises every
+dip-induced alive set; softmax heads with positional biases or
+token-level forget gates need head dimension linear in the number of
+keys (Theorem 3.1).</td>
+<td style="text-align: left;">In the hard limit Selective Attention and
+DCP realise the same alive sets; the separation is in the
+scalar-per-position bias and in depth versus duration.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Selectivity</td>
+<td style="text-align: left;">A later token can erase a newer key while
+preserving older ones (the alive set is a stack); FoX is the special
+case of a non-rising walk.</td>
+<td style="text-align: left;">Requires the straight-through soft-minimum
+gradient; the inner minimum can otherwise close early in training.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cost</td>
+<td style="text-align: left;"><span
+class="math inline">\(0.97\times\)</span> SDPA training time; two extra
+scalars per cached key/head (<span
+class="math inline">\(+1.56\%\)</span>); exact <span
+class="math inline">\(O(t)\)</span> decode; dead keys are evictable down
+to <span class="math inline">\(\sim\)</span>26–34% of the cache at
+negligible loss.</td>
+<td style="text-align: left;">Quadratic attention remains; the paper’s
+fused Triton kernel is not reproduced here (the reference implementation
+materialises the <span class="math inline">\(T\times T\)</span>
+bias).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Evidence</td>
+<td style="text-align: left;">110M LM matches FoX in perplexity and
+retrieves passkeys at <span class="math inline">\(8\times\)</span>–<span
+class="math inline">\(16\times\)</span> the training length;
+preregistered one-layer probes agree with the theory.</td>
+<td style="text-align: left;">One seed per 110M model; a first-layer
+bias hurt multi-query associative recall unless removed.</td>
+</tr>
+</tbody>
+</table>
+</div>
 <h2 id="unified-gating-principle">Unified Gating Principle</h2>
-<p>All eight architectures share a common principle: <strong>gating is a
+<p>All nine architectures share a common principle: <strong>gating is a
 mechanism to control information flow and selective memory
 retention</strong>. The specific design choices diverge along several
 dimensions:</p>
 <ol>
 <li><p><strong>Location of gating</strong>: Recurrent state updates
 (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2) versus softmax
-logit/output space (FoX, Gated Softmax, RetNet).</p></li>
+logit/output space (FoX, Gated Softmax, FPA, RetNet).</p></li>
 <li><p><strong>Granularity of control</strong>: Dimension-wise (GLA,
 HGRN2 diagonal), key-specific (DeltaNet), token-wise (FoX), head-wise
-(Gated Softmax), or channel-wise decoupled erase/write (Gated
-DeltaNet-2).</p></li>
+(Gated Softmax), channel-wise decoupled erase/write (Gated DeltaNet-2),
+or a per-key level compared against a head-specific field
+(FPA).</p></li>
 <li><p><strong>Data dependence</strong>: Fully data-dependent (GLA,
-DeltaNet, Gated DeltaNet, Gated DeltaNet-2, FoX, Gated Softmax) versus
-fixed schedules (RetNet with exponential decay).</p></li>
+DeltaNet, Gated DeltaNet, Gated DeltaNet-2, FoX, Gated Softmax, FPA)
+versus fixed schedules (RetNet with exponential decay).</p></li>
+<li><p><strong>Aggregation along the key–query path</strong>: No path
+term (Gated Softmax), a sum of log-forget gates (FoX), or a range
+minimum of a learned field (FPA) — sums accumulate with duration,
+extrema depend only on the deepest dip.</p></li>
 <li><p><strong>Expressiveness trade-off</strong>: Linear recurrent
 efficiency (GLA, DeltaNet, Gated DeltaNet, Gated DeltaNet-2, HGRN2,
-RetNet) versus full softmax expressiveness (FoX, Gated
-Softmax).</p></li>
+RetNet) versus full softmax expressiveness (FoX, Gated Softmax,
+FPA).</p></li>
 </ol>
 <h2 id="implementation-and-practical-guidance">Implementation and
 Practical Guidance</h2>
@@ -13285,6 +13603,10 @@ softmax is not desired.</p></li>
 <li><p><strong>Gated Softmax</strong>: Quick improvement to existing
 softmax models with minimal code changes; best for practitioners wanting
 immediate gains without major refactoring.</p></li>
+<li><p><strong>FPA</strong>: Long-context and structured sequences where
+a later event invalidates recent tokens but not older ones (delimiters,
+backspaces, reassignment); when softmax quality and exact KV decoding
+are required and a small per-head scalar state is acceptable.</p></li>
 </ol>
 <h3 id="hardware-considerations">Hardware Considerations</h3>
 <table>
@@ -15542,11 +15864,10 @@ mixers (<code>longformer</code>, <code>bigbird</code>,
 (RoPE on the scoring pair only; values are built from the unrotated
 keys).</p></li>
 <li><p><strong>False</strong> (recurrent/decay mixers):
-<code>retnet</code>, <code>retnet</code>, <code>mamba</code>,
-<code>ode</code>, <code>gla</code>, <code>deltanet</code>,
-<code>gated_deltanet</code>, <code>gated_deltanet2</code>,
-<code>hgrn2</code>, <code>fox</code>, <code>kda</code>,
-<code>mtla</code>.</p></li>
+<code>retnet</code>, <code>mamba</code>, <code>ode</code>,
+<code>gla</code>, <code>deltanet</code>, <code>gated_deltanet</code>,
+<code>gated_deltanet2</code>, <code>hgrn2</code>, <code>fox</code>,
+<code>fpa</code>, <code>kda</code>, <code>mtla</code>.</p></li>
 </ul>
 <p>The <code>False</code> default for recurrent/decay mixers reflects
 that these architectures bake their own temporal/positional inductive
@@ -16238,10 +16559,10 @@ class="math display">\[\mathcal{O}\!\left(S^2 +
 \sum_{t=0}^{T-1}(S+t)\right) \;=\; \mathcal{O}\!\left(S^2 + TS +
 T^2\right).\]</span> The difference is the familiar one between
 re-encoding a conversation and continuing it.</p>
-<p>The subsystem covers every one of the forty-eight dispatchable layer
-types. Thirty have parity-tested incremental branches; the remainder are
-registered with an explicit, paper-based rationale for running uncached
-(§<a href="#sec:kv-fallbacks" data-reference-type="ref"
+<p>The subsystem covers every one of the forty-nine dispatchable layer
+types. Thirty-one have parity-tested incremental branches; the remainder
+are registered with an explicit, paper-based rationale for running
+uncached (§<a href="#sec:kv-fallbacks" data-reference-type="ref"
 data-reference="sec:kv-fallbacks">28.4.5</a>). Quantization and eviction
 are orthogonal to the mixer mathematics: codecs transform tensors at
 <em>write</em> time and policies act at <em>read</em> time, so the same
@@ -16502,6 +16823,19 @@ token and evaluates a single row of <span
 class="math inline">\(D\)</span> against the cached column <span
 class="citation"
 data-cites="lin_forgetting_transformer_2025"></span>.</p></li>
+<li><p><strong>First passage attention.</strong> The logit bias is <span
+class="math inline">\(\beta\min(0,\min_{s&lt;u\le
+t}\phi_u-\psi_s)\)</span>, a range minimum of a per-token field <span
+class="math inline">\(\phi\)</span> below the key’s level <span
+class="math inline">\(\psi\)</span>. The cache stores <em>two</em>
+scalars per token and head as extras (<span
+class="math inline">\(\phi_u\)</span> and <span
+class="math inline">\(\psi_s\)</span>); decode updates <span
+class="math inline">\(\bar{\phi}_{t,s}=\min(\bar{\phi}_{t-1,s},\phi_t)\)</span>
+in <span class="math inline">\(O(t)\)</span> and evaluates one bias row
+against the cached levels, which is exact (Proposition 2.4(b)). Dead
+keys (bias below a threshold) never revive, so they are evictable <span
+class="citation" data-cites="liu_first_passage_2026"></span>.</p></li>
 <li><p><strong>Titans.</strong> The implemented layer is the attention
 window; the memory module is outside the cached path. Standard
 append/read applies <span class="citation"
@@ -17343,7 +17677,7 @@ Attention mixers &amp; <code>standard</code>, <code>titan</code>,
 <code>gqla</code>, <code>mlra</code>, <code>tucker</code>,
 <code>iha</code>, <code>gta</code>, <code>mtla</code>, <code>cca</code>,
 <code>ccgqa</code>, <code>gma</code>); gated
-(<code>gated_softmax</code>, <code>fox</code>); sparse
+(<code>gated_softmax</code>, <code>fox</code>, <code>fpa</code>); sparse
 (<code>fasa</code>, <code>sparge</code>, <code>msa</code>,
 <code>nsa</code>, <code>bigbird</code>, <code>longformer</code>,
 <code>sparse_transformer</code>, <code>sparsek</code>, <code>swa</code>,
@@ -18366,7 +18700,7 @@ head keeps <span class="math inline">\(3.94\)</span>M, leaving <span
 class="math inline">\(4.15\)</span>M total parameters—the paper’s own
 accounting, where the head is dropped only for deployment.</p>
 <p>Table <a href="#tab:eelbert-results" data-reference-type="ref"
-data-reference="tab:eelbert-results">16</a> summarises the reference
+data-reference="tab:eelbert-results">18</a> summarises the reference
 results reported by <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results">
@@ -18562,7 +18896,7 @@ Nothing in this chain needs a GPU.</figcaption>
 </figure>
 <h2 id="the-stage-ledger-of-round-2">The Stage Ledger of Round 2</h2>
 <p>Table <a href="#tab:stage-ledger" data-reference-type="ref"
-data-reference="tab:stage-ledger">17</a> reproduces the ledger. Training
+data-reference="tab:stage-ledger">19</a> reproduces the ledger. Training
 dominates both the record count and the cost: 1<span>,</span>039
 attempts, of which 868 succeeded and 171 failed, with a median of 68
 minutes and a P90 of 84 minutes per attempt—906 CPU-hours in total, of
@@ -18765,7 +19099,7 @@ driven by the <code>engram</code> memory bank, which attaches a large
 key–value table to the attention block.</p>
 <p>The composition chart (Figure <a href="#fig:r2-params-composition"
 data-reference-type="ref"
-data-reference="fig:r2-params-composition">88</a>) is the most useful
+data-reference="fig:r2-params-composition">89</a>) is the most useful
 diagnostic of the section. The token embeddings and the output head are
 fixed costs of roughly 49k parameters each, so almost every difference
 between configurations is paid in the attention block and the FFN—the
@@ -18807,9 +19141,9 @@ with four evaluation sentences, a single lucky or unlucky token rewrites
 the ranking. Both signals are therefore reported throughout, and the
 inference tables should be read as a catastrophic-failure check rather
 than as a leaderboard. Table <a href="#tab:r2-top-loss"
-data-reference-type="ref" data-reference="tab:r2-top-loss">18</a> lists
+data-reference-type="ref" data-reference="tab:r2-top-loss">20</a> lists
 the ten best pairs by final loss and Table <a href="#tab:r2-top-acc"
-data-reference-type="ref" data-reference="tab:r2-top-acc">19</a> the ten
+data-reference-type="ref" data-reference="tab:r2-top-acc">21</a> the ten
 best by held-out accuracy; the two tables have no pair in common.</p>
 <div id="tab:r2-top-loss">
 <table>
@@ -19062,7 +19396,7 @@ the median clip ratio is 0.90.</figcaption>
 <h2 id="the-atimesb-atlas">The A<span
 class="math inline">\(\times\)</span>B Atlas</h2>
 <p>The atlas (Figure <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">96</a>) is
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">97</a>) is
 the centrepiece of the experiment: a matrix in which each cell is one
 hybrid pair, rows index the first mixer, columns index the second, and
 colour encodes the final loss. It is read in two directions. Column by
@@ -19096,7 +19430,7 @@ train.</figcaption>
 </figure>
 <h4 id="which-second-mixer-to-pick.">Which second mixer to pick.</h4>
 <p>Table <a href="#tab:r2-best-b" data-reference-type="ref"
-data-reference="tab:r2-best-b">20</a> ranks second mixers by mean final
+data-reference="tab:r2-best-b">22</a> ranks second mixers by mean final
 loss across every pair that contains them. The <em>Pairs</em> column is
 the sample size behind each mean and should be read alongside it: a
 single-pair mean (for example <code>mamba</code>, with one pair) is
@@ -19381,7 +19715,7 @@ not a substitute for held-out evaluation.</figcaption>
 <p>The optimizer sweep is the most sobering chart of the round: 23
 optimizers, the same 210k backbone, and a final-loss range of only
 10.10–10.77 nats (Table <a href="#tab:r2-optimizers"
-data-reference-type="ref" data-reference="tab:r2-optimizers">22</a>).
+data-reference-type="ref" data-reference="tab:r2-optimizers">24</a>).
 <code>q_apollo</code> wins at 10.098 and <code>galore_adamw</code>
 closes the table at 10.772, but a dozen optimizers land on exactly
 10.404—the run is too short for the choice of optimizer to separate from
@@ -19560,12 +19894,12 @@ overhead.</figcaption>
 <h4 id="normalization-and-positional-encoding.">Normalization and
 positional encoding.</h4>
 <p>Among the normalizations (Table <a href="#tab:r2-norms"
-data-reference-type="ref" data-reference="tab:r2-norms">23</a>),
+data-reference-type="ref" data-reference="tab:r2-norms">25</a>),
 <code>flash_norm</code> wins clearly at 9.749 nats—half a nat ahead of
 the runner-up, a large margin by the standards of this round—while
 <code>prms_norm</code> and <code>rms_norm</code> lag. In the positional
 encodings (Table <a href="#tab:r2-pe" data-reference-type="ref"
-data-reference="tab:r2-pe">24</a>), the PAPE family
+data-reference="tab:r2-pe">26</a>), the PAPE family
 (<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
 sweeps the podium, and classical RoPE is mid-table. Both results are
 useful calibration: “modern” is not automatically better on a 100-epoch
@@ -19721,7 +20055,7 @@ classical RoPE is mid-table at this scale.</figcaption>
 </figure>
 <h4 id="structural-switches.">Structural switches.</h4>
 <p>The structural toggles (Table <a href="#tab:r2-trans"
-data-reference-type="ref" data-reference="tab:r2-trans">25</a>) separate
+data-reference-type="ref" data-reference="tab:r2-trans">27</a>) separate
 more than the optimizers do—evidence that, at this scale, architecture
 is a stronger lever than the update rule. The three wins are factorised
 embeddings (9.623), a SwiGLU FFN (9.901) and two Hyperloop loops
@@ -20084,7 +20418,7 @@ class="math inline">\(r = 1.00\)</span>), which is expected because the
 clip ratio is computed from the gradient norm, and neither correlates
 with quality.</p>
 <p>The correlation matrix of Figure <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">115</a> is
+data-reference-type="ref" data-reference="fig:r2-correlation">116</a> is
 computed over all 868 rows. Read that way, parameter count correlates
 with loss at <span class="math inline">\(-0.43\)</span> and with
 accuracy at <span class="math inline">\(+0.42\)</span>, apparently
