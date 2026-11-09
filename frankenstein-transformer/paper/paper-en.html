@@ -923,6 +923,9 @@ Normalization and Attention-Logit Control</a></li>
 <li><a href="#bitnet-ternary-quantization-path"
 id="toc-bitnet-ternary-quantization-path">BitNet Ternary Quantization
 Path</a></li>
+<li><a href="#sec:annex-block-affine"
+id="toc-sec:annex-block-affine">Block-Affine Quantization and
+Safetensors Export</a></li>
 <li><a href="#mixture-of-depths-mod-token-routing"
 id="toc-mixture-of-depths-mod-token-routing">Mixture-of-Depths (MoD)
 Token Routing</a>
@@ -1460,9 +1463,9 @@ class="citation"
 data-cites="zhu2025apollosgdlikememoryadamwlevel"></span>.</p></li>
 <li><p><strong>End-to-end workflows</strong>: training (including
 sentence-embedding objectives), deployment and export (quantized,
-standard, HuggingFace Transformers, and BitNet GGUF formats), inference,
-and a schema-driven web builder inspired by SBERT-style workflows <span
-class="citation"
+standard, HuggingFace safetensors at 8/4/2 bits, and BitNet GGUF
+formats), inference, and a schema-driven web builder inspired by
+SBERT-style workflows <span class="citation"
 data-cites="reimers_sentence-bert_2019"></span>.</p></li>
 <li><p><strong>Vision support</strong>: a Vision Transformer model class
 covering masked patch prediction, classification, and segmentation under
@@ -2043,15 +2046,34 @@ attention, feed-forward, normalization, heads, mHC, routers, residuals,
 and the remaining parameters).</figcaption>
 </figure>
 <h1 id="sec:quantization">Quantization and Deployment</h1>
-<p>The deploy stage converts a trained checkpoint into a compact
-artifact through ternary weight packing <span class="citation"
-data-cites="wang_bitnet_2023"></span> and INT8 activation scaling, with
-size estimates aligned with lightweight deployment goals <span
-class="citation"
-data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>. The
-same subcommand emits standard or quantized artifacts, or exports
-HuggingFace Transformers and BitNet GGUF formats for external runtimes.
-The formulations and size estimates are deferred to Appendix <a
+<p>The deploy stage converts a trained checkpoint into a deployment
+artifact through post-training quantization. BitNet-style ternary
+packing <span class="citation" data-cites="wang_bitnet_2023"></span> is
+complemented by two block-affine formats and a ternary safetensors
+format, all emitted inside a self-contained HuggingFace package whose
+only weight container is <code>model.safetensors</code>. In the
+block-affine formats, weights are grouped into blocks of 32:
+<code>Q8_</code> stores one FP16 scale and 32 signed 8-bit values per
+block (8.5 bits per weight), whereas <code>Q4_</code> stores one FP16
+scale and 16 packed nibbles (4.5 bits per weight). The ternary
+<code>i2_s</code> layout packs four symbols per byte and adds one FP32
+scale per tensor (2 bits per weight before the scale). These formats
+complement, rather than replace, the native standard and quantized
+artifacts and the BitNet GGUF export used by external runtimes.</p>
+<p>The safetensors artifact supports two load-time runtimes. In the
+<em>dequantize-on-load</em> runtime (v1), packed blocks are expanded to
+FP32 parameters while the model is loaded, so inference executes exactly
+like the unquantized backbone. In the <em>packed-linear</em> runtime
+(v2), each quantized projection keeps its packed buffers and dequantizes
+inside <code>forward</code>; when a projection replaces a BitLinear
+layer, the input LayerNorm and INT8 activation quantization are
+preserved. Only two-dimensional linear weights whose last dimension is a
+multiple of 32 are quantized; embeddings, normalization parameters,
+biases and convolutions remain in FP32, which bounds the achievable
+compression ratio. The experiment harness exports <code>Q8_</code>,
+<code>Q4_</code> and <code>i2_s</code> in both runtimes and reports
+their task accuracy alongside the unquantized export. The formulations,
+block layouts and size estimates are deferred to Appendix <a
 href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">20</a>.</p>
 <figure id="fig:deploy-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/deploy-flow.svg" alt="image" /></span></p>
@@ -2212,7 +2234,10 @@ declared as <code>layer_pattern: [A, B]</code>, a vision transformer, or
 an ablation of the backbone), the task, and the training budget. Because
 the file is the only input, any measurement can be traced back to the
 configuration that produced it, and any configuration can be re-run to
-reproduce its measurement.</p>
+reproduce its measurement. The current harness extends the export stage
+to <code>Q8_</code>, <code>Q4_</code> and <code>i2_s</code> safetensors
+variants in both load runtimes and records their task accuracy; the
+Round 2 tables below were produced before that extension.</p>
 <p>Three recorders observe the process independently and are joined only
 at reporting time: a per-step training log, a parameter census by module
 group, and a ledger with one row per stage execution. Independence is a
@@ -2598,9 +2623,14 @@ but makes specific engineering trade-offs. Ternary weight packing
 reduces storage to approximately <span
 class="math inline">\(1.58\)</span> bits per parameter, but this
 aggressive compression may degrade performance, especially for smaller
-models where quantization error is more significant. The current
-implementation applies quantization uniformly across parameter
-types.</p>
+models where quantization error is more significant. The safetensors
+exporter instead offers block-affine <code>Q8_</code> and
+<code>Q4_</code> formats (8.5 and 4.5 bits per weight) and applies all
+three only to two-dimensional linear weights whose input dimension is
+divisible by 32; embeddings, normalization parameters and biases remain
+in FP32, so the effective compression ratio depends on the linear
+fraction of the model. The packed-linear runtime keeps the artifact
+compact at the cost of a dequantization step in every forward pass.</p>
 <p>The SBERT workflows provide practical utility for semantic similarity
 and retrieval tasks, but implementation assumes standard pooling
 strategies (CLS token, mean pooling). Recent advances such as Matryoshka
@@ -2655,7 +2685,8 @@ AdamW, Prodigy), curvature-aware (Sophia), second-order (Shampoo, SOAP),
 geometry-oriented (Muon, Turbo-Muon, AF-Muon), and adaptivity-tunable
 (Anon) optimizers.</p></li>
 <li><p><strong>End-to-End Workflows</strong>: Integrated deployment
-pipeline supporting ternary weight packing and INT8 activation
+pipeline supporting ternary weight packing, block-affine 8/4-bit
+safetensors export at both load-time runtimes, and INT8 activation
 quantization; SBERT-inspired training and inference for semantic
 similarity, retrieval, and clustering tasks.</p></li>
 <li><p><strong>Interactive Configuration</strong>: Streamlit-based web
@@ -2678,11 +2709,10 @@ architectures (Griffin, Jamba, Mamba-X) demonstrate benefits of
 combining multiple mechanisms into unified blocks. Future versions
 should integrate these architectures and explore systematic composition
 patterns.</p></li>
-<li><p><strong>Advanced Quantization</strong>: Current implementation
-uses uniform ternary packing across all parameters. Research on
-layer-wise, channel-wise, and importance-aware quantization suggests
-more sophisticated strategies could improve quality-efficiency
-trade-offs.</p></li>
+<li><p><strong>Advanced Quantization</strong>: Current safetensors
+quantization is weight-only and packs two-dimensional linear weights,
+dequantizing without fused integer kernels; layer-wise, channel-wise and
+importance-aware policies remain future work.</p></li>
 <li><p><strong>Plugin-Based Extensibility</strong>: The current dispatch
 pattern becomes increasingly complex with each new addition. A plugin
 architecture allowing declarative registration of new mixers,
@@ -14225,6 +14255,43 @@ size}\approx 2N,\quad \text{1.58-bit size}\approx
 \frac{1.58}{8}N\]</span> which aligns with lightweight deployment goals
 <span class="citation"
 data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>.</p>
+<h2 id="sec:annex-block-affine">Block-Affine Quantization and
+Safetensors Export</h2>
+<p>The HuggingFace export applies block-affine quantization to every
+two-dimensional linear weight whose input dimension is a multiple of 32.
+Let <span class="math inline">\(w_1,\ldots,w_{32}\)</span> be one block.
+The <code>Q8_</code> layout stores <span
+class="math display">\[d=\frac{\max_i |w_i|}{127},\qquad
+q_i=\operatorname{round}\!\left(\frac{w_i}{d}\right)\in[-127,127],\]</span>
+as one FP16 scale plus 32 signed bytes (34 bytes per block, 8.5 bits per
+weight). The <code>Q4_</code> layout follows the signed-maximum
+convention: it selects the signed value <span
+class="math inline">\(m\)</span> with the largest magnitude, sets <span
+class="math inline">\(d=m/(-8)\)</span>, and stores <span
+class="math display">\[q_i=\min\!\bigl(15,\operatorname{trunc}(w_i/d+8.5)\bigr)\in[0,15],\]</span>
+as one FP16 scale plus 16 nibble bytes (18 bytes per block, 4.5 bits per
+weight). Element <span class="math inline">\(j\)</span> occupies the low
+nibble and element <span class="math inline">\(j+16\)</span> the high
+nibble; dequantization is <span class="math inline">\(\hat
+w_i=d\,(q_i-8)\)</span>. The ternary <code>i2_s</code> layout reuses the
+BitNet scale <span class="math inline">\(s=\text{mean}(|W|)\)</span> (or
+<span class="math inline">\(\max|W|\)</span> when the weights are
+already ternary), packs four symbols per byte, and adds one FP32 scale
+per tensor (2 bits per weight). Nominal storage is therefore <span
+class="math inline">\(8.5\)</span>, <span
+class="math inline">\(4.5\)</span> and <span
+class="math inline">\(2.0\)</span> bits per quantized linear weight,
+before tensor metadata.</p>
+<p>The safetensors artifact records the per-tensor format and original
+shape in <code>config.json</code>. Two runtimes consume it:
+<em>dequantize-on-load</em> (v1) reconstructs FP32 parameters while
+loading, while <em>packed-linear</em> (v2) keeps the packed buffers in a
+<code>PackedLinear</code> module and dequantizes in
+<code>forward</code>, preserving BitLinear’s input normalization and
+INT8 activation quantization when applicable. The exporter does not use
+fused integer kernels, and the experiment harness evaluates
+<code>Q8_</code>, <code>Q4_</code> and <code>i2_s</code> in both
+runtimes.</p>
 <h2 id="mixture-of-depths-mod-token-routing">Mixture-of-Depths (MoD)
 Token Routing</h2>
 <p>When <code>use_mixture_of_depths=true</code>, each transformer block

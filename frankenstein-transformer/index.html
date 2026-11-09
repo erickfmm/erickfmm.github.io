@@ -997,6 +997,10 @@ pre {
         <div><label for="opt-deploy-format">--format</label><select id="opt-deploy-format" onchange="updateCmdPreview()"><option value="">(default: quantized)</option><option value="--format quantized">quantized</option><option value="--format standard">standard</option><option value="--format transformers">transformers</option><option value="--format gguf">gguf</option></select></div>
         <div><label for="opt-deploy-yaml">--yaml</label><input type="text" id="opt-deploy-yaml" oninput="updateCmdPreview()" placeholder="config.yaml (required for transformers/gguf)"></div>
         <div><label for="opt-deploy-config">--config</label><input type="text" id="opt-deploy-config" oninput="updateCmdPreview()" placeholder="model.json (standard/quantized only)"></div>
+        <div id="opt-deploy-quant-wrap" style="display:none">
+          <div><label for="opt-deploy-quant">--quant</label><select id="opt-deploy-quant" onchange="updateCmdPreview()"><option value="">(default: none)</option><option value="--quant q8_0">q8_0 — 8.5 bpw</option><option value="--quant q4_0">q4_0 — 4.5 bpw</option><option value="--quant i2_s">i2_s — BitNet 2 bpw</option></select></div>
+          <div><label for="opt-deploy-quant-runtime">--quant-runtime</label><select id="opt-deploy-quant-runtime" onchange="updateCmdPreview()"><option value="">(default: dequantize_on_load)</option><option value="--quant-runtime dequantize_on_load">dequantize_on_load (v1)</option><option value="--quant-runtime quantized_linear">quantized_linear (v2)</option></select></div>
+        </div>
         <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-validate" onchange="updateCmdPreview()"><label for="opt-deploy-validate">--validate</label></div>
         <div class="checkbox-wrap"><input type="checkbox" id="opt-deploy-check" onchange="updateCmdPreview()"><label for="opt-deploy-check">--check (gguf compatibility check only)</label></div>
       </div>
@@ -2970,7 +2974,7 @@ function updateCmdPreview() {
   if (info) {
     const infoText = {
       train: 'Runs schema-validated training from the generated YAML (YAML is the source of truth; --device is the runtime override).',
-      deploy: 'Converts a checkpoint to deployment artifacts, or exports transformers/gguf. --yaml is required for export formats; --config (JSON) applies to standard/quantized.',
+      deploy: 'Converts a checkpoint to deployment artifacts, or exports transformers/gguf. --yaml is required for export formats; --config (JSON) applies to standard/quantized. transformers exports model.safetensors and accepts --quant q8_0|q4_0|i2_s with --quant-runtime dequantize_on_load|quantized_linear.',
       infer: 'Runs a deployed encoder (mlm), autoregressive generation (causal_lm), or a trained SBERT model (sbert).',
       'web-server': 'Launches the Streamlit YAML builder. No config or device flag is needed.'
     };
@@ -2995,6 +2999,15 @@ function updateCmdPreview() {
     if (out) addFlag(extraFlags, '--output', out.value);
     const fmt = document.getElementById('opt-deploy-format');
     if (fmt && fmt.value) extraFlags.push(fmt.value);
+    const quantWrap = document.getElementById('opt-deploy-quant-wrap');
+    const isTransformers = fmt && fmt.value === '--format transformers';
+    if (quantWrap) quantWrap.style.display = isTransformers ? 'block' : 'none';
+    if (isTransformers) {
+      const quant = document.getElementById('opt-deploy-quant');
+      if (quant && quant.value) extraFlags.push(quant.value);
+      const quantRuntime = document.getElementById('opt-deploy-quant-runtime');
+      if (quantRuntime && quantRuntime.value) extraFlags.push(quantRuntime.value);
+    }
     const yml = document.getElementById('opt-deploy-yaml');
     if (yml) addFlag(extraFlags, '--yaml', yml.value);
     const cfg = document.getElementById('opt-deploy-config');

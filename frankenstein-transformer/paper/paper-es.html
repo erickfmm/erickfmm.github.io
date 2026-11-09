@@ -945,6 +945,9 @@ Logits de Atención</a></li>
 <li><a href="#ruta-de-cuantización-ternaria-bitnet"
 id="toc-ruta-de-cuantización-ternaria-bitnet">Ruta de Cuantización
 Ternaria BitNet</a></li>
+<li><a href="#sec:annex-block-affine"
+id="toc-sec:annex-block-affine">Cuantización Afín por Bloques y
+Exportación Safetensors</a></li>
 <li><a href="#enrutamiento-de-tokens-mixture-of-depths-mod"
 id="toc-enrutamiento-de-tokens-mixture-of-depths-mod">Enrutamiento de
 Tokens Mixture-of-Depths (MoD)</a>
@@ -1496,9 +1499,9 @@ data-cites="zhu2025apollosgdlikememoryadamwlevel"></span>.</p></li>
 <li><p><strong>Flujos de trabajo de extremo a extremo</strong>:
 entrenamiento (incluidos objetivos de embeddings de oraciones),
 despliegue y exportación (formatos cuantizado, estándar, HuggingFace
-Transformers y BitNet GGUF), inferencia y un constructor web generado
-desde el esquema, inspirado en flujos de trabajo estilo SBERT <span
-class="citation"
+safetensors a 8/4/2 bits y BitNet GGUF), inferencia y un constructor web
+generado desde el esquema, inspirado en flujos de trabajo estilo SBERT
+<span class="citation"
 data-cites="reimers_sentence-bert_2019"></span>.</p></li>
 <li><p><strong>Soporte de visión</strong>: una clase de modelo Vision
 Transformer que cubre predicción de parches enmascarados, clasificación
@@ -2129,15 +2132,37 @@ parámetros).</figcaption>
 </figure>
 <h1 id="sec:quantization">Cuantización y Despliegue</h1>
 <p>La etapa de despliegue convierte un checkpoint entrenado en un
-artefacto compacto mediante empaquetado ternario de pesos <span
-class="citation" data-cites="wang_bitnet_2023"></span> y escalado de
-activaciones INT8, con estimaciones de tamaño alineadas con objetivos de
-despliegue ligero <span class="citation"
-data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>. El
-mismo subcomando emite artefactos estándar o cuantizados, o exporta
-formatos HuggingFace Transformers y BitNet GGUF para runtimes externos.
-Las formulaciones y las estimaciones de tamaño se remiten al Apéndice <a
-href="#sec:annex-norm-bitnet-mod" data-reference-type="ref"
+artefacto de despliegue mediante cuantización post-entrenamiento. Al
+empaquetado ternario estilo BitNet <span class="citation"
+data-cites="wang_bitnet_2023"></span> se suman dos formatos afines por
+bloques y un formato ternario en safetensors, todos emitidos dentro de
+un paquete HuggingFace autocontenido cuyo único contenedor de pesos es
+<code>model.safetensors</code>. En los formatos afines por bloques, los
+pesos se agrupan en bloques de 32: <code>Q8_</code> almacena una escala
+FP16 y 32 valores con signo de 8 bits por bloque (8.5 bits por peso),
+mientras que <code>Q4_</code> almacena una escala FP16 y 16 nibbles
+empaquetados (4.5 bits por peso). El formato ternario <code>i2_s</code>
+empaqueta cuatro símbolos por byte y añade una escala FP32 por tensor (2
+bits por peso antes de la escala). Estos formatos complementan, y no
+reemplazan, los artefactos nativos estándar y cuantizado ni la
+exportación BitNet GGUF para runtimes externos.</p>
+<p>El artefacto safetensors admite dos runtimes de carga. En el runtime
+<em>dequantize-on-load</em> (v1), los bloques empaquetados se expanden a
+parámetros FP32 durante la carga, de modo que la inferencia se ejecuta
+igual que el backbone sin cuantizar. En el runtime
+<em>packed-linear</em> (v2), cada proyección cuantizada conserva sus
+búferes empaquetados y des-cuantiza dentro de <code>forward</code>;
+cuando una proyección reemplaza a una capa BitLinear, se preservan el
+LayerNorm de entrada y la cuantización INT8 de activaciones. Solo se
+cuantizan pesos lineales bidimensionales cuya última dimensión es
+múltiplo de 32; los embeddings, los parámetros de normalización, los
+sesgos y las convoluciones permanecen en FP32, lo que acota la
+compresión alcanzable. El harness experimental exporta <code>Q8_</code>,
+<code>Q4_</code> e <code>i2_s</code> en ambos runtimes y reporta su
+exactitud de tarea junto a la exportación sin cuantizar. Las
+formulaciones, los diseños de bloque y las estimaciones de tamaño se
+remiten al Apéndice <a href="#sec:annex-norm-bitnet-mod"
+data-reference-type="ref"
 data-reference="sec:annex-norm-bitnet-mod">20</a>.</p>
 <figure id="fig:deploy-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/deploy-flow.svg" alt="image" /></span></p>
 
@@ -2306,7 +2331,11 @@ mezclador, un par de mezcladores declarado como
 ablación del esqueleto), la tarea y el presupuesto de entrenamiento.
 Como el archivo es la única entrada, toda medición puede rastrearse
 hasta la configuración que la produjo, y toda configuración puede volver
-a correrse para reproducir su medición.</p>
+a correrse para reproducir su medición. El harness actual extiende la
+etapa de exportación a variantes safetensors <code>Q8_</code>,
+<code>Q4_</code> e <code>i2_s</code> en ambos runtimes de carga y
+registra su exactitud de tarea; las tablas de la Ronda 2 que siguen se
+produjeron antes de esa extensión.</p>
 <p>Tres registradores observan el proceso de forma independiente y se
 unen solo al momento del reporte: un log de entrenamiento paso a paso,
 un censo de parámetros por grupo de módulos y un libro con una fila por
@@ -2717,8 +2746,14 @@ empaquetado ternario de pesos reduce el almacenamiento a aproximadamente
 <span class="math inline">\(1.58\)</span> bits por parámetro, pero esta
 compresión agresiva puede degradar el rendimiento, especialmente para
 modelos más pequeños donde el error de cuantización es más
-significativo. La implementación actual aplica cuantización uniforme
-entre todos los tipos de parámetros.</p>
+significativo. El exportador safetensors ofrece además formatos afines
+por bloques <code>Q8_</code> y <code>Q4_</code> (8.5 y 4.5 bits por
+peso) y aplica los tres solo a pesos lineales bidimensionales cuya
+dimensión de entrada es divisible por 32; los embeddings, los parámetros
+de normalización y los sesgos permanecen en FP32, por lo que la
+compresión efectiva depende de la fracción lineal del modelo. El runtime
+packed-linear mantiene el artefacto compacto a costa de un paso de
+des-cuantización en cada pase forward.</p>
 <p>Los flujos de trabajo SBERT proporcionan utilidad práctica para
 tareas de similitud semántica y recuperación, pero la implementación
 asume estrategias de pooling estándar (token CLS, pooling promedio).
@@ -2778,9 +2813,10 @@ APOLLO-Mini, Q-APOLLO), lotes grandes y simplificación de programación
 segundo orden (Shampoo, SOAP), orientados a geometría (Muon, Turbo-Muon,
 AF-Muon) y adaptividad ajustable (Anon).</p></li>
 <li><p><strong>Flujos de Trabajo de Extremo a Extremo</strong>: Pipeline
-de despliegue integrado que soporta empaquetado ternario de pesos y
-cuantización de activaciones INT8; entrenamiento e inferencia inspirados
-en SBERT para similitud semántica, recuperación y tareas de
+de despliegue integrado que soporta empaquetado ternario de pesos,
+exportación safetensors afín por bloques a 8/4 bits en ambos runtimes de
+carga y cuantización de activaciones INT8; entrenamiento e inferencia
+inspirados en SBERT para similitud semántica, recuperación y tareas de
 clustering.</p></li>
 <li><p><strong>Configuración Interactiva</strong>: Interfaz web basada
 en Streamlit que proporciona generación de formularios impulsada por
@@ -2804,11 +2840,11 @@ híbridas recientes (Griffin, Jamba, Mamba-X) demuestran beneficios de
 combinar múltiples mecanismos en bloques unificados. Versiones futuras
 deberían integrar estas arquitecturas y explorar patrones de composición
 sistemática.</p></li>
-<li><p><strong>Cuantización Avanzada</strong>: La implementación actual
-utiliza empaquetado ternario uniforme en todos los parámetros. La
-investigación sobre cuantización por capas, por canales y consciente de
-importancia sugiere que estrategias más sofisticadas podrían mejorar los
-compromisos calidad-eficiencia.</p></li>
+<li><p><strong>Cuantización Avanzada</strong>: La cuantización
+safetensors actual es solo de pesos y empaqueta pesos lineales
+bidimensionales, des-cuantizando sin kernels enteros fusionados; las
+políticas por capas, por canales y conscientes de importancia quedan
+como trabajo futuro.</p></li>
 <li><p><strong>Extensibilidad Basada en Plugins</strong>: El patrón de
 despacho actual se vuelve cada vez más complejo con cada nueva adición.
 Una arquitectura de plugins que permita el registro declarativo de
@@ -14766,6 +14802,44 @@ FP16}\approx 2N,\quad \text{Tamaño 1.58-bit}\approx
 \frac{1.58}{8}N\]</span> lo que se alinea con objetivos de despliegue
 ligero <span class="citation"
 data-cites="samson_lightweight_2026 bravin_embbert_2026"></span>.</p>
+<h2 id="sec:annex-block-affine">Cuantización Afín por Bloques y
+Exportación Safetensors</h2>
+<p>La exportación a HuggingFace aplica cuantización afín por bloques a
+cada peso lineal bidimensional cuya dimensión de entrada es múltiplo de
+32. Sean <span class="math inline">\(w_1,\ldots,w_{32}\)</span> un
+bloque. El diseño <code>Q8_</code> almacena <span
+class="math display">\[d=\frac{\max_i |w_i|}{127},\qquad
+q_i=\operatorname{round}\!\left(\frac{w_i}{d}\right)\in[-127,127],\]</span>
+como una escala FP16 más 32 bytes con signo (34 bytes por bloque, 8.5
+bits por peso). El diseño <code>Q4_</code> sigue la convención del
+máximo con signo: selecciona el valor con signo <span
+class="math inline">\(m\)</span> de mayor magnitud, fija <span
+class="math inline">\(d=m/(-8)\)</span> y almacena <span
+class="math display">\[q_i=\min\!\bigl(15,\operatorname{trunc}(w_i/d+8.5)\bigr)\in[0,15],\]</span>
+como una escala FP16 más 16 bytes de nibbles (18 bytes por bloque, 4.5
+bits por peso). El elemento <span class="math inline">\(j\)</span> ocupa
+el nibble bajo y el elemento <span class="math inline">\(j+16\)</span>
+el nibble alto; la des-cuantización es <span class="math inline">\(\hat
+w_i=d\,(q_i-8)\)</span>. El diseño ternario <code>i2_s</code> reutiliza
+la escala de BitNet <span
+class="math inline">\(s=\text{mean}(|W|)\)</span> (o <span
+class="math inline">\(\max|W|\)</span> si los pesos ya son ternarios),
+empaqueta cuatro símbolos por byte y añade una escala FP32 por tensor (2
+bits por peso). El almacenamiento nominal es, por tanto, de <span
+class="math inline">\(8.5\)</span>, <span
+class="math inline">\(4.5\)</span> y <span
+class="math inline">\(2.0\)</span> bits por peso lineal cuantizado,
+antes de los metadatos del tensor.</p>
+<p>El artefacto safetensors registra el formato y la forma original de
+cada tensor en <code>config.json</code>. Dos runtimes lo consumen:
+<em>dequantize-on-load</em> (v1) reconstruye parámetros FP32 durante la
+carga, mientras que <em>packed-linear</em> (v2) conserva los búferes
+empaquetados en un módulo <code>PackedLinear</code> y des-cuantiza en
+<code>forward</code>, preservando la normalización de entrada y la
+cuantización INT8 de activaciones de BitLinear cuando corresponde. El
+exportador no utiliza kernels enteros fusionados, y el harness
+experimental evalúa <code>Q8_</code>, <code>Q4_</code> e
+<code>i2_s</code> en ambos runtimes.</p>
 <h2 id="enrutamiento-de-tokens-mixture-of-depths-mod">Enrutamiento de
 Tokens Mixture-of-Depths (MoD)</h2>
 <p>Cuando <code>use_mixture_of_depths=true</code>, cada bloque del
