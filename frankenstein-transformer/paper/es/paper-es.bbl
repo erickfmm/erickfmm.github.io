@@ -1,4 +1,4 @@
-\begin{thebibliography}{148}
+\begin{thebibliography}{149}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -470,6 +470,11 @@ Daan Kerssies, Quentin Sartenaer, Fabio Ferraro, Gabriel~Y. da~Silva,
   Twardowski, Joost van~de Weijer, Robert Dangovski, and Luca Berton.
 \newblock {Your ViT is Secretly an Image Segmentation Model}, 2025.
 \newblock URL \url{http://arxiv.org/abs/2503.19108}.
+
+\bibitem[Khadangi(2026)]{khadangi_continuum_2026}
+Afshin Khadangi.
+\newblock Continuum attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2610.20586}.
 
 \bibitem[Khosla et~al.(2020)Khosla, Teterwak, Wang, Sarna, Tian, Isola,
   Maschinot, Liu, and Krishnan]{chen_supervised_2020}

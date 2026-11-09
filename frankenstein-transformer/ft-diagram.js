@@ -4,6 +4,7 @@ var FTDiagram = (function () {
     var CATS = {
         standard: { c: 'attn', l: 'Standard Attention' },
         sigmoid: { c: 'attn', l: 'Sigmoid Attention' },
+        ca: { c: 'attn', l: 'Continuum Attn' },
         memory: { c: 'mem', l: 'Memory Attention' },
         gated_softmax: { c: 'attn', l: 'Gated Softmax Attn' },
         titan: { c: 'attn', l: 'Titan Attention' },
@@ -119,6 +120,16 @@ var FTDiagram = (function () {
             { n: 'scores = QKᵀ/√d + b [B,nh,n]', c: 'attn', e: 'QKᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,H]'] },
             { n: 'A = σ(scores)', c: 'attn', e: 'sigmoid', from: ['scores = QKᵀ/√d + b [B,nh,n]'] },
             { n: 'O = A·V [B,n,H]', c: 'attn', e: 'A·V', from: ['A = σ(scores)', 'V = Wv·x [B,n,H]'] }
+        ],
+        ca: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
+            { n: 'K = Wk·x [B,n,H]', c: 'attn', e: 'Wk', from: ['x'] },
+            { n: 'V = Wv·x [B,n,H]', c: 'attn', e: 'Wv', from: ['x'] },
+            { n: 'a,b = γQKᵀ/√d endpoints [B,nh,n,n]', c: 'attn', e: 'γQKᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,H]'] },
+            { n: 'M = eᵃJ₀(Δ), μ = J₁/J₀ [B,nh,n,n]', c: 'attn', e: 'moments', from: ['a,b = γQKᵀ/√d endpoints [B,nh,n,n]'] },
+            { n: 'w = caps + segments, Σw=1', c: 'attn', e: 'normalize', from: ['M = eᵃJ₀(Δ), μ = J₁/J₀ [B,nh,n,n]'] },
+            { n: 'O = Wo·(w·V) [B,n,H]', c: 'attn', e: 'Wo', from: ['w = caps + segments, Σw=1', 'V = Wv·x [B,n,H]'] }
         ],
         memory: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },

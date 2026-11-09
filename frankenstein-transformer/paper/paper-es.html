@@ -210,7 +210,7 @@ Presentamos Frankenstein Transformer, un conjunto de herramientas CLI
 basado en configuración (<code>frankenstein-transformer</code>) que
 unifica la definición, el entrenamiento, el despliegue y la inferencia
 de modelos tras un único esquema YAML estricto. El conjunto de
-herramientas cubre cuarenta y siete mezcladores de secuencia en diez
+herramientas cubre cuarenta y ocho mezcladores de secuencia en diez
 familias y veinticuatro familias de optimizadores con control de
 hiperparámetros por grupo de parámetros, y soporta clases de modelo
 encoder, decoder, Vision Transformer y audio para masked language
@@ -483,9 +483,9 @@ Poblacionales</a></li>
 id="toc-sec:annex-transformer">Transformadores Densos, Recurrentes y
 Aumentados con Memoria</a>
 <ul>
-<li><a href="#atención-densa-de-referencia-estándar-y-sigmoide"
-id="toc-atención-densa-de-referencia-estándar-y-sigmoide">Atención Densa
-de Referencia: Estándar y Sigmoide</a>
+<li><a href="#atención-densa-de-referencia-estándar-sigmoide-y-continua"
+id="toc-atención-densa-de-referencia-estándar-sigmoide-y-continua">Atención
+Densa de Referencia: Estándar, Sigmoide y Continua</a>
 <ul>
 <li><a href="#atención-softmax-estándar"
 id="toc-atención-softmax-estándar">Atención Softmax Estándar</a></li>
@@ -494,6 +494,8 @@ Sigmoide</a></li>
 <li><a href="#atención-por-consultas-agrupadas-gqa"
 id="toc-atención-por-consultas-agrupadas-gqa">Atención por Consultas
 Agrupadas (GQA)</a></li>
+<li><a href="#atención-continua" id="toc-atención-continua">Atención
+Continua</a></li>
 </ul></li>
 <li><a href="#memoria-indexada-por-token-memory-attention"
 id="toc-memoria-indexada-por-token-memory-attention">Memoria Indexada
@@ -1439,7 +1441,7 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cuarenta y siete mezcladores de secuencia en diez
+estricto que soporta cuarenta y ocho mezcladores de secuencia en diez
 familias y veinticuatro familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
@@ -1857,13 +1859,13 @@ data-reference-type="ref" data-reference="sec:annex-mhc">22</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
-<p>El sistema implementa cuarenta y siete mezcladores de secuencia
+<p>El sistema implementa cuarenta y ocho mezcladores de secuencia
 organizados en diez categorías funcionales que reflejan cómo cada método
 equilibra expresividad, costo computacional y memoria.</p>
 <ol>
-<li><p><strong>Líneas base densas</strong> (3): atención softmax
-estándar, atención sigmoide y Grouped-Query Attention (GQA) ofrecen
-enrutamiento global completo a costo cuadrático.</p></li>
+<li><p><strong>Líneas base densas</strong> (4): atención softmax
+estándar, atención sigmoide, Atención Continua y Grouped-Query Attention
+(GQA) ofrecen enrutamiento global completo a costo cuadrático.</p></li>
 <li><p><strong>Recurrentes y retentivas</strong> (4): RetNet, Mamba,
 bloques tipo ODE y Titans mantienen estado para inferencia en tiempo
 constante mediante recurrencia, espacios de estados selectivos,
@@ -1907,23 +1909,26 @@ data-reference="sec:annex-17">30</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
-<figcaption>Taxonomía de los cuarenta y siete mezcladores de secuencia
-en diez categorías funcionales. Las líneas base densas ofrecen
-enrutamiento global completo a costo cuadrático; los métodos recurrentes
-comprimen el estado para inferencia en tiempo constante; las variantes
-dispersas restringen el patrón de atención; los mecanismos con compuerta
-modulan retención y olvido; los métodos latentes comprimen las
-representaciones clave–valor; la memoria condicional añade búsquedas de
-lectura/escritura en tiempo de prueba; la memoria indexada por token
-traslada capacidad de valores a tablas de búsqueda; los métodos de peso
-rápido formulan la transición de estado como una regla de aprendizaje en
-línea; los métodos geométricos codifican priors
-estructurados.</figcaption>
+<figcaption>Taxonomía de los cuarenta y ocho mezcladores de secuencia en
+diez categorías funcionales. Las líneas base densas ofrecen enrutamiento
+global completo a costo cuadrático; los métodos recurrentes comprimen el
+estado para inferencia en tiempo constante; las variantes dispersas
+restringen el patrón de atención; los mecanismos con compuerta modulan
+retención y olvido; los métodos latentes comprimen las representaciones
+clave–valor; la memoria condicional añade búsquedas de lectura/escritura
+en tiempo de prueba; la memoria indexada por token traslada capacidad de
+valores a tablas de búsqueda; los métodos de peso rápido formulan la
+transición de estado como una regla de aprendizaje en línea; los métodos
+geométricos codifican priors estructurados.</figcaption>
 </figure>
 <h2 id="familias-densa-y-recurrente">Familias Densa y Recurrente</h2>
 <p>Las líneas base densas—softmax estándar <span class="citation"
-data-cites="vaswani_attention_2017"></span> y atención sigmoide <span
-class="citation" data-cites="ramapuram_theory_2024"></span>—y la familia
+data-cites="vaswani_attention_2017"></span>, atención sigmoide <span
+class="citation" data-cites="ramapuram_theory_2024"></span> y Atención
+Continua <span class="citation"
+data-cites="khadangi_continuum_2026"></span>, que reemplaza el softmax
+por la integración exacta de una densidad de relevancia exponencial
+sobre trayectorias clave/valor lineales por tramos—y la familia
 recurrente—RetNet <span class="citation"
 data-cites="sun_retentive_2023"></span>, Mamba <span class="citation"
 data-cites="gu_mamba_2023"></span>, bloques tipo ODE <span
@@ -2194,14 +2199,14 @@ Frankenstein, inyectan el tamaño de vocabulario desde el tokenizador
 resuelto y transmiten las métricas por época a dashAI.</p>
 <h2 id="estado">Estado</h2>
 <p>Las tres fases de implementación—MVP de clasificación, decoder
-generativo y clasificador ViT, y segmentador ViT—están completas, pero
-el paquete aún no se ha ejecutado dentro de una instancia viva de dashAI
-y la publicación en PyPI está pendiente. Las limitaciones conocidas
-incluyen un bucle de clasificación directo en lugar de preentrenamiento
-MLM, campos nativos diferidos para ajustes de alto impacto y renderizado
-no confirmado de máscaras de segmentación. El adaptador deja
-deliberadamente intacto el núcleo de dashAI, de modo que futuros
-releases no puedan romperlo por acoplamiento.</p>
+generativo y clasificador ViT, y segmentador ViT—están completas,
+verificadas dentro de una instancia viva de dashAI (0.10.x y 0.11.0) y
+publicadas en PyPI. Las limitaciones conocidas incluyen un bucle de
+clasificación directo en lugar de preentrenamiento MLM, campos nativos
+diferidos para ajustes de alto impacto y renderizado no confirmado de
+máscaras de segmentación. El adaptador deja deliberadamente intacto el
+núcleo de dashAI, de modo que futuros releases no puedan romperlo por
+acoplamiento.</p>
 <h1 id="sec:empirical-evaluation">Evaluación Empírica</h1>
 <p>Las secciones anteriores describen el conjunto de herramientas en
 términos de lo que puede expresar: qué mezcladores, optimizadores,
@@ -2612,7 +2617,7 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las cuarenta y siete arquitecturas de mezclador implementadas abarcan
+<p>Las cuarenta y ocho arquitecturas de mezclador implementadas abarcan
 las principales direcciones de investigación en modelado de secuencias,
 pero ciertos vacíos permanecen. El sistema carece de arquitecturas
 híbridas recientes como Griffin <span class="citation"
@@ -2711,7 +2716,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y siete mezcladores de secuencia y veinticuatro familias de
+cuarenta y ocho mezcladores de secuencia y veinticuatro familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -2805,7 +2810,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>148</span> urlstyle</p>
+<p><span>149</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3055,6 +3060,8 @@ generalization in transformers, 2023. URL
 Harkanwarpreet Maan, Matthieu Galon, Arsha Nagrani, Nathan Beeler,
 Bartlomiej Twardowski, Joost van de Weijer, Robert Dangovski, and Luca
 Berton. , 2025. URL <code>http://arxiv.org/abs/2503.19108</code>.</p>
+<p>Afshin Khadangi. Continuum attention, 2026. URL
+<code>https://arxiv.org/abs/2610.20586</code>.</p>
 <p>Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong
 Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan.
 Supervised contrastive learning, 2020. URL
@@ -3748,7 +3755,7 @@ Debe dividir <code>hidden_size</code> exactamente.</td>
 <td style="text-align: left;">dims.layer_pattern</td>
 <td style="text-align: left;">array of enum (obligatorio)</td>
 <td style="text-align: left;">Secuencia ordenada de tipos de capa. La
-longitud debe igualar <code>num_layers</code>. 47 códigos de mezclador
+longitud debe igualar <code>num_layers</code>. 48 códigos de mezclador
 disponibles (ver Tabla <a href="#tab:layer-pattern"
 data-reference-type="ref"
 data-reference="tab:layer-pattern">13.2.1</a>).</td>
@@ -4501,7 +4508,7 @@ vigente para las filas que le siguen. No hay claves de características
 planas en <code>model.*</code>.</p>
 <h3 id="tab:layer-pattern">Enumeración del Patrón de Capas</h3>
 <p>El array <code>model.dims.layer_pattern</code> acepta los siguientes
-47 códigos de mezclador. Cada elemento define una capa física en la pila
+48 códigos de mezclador. Cada elemento define una capa física en la pila
 del modelo. La Tabla <a href="#tab:layer-pattern-enum"
 data-reference-type="ref" data-reference="tab:layer-pattern-enum">3</a>
 enumera todos los tipos disponibles con su soporte de entrenamiento e
@@ -4549,254 +4556,261 @@ BERT)</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">ca</td>
+<td style="text-align: left;">Atención Continua — integración continua
+exacta sobre trayectorias de memoria lineales por tramos</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">memory</td>
 <td style="text-align: left;">Atención con memoria — valores por ID de
 token (V = K + Norm(E[s]))</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gated_softmax</td>
 <td style="text-align: left;">Atención softmax con compuerta sigmoide
 post-SDPA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">titan</td>
 <td style="text-align: left;">Atención Titan con codificación posicional
 (HoPE/RoPE)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">retnet</td>
 <td style="text-align: left;">Red de Retención (híbrido
 RNN+transformer)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mamba</td>
 <td style="text-align: left;">Modelo de espacio de estado selectivo
 (SSM)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ode</td>
 <td style="text-align: left;">Capa ODE de profundidad continua</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gla</td>
 <td style="text-align: left;">Atención Lineal con Compuerta con
 decaimiento multiplicativo</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">deltanet / gated_deltanet</td>
 <td style="text-align: left;">DeltaNet con regla delta correctiva</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gated_deltanet2</td>
 <td style="text-align: left;">Gated DeltaNet-2 con compuertas de
 borrado/escritura canalizadas desacopladas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">hgrn2</td>
 <td style="text-align: left;">HGRN2 con compuertas de olvido
 jerárquicas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">fox</td>
 <td style="text-align: left;">Forgetting Transformer (FoX) con sesgo de
 olvido en logits</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">nsa</td>
 <td style="text-align: left;">Native Sparse Attention (tres ramas)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">engram</td>
 <td style="text-align: left;">Búsqueda condicional de memoria de
 N-gramas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gqa</td>
 <td style="text-align: left;">Atención por Consultas Agrupadas con
 cabezas KV configurables</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">longformer</td>
 <td style="text-align: left;">Longformer: ventanas deslizantes + tokens
 globales</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bigbird</td>
 <td style="text-align: left;">BigBird: atención local + aleatoria +
 global</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparse_transformer</td>
 <td style="text-align: left;">Sparse Transformer: patrones
 factorizados</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">sparsek</td>
 <td style="text-align: left;">SparseK: selección KV top-k
 diferenciable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparge</td>
 <td style="text-align: left;">SpargeAttn — poda de bloques en dos
 etapas; entrenamiento denso, inferencia dispersa</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">fasa</td>
 <td style="text-align: left;">FASA — selección de tokens consciente de
 frecuencia; entrenamiento denso, inferencia dispersa</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">msa</td>
 <td style="text-align: left;">MiniMax Sparse Attention — bloques
 dispersos sobre GQA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">sparda</td>
 <td style="text-align: left;">SparDA — atención dispersa desacoplada con
 proyección Forecast</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">lsa</td>
 <td style="text-align: left;">Latent Sparse Attention — clustering
 semántico de claves con selección top-k</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">fastconformer</td>
 <td style="text-align: left;">Fast Conformer — ventana de contexto
 limitado + token global anclado a la cabecera</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">kda</td>
 <td style="text-align: left;">Kimi Delta Attention — decaimiento por
 canal + compuerta de escritura escalar</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">falcon1 / falcon2 / falcon3</td>
 <td style="text-align: left;">Familia de regresión Falcon — regla delta
 NLMS prefix-alineada (RAW)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">falcon1a / falcon2a / falcon3a</td>
 <td style="text-align: left;">Familia de producto interno Falcon —
 escrituras aditivas desplazadas con decaimiento por ridge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mla</td>
 <td style="text-align: left;">Atención Latente Multi-Cabeza + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gqla</td>
 <td style="text-align: left;">Atención Latente por Consultas Agrupadas —
 dos rutas de decodificación</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mlra</td>
 <td style="text-align: left;">Atención Multi-Cabeza de Rango Bajo —
 latente particionable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">tucker</td>
 <td style="text-align: left;">Atención Tucker — factorización de rango
 bajo generalizada</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">iha</td>
 <td style="text-align: left;">Atención de Cabezas Entrelazadas —
 pseudo-cabezas entre cabezas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gta</td>
 <td style="text-align: left;">Atención laTenT por Cabezas Agrupadas —
 mapa compartido + valores latentes</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mtla</td>
 <td style="text-align: left;">Atención Latente Temporal Multi-Cabeza —
 fusión temporal KV</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">cca</td>
 <td style="text-align: left;">Atención Convolucional Comprimida —
 atención en espacio latente + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ccgqa</td>
 <td style="text-align: left;">Atención Convolucional Comprimida por
 Consultas Agrupadas — CCA + GQA en latente</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gma</td>
 <td style="text-align: left;">Atención de Mezcla Gaussiana —
 enrutamiento latente probabilístico, <span
@@ -5586,7 +5600,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-47 mezcladores de secuencia en diez familias, 36 optimizadores, 6
+48 mezcladores de secuencia en diez familias, 36 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -5627,6 +5641,12 @@ d)\)</span> &amp; <span class="math inline">\(\mathcal{O}(n)\)</span>
 caché &amp; Compresión KV ajustable; reducción de caché <span
 class="math inline">\(G\times\)</span> mediante cabezas compartidas
 &amp; <span class="citation" data-cites="ainslie_gqa_2023"></span><br />
+ca &amp; Denso &amp; <span class="math inline">\(\mathcal{O}(n^2
+d)\)</span> &amp; <span class="math inline">\(\mathcal{O}(n)\)</span>
+caché &amp; Integración exacta sobre trayectorias clave/valor lineales
+por tramos; extensiones de medio token; pesos efectivos normalizados no
+negativos &amp; <span class="citation"
+data-cites="khadangi_continuum_2026"></span><br />
 conformer &amp; Aumentado conv. &amp; <span
 class="math inline">\(\mathcal{O}(n^2 d + n K d)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> (recómputo completo) &amp;
@@ -9941,8 +9961,9 @@ de valores indexada por token y arquitecturas aumentadas con memoria.
 Comprender esta taxonomía ilumina las compensaciones fundamentales entre
 expresividad, costo computacional, huella de memoria y simplicidad de
 despliegue.</p>
-<h2 id="atención-densa-de-referencia-estándar-y-sigmoide">Atención Densa
-de Referencia: Estándar y Sigmoide</h2>
+<h2
+id="atención-densa-de-referencia-estándar-sigmoide-y-continua">Atención
+Densa de Referencia: Estándar, Sigmoide y Continua</h2>
 <h3 id="atención-softmax-estándar">Atención Softmax Estándar</h3>
 <figure id="fig:mixer-standard"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/standard.svg" alt="image" /></span></p>
 
@@ -10105,6 +10126,118 @@ capacidad representacional en modelos pequeños; requerir que <span
 class="math inline">\(h_k\)</span> divida a <span
 class="math inline">\(h\)</span> restringe las opciones
 arquitectónicas.</p></li>
+</ul>
+<h3 id="atención-continua">Atención Continua</h3>
+<figure id="fig:mixer-ca-es"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/ca.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de datos de la Atención Continua: puntajes de extremo
+de la trayectoria lineal de claves, integración exacta por tramos
+mediante momentos exponenciales, extensiones de medio token en los
+bordes y pesos efectivos normalizados sobre los valores
+originales.</figcaption>
+</figure>
+<p>La Atención Continua <span class="citation"
+data-cites="khadangi_continuum_2026"></span> reemplaza la recuperación
+softmax discreta por la integración exacta sobre una trayectoria de
+memoria continua, lineal por tramos. Las claves y valores adyacentes se
+interpolan de modo que <span
+class="math inline">\(\mathbf{k}(t)\)</span> y <span
+class="math inline">\(\mathbf{v}(t)\)</span> quedan definidos en toda
+posición del dominio visible: <span
+class="math display">\[\mathbf{k}_j(u) = (1-u)\,\mathbf{k}_{j-1} +
+u\,\mathbf{k}_j, \qquad
+\mathbf{v}_j(u) = (1-u)\,\mathbf{v}_{j-1} + u\,\mathbf{v}_j,\]</span>
+con <span class="math inline">\(u = t-(j-1)\in[0,1]\)</span> en el
+intervalo <span class="math inline">\([j-1,j]\)</span>; extensiones
+constantes de medio token cubren <span
+class="math inline">\([-1/2,0]\)</span> y <span
+class="math inline">\([i,i+1/2]\)</span>. Cada consulta induce una
+densidad de relevancia exponencial sobre su prefijo visible, <span
+class="math display">\[s_i(t) =
+\frac{\gamma}{\sqrt{d_h}}\,\mathbf{q}_i^\top \mathbf{k}(t), \qquad
+p_i(t) = \frac{\exp(s_i(t))}{Z_i}, \qquad
+\mathbf{o}_i = \int_{-1/2}^{i+1/2} p_i(t)\,\mathbf{v}(t)\,dt,\]</span>
+donde <span class="math inline">\(\gamma&gt;0\)</span> es la ganancia de
+puntaje (<span class="math inline">\(\gamma=1/\tau\)</span>). Como la
+trayectoria de claves es lineal dentro de cada tramo, el puntaje es
+afín, <span class="math inline">\(s_{ij}(u) = a_{ij} +
+u\,\Delta_{ij}\)</span> con <span
+class="math inline">\(a_{ij}=s_i(j-1)\)</span>, <span
+class="math inline">\(b_{ij}=s_i(j)\)</span> y <span
+class="math inline">\(\Delta_{ij}=b_{ij}-a_{ij}\)</span>, de modo que
+las integrales tienen forma cerrada en los momentos exponenciales <span
+class="math inline">\(J_n(\Delta)=\int_0^1 u^n e^{\Delta
+u}\,du\)</span>: <span class="math display">\[\begin{aligned}
+J_0(\Delta) &amp;= \frac{e^{\Delta}-1}{\Delta}, \qquad
+J_1(\Delta) = \frac{(\Delta-1)e^{\Delta}+1}{\Delta^2}, \\
+M_{ij} &amp;= e^{a_{ij}} J_0(\Delta_{ij}), \qquad
+\mathbf{U}_{ij} = e^{a_{ij}}\big[(J_0-J_1)\,\mathbf{v}_{j-1} +
+J_1\,\mathbf{v}_j\big], \\
+Z_i &amp;= \tfrac12 e^{s_i(0)} + \tfrac12 e^{s_i(i)} + \sum_{j=1}^{i}
+M_{ij}, \qquad
+\mathbf{o}_i = \frac{\mathbf{U}_i^{\mathrm{cap}} +
+\sum_{j=1}^{i}\mathbf{U}_{ij}}{Z_i},
+\end{aligned}\]</span> con <span
+class="math inline">\(\mu(\Delta)=J_1/J_0\)</span> la posición de
+recuperación normalizada dentro de un tramo. Como las contribuciones no
+son negativas, la atención continua equivale a una suma ponderada
+normalizada y no negativa de los valores originales, <span
+class="math inline">\(\mathbf{o}_i = \sum_{j\le i}
+w_{ij}\mathbf{v}_j\)</span> con <span class="math inline">\(w_{ij}\ge
+0\)</span> y <span class="math inline">\(\sum_j w_{ij}=1\)</span>;
+puntajes visibles iguales se reducen exactamente a atención causal
+uniforme y <span class="math inline">\(o_0=v_0\)</span>. La variante con
+ganancia aprendida añade un escalar por cabeza (<span
+class="math inline">\(\gamma=\exp(\rho)\)</span>, inicializada en <span
+class="math inline">\(\gamma=1\)</span> en el modelo de 101M; la
+variante fija CA-P usa <span
+class="math inline">\(\gamma=1/0.30\)</span> y no añade parámetros). La
+forma encoder (bidireccional) integra sobre la trayectoria completa
+<span class="math inline">\([-1/2,n-1/2]\)</span> — la extensión
+simétrica natural del artículo, que sólo define el caso causal.</p>
+<div class="algorithmic">
+<p><strong>Entrada:</strong> <span class="math inline">\(\mathbf{Q},
+\mathbf{K}, \mathbf{V} \in \mathbb{R}^{n \times d_h}\)</span>, ganancia
+<span class="math inline">\(\gamma&gt;0\)</span> <span
+class="math inline">\(\mathbf{S} \gets
+\gamma\,\mathbf{Q}\mathbf{K}^\top/\sqrt{d_h}\)</span> enmascarar <span
+class="math inline">\(\mathbf{S}\)</span> al prefijo visible; restar el
+máximo de fila <span class="math inline">\(m\)</span> (estabilidad)
+<span class="math inline">\(\Delta_{ij} \gets
+\mathbf{S}_{j}-\mathbf{S}_{j-1}\)</span>; <span
+class="math inline">\(J_0,J_1 \gets\)</span> Ecs. (11)–(12) (serie cerca
+de <span class="math inline">\(\Delta=0\)</span>) <span
+class="math inline">\(M_{ij} \gets e^{a_{ij}-m}J_0\)</span>, <span
+class="math inline">\(w^{(L)}_{ij}\gets M_{ij}(1-\mu)\)</span>, <span
+class="math inline">\(w^{(R)}_{ij}\gets M_{ij}\mu\)</span> sumar las
+extensiones de medio token <span class="math inline">\(\tfrac12
+e^{s_i(0)-m}\)</span> y <span class="math inline">\(\tfrac12
+e^{s_i(i)-m}\)</span>; normalizar por <span
+class="math inline">\(Z_i\)</span> <strong>Salida:</strong> <span
+class="math inline">\(\mathbf{o}_i = \sum_{j\le i}
+w_{ij}\mathbf{v}_j\)</span></p>
+</div>
+<ul>
+<li><p><strong>Complejidad de entrenamiento</strong>: <span
+class="math inline">\(\mathcal{O}(n^2 d)\)</span> — idéntica al softmax
+denso; los momentos en forma cerrada reemplazan al softmax (sin
+cuadratura).</p></li>
+<li><p><strong>Complejidad de inferencia</strong>: <span
+class="math inline">\(\mathcal{O}(n)\)</span> por token con caché KV;
+los pesos efectivos se recalculan localmente por fila sobre el prefijo
+cacheado en cada paso (exacto).</p></li>
+<li><p><strong>Fortalezas</strong>: Recuperación continua exacta con
+pesos efectivos normalizados no negativos; cero parámetros más allá de
+las proyecciones en la forma de ganancia fija; resultados multilingües y
+zero-shot sólidos (macro FLORES 1.8915 BPB, una reducción del 5.8%
+frente al mejor baseline y el mejor puntaje en todos los idiomas;
+HellaSwag y ARC-Challenge los mejores entre los baselines); 42% menos
+bytes de entrenamiento para alcanzar el umbral de 1.10 BPB que un
+Transformer emparejado.</p></li>
+<li><p><strong>Debilidades</strong>: La aritmética cuadrática de
+atención persiste; el desempeño en código fuente es el más débil de las
+cinco arquitecturas (Stack-smol 3.3451 BPB); robustez reducida a la
+eliminación de bytes y a perturbaciones “antspeak”.</p></li>
 </ul>
 <h2 id="memoria-indexada-por-token-memory-attention">Memoria Indexada
 por Token: Memory Attention</h2>
@@ -10428,6 +10561,7 @@ class="math inline">\(\ell\)</span> <span class="math inline">\(m \gets
 P[\ell \bmod |P|]\)</span> <span class="math inline">\(H \gets
 \text{softmax-attention}(H)\)</span> <span class="math inline">\(H \gets
 \text{softmax-attention}(H)\)</span> <span class="math inline">\(H \gets
+\text{atención-continua}(H)\)</span> <span class="math inline">\(H \gets
 \text{sigmoid-attention}(H)\)</span> <span class="math inline">\(H \gets
 \text{memory-attention}(H)\)</span> <span class="math inline">\(H \gets
 \text{retention}(H)\)</span> <span class="math inline">\(H \gets
@@ -15935,12 +16069,13 @@ Mezclador</h2>
 valores por defecto son:</p>
 <ul>
 <li><p><strong>True</strong> (mezcladores de atención):
-<code>standard</code>, <code>titan</code>, <code>sigmoid</code>,
-<code>gated_softmax</code>, <code>gqa</code>, todos los mezcladores
-latentes (<code>mla</code>, <code>gqla</code>, <code>mlra</code>,
-<code>tucker</code>, <code>iha</code>, <code>gta</code>,
-<code>cca</code>, <code>ccgqa</code>, <code>gma</code>), todos los
-mezcladores dispersos (<code>longformer</code>, <code>bigbird</code>,
+<code>standard</code>, <code>ca</code>, <code>titan</code>,
+<code>sigmoid</code>, <code>gated_softmax</code>, <code>gqa</code>,
+todos los mezcladores latentes (<code>mla</code>, <code>gqla</code>,
+<code>mlra</code>, <code>tucker</code>, <code>iha</code>,
+<code>gta</code>, <code>cca</code>, <code>ccgqa</code>,
+<code>gma</code>), todos los mezcladores dispersos
+(<code>longformer</code>, <code>bigbird</code>,
 <code>sparse_transformer</code>, <code>sparsek</code>, <code>nsa</code>,
 <code>msa</code>, <code>sparda</code>, <code>fasa</code>,
 <code>sparge</code>), y <code>engram</code>, y <code>memory</code> (RoPE
@@ -16678,8 +16813,8 @@ class="math display">\[\mathcal{O}\!\left(S^2 +
 \sum_{t=0}^{T-1}(S+t)\right) \;=\; \mathcal{O}\!\left(S^2 + TS +
 T^2\right).\]</span> La diferencia es la conocida entre re-codificar una
 conversación y continuarla.</p>
-<p>El subsistema cubre los cuarenta y siete tipos de capa despachables.
-Veintinueve tienen ramas incrementales verificadas por paridad; el resto
+<p>El subsistema cubre los cuarenta y ocho tipos de capa despachables.
+Treinta tienen ramas incrementales verificadas por paridad; el resto
 queda registrado con una justificación explícita, basada en el artículo,
 para ejecutarse sin caché (§<a href="#sec:kv-fallbacks"
 data-reference-type="ref" data-reference="sec:kv-fallbacks">28.4.5</a>).
@@ -16942,6 +17077,14 @@ desplazamientos, el denominador debe re-sumarse sobre todo el prefijo
 cacheado en cada paso; no existe truco de máximo estilo softmax en línea
 <span class="citation"
 data-cites="ramapuram_theory_2024"></span>.</p></li>
+<li><p><strong>Atención continua.</strong> El normalizador se sustituye
+por la integración exacta por tramos: los pesos efectivos son una
+función de forma cerrada (momentos exponenciales de las diferencias de
+puntajes de extremo) de la fila completa de puntajes, de modo que la
+decodificación los recalcula sobre todo el prefijo cacheado en cada paso
+— locales a la fila, por tanto exactos, en el patrón de re-normalización
+de la sigmoide <span class="citation"
+data-cites="khadangi_continuum_2026"></span>.</p></li>
 <li><p><strong>Softmax con compuerta.</strong> La compuerta <span
 class="math inline">\(\sigma(\mathbf{x}\mathbf{W}_g)\)</span> multiplica
 la salida de atención y depende sólo del token actual, así que no se
@@ -17882,8 +18025,9 @@ La cross-entropy de objetivo blando (destilación de conocimiento,
 regularización KL) necesitaría la construcción de diferencias con
 <code>expm1</code>/<code>log1p</code> del artículo, que este toolkit no
 implementa porque no tiene ruta de destilación. Los núcleos LSE internos
-del mixer SSOG y el normalizador de atención sigmoide (que no es un
-softmax) se dejan intactos deliberadamente.</p>
+del mixer SSOG, el normalizador de atención sigmoide (que no es un
+softmax) y el normalizador integral de la Atención Continua se dejan
+intactos deliberadamente.</p>
 <h4 id="validación.">Validación.</h4>
 <p>El repositorio incluye , que verifica (i) la paridad forward con
 <code>torch</code> para softmax, log-softmax y cross-entropy en
@@ -19320,7 +19464,7 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">87</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">88</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -19624,7 +19768,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">95</a>) es
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">96</a>) es
 el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -20666,7 +20810,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">114</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">115</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
@@ -20718,8 +20862,8 @@ role="doc-endnotes">
 <hr />
 <ol>
 <li id="fn1"><p><a
-href="https://erickfmm.github.io/frankenstein-transformer/experiments/2/"
-class="uri">https://erickfmm.github.io/frankenstein-transformer/experiments/2/</a><a
+href="https://erickfmm.github.io/frankenstein-transformer/charts/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/charts/index.html</a><a
 href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>

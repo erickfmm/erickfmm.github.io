@@ -84,6 +84,13 @@ var FTParamEstimator = (function () {
       // ---- Dense ----
       case 'sigmoid':
         return 4 * H * H + nH;      // Q,K,V,O (bias-free) + per-head logit bias b
+      // ---- Continuum Attention (arXiv:2610.20586) ----
+      // Q,K,V,O (bias-free) = 4H²; the learned per-head log score gain
+      // γ = exp(ρ) adds nH when attention.ca.learned_gain is true (default).
+      case 'ca': {
+        var caLearn = toBool(pick(m, 'attention.ca.learned_gain', 'ca_learned_gain', true), true);
+        return 4 * H * H + (caLearn ? nH : 0);
+      }
       case 'standard':
       case 'titan':
       case 'sparse_transformer':
