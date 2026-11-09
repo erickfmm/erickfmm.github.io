@@ -23,3 +23,6 @@ Gemfile.lock
 *.log
 *.out
 *.toc
+
+# Experiment datasets live in the Hugging Face bucket, not in the repo.
+frankenstein-transformer/experiments/*/data/

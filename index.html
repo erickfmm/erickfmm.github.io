@@ -121,6 +121,7 @@
         data-close-label="Cerrar menú de navegación"
       >Menú</button>
       <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#laboratorio">Laboratorio</a>
         <a href="#sobre">Sobre mí</a>
         <a href="#experiencia">Experiencia</a>
         <a href="#educacion">Educación</a>
@@ -136,6 +137,7 @@
     </div>
     <nav id="mobile-nav-panel" class="mobile-nav-panel" aria-label="Navegación principal móvil" hidden>
       <div class="container mobile-nav-links">
+        <a href="#laboratorio">Laboratorio</a>
         <a href="#sobre">Sobre mí</a>
         <a href="#experiencia">Experiencia</a>
         <a href="#educacion">Educación</a>
@@ -208,6 +210,43 @@
             <strong class="counter" data-target="9">9</strong>
             <span>años academia + práctica</span>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="laboratorio" class="lab-section" aria-labelledby="lab-title">
+      <div class="container">
+        <div class="lab-head">
+          <h2 id="lab-title">Dos artefactos públicos.</h2>
+          <p>El proyecto Frankenstein Transformer no se queda en el paper: el atlas de experimentos y el constructor de configuraciones están abiertos para explorar.</p>
+        </div>
+        <div class="lab-grid">
+          <a class="lab-feature lab-feature--atlas reveal" href="frankenstein-transformer/experiments/2/index.html" target="_blank" rel="noreferrer">
+            <div class="lab-feature-copy">
+              <span class="lab-label">Experimento 2 · Atlas de mixers</span>
+              <h3>868 configuraciones.<br />667 pares híbridos.</h3>
+              <p>2,66 M de pasos de entrenamiento, 56 figuras, análisis cruzado y datasets descargables. La pregunta: qué par de mixers aprende más rápido con 32 tokens.</p>
+              <span class="lab-cta">Abrir el atlas <span aria-hidden="true">→</span></span>
+            </div>
+            <div class="lab-feature-media" aria-hidden="true">
+              <img src="frankenstein-transformer/experiments/2/img/matrix_loss-dark.png" alt="" loading="lazy" />
+            </div>
+          </a>
+          <a class="lab-feature lab-feature--builder reveal" href="frankenstein-transformer/index.html" target="_blank" rel="noreferrer">
+            <div class="lab-feature-copy">
+              <span class="lab-label">Config Builder</span>
+              <h3>Diseña un Transformer desde el navegador.</h3>
+              <p>YAML validado contra el esquema, estimación de parámetros y el comando de entrenamiento listo para copiar.</p>
+              <pre aria-hidden="true"><code>model:
+  attention:
+    layer_pattern: [nsa, engram]</code></pre>
+              <span class="lab-cta">Abrir el constructor <span aria-hidden="true">→</span></span>
+            </div>
+          </a>
+        </div>
+        <div class="lab-foot">
+          <a href="frankenstein-transformer/experiments/1/index.html" target="_blank" rel="noreferrer">Experimento 1 · la ronda smoke <span aria-hidden="true">→</span></a>
+          <a href="frankenstein-transformer/experiments/index.html" target="_blank" rel="noreferrer">Ver todas las rondas <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </section>

@@ -121,6 +121,7 @@
         data-close-label="Close navigation menu"
       >Menu</button>
       <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#laboratorio">Lab</a>
         <a href="#about">About</a>
         <a href="#experience">Experience</a>
         <a href="#education">Education</a>
@@ -136,6 +137,7 @@
     </div>
     <nav id="mobile-nav-panel" class="mobile-nav-panel" aria-label="Mobile primary navigation" hidden>
       <div class="container mobile-nav-links">
+        <a href="#laboratorio">Lab</a>
         <a href="#about">About</a>
         <a href="#experience">Experience</a>
         <a href="#education">Education</a>
@@ -208,6 +210,43 @@
             <strong class="counter" data-target="9">9</strong>
             <span>years academia + practice</span>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="laboratorio" class="lab-section" aria-labelledby="lab-title">
+      <div class="container">
+        <div class="lab-head">
+          <h2 id="lab-title">Two public artifacts.</h2>
+          <p>Frankenstein Transformer does not stop at the paper: the experiment atlas and the configuration builder are open to explore.</p>
+        </div>
+        <div class="lab-grid">
+          <a class="lab-feature lab-feature--atlas reveal" href="../frankenstein-transformer/experiments/2/index.html" target="_blank" rel="noreferrer">
+            <div class="lab-feature-copy">
+              <span class="lab-label">Experiment 2 · Mixer atlas</span>
+              <h3>868 configurations.<br />667 hybrid pairs.</h3>
+              <p>2.66 M training steps, 56 figures, crossed analysis and downloadable datasets. The question: which mixer pair learns fastest at 32 tokens.</p>
+              <span class="lab-cta">Open the atlas <span aria-hidden="true">→</span></span>
+            </div>
+            <div class="lab-feature-media" aria-hidden="true">
+              <img src="../frankenstein-transformer/experiments/2/img/matrix_loss-dark.png" alt="" loading="lazy" />
+            </div>
+          </a>
+          <a class="lab-feature lab-feature--builder reveal" href="../frankenstein-transformer/index.html" target="_blank" rel="noreferrer">
+            <div class="lab-feature-copy">
+              <span class="lab-label">Config Builder</span>
+              <h3>Design a Transformer in the browser.</h3>
+              <p>YAML validated against the schema, parameter estimation and the training command ready to copy.</p>
+              <pre aria-hidden="true"><code>model:
+  attention:
+    layer_pattern: [nsa, engram]</code></pre>
+              <span class="lab-cta">Open the builder <span aria-hidden="true">→</span></span>
+            </div>
+          </a>
+        </div>
+        <div class="lab-foot">
+          <a href="../frankenstein-transformer/experiments/1/index.html" target="_blank" rel="noreferrer">Experiment 1 · the smoke round <span aria-hidden="true">→</span></a>
+          <a href="../frankenstein-transformer/experiments/index.html" target="_blank" rel="noreferrer">See all rounds <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </section>

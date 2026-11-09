@@ -33,14 +33,28 @@
   </url>
 
   <url>
-    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/</loc>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/experiments/</loc>
     <lastmod>2026-11-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://erickfmm.github.io/frankenstein-transformer/charts/chartmaker.html</loc>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/experiments/1/</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/experiments/2/</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://erickfmm.github.io/frankenstein-transformer/experiments/2/chartmaker.html</loc>
     <lastmod>2026-11-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

@@ -21,6 +21,8 @@
   var MAX_SCATTER_POINTS = 12000;
   var MAX_BOX_JITTER = 14000;
   var MAX_SERIES = 80;
+  /* Temporary data host: the same files that used to live in data/. */
+  var HF_BUCKET = 'https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2/resolve/';
 
   function lang() {
     return document.documentElement.getAttribute('data-lang') === 'es' ? 'es' : 'en';
@@ -234,7 +236,7 @@
   var DATASETS = {
     master: {
       id: 'master',
-      file: 'data/master.csv',
+      file: HF_BUCKET + 'master.csv',
       count: 868,
       label: loc('Configurations', 'Configuraciones'),
       fields: [
@@ -287,7 +289,7 @@
 
     inference: {
       id: 'inference',
-      file: 'data/inference_samples.csv',
+      file: HF_BUCKET + 'inference_samples.csv',
       count: 6520,
       label: loc('Inference records', 'Registros de inferencia'),
       derive: function (row) {
@@ -314,7 +316,7 @@
 
     pipeline: {
       id: 'pipeline',
-      file: 'data/pipeline_stages.csv',
+      file: HF_BUCKET + 'pipeline_stages.csv',
       count: 5271,
       label: loc('Pipeline stages', 'Etapas del pipeline'),
       fields: [
@@ -333,7 +335,7 @@
 
     epochs: {
       id: 'epochs',
-      file: 'data/training_per_epoch.csv',
+      file: HF_BUCKET + 'training_per_epoch.csv',
       count: 86274,
       label: loc('Learning curves', 'Curvas de aprendizaje'),
       fields: [
@@ -1957,6 +1959,8 @@
       var header = matrix[0].map(function (h) { return h.trim(); });
       var data = prepareDataset(def, header, matrix);
       state.cache[id] = data;
+      var alert = document.getElementById('cm-data-alert');
+      if (alert) alert.hidden = true;
       return data;
     });
   }
@@ -2537,6 +2541,8 @@
       state.loading = false;
       hideLoading();
       if (select) select.value = previous;
+      var alert = document.getElementById('cm-data-alert');
+      if (alert) alert.hidden = false;
       toast(L(MSG.loadFail) + ' (' + (err && err.message ? err.message : err) + ')', 'error');
       render();
     });

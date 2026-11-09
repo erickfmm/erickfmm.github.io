@@ -541,6 +541,217 @@ summary:focus-visible,
   text-transform: uppercase;
 }
 
+/* ---------- Lab / featured artifacts ---------- */
+
+.lab-section {
+  padding: clamp(3rem, 6vw, 5rem) 0 clamp(3.5rem, 7vw, 6rem);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(120deg, rgba(124, 92, 255, 0.08), transparent 48%),
+    rgba(8, 12, 27, 0.55);
+}
+
+.lab-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 1.5rem 3rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
+
+.lab-head h2 {
+  font-size: clamp(2rem, 4.4vw, 3.9rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.lab-head p {
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: 0.98rem;
+  padding-bottom: 0.35rem;
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+  gap: 1rem;
+}
+
+.lab-feature {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  min-height: 100%;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lab-feature:hover {
+  border-color: rgba(34, 211, 238, 0.42);
+  transform: translateY(-3px);
+  box-shadow: 0 22px 54px rgba(2, 4, 14, 0.5);
+}
+
+.lab-feature--atlas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.9fr);
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+.lab-feature-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.lab-label {
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.lab-feature h3 {
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.lab-feature p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  max-width: 46ch;
+}
+
+.lab-cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.45);
+  padding-bottom: 0.15rem;
+}
+
+.lab-feature:hover .lab-cta {
+  color: var(--cyan);
+}
+
+.lab-feature-media {
+  position: relative;
+  min-height: 220px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #080c1b;
+}
+
+.lab-feature-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.84;
+  transform: scale(1.02);
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.lab-feature:hover .lab-feature-media img {
+  transform: scale(1.06);
+  opacity: 1;
+}
+
+.lab-feature--builder {
+  background:
+    linear-gradient(160deg, rgba(34, 211, 238, 0.08), transparent 46%),
+    var(--surface);
+}
+
+.lab-feature pre {
+  width: 100%;
+  margin: 0.3rem 0 0.8rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(5, 6, 15, 0.75);
+  color: #b8c7e6;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  line-height: 1.65;
+  overflow-x: auto;
+}
+
+.lab-feature pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+
+.lab-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.8rem 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lab-foot a {
+  color: var(--cyan);
+}
+
+.lab-foot a:hover {
+  color: var(--text);
+}
+
+@media (max-width: 960px) {
+  .lab-head,
+  .lab-grid,
+  .lab-feature--atlas {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-feature-media {
+    min-height: 180px;
+    max-height: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lab-feature {
+    padding: 1.2rem;
+  }
+
+  .lab-feature-media {
+    display: none;
+  }
+
+  .lab-foot {
+    flex-direction: column;
+  }
+}
+
 /* ---------- Sections ---------- */
 
 .section {

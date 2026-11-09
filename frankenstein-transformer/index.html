@@ -862,7 +862,7 @@ pre {
     View on GitHub
   </a>
 
-  <a href="charts/index.html" class="btn btn-exp btn-sm" id="exp-side-btn" style="margin-top:10px"></a>
+  <a href="experiments/2/index.html" class="btn btn-exp btn-sm" id="exp-side-btn" style="margin-top:10px"></a>
 
   <button type="button" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-pressed="false" aria-label="Toggle light/dark theme">
     <span class="tt-track" aria-hidden="true"><span class="tt-thumb" id="tt-thumb"></span></span>
@@ -901,7 +901,8 @@ pre {
   <h1>🤖 Frankestein Transformer — Config Builder</h1>
   <div class="exp-cta-row">
     <button type="button" class="btn btn-exp btn-sm" id="exp-open-btn" onclick="openExperimentModal()"></button>
-    <a href="charts/index.html" class="btn btn-sm" id="exp-direct-link"></a>
+    <a href="experiments/2/index.html" class="btn btn-sm" id="exp-direct-link"></a>
+    <a href="experiments/1/index.html" class="btn btn-sm" id="exp-exp1-link"></a>
     <span class="exp-hint" id="exp-cta-hint"></span>
   </div>
   <p id="lang-status" class="info" style="margin-bottom: 12px;"></p>
@@ -1108,19 +1109,22 @@ const paperCache = { en: null, es: null };
 const UI = {
   required: { en:'Required', es:'Obligatorio' },
   langTitle: { en:'🌐 Language', es:'🌐 Idioma' },
-  expNavBtn: { en:'📊 Experiment results', es:'📊 Resultados del experimento' },
-  expNavHint: { en:'868 configurations, charts and a chart maker', es:'868 configuraciones, gráficos y un constructor' },
-  expModalBadge: { en:'Experiment 2 · first round', es:'Experimento 2 · primera tanda' },
-  expModalTitle: { en:'Results of the first round of experiments', es:'Resultados de la primera tanda de experimentos' },
+  expNavBtn: { en:'📊 Experiment atlas', es:'📊 Atlas de experimentos' },
+  expNavHint: { en:'Two rounds · 868 configurations · chart maker', es:'Dos rondas · 868 configuraciones · constructor de gráficos' },
+  expAtlasLink: { en:'Open the atlas →', es:'Abrir el atlas →' },
+  expExp1Link: { en:'Experiment 1 · smoke round', es:'Experimento 1 · ronda smoke' },
+  expModalBadge: { en:'Experiments 1 + 2 · one harness', es:'Experimentos 1 + 2 · un mismo arnés' },
+  expModalTitle: { en:'Two rounds on one harness', es:'Dos rondas sobre un mismo arnés' },
   expModalLede: {
-    en:'868 hybrid attention-mixer combinations were trained, evaluated and deployed. Explore the full report with 56 figures, crossed analysis and an interactive chart maker.',
-    es:'868 combinaciones híbridas de mezcladores de atención fueron entrenadas, evaluadas y desplegadas. Explora el informe completo con 56 figuras, análisis cruzado y un constructor de gráficos interactivo.'
+    en:'Experiment 2 is the 868-configuration mixer atlas. Experiment 1 is the smoke-scale rehearsal that validated the pipeline before the campaign.',
+    es:'El Experimento 2 es el atlas de mixers con 868 configuraciones. El Experimento 1 es el ensayo a escala smoke que validó el pipeline antes de la campaña.'
   },
   expStatConfigs: { en:'configurations', es:'configuraciones' },
-  expStatPairs: { en:'hybrid pairs', es:'pares híbridos' },
+  expStatPairs: { en:'unique hybrid pairs', es:'pares híbridos únicos' },
   expStatSteps: { en:'training steps', es:'pasos de entrenamiento' },
-  expStatTop5: { en:'mean top-5 hit rate', es:'top-5 medio' },
-  expModalCta: { en:'View charts & analysis →', es:'Ver gráficos y análisis →' },
+  expStatRecords: { en:'stage records in the smoke round', es:'registros de etapas en la ronda smoke' },
+  expModalCta: { en:'Open Experiment 2 atlas →', es:'Abrir el atlas del Experimento 2 →' },
+  expModalExp1: { en:'Experiment 1 · smoke round', es:'Experimento 1 · ronda smoke' },
   expModalMaker: { en:'Open the chart maker', es:'Abrir el constructor de gráficos' },
   expModalLater: { en:'Maybe later', es:'Quizá después' },
   expModalClose: { en:'Close', es:'Cerrar' },
@@ -4369,12 +4373,14 @@ function applyStaticI18n() {
   // Experiment 2 modal + call-to-action buttons
   const expIds = {
     'exp-side-btn': 'expNavBtn', 'exp-open-btn': 'expNavBtn',
-    'exp-direct-link': 'expModalMaker', 'exp-cta-hint': 'expNavHint',
+    'exp-direct-link': 'expAtlasLink', 'exp-exp1-link': 'expExp1Link',
+    'exp-cta-hint': 'expNavHint',
     'exp-modal-badge': 'expModalBadge', 'exp-modal-title': 'expModalTitle',
     'exp-modal-lede': 'expModalLede', 'exp-stat-1': 'expStatConfigs',
     'exp-stat-2': 'expStatPairs', 'exp-stat-3': 'expStatSteps',
-    'exp-stat-4': 'expStatTop5', 'exp-modal-cta': 'expModalCta',
-    'exp-modal-maker': 'expModalMaker', 'exp-modal-later': 'expModalLater'
+    'exp-stat-4': 'expStatRecords', 'exp-modal-cta': 'expModalCta',
+    'exp-modal-exp1': 'expModalExp1', 'exp-modal-maker': 'expModalMaker',
+    'exp-modal-later': 'expModalLater'
   };
   for (const [id, key] of Object.entries(expIds)) {
     const node = document.getElementById(id);
@@ -4622,18 +4628,19 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="exp-modal-backdrop" id="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title" aria-hidden="true">
   <div class="exp-modal">
     <button type="button" class="exp-close" onclick="closeExperimentModal(true)" id="exp-modal-close" aria-label="Close">✕</button>
-    <span class="exp-badge" id="exp-modal-badge">Experiment 2 · first round</span>
-    <h2 id="exp-modal-title">Results of the first round of experiments</h2>
+    <span class="exp-badge" id="exp-modal-badge">Experiments 1 + 2 · one harness</span>
+    <h2 id="exp-modal-title">Two rounds on one harness</h2>
     <p class="exp-lede" id="exp-modal-lede"></p>
     <div class="exp-stats">
       <div class="exp-stat"><b>868</b><span id="exp-stat-1">configurations</span></div>
-      <div class="exp-stat"><b>703</b><span id="exp-stat-2">hybrid pairs</span></div>
+      <div class="exp-stat"><b>667</b><span id="exp-stat-2">unique hybrid pairs</span></div>
       <div class="exp-stat"><b>2.66 M</b><span id="exp-stat-3">training steps</span></div>
-      <div class="exp-stat"><b>13.3 %</b><span id="exp-stat-4">mean top-5 hit rate</span></div>
+      <div class="exp-stat"><b>5,129</b><span id="exp-stat-4">stage records in the smoke round</span></div>
     </div>
     <div class="exp-actions">
-      <a class="btn btn-primary" id="exp-modal-cta" href="charts/index.html">View charts &amp; analysis →</a>
-      <a class="btn" id="exp-modal-maker" href="charts/chartmaker.html">Open the chart maker</a>
+      <a class="btn btn-primary" id="exp-modal-cta" href="experiments/2/index.html">Open Experiment 2 atlas →</a>
+      <a class="btn" id="exp-modal-exp1" href="experiments/1/index.html">Experiment 1 · smoke round</a>
+      <a class="btn" id="exp-modal-maker" href="experiments/2/chartmaker.html">Open the chart maker</a>
       <button type="button" class="exp-later" onclick="closeExperimentModal(true)" id="exp-modal-later">Maybe later</button>
     </div>
   </div>

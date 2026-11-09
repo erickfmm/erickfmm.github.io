@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiments · Frankenstein Transformer</title>
+<meta name="description" content="Two experiment rounds of the Frankenstein Transformer: a smoke-scale pipeline rehearsal and the 868-configuration mixer atlas.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Experiments · Frankenstein Transformer">
+<meta property="og:description" content="Two rounds on one harness: the smoke-scale rehearsal and the 868-configuration mixer atlas.">
+<meta property="og:url" content="https://erickfmm.github.io/frankenstein-transformer/experiments/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://erickfmm.github.io/frankenstein-transformer/experiments/">
+<link rel="icon" href="../../favicon.ico">
+<link rel="stylesheet" href="atlas.css">
+<script>
+(function(){
+  function init(){
+    var root=document.documentElement;
+    var theme=localStorage.getItem('ft-theme')||
+      ((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
+    var lang=localStorage.getItem('ft-lang')||'en';
+    root.setAttribute('data-theme',theme);root.setAttribute('data-lang',lang);
+    window.ftSetTheme=function(t){
+      root.setAttribute('data-theme',t);localStorage.setItem('ft-theme',t);
+      document.querySelectorAll('[data-theme-btn]').forEach(function(b){
+        b.classList.toggle('on',b.getAttribute('data-theme-btn')===t);
+      });
+    };
+    window.ftSetLang=function(l){
+      root.setAttribute('data-lang',l);root.setAttribute('lang',l);localStorage.setItem('ft-lang',l);
+      document.querySelectorAll('[data-lang-btn]').forEach(function(b){
+        b.classList.toggle('on',b.getAttribute('data-lang-btn')===l);
+      });
+    };
+    window.ftSetTheme(theme);window.ftSetLang(lang);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="../index.html"><span class="dot"></span>Frankenstein<span style="color:var(--muted);font-weight:500">/ experiments</span></a>
+  <nav>
+    <a href="1/index.html"><span class="t-en">Experiment 1</span><span class="t-es">Experimento 1</span></a>
+    <a href="2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a>
+    <a href="2/chartmaker.html"><span class="t-en">Chart maker</span><span class="t-es">Constructor de gráficos</span></a>
+    <a href="../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a>
+  </nav>
+  <div class="tools">
+    <button class="tbtn" data-lang-btn="en" onclick="ftSetLang('en')">EN</button>
+    <button class="tbtn" data-lang-btn="es" onclick="ftSetLang('es')">ES</button>
+    <button class="tbtn" data-theme-btn="dark" onclick="ftSetTheme('dark')">◐</button>
+    <button class="tbtn" data-theme-btn="light" onclick="ftSetTheme('light')">☀</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1><span class="t-en">Two rounds, one harness</span><span class="t-es">Dos rondas, un mismo arnés</span></h1>
+    <p class="lede"><span class="t-en">Experiment 1 proved that the pipeline could run end to end at smoke scale. Experiment 2 used that same harness to train, deploy and evaluate 868 configurations and map the mixer landscape.</span><span class="t-es">El Experimento 1 demostró que el pipeline podía correr de extremo a extremo a escala smoke. El Experimento 2 usó ese mismo arnés para entrenar, desplegar y evaluar 868 configuraciones y mapear el paisaje de mixers.</span></p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="1/index.html"><span class="t-en">Experiment 1 · smoke round</span><span class="t-es">Experimento 1 · ronda smoke</span> →</a>
+      <a class="btn" href="2/index.html"><span class="t-en">Experiment 2 · mixer atlas</span><span class="t-es">Experimento 2 · atlas de mixers</span> →</a>
+      <a class="btn" href="../index.html"><span class="t-en">Open the Config Builder</span><span class="t-es">Abrir el Config Builder</span></a>
+    </div>
+    <div class="hero-meta">
+      <span><span class="t-en">Two rounds</span><span class="t-es">Dos rondas</span></span>
+      <span>·</span>
+      <span><span class="t-en">10,400 stage records</span><span class="t-es">10.400 registros de etapas</span></span>
+      <span>·</span>
+      <span><span class="t-en">905 CPU-hours in the measurement round</span><span class="t-es">905 horas de CPU en la ronda de medición</span></span>
+    </div>
+  </div>
+</header>
+
+<section class="stats" aria-label="Experiment summary">
+  <div class="stat blue"><div class="stat-v">868</div><div class="stat-l"><span class="t-en">configurations in Round 2</span><span class="t-es">configuraciones en la ronda 2</span></div></div>
+  <div class="stat violet"><div class="stat-v">667</div><div class="stat-l"><span class="t-en">unique hybrid pairs</span><span class="t-es">pares híbridos únicos</span></div></div>
+  <div class="stat green"><div class="stat-v">2.66 M</div><div class="stat-l"><span class="t-en">logged training steps</span><span class="t-es">pasos de entrenamiento registrados</span></div></div>
+  <div class="stat orange"><div class="stat-v">5,129</div><div class="stat-l"><span class="t-en">stage records in the smoke round</span><span class="t-es">registros de etapas en la ronda smoke</span></div></div>
+</section>
+
+<main>
+  <section class="section">
+    <h2><span class="t-en">The two rounds at a glance</span><span class="t-es">Las dos rondas de un vistazo</span></h2>
+    <p><span class="t-en">A round is one complete pass of the experiment harness: train, export, deploy, evaluate and package every configuration. The first round tested the machinery; the second produced the measurements.</span><span class="t-es">Una ronda es una pasada completa del arnés de experimentación: entrenar, exportar, desplegar, evaluar y empaquetar cada configuración. La primera ronda probó la maquinaria; la segunda produjo las mediciones.</span></p>
+    <div class="table-wrap">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th scope="col"><span class="t-en">Round</span><span class="t-es">Ronda</span></th>
+            <th scope="col"><span class="t-en">Question</span><span class="t-es">Pregunta</span></th>
+            <th scope="col"><span class="t-en">Scale</span><span class="t-es">Escala</span></th>
+            <th scope="col"><span class="t-en">Recorded evidence</span><span class="t-es">Evidencia registrada</span></th>
+            <th scope="col"><span class="t-en">Output</span><span class="t-es">Salida</span></th>
+            <th scope="col"><span class="t-en">How to read it</span><span class="t-es">Cómo leerla</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="1/index.html"><span class="t-en">Experiment 1</span><span class="t-es">Experimento 1</span></a><br><span class="t-en" style="color:var(--muted);font-weight:500">The smoke round</span><span class="t-es" style="color:var(--muted);font-weight:500">La ronda smoke</span></td>
+            <td><span class="t-en">Does the harness run end to end?</span><span class="t-es">¿Corre el arnés de extremo a extremo?</span></td>
+            <td><span class="t-en">Smoke scale: five stages, training runs of roughly half a minute.</span><span class="t-es">Escala smoke: cinco etapas, corridas de entrenamiento de aproximadamente medio minuto.</span></td>
+            <td class="num">5,129 <span class="t-en">stage records</span><span class="t-es">registros de etapas</span></td>
+            <td><span class="t-en">A validated pipeline: slugs, ledger, deployment symmetry and reporting joins.</span><span class="t-es">Un pipeline validado: slugs, libro de etapas, simetría de despliegue y uniones del reporte.</span></td>
+            <td><span class="t-en">Procedural, not architectural. Too short to separate models.</span><span class="t-es">Procedimental, no arquitectónica. Demasiado corta para separar modelos.</span></td>
+          </tr>
+          <tr>
+            <td><a href="2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a><br><span class="t-en" style="color:var(--muted);font-weight:500">The mixer atlas</span><span class="t-es" style="color:var(--muted);font-weight:500">El atlas de mixers</span></td>
+            <td><span class="t-en">Which mixer pair learns fastest at 32 tokens?</span><span class="t-es">¿Qué par de mixers aprende más rápido con 32 tokens?</span></td>
+            <td><span class="t-en">868 configurations, 667 unique pairs, 100 epochs, one seed.</span><span class="t-es">868 configuraciones, 667 pares únicos, 100 épocas, una semilla.</span></td>
+            <td class="num">2,656,372 <span class="t-en">training steps</span><span class="t-es">pasos de entrenamiento</span><br>5,271 <span class="t-en">stage records</span><span class="t-es">registros de etapas</span><br>905 CPU-h</td>
+            <td><span class="t-en">56 figures, the A×B atlas, ablation sweeps, deployment measurements and downloadable datasets.</span><span class="t-es">56 figuras, el atlas A×B, barridas de ablaciones, mediciones de despliegue y datasets descargables.</span></td>
+            <td><span class="t-en">Directional, not a final verdict. Curves are still descending at epoch 100.</span><span class="t-es">Direccional, no un veredicto final. Las curvas siguen bajando en la época 100.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><span class="callout-icon">◆</span><div><div class="t-en"><b>What changed between rounds is scale, not machinery.</b> Round 2 inherited a harness whose bookkeeping had already been exercised and whose failure modes were already known. That is why the second round can be compared configuration by configuration.</div><div class="t-es"><b>Lo que cambió entre rondas es la escala, no la maquinaria.</b> La ronda 2 heredó un arnés cuya contabilidad ya estaba ejercitada y cuyos modos de fallo ya eran conocidos. Por eso la segunda ronda se puede comparar configuración por configuración.</div></div></div>
+  </section>
+
+  <section class="section">
+    <h2><span class="t-en">Open a round</span><span class="t-es">Abrir una ronda</span></h2>
+    <ul class="mechanics">
+      <li><b><a href="1/index.html"><span class="t-en">Experiment 1 · The smoke round</span><span class="t-es">Experimento 1 · La ronda smoke</span></a></b><span><span class="t-en">What the paper says about the pilot: 5,129 stage records, half-minute runs, and the four mechanics it validated.</span><span class="t-es">Lo que dice el paper sobre el piloto: 5.129 registros de etapas, corridas de medio minuto y las cuatro mecánicas que validó.</span></span></li>
+      <li><b><a href="2/index.html"><span class="t-en">Experiment 2 · The mixer atlas</span><span class="t-es">Experimento 2 · El atlas de mixers</span></a></b><span><span class="t-en">The full measurement round: parameters, training, dynamics, the A×B atlas, ablations, deployment and reliability.</span><span class="t-es">La ronda de medición completa: parámetros, entrenamiento, dinámica, el atlas A×B, ablaciones, despliegue y fiabilidad.</span></span></li>
+      <li><b><a href="2/chartmaker.html"><span class="t-en">Chart maker</span><span class="t-es">Constructor de gráficos</span></a></b><span><span class="t-en">Build your own view from the four published datasets.</span><span class="t-es">Construye tu propia vista desde los cuatro datasets publicados.</span></span></li>
+    </ul>
+  </section>
+
+  <section class="cta">
+    <h2><span class="t-en">Start with the atlas</span><span class="t-es">Empieza por el atlas</span></h2>
+    <p><span class="t-en">The second round is where the mixer comparisons live. The first round explains why the harness could be trusted to produce them.</span><span class="t-es">La segunda ronda es donde viven las comparaciones de mixers. La primera explica por qué se podía confiar en que el arnés las produjera.</span></p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="2/index.html"><span class="t-en">Open Experiment 2</span><span class="t-es">Abrir el Experimento 2</span> →</a>
+      <a class="btn" href="1/index.html"><span class="t-en">Read Experiment 1</span><span class="t-es">Leer el Experimento 1</span></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="t-en">Generated from the experiment rounds of Frankenstein Transformer</span><span class="t-es">Generado desde las rondas de experimentos de Frankenstein Transformer</span> ·
+  <a href="../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a> ·
+  <a href="2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a>
+</footer>
+</body>
+</html>

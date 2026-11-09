@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiment 1 · The smoke round · Frankenstein Transformer</title>
+<meta name="description" content="Experiment 1 of the Frankenstein Transformer: a smoke-scale rehearsal that exercised the full five-stage harness before the 868-configuration campaign.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Experiment 1 · The smoke round · Frankenstein Transformer">
+<meta property="og:description" content="5,129 stage records and half-minute training runs: the pilot that validated the experiment harness.">
+<meta property="og:url" content="https://erickfmm.github.io/frankenstein-transformer/experiments/1/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://erickfmm.github.io/frankenstein-transformer/experiments/1/">
+<link rel="icon" href="../../../favicon.ico">
+<link rel="stylesheet" href="../atlas.css">
+<script>
+(function(){
+  function init(){
+    var root=document.documentElement;
+    var theme=localStorage.getItem('ft-theme')||
+      ((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
+    var lang=localStorage.getItem('ft-lang')||'en';
+    root.setAttribute('data-theme',theme);root.setAttribute('data-lang',lang);
+    window.ftSetTheme=function(t){
+      root.setAttribute('data-theme',t);localStorage.setItem('ft-theme',t);
+      document.querySelectorAll('[data-theme-btn]').forEach(function(b){
+        b.classList.toggle('on',b.getAttribute('data-theme-btn')===t);
+      });
+    };
+    window.ftSetLang=function(l){
+      root.setAttribute('data-lang',l);root.setAttribute('lang',l);localStorage.setItem('ft-lang',l);
+      document.querySelectorAll('[data-lang-btn]').forEach(function(b){
+        b.classList.toggle('on',b.getAttribute('data-lang-btn')===l);
+      });
+    };
+    window.ftSetTheme(theme);window.ftSetLang(lang);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="../index.html"><span class="dot"></span>Frankenstein<span style="color:var(--muted);font-weight:500">/ experiments / 1</span></a>
+  <nav>
+    <a href="../index.html"><span class="t-en">All experiments</span><span class="t-es">Todos los experimentos</span></a>
+    <a href="../2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a>
+    <a href="../2/chartmaker.html"><span class="t-en">Chart maker</span><span class="t-es">Constructor de gráficos</span></a>
+    <a href="../../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a>
+  </nav>
+  <div class="tools">
+    <button class="tbtn" data-lang-btn="en" onclick="ftSetLang('en')">EN</button>
+    <button class="tbtn" data-lang-btn="es" onclick="ftSetLang('es')">ES</button>
+    <button class="tbtn" data-theme-btn="dark" onclick="ftSetTheme('dark')">◐</button>
+    <button class="tbtn" data-theme-btn="light" onclick="ftSetTheme('light')">☀</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1><span class="t-en">The smoke round</span><span class="t-es">La ronda smoke</span></h1>
+    <p class="lede"><span class="t-en">Experiment 1 was a rehearsal at smoke scale: 5,129 stage records, with training runs of roughly half a minute each, whose purpose was to debug the pipeline itself before committing serious computation.</span><span class="t-es">El Experimento 1 fue un ensayo a escala de humo: 5.129 registros de etapas, con corridas de entrenamiento de aproximadamente medio minuto cada una, cuyo propósito era depurar el propio pipeline antes de comprometer cómputo serio.</span></p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="../2/index.html"><span class="t-en">Continue to Experiment 2</span><span class="t-es">Continuar al Experimento 2</span> →</a>
+      <a class="btn t-en" href="../../paper/paper-en.html#sec:annex-experiment-harness">Read the harness annex</a>
+      <a class="btn t-es" href="../../paper/paper-es.html#sec:annex-experiment-harness">Leer el anexo del arnés</a>
+      <a class="btn" href="../index.html"><span class="t-en">Back to the summary</span><span class="t-es">Volver al resumen</span></a>
+    </div>
+    <div class="hero-meta">
+      <span><span class="t-en">Pilot round</span><span class="t-es">Ronda piloto</span></span>
+      <span>·</span>
+      <span><span class="t-en">Same five-stage harness</span><span class="t-es">Mismo arnés de cinco etapas</span></span>
+      <span>·</span>
+      <span><span class="t-en">Not a leaderboard</span><span class="t-es">No es un leaderboard</span></span>
+    </div>
+  </div>
+</header>
+
+<section class="stats" aria-label="Experiment 1 summary">
+  <div class="stat blue"><div class="stat-v">5,129</div><div class="stat-l"><span class="t-en">stage records</span><span class="t-es">registros de etapas</span></div></div>
+  <div class="stat violet"><div class="stat-v">~30 s</div><div class="stat-l"><span class="t-en">per training run</span><span class="t-es">por corrida de entrenamiento</span></div></div>
+  <div class="stat green"><div class="stat-v">5</div><div class="stat-l"><span class="t-en">pipeline stages</span><span class="t-es">etapas del pipeline</span></div></div>
+  <div class="stat orange"><div class="stat-v">4</div><div class="stat-l"><span class="t-en">mechanics validated</span><span class="t-es">mecánicas validadas</span></div></div>
+</section>
+
+<main>
+  <section class="section">
+    <h2><span class="t-en">What the paper says</span><span class="t-es">Lo que dice el paper</span></h2>
+    <p><span class="t-en">Round 1 exercised the same harness end to end at smoke scale: 5,129 stage records, training runs of roughly half a minute, and the same five-stage sequence. Its purpose was to validate the mechanics — slug generation, ledger bookkeeping, deployment symmetry and the reporting joins — before committing CPU time to the real campaign.</span><span class="t-es">La ronda 1 ejercitó el mismo arnés de extremo a extremo a escala de humo: 5.129 registros de etapas, corridas de entrenamiento de aproximadamente medio minuto y la misma secuencia de cinco etapas. Su propósito era validar la mecánica — la generación de slugs, la contabilidad del libro, la simetría del despliegue y las uniones del reporte — antes de comprometer tiempo de CPU en la campaña real.</span></p>
+    <div class="callout"><span class="callout-icon">◆</span><div><div class="t-en"><b>It is not analysed further because the runs were too short to separate architectures.</b> Its value is procedural: Round 2 inherited a harness whose bookkeeping had already been exercised and whose failure modes were already known.</div><div class="t-es"><b>No se analiza más porque las corridas eran demasiado cortas para separar arquitecturas.</b> Su valor es procedimental: la ronda 2 heredó un arnés cuya contabilidad ya estaba ejercitada y cuyos modos de fallo ya eran conocidos.</div></div></div>
+  </section>
+
+  <section class="section">
+    <h2><span class="t-en">What it validated</span><span class="t-es">Qué validó</span></h2>
+    <p><span class="t-en">The pilot did not rank models. It tested the four pieces of bookkeeping that make a later measurement round interpretable.</span><span class="t-es">El piloto no ordenó modelos. Probó las cuatro piezas de contabilidad que hacen interpretable una ronda de medición posterior.</span></p>
+    <ul class="mechanics">
+      <li><b><span class="t-en">Slug generation</span><span class="t-es">Generación de slugs</span></b><span><span class="t-en">Each configuration gets a stable identifier derived mechanically from its YAML file.</span><span class="t-es">Cada configuración recibe un identificador estable derivado mecánicamente de su archivo YAML.</span></span></li>
+      <li><b><span class="t-en">Ledger bookkeeping</span><span class="t-es">Contabilidad del libro</span></b><span><span class="t-en">One row per stage execution, with category, status, duration and return code.</span><span class="t-es">Una fila por ejecución de etapa, con categoría, estado, duración y código de retorno.</span></span></li>
+      <li><b><span class="t-en">Deployment symmetry</span><span class="t-es">Simetría del despliegue</span></b><span><span class="t-en">When a configuration's standard export fails, its quantized export fails too — a shared root cause, not a quantization bug.</span><span class="t-es">Cuando falla el export estándar de una configuración, también falla el cuantizado — una causa raíz compartida, no un fallo de cuantización.</span></span></li>
+      <li><b><span class="t-en">Reporting joins</span><span class="t-es">Uniones del reporte</span></b><span><span class="t-en">The training log, parameter census and stage ledger join by configuration slug without losing rows.</span><span class="t-es">El log de entrenamiento, el censo de parámetros y el libro de etapas se unen por slug sin perder filas.</span></span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span class="t-en">The harness, exercised end to end</span><span class="t-es">El arnés, ejercitado de extremo a extremo</span></h2>
+    <p><span class="t-en">The pilot ran the same five stages that Round 2 would later use at scale: train, export, deploy in standard and quantized formats, evaluate four held-out prompts per format, and export the Hugging Face package.</span><span class="t-es">El piloto corrió las mismas cinco etapas que la ronda 2 usaría después a escala: entrenar, exportar, desplegar en formato estándar y cuantizado, evaluar cuatro consignas reservadas por formato y exportar el paquete de Hugging Face.</span></p>
+    <div class="figures">
+      <figure class="paper-fig">
+        <img src="../../paper/figures/experiment-pipeline.svg" alt="Five-stage experiment pipeline driven by one YAML file and three recorders">
+        <figcaption><span class="t-en">One configuration of a round: five stages driven by a single YAML file and logged by three independent recorders.</span><span class="t-es">Una configuración de una ronda: cinco etapas impulsadas por un único archivo YAML y registradas por tres registradores independientes.</span></figcaption>
+      </figure>
+      <figure class="paper-fig">
+        <img src="../../paper/figures/experiment-reporting.svg" alt="Offline reporting toolchain from recorders to bilingual static page">
+        <figcaption><span class="t-en">The offline reporting toolchain: three recorders consolidated into CSVs, joined by configuration, charted and rendered into a bilingual static page.</span><span class="t-es">La cadena de reporte offline: tres registradores consolidados en CSV, unidos por configuración, graficados y renderizados en una página estática bilingüe.</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="t-en">Round 1 against Round 2</span><span class="t-es">Ronda 1 frente a ronda 2</span></h2>
+    <div class="table-wrap">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th scope="col"><span class="t-en">Dimension</span><span class="t-es">Dimensión</span></th>
+            <th scope="col"><span class="t-en">Experiment 1</span><span class="t-es">Experimento 1</span></th>
+            <th scope="col"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="t-en">Purpose</span><span class="t-es">Propósito</span></td><td><span class="t-en">Debug the pipeline</span><span class="t-es">Depurar el pipeline</span></td><td><span class="t-en">Measure the mixer landscape</span><span class="t-es">Medir el paisaje de mixers</span></td></tr>
+          <tr><td><span class="t-en">Stage records</span><span class="t-es">Registros de etapas</span></td><td class="num">5,129</td><td class="num">5,271</td></tr>
+          <tr><td><span class="t-en">Training run length</span><span class="t-es">Duración de las corridas</span></td><td><span class="t-en">About 30 seconds</span><span class="t-es">Alrededor de 30 segundos</span></td><td><span class="t-en">About 68 minutes median</span><span class="t-es">Unos 68 minutos de mediana</span></td></tr>
+          <tr><td><span class="t-en">Compute</span><span class="t-es">Cómputo</span></td><td><span class="t-en">Smoke scale</span><span class="t-es">Escala smoke</span></td><td><span class="t-en">905 CPU-hours</span><span class="t-es">905 horas de CPU</span></td></tr>
+          <tr><td><span class="t-en">Output</span><span class="t-es">Salida</span></td><td><span class="t-en">A validated harness</span><span class="t-es">Un arnés validado</span></td><td><span class="t-en">The 868-configuration atlas</span><span class="t-es">El atlas de 868 configuraciones</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="t-en">What this round does not answer</span><span class="t-es">Qué no responde esta ronda</span></h2>
+    <div class="callout warn"><span class="callout-icon">!</span><div><div class="t-en"><b>It is not a model comparison.</b> The runs were too short to separate architectures, so this round says nothing about which mixer, optimizer or normalization is better. Those questions belong to Experiment 2, and even there the answers are directional rather than final.</div><div class="t-es"><b>No es una comparación de modelos.</b> Las corridas eran demasiado cortas para separar arquitecturas, así que esta ronda no dice nada sobre qué mixer, optimizador o normalización es mejor. Esas preguntas pertenecen al Experimento 2, y aun allí las respuestas son direccionales, no definitivas.</div></div></div>
+  </section>
+
+  <section class="cta">
+    <h2><span class="t-en">The measurements are in Round 2</span><span class="t-es">Las mediciones están en la ronda 2</span></h2>
+    <p><span class="t-en">The pilot made the harness trustworthy. The mixer atlas is what it was preparing for.</span><span class="t-es">El piloto hizo confiable el arnés. El atlas de mixers es aquello para lo que preparaba.</span></p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="../2/index.html"><span class="t-en">Open Experiment 2</span><span class="t-es">Abrir el Experimento 2</span> →</a>
+      <a class="btn" href="../index.html"><span class="t-en">Back to the summary</span><span class="t-es">Volver al resumen</span></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="t-en">Generated from the Round 1 description in the paper</span><span class="t-es">Generado desde la descripción de la ronda 1 en el paper</span> ·
+  <a href="../index.html"><span class="t-en">Experiments</span><span class="t-es">Experimentos</span></a> ·
+  <a href="../2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a> ·
+  <a href="../../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a>
+</footer>
+</body>
+</html>

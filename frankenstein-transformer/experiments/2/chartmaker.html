@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chart maker · Frankenstein Transformer</title>
 <meta name="description" content="Tableau-style chart maker for the Frankenstein Transformer experiment data: 868 configurations, 6,520 inference records, 5,271 pipeline stages and 86k learning-curve epochs.">
-<link rel="icon" href="../../favicon.ico">
+<link rel="canonical" href="https://erickfmm.github.io/frankenstein-transformer/experiments/2/chartmaker.html">
+<link rel="icon" href="../../../favicon.ico">
 
 <style>
 :root{
@@ -72,6 +73,12 @@ html[data-lang="es"] div.t-en{display:none!important}
 .cm-head h1{font-size:clamp(28px,4vw,44px);line-height:1.05;margin:8px 0 10px;letter-spacing:-.03em}
 .cm-lede{font-size:14.6px;color:var(--muted);margin:0;max-width:700px}
 .cm-lede .t-en,.cm-lede .t-es{display:inline}
+.cm-source{font-size:12px;color:var(--muted);margin:10px 0 0;max-width:700px}
+.cm-source a{text-decoration:underline;text-underline-offset:2px}
+.cm-alert{max-width:1440px;margin:0 auto 16px;padding:12px 16px;border-radius:var(--radius-sm);
+  border:1px solid color-mix(in srgb,var(--danger) 40%,var(--border));
+  background:color-mix(in srgb,var(--danger) 10%,var(--surface));font-size:13px}
+.cm-alert a{text-decoration:underline;text-underline-offset:2px}
 .cm-ds{display:flex;flex-direction:column;gap:5px;min-width:290px}
 .cm-ds label{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .cm-ds select{width:100%;font-size:13.5px;padding:9px 10px}
@@ -310,12 +317,14 @@ footer .t-en,footer .t-es{display:block}
 <body>
 
 <div class="topbar">
-  <a class="brand" href="../index.html"><span class="dot"></span>Frankenstein<span style="color:var(--muted);font-weight:500">/ charts</span></a>
+  <a class="brand" href="../../index.html"><span class="dot"></span>Frankenstein<span style="color:var(--muted);font-weight:500">/ experiments / 2 / chart maker</span></a>
   <nav>
     <a href="index.html"><span class="t-en">Report</span><span class="t-es">Informe</span></a>
+    <a href="../index.html"><span class="t-en">All experiments</span><span class="t-es">Todos los experimentos</span></a>
+    <a href="../1/index.html"><span class="t-en">Experiment 1</span><span class="t-es">Experimento 1</span></a>
     <a href="#my-charts"><span class="t-en">My charts</span><span class="t-es">Mis gráficos</span></a>
     <a href="#chart-panel"><span class="t-en">Chart</span><span class="t-es">Gráfico</span></a>
-    <a href="../index.html"><span class="t-en">Project home</span><span class="t-es">Inicio del proyecto</span></a>
+    <a href="../../index.html"><span class="t-en">Project home</span><span class="t-es">Inicio del proyecto</span></a>
   </nav>
   <div class="tools">
     <button class="tbtn" data-lang-btn="en" title="English">EN</button>
@@ -333,6 +342,7 @@ footer .t-en,footer .t-es{display:block}
       <span class="t-en">A Tableau-style explorer for the experiment data. Drop typed fields onto Columns, Rows, Color and Size, pick a chart, and share the result.</span>
       <span class="t-es">Un explorador estilo Tableau para los datos del experimento. Suelta campos tipados en Columnas, Filas, Color y Tamaño, elige un gráfico y compártelo.</span>
     </p>
+    <p class="cm-source"><span class="t-en">Datasets stream from the temporary Hugging Face bucket <a href="https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2">erickfmm/frankenstein-transformer-exp2</a>.</span><span class="t-es">Los datasets se cargan desde el bucket temporal de Hugging Face <a href="https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2">erickfmm/frankenstein-transformer-exp2</a>.</span></p>
   </div>
   <div class="cm-ds">
     <label for="cm-dataset"><span class="t-en">Dataset</span><span class="t-es">Conjunto de datos</span></label>
@@ -340,6 +350,11 @@ footer .t-en,footer .t-es{display:block}
     <div class="cm-ds-meta" id="cm-ds-meta"></div>
   </div>
 </header>
+
+<div class="cm-alert" id="cm-data-alert" role="alert" hidden>
+  <span class="t-en">The dataset could not be loaded from Hugging Face. <a href="https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2">Open the bucket</a> and retry.</span>
+  <span class="t-es">No se pudo cargar el dataset desde Hugging Face. <a href="https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2">Abre el bucket</a> y vuelve a intentar.</span>
+</div>
 
 <main class="cm-main">
 

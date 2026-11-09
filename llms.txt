@@ -69,6 +69,10 @@ Librería Python y CLI config-driven para entrenar arquitecturas experimentales 
 (Mixture of Experts, BitNet 1.58, Titan Memory y más) mediante YAML/JSON.
 - Más de 30 mixers de atención, varias normas y más de 20 optimizadores.
 - Config Builder: https://erickfmm.github.io/frankenstein-transformer/index.html
+- Experimentos: https://erickfmm.github.io/frankenstein-transformer/experiments/
+- Experimento 2 · atlas de mixers: https://erickfmm.github.io/frankenstein-transformer/experiments/2/
+- Experimento 1 · ronda smoke: https://erickfmm.github.io/frankenstein-transformer/experiments/1/
+- Dataset temporal (Hugging Face bucket): https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2
 - Paper: https://erickfmm.github.io/frankenstein-transformer/paper/paper-es.html
 - GitHub: https://github.com/erickfmm/frankenstein-transformer
 - PyPI: https://pypi.org/project/frankenstein-transformer/
