@@ -129,6 +129,7 @@ table.dt .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 footer{padding:26px 24px 60px;color:var(--muted);font-size:12.5px;text-align:center}
 @media(max-width:700px){
   .topbar nav{display:none}
+  .brand-path{display:none!important}
   .hero{padding:52px 18px 40px}
   .section{padding:36px 18px 8px}
   .stats{padding:20px 18px 6px}
