@@ -1,4 +1,4 @@
-\begin{thebibliography}{150}
+\begin{thebibliography}{176}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -122,6 +122,10 @@ Riccardo Bravin, Massimo Pavan, Hazem Hesham~Yousef Shalby, Fabrizio Pittorino,
 \newblock {EmbBERT}: Attention under 2 {MB} memory, 2026.
 \newblock URL \url{http://arxiv.org/abs/2502.10001}.
 
+\bibitem[Cai et~al.(2024)Cai, Jiang, Wang, Tang, Kim, and Huang]{cai2024scmoe}
+Weilin Cai, Juyong Jiang, Fan Wang, Jing Tang, Sunghun Kim, and Jiayi Huang.
+\newblock Shortcut-connected mixture-of-experts, 2024.
+
 \bibitem[Chen et~al.(2025)Chen, Lu, Zhu, Sun, and Liu]{chen_stronger_2025}
 Mingzhi Chen, Taiming Lu, Jiachen Zhu, Mingjie Sun, and Zhuang Liu.
 \newblock Stronger normalization-free transformers, 2025.
@@ -170,6 +174,13 @@ Chang Dai, Hongyu Shan, Mingyang Song, and Di~Liang.
   dependency modeling in large language models, 2025.
 \newblock URL \url{http://arxiv.org/abs/2509.05218}.
 
+\bibitem[Dai et~al.(2024)Dai, Deng, Zhao, Xu, Gao, Chen, Li, Zeng, Yu, Wu,
+  et~al.]{dai2024deepseekmoe}
+Damai Dai, Chengqi Deng, Chenggang Zhao, R.~X. Xu, Han Gao, Deli Chen, Jiashi
+  Li, Wangding Zeng, Xingkai Yu, Y.~Wu, et~al.
+\newblock {DeepSeekMoE}: Towards ultimate expert specialization in
+  mixture-of-experts language models, 2024.
+
 \bibitem[Dai et~al.(2019)Dai, Yang, Yang, Carbonell, Le, and
   Salakhutdinov]{Dai2019}
 Zihang Dai, Zhilin Yang, Yiming Yang, Jaime Carbonell, Quoc~V. Le, and Ruslan
@@ -180,6 +191,20 @@ Zihang Dai, Zhilin Yang, Yiming Yang, Jaime Carbonell, Quoc~V. Le, and Ruslan
   for Computational Linguistics (ACL)}, pages 2978--2988, 2019.
 \newblock \doi{10.18653/v1/P19-1285}.
 \newblock URL \url{https://arxiv.org/abs/1906.08237}.
+
+\bibitem[{DeepSeek-AI}(2024)]{deepseek2024v3}
+{DeepSeek-AI}.
+\newblock {DeepSeek-V3} technical report, 2024.
+
+\bibitem[{DeepSeek-AI}(2026{\natexlab{a}})]{deepseek2026v4}
+{DeepSeek-AI}.
+\newblock {DeepSeek-V4}: Towards highly efficient million-token context
+  intelligence, 2026{\natexlab{a}}.
+
+\bibitem[{DeepSeek-AI}(2026{\natexlab{b}})]{deepseek2026v4flash}
+{DeepSeek-AI}.
+\newblock {DeepSeek-V4.1-Flash}: Pushing the limits of {KV} cache compression,
+  2026{\natexlab{b}}.
 
 \bibitem[Defazio et~al.(2024)Defazio, Yang, Mehta, Mishchenko, Khaled, and
   Cutkosky]{defazio_road_2024}
@@ -236,6 +261,16 @@ Sai~Surya Duvvuri, Chanakya Ekbote, Rachit Bansal, Rishabh Tiwari, Devvrit
 \newblock Interleaved head attention, 2026.
 \newblock URL \url{https://arxiv.org/abs/2602.21371}.
 
+\bibitem[Elango et~al.(2026)Elango, Bhatia, Waleffe, Shafipour, Asida, Khattar,
+  Assaf, Golub, Guman, Mitra, Zhao, Borkar, Zilberstein, Patwary, Shoeybi, and
+  Rouhani]{elango2026latentmoe}
+Venmugil Elango, Nidhi Bhatia, Roger Waleffe, Rasoul Shafipour, Tomer Asida,
+  Abhinav Khattar, Nave Assaf, Maximilian Golub, Joey Guman, Tiyasa Mitra,
+  Ritchie Zhao, Ritika Borkar, Ran Zilberstein, Mostofa Patwary, Mohammad
+  Shoeybi, and Bita Rouhani.
+\newblock {LatentMoE}: Toward optimal accuracy per {FLOP} and parameter in
+  mixture of experts, 2026.
+
 \bibitem[Elfwing et~al.(2018)Elfwing, Uchibe, and Doya]{elfwing2018silu}
 Stefan Elfwing, Eiji Uchibe, and Kenji Doya.
 \newblock Sigmoid-weighted linear units for neural network function
@@ -262,6 +297,11 @@ Aiming Fang, Suhyune Lee, Nafise~Sadat Moosavi, and Iryna Gurevych.
 \newblock \doi{10.48550/arXiv.2208.14111}.
 \newblock URL \url{https://arxiv.org/abs/2208.14111}.
 
+\bibitem[Fedus et~al.(2021)Fedus, Zoph, and Shazeer]{fedus2021switch}
+William Fedus, Barret Zoph, and Noam Shazeer.
+\newblock Switch transformers: Scaling to trillion parameter models with simple
+  and efficient sparsity, 2021.
+
 \bibitem[Figliola et~al.(2025)Figliola, Alonso, Iyer, Anthony, and
   Millidge]{figliola_cca_2025}
 Tomas Figliola, Nicholas Alonso, Rishi Iyer, Quentin Anthony, and Beren
@@ -275,6 +315,12 @@ Yaosheng Fu, Guangxuan Xiao, Xin Dong, Song Han, and Oreste Villa.
 \newblock Sparda: Sparse decoupled attention for efficient long-context llm
   inference, 2026.
 \newblock URL \url{https://arxiv.org/abs/2606.04511}.
+
+\bibitem[Gale et~al.(2022)Gale, Narayanan, Young, and
+  Zaharia]{gale2022megablocks}
+Trevor Gale, Deepak Narayanan, Cliff Young, and Matei Zaharia.
+\newblock {MegaBlocks}: Efficient sparse training with mixture-of-experts,
+  2022.
 
 \bibitem[Glorot et~al.(2011)Glorot, Bordes, and Bengio]{glorot2011softplus}
 Xavier Glorot, Antoine Bordes, and Yoshua Bengio.
@@ -431,6 +477,11 @@ Andrew~G. Howard, Menglong Zhu, Bo~Chen, Dmitry Kalenichenko, Weijun Wang,
 \newblock In \emph{arXiv preprint arXiv:1704.04861}, 2017.
 \newblock URL \url{https://arxiv.org/abs/1704.04861}.
 
+\bibitem[Huang et~al.(2026)Huang, Li, Kong, et~al.]{huang2026step35}
+Ailin Huang, Ang Li, Aobo Kong, et~al.
+\newblock Step 3.5 flash: Open frontier-level intelligence with 11b active
+  parameters, 2026.
+
 \bibitem[Huang and Raza(2026)]{huang_gma_2026}
 Yongchao Huang and Hassan Raza.
 \newblock Gaussian mixture attention: Linear-time sequence mixing via
@@ -441,6 +492,13 @@ Yongchao Huang and Hassan Raza.
 Xiaowei Ji, Lishan Xu, Jianing An, Jie Luo, Wenjun Wu, and Lei Huang.
 \newblock Adampm: Memory-efficient llm optimization via moment pooling, 2026.
 \newblock URL \url{https://arxiv.org/abs/2610.24598}.
+
+\bibitem[Jin et~al.(2026)Jin, Qiu, Wang, Zheng, Xu, Xie, Li, Zhang, Lian, Men,
+  and Liu]{jin2026idbalancing}
+Peng Jin, Zihan Qiu, Zekun Wang, Bo~Zheng, Yang Xu, Tian Xie, Xiao Li, Huaqing
+  Zhang, Haoran Lian, Rui Men, and Dayiheng Liu.
+\newblock {ID} balancing: Stable training of extremely sparse {MoE} via
+  {PID}-based load control, 2026.
 
 \bibitem[Jolicoeur-Martineau et~al.(2026)Jolicoeur-Martineau, Sukthanker,
   Cameron, and Gervais]{jolicoeur_sliding_window_2026}
@@ -489,6 +547,10 @@ Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip
 \newblock URL \url{https://arxiv.org/abs/2507.20534}.
 \newblock MuonClip optimizer and QK-Clip (Section 2.1, Algorithm 1).
 
+\bibitem[{Kimi Team}(2026)]{kimiteam2026k3}
+{Kimi Team}.
+\newblock {Kimi K3}: Open frontier intelligence, 2026.
+
 \bibitem[{Kimi Team} et~al.(2025){Kimi Team}, Zhang, Lin, Yao, Hu, Meng, Liu,
   Men, Yang, Li, Li, Lu, Liu, Chen, Xu, Yu, Wang, Fan, Zhong, Yuan, Zhang,
   Zhang, Liu, Wang, Fang, He, Liu, Li, Su, Qiu, Pang, Yan, Jiang, Huang, Yin,
@@ -523,6 +585,19 @@ Timon Klein, Jonas Kusch, Sebastian Sager, Stefan Schnake, and Steffen
   mechanisms, 2026.
 \newblock URL \url{https://arxiv.org/abs/2603.30033}.
 
+\bibitem[Komatsuzaki et~al.(2023)Komatsuzaki, Puigcerver, Lee-Thorp, Ruiz,
+  Mustafa, Ainslie, and Houlsby]{komatsuzaki2023upcycling}
+Aran Komatsuzaki, Joan Puigcerver, James Lee-Thorp, Carlos~Riquelme Ruiz, Basil
+  Mustafa, Joshua Ainslie, and Neil Houlsby.
+\newblock Sparse upcycling: Training mixture-of-experts from dense checkpoints,
+  2023.
+
+\bibitem[Krajewski et~al.(2025)Krajewski, Chochowski, and
+  Korzekwa]{krajewski2025scaling}
+Jakub Krajewski, Marcin Chochowski, and Daniel Korzekwa.
+\newblock Scaling fine-grained {MoE} beyond 50b parameters: Empirical
+  evaluation and practical insights, 2025.
+
 \bibitem[Kubicek et~al.(2026)Kubicek, Caciolai, Peng, Sumant, Hoover, Greenlee,
   Battleday, Urban, Hoefler, and Whittington]{kubicek_lsa_2026}
 Ales Kubicek, Andrea Caciolai, Liangzu Peng, Sukrit Sumant, Benjamin Hoover,
@@ -556,11 +631,23 @@ Johannes Lederer.
 \newblock \doi{10.48550/arXiv.2101.09957}.
 \newblock URL \url{https://arxiv.org/abs/2101.09957}.
 
+\bibitem[Lepikhin et~al.(2020)Lepikhin, Lee, Xu, Chen, Firat, Huang, Krikun,
+  Shazeer, and Chen]{lepikhin2020gshard}
+Dmitry Lepikhin, HyoukJoong Lee, Yuanzhong Xu, Dehao Chen, Orhan Firat, Yanping
+  Huang, Maxim Krikun, Noam Shazeer, and Zhifeng Chen.
+\newblock {GShard}: Scaling giant models with conditional computation and
+  automatic sharding, 2020.
+
 \bibitem[Lewis et~al.(2021)Lewis, Bhosale, Dettmers, Kiela, and
   Zettlemoyer]{lewis_moe_2021}
 Mike Lewis, Shruti Bhosale, Tim Dettmers, Douwe Kiela, and Luke Zettlemoyer.
 \newblock Base layers: Simplifying training of large, sparse models, 2021.
 \newblock URL \url{https://arxiv.org/abs/2103.16716}.
+
+\bibitem[Li et~al.(2026)Li, Kudugunta, Rothermel, and
+  Zettlemoyer]{li2026slicing}
+Margaret Li, Sneha Kudugunta, Danielle Rothermel, and Luke Zettlemoyer.
+\newblock Slicing and dicing: Configuring optimal mixtures of experts, 2026.
 
 \bibitem[Li et~al.(2025)Li, Liu, Liang, Chen, and Zhao]{li_normuon_2025}
 Zichong Li, Liming Liu, Chen Liang, Weizhu Chen, and Tuo Zhao.
@@ -572,6 +659,11 @@ Kaizhao Liang, Lizhang Chen, Bo~Liu, and Qiang Liu.
 \newblock Cautious optimizers: Improving training with one line of code, 2024.
 \newblock URL \url{https://arxiv.org/abs/2411.16085}.
 \newblock Version Number: 4.
+
+\bibitem[Liew et~al.(2026)Liew, Shinzato, and Dong]{liew2026principled}
+Seng~Pei Liew, Kenta Shinzato, and Yuyang Dong.
+\newblock Towards principled design of mixture-of-experts language models under
+  memory and inference constraints, 2026.
 
 \bibitem[Lin et~al.(2025)Lin, Wang, et~al.]{lin_forgetting_transformer_2025}
 Zhixuan Lin, Ke~Wang, et~al.
@@ -659,11 +751,23 @@ Sushant Mehta, Raj Dandekar, Rajat Dandekar, and Sreedath Panat.
 \newblock Latent multi-head attention for small language models, 2025.
 \newblock URL \url{https://arxiv.org/abs/2506.09342}.
 
+\bibitem[{Meituan LongCat Team}(2025)]{longcat2025flash}
+{Meituan LongCat Team}.
+\newblock {LongCat-Flash} technical report, 2025.
+
 \bibitem[Meng(2026)]{meng_gqla_2026}
 Fanxu Meng.
 \newblock Gqla: Group-query latent attention for hardware-adaptive large
   language model decoding, 2026.
 \newblock URL \url{https://arxiv.org/abs/2605.15250}.
+
+\bibitem[{Meta AI}(2025)]{meta2025llama4}
+{Meta AI}.
+\newblock The {Llama} 4 herd: Multimodal intelligence at the frontier.
+\newblock \url{https://ai.meta.com/blog/llama-4-multimodal-intelligence/},
+  2025.
+\newblock Model cards: \texttt{meta-llama/Llama-4-Scout-17B-16E-Instruct} and
+  \texttt{Llama-4-Maverick-17B-128E-Instruct}.
 
 \bibitem[Mishchenko and Defazio(2023)]{mishchenko_prodigy_2023}
 Konstantin Mishchenko and Aaron Defazio.
@@ -704,6 +808,10 @@ Matteo Pagliardini, Pierre Ablin, and David Grangier.
 \newblock The {AdEMAMix} optimizer: Better, faster, older, 2024.
 \newblock URL \url{https://arxiv.org/abs/2409.03137}.
 \newblock Version Number: 2.
+
+\bibitem[{Pangu Team}(2025)]{pangu2025ultra}
+{Pangu Team}.
+\newblock Pangu ultra moe: Scaling mixture-of-experts language models, 2025.
 
 \bibitem[Park et~al.(2019)Park, Chan, Zhang, Chiu, Zoph, Cubuk, and
   Le]{Park2019}
@@ -767,10 +875,22 @@ Zhen Qin, Xu~Han, et~al.
 \newblock Hgrn2: Gated linear rnns with state expansion, 2024.
 \newblock URL \url{https://arxiv.org/abs/2404.07904}.
 
-\bibitem[Qiu et~al.(2025)Qiu, Team, et~al.]{qiu_gated_attention_2025}
+\bibitem[Qiu et~al.(2025{\natexlab{a}})Qiu, Team,
+  et~al.]{qiu_gated_attention_2025}
 Yuxiang Qiu, Qwen Team, et~al.
-\newblock Gated attention for large language models, 2025.
+\newblock Gated attention for large language models, 2025{\natexlab{a}}.
 \newblock URL \url{https://arxiv.org/abs/2505.06708}.
+
+\bibitem[Qiu et~al.(2025{\natexlab{b}})Qiu, Mao, Huang, Wang, Zheng, Wen, Wang,
+  Lin, and Huang]{qiu2025demons}
+Zihan Qiu, Huanqi Mao, Ziyang Huang, Zekun Wang, Bo~Zheng, Kaiyue Wen, Yanghua
+  Wang, Junyang Lin, and Xuanjing Huang.
+\newblock Demons in the detail: On implementing load balancing loss for
+  training specialized mixture-of-expert models, 2025{\natexlab{b}}.
+
+\bibitem[{Qwen Team}(2025)]{qwen2025qwen3}
+{Qwen Team}.
+\newblock {Qwen3} technical report, 2025.
 
 \bibitem[Raj and Deb(2026)]{raj_eve_2026}
 Shashank Raj and Kalyanmoy Deb.
@@ -809,6 +929,11 @@ Dima Rekesh, Nithin~Rao Koluguri, Samuel Kriman, Somshubra Majumdar, Vahid
   recognition, 2023.
 \newblock URL \url{https://arxiv.org/abs/2305.05084}.
 
+\bibitem[Roller et~al.(2021)Roller, Sukhbaatar, Szlam, and
+  Weston]{roller2021hash}
+Stephen Roller, Sainbayar Sukhbaatar, Arthur Szlam, and Jason Weston.
+\newblock Hash layers for large sparse models, 2021.
+
 \bibitem[Roy et~al.(2019)Roy, Manna, Bagui, et~al.]{roy2019lisht}
 Susmita Roy, Souvik Manna, Subhash Bagui, et~al.
 \newblock {LiSHT}: Non-parametric linearly scaled hyperbolic tangent activation
@@ -833,6 +958,13 @@ Noam Shazeer and Mitchell Stern.
 \newblock Adafactor: Adaptive learning rates with sublinear memory cost, 2018.
 \newblock URL \url{https://arxiv.org/abs/1804.04235}.
 \newblock Version Number: 1.
+
+\bibitem[Shazeer et~al.(2017)Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton,
+  and Dean]{shazeer2017moe}
+Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le,
+  Geoffrey Hinton, and Jeff Dean.
+\newblock Outrageously large neural networks: The sparsely-gated
+  mixture-of-experts layer, 2017.
 
 \bibitem[Shen et~al.(2025)Shen, Huang, Huang, Shen, and
   Zhang]{shen_convergence_2025}
@@ -945,6 +1077,11 @@ Junjie Wang, Pan Zhou, Yiming Dong, Huan Li, Jia Li, Xun Zhou, Qicheng Lao,
 \newblock Conda: Column-normalized adam for training large language models
   faster, 2025.
 \newblock URL \url{https://arxiv.org/abs/2509.24218}.
+
+\bibitem[Wang et~al.(2024)Wang, Gao, Zhao, Sun, and Dai]{wang2024auxfree}
+Lean Wang, Huazuo Gao, Chenggang Zhao, Xu~Sun, and Damai Dai.
+\newblock Auxiliary-loss-free load balancing strategy for mixture-of-experts,
+  2024.
 
 \bibitem[Wang et~al.(2026)Wang, Liu, et~al.]{wang_fasa_2026}
 Zhe Wang, Ming Liu, et~al.
@@ -1090,6 +1227,12 @@ Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima Anandkumar, and
 \newblock URL \url{https://arxiv.org/abs/2403.03507}.
 \newblock Version Number: 2.
 
+\bibitem[Zhou et~al.(2022)Zhou, Lei, Liu, Du, Huang, Zhao, Dai, Le, Laudon,
+  Zhao, et~al.]{zhou2022expertchoice}
+Yanqi Zhou, Tao Lei, Hanxiao Liu, Nan Du, Yanping Huang, Vincent Zhao, Andrew
+  Dai, Quoc Le, James Laudon, Qirong Zhao, et~al.
+\newblock Mixture-of-experts with expert choice routing, 2022.
+
 \bibitem[Zhu et~al.(2025{\natexlab{a}})Zhu, Zhang, Cong, Liu, Park, Chandra,
   Long, Pan, Wang, and Lee]{zhu2025apollosgdlikememoryadamwlevel}
 Hanqing Zhu, Zhenyu Zhang, Wenyan Cong, Xi~Liu, Sem Park, Vikas Chandra,
@@ -1110,5 +1253,12 @@ Lianghui Zhu, Yuxin Fang, Bencheng Liao, Shijie Wang, Tianheng Cheng, Zilong
   Wang.
 \newblock Mixture-of-depths attention, 2026.
 \newblock URL \url{https://arxiv.org/abs/2603.15619}.
+
+\bibitem[Zoph et~al.(2022)Zoph, Bello, Kumar, Du, Huang, Dean, Shazeer, and
+  Fedus]{zoph2022stmoe}
+Barret Zoph, Irwan Bello, Sameer Kumar, Nan Du, Yanping Huang, Jeff Dean, Noam
+  Shazeer, and William Fedus.
+\newblock {ST-MoE}: Designing stable and transferable sparse expert models,
+  2022.
 
 \end{thebibliography}

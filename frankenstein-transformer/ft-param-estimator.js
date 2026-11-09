@@ -384,6 +384,17 @@ var FTParamEstimator = (function () {
     var fA = String(pick(m, 'ffn.activation', 'ffn_activation', 'silu') || 'silu');
     var moe = toBool(pick(m, 'moe.enabled', 'use_moe', true), true);
     var nE = toNum(pick(m, 'moe.num_experts', 'num_experts', 8), 8);
+    // MoE anatomy (src/schema/_model/_moe.yaml): routed expert width differs
+    // from the dense FFN width, and shared / latent branches add parameters.
+    var moeDense = toNum(pick(m, 'moe.layout.dense_layers', 'moe_dense_layers', 0), 0);
+    var moeFreq = Math.max(1, toNum(pick(m, 'moe.layout.every_n_layers', 'moe_layer_frequency', 1), 1));
+    var expertH = toNum(pick(m, 'moe.expert_hidden_size', 'moe_expert_hidden_size', fH), fH);
+    var latentOn = toBool(pick(m, 'moe.latent.enabled', 'moe_latent_enabled', false), false);
+    var latentDim = toNum(pick(m, 'moe.latent.dim', 'moe_latent_dim', H), H);
+    var latentNorm = toBool(pick(m, 'moe.latent.norm_before_up_proj', 'moe_latent_norm_before_up_proj', false), false);
+    var sharedN = toNum(pick(m, 'moe.shared.count', 'moe_shared_experts_count', 0), 0);
+    var sharedH = toNum(pick(m, 'moe.shared.hidden_size', 'moe_shared_expert_hidden_size', expertH), expertH);
+    var sharedGate = String(pick(m, 'moe.shared.gate', 'moe_shared_expert_gate', 'none') || 'none').toLowerCase();
     var mod = toBool(pick(m, 'mixture_of_depths.enabled', 'use_mixture_of_depths', false), false);
     var mhcEnabled = toBool(pick(m, 'mhc.enabled', 'use_mhc', false), false);
     var mhcN = toNum(pick(m, 'mhc.expansion_rate', 'mhc_expansion_rate', 4), 4);
@@ -450,13 +461,28 @@ var FTParamEstimator = (function () {
     // ---- Per-layer sums ----
     var normPer = normParams(normType, H);
     var ffnPer = ffnBodyParams(H, fH, fA);
+    // LatentMoE experts run in the latent space; shared experts stay at H.
+    var expertInner = latentOn ? latentDim : H;
+    var expertPer = ffnBodyParams(expertInner, expertH, fA);
+    var sharedPer = ffnBodyParams(H, sharedH, fA);
     var pAttn = 0, pFfn = 0, pNorm = 0, pMhc = 0, pRouter = 0;
     for (var li = 0; li < nL; li++) {
       pAttn += mixerParams(expanded[li], m, H, nH, nKv, fH, normType, bitnetOn);
-      pFfn += moe ? nE * ffnPer : ffnPer;
+      var isMoeLayer = moe && li >= moeDense && ((li - moeDense) % moeFreq === 0);
+      if (isMoeLayer) {
+        pFfn += nE * expertPer;          // routed experts
+        pFfn += sharedN * sharedPer;     // always-on shared experts
+        if (latentOn) {
+          pFfn += 2 * H * latentDim;     // down + up projections (bias=False)
+          if (latentNorm) pFfn += latentDim; // RMSNorm before up-projection
+        }
+        pRouter += H * nE;               // router (bias=False)
+        if (sharedN > 0 && sharedGate === 'sigmoid') pRouter += H + 1; // gate
+      } else {
+        pFfn += ffnPer;                  // dense FFN
+      }
       pNorm += normPer * 2;              // norm1 + norm2 (flash: 0 each)
       if (mhcEnabled && !hyperloop) pMhc += 2 * mhcBlockParams(H, mhcN); // attn + ffn blocks
-      if (moe) pRouter += H * nE;        // router (bias=False)
       if (mod) pRouter += H;             // depth_router (bias=False)
     }
     pNorm += normPer;                    // final_norm
@@ -532,7 +558,7 @@ var FTParamEstimator = (function () {
     var total = emb + pPos + pAttn + pFfn + pNorm + head + pMhc + pRouter + pRes;
 
     var notes = [];
-    if (moe) notes.push('MoE: ' + nE + ' experts');
+    if (moe) notes.push('MoE: ' + nE + ' experts, width ' + expertH + (latentOn ? ', latent ' + latentDim : '') + (sharedN ? ', ' + sharedN + ' shared' : ''));
     if (dyn) notes.push('dynamic embeddings (EELBERT): no input table');
     if (loops > 1) notes.push(loops + ' loops (weights reused)');
     if (mhcEnabled && hyperloop) notes.push('Hyperloop ' + (hlBegin || hlEnd ? hlBegin + 'L→' + (nL - hlBegin - hlEnd) + 'L(x' + loops + ')→' + hlEnd + 'L' : 'x' + loops) + ', n=' + mhcN + ', H^res=' + hlRp);

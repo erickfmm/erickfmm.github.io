@@ -1383,6 +1383,34 @@ Predicts Quality</a></li>
 id="toc-practical-reading-and-next-steps">Practical Reading and Next
 Steps</a></li>
 </ul></li>
+<li><a href="#app:moe" id="toc-app:moe">Mixture-of-Experts: Theory and
+Implementation</a>
+<ul>
+<li><a href="#app:moe-overview" id="toc-app:moe-overview">Overview and
+taxonomy</a></li>
+<li><a href="#app:moe-router" id="toc-app:moe-router">Router scoring:
+from logits to weights</a></li>
+<li><a href="#app:moe-routing" id="toc-app:moe-routing">Routing
+strategy: who selects, and how</a></li>
+<li><a href="#app:moe-balancing" id="toc-app:moe-balancing">Load
+balancing</a></li>
+<li><a href="#app:moe-experts" id="toc-app:moe-experts">Experts: count,
+width, latent space, sharing</a></li>
+<li><a href="#app:moe-layout" id="toc-app:moe-layout">Layer
+layout</a></li>
+<li><a href="#app:moe-capacity" id="toc-app:moe-capacity">Capacity and
+token dropping</a></li>
+<li><a href="#app:moe-monitoring"
+id="toc-app:moe-monitoring">Monitoring</a></li>
+<li><a href="#app:moe-schema" id="toc-app:moe-schema">Schema
+contract</a></li>
+<li><a href="#app:moe-presets" id="toc-app:moe-presets">Named
+presets</a></li>
+<li><a href="#app:moe-training" id="toc-app:moe-training">Training
+interaction</a></li>
+<li><a href="#app:moe-future" id="toc-app:moe-future">Related systems
+and future work</a></li>
+</ul></li>
 </ul>
 </nav>
 <h1 id="introduction">Introduction</h1>
@@ -2697,7 +2725,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>150</span> urlstyle</p>
+<p><span>176</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2760,6 +2788,8 @@ Skye Wanderman-Milne, and Qiao Zhang. : composable transformations of
 <p>Riccardo Bravin, Massimo Pavan, Hazem Hesham Yousef Shalby, Fabrizio
 Pittorino, and Manuel Roveri. : Attention under 2 <span>MB</span>
 memory, 2026. URL <code>http://arxiv.org/abs/2502.10001</code>.</p>
+<p>Weilin Cai, Juyong Jiang, Fan Wang, Jing Tang, Sunghun Kim, and Jiayi
+Huang. Shortcut-connected mixture-of-experts, 2024.</p>
 <p>Mingzhi Chen, Taiming Lu, Jiachen Zhu, Mingjie Sun, and Zhuang Liu.
 Stronger normalization-free transformers, 2025. URL
 <code>http://arxiv.org/abs/2512.10938</code>.</p>
@@ -2787,12 +2817,21 @@ Patwardhan. : Tiny models through dynamic embeddings. URL
 rotary positional encoding for stable long-range dependency modeling in
 large language models, 2025. URL
 <code>http://arxiv.org/abs/2509.05218</code>.</p>
+<p>Damai Dai, Chengqi Deng, Chenggang Zhao, R. X. Xu, Han Gao, Deli
+Chen, Jiashi Li, Wangding Zeng, Xingkai Yu, Y. Wu, et al. : Towards
+ultimate expert specialization in mixture-of-experts language models,
+2024.</p>
 <p>Zihang Dai, Zhilin Yang, Yiming Yang, Jaime Carbonell, Quoc V. Le,
 and Ruslan Salakhutdinov. Transformer-<span>XL</span>: Attentive
 language models beyond a fixed-length context. In <em>Proceedings of the
 57th Annual Meeting of the Association for Computational Linguistics
 (ACL)</em>, pages 2978–2988, 2019. doi: 10.18653/v1/P19-1285. URL
 <code>https://arxiv.org/abs/1906.08237</code>.</p>
+<p><span>DeepSeek-AI</span>. technical report, 2024.</p>
+<p><span>DeepSeek-AI</span>. : Towards highly efficient million-token
+context intelligence, 2026<span>a</span>.</p>
+<p><span>DeepSeek-AI</span>. : Pushing the limits of <span>KV</span>
+cache compression, 2026<span>b</span>.</p>
 <p>Aaron Defazio, Xingyu Alice Yang, Harsh Mehta, Konstantin Mishchenko,
 Ahmed Khaled, and Ashok Cutkosky. The road less scheduled, 2024. URL
 <code>https://arxiv.org/abs/2405.15682</code>. Version Number: 4.</p>
@@ -2820,6 +2859,11 @@ benchmark. <em>Neurocomputing</em>, 453: 1–24, 2021. doi:
 Devvrit Khatri, David Brandfonbrener, Paul Liang, Inderjit Dhillon, and
 Manzil Zaheer. Interleaved head attention, 2026. URL
 <code>https://arxiv.org/abs/2602.21371</code>.</p>
+<p>Venmugil Elango, Nidhi Bhatia, Roger Waleffe, Rasoul Shafipour, Tomer
+Asida, Abhinav Khattar, Nave Assaf, Maximilian Golub, Joey Guman, Tiyasa
+Mitra, Ritchie Zhao, Ritika Borkar, Ran Zilberstein, Mostofa Patwary,
+Mohammad Shoeybi, and Bita Rouhani. : Toward optimal accuracy per
+<span>FLOP</span> and parameter in mixture of experts, 2026.</p>
 <p>Stefan Elfwing, Eiji Uchibe, and Kenji Doya. Sigmoid-weighted linear
 units for neural network function approximation in reinforcement
 learning. <em>Neural Networks</em>, 106: 300–312, 2018. doi:
@@ -2835,6 +2879,9 @@ Transformers with learnable activation functions. In <em>Findings of the
 Association for Computational Linguistics: EACL 2023</em>, pages
 1736–1746, 2023. doi: 10.48550/arXiv.2208.14111. URL
 <code>https://arxiv.org/abs/2208.14111</code>.</p>
+<p>William Fedus, Barret Zoph, and Noam Shazeer. Switch transformers:
+Scaling to trillion parameter models with simple and efficient sparsity,
+2021.</p>
 <p>Tomas Figliola, Nicholas Alonso, Rishi Iyer, Quentin Anthony, and
 Beren Millidge. Compressed convolutional attention: Efficient attention
 in a compressed latent space, 2025. URL
@@ -2842,6 +2889,8 @@ in a compressed latent space, 2025. URL
 <p>Yaosheng Fu, Guangxuan Xiao, Xin Dong, Song Han, and Oreste Villa.
 Sparda: Sparse decoupled attention for efficient long-context llm
 inference, 2026. URL <code>https://arxiv.org/abs/2606.04511</code>.</p>
+<p>Trevor Gale, Deepak Narayanan, Cliff Young, and Matei Zaharia. :
+Efficient sparse training with mixture-of-experts, 2022.</p>
 <p>Xavier Glorot, Antoine Bordes, and Yoshua Bengio. Deep sparse
 rectifier neural networks. <em>Proceedings of the 14th International
 Conference on Artificial Intelligence and Statistics (AISTATS)</em>,
@@ -2928,12 +2977,18 @@ Wang, Tobias Weyand, Marco Andreetto, and Hartwig Adam. : Efficient
 convolutional neural networks for mobile vision applications. In
 <em>arXiv preprint arXiv:1704.04861</em>, 2017. URL
 <code>https://arxiv.org/abs/1704.04861</code>.</p>
+<p>Ailin Huang, Ang Li, Aobo Kong, et al. Step 3.5 flash: Open
+frontier-level intelligence with 11b active parameters, 2026.</p>
 <p>Yongchao Huang and Hassan Raza. Gaussian mixture attention:
 Linear-time sequence mixing via probabilistic latent routing, 2026. URL
 <code>https://arxiv.org/abs/2606.18283</code>.</p>
 <p>Xiaowei Ji, Lishan Xu, Jianing An, Jie Luo, Wenjun Wu, and Lei Huang.
 Adampm: Memory-efficient llm optimization via moment pooling, 2026. URL
 <code>https://arxiv.org/abs/2610.24598</code>.</p>
+<p>Peng Jin, Zihan Qiu, Zekun Wang, Bo Zheng, Yang Xu, Tian Xie, Xiao
+Li, Huaqing Zhang, Haoran Lian, Rui Men, and Dayiheng Liu. balancing:
+Stable training of extremely sparse <span>MoE</span> via
+<span>PID</span>-based load control, 2026.</p>
 <p>Alexia Jolicoeur-Martineau, Rhea Sanjay Sukthanker, Pashmina Cameron,
 and Emy Gervais. Sliding window beats linear attention, 2026. URL
 <code>https://arxiv.org/abs/2608.28444</code>.</p>
@@ -2956,6 +3011,7 @@ Supervised contrastive learning, 2020. URL
 <p><span>Kimi Team</span>. Kimi <span>K2</span>: Open agentic
 intelligence, 2025. URL <code>https://arxiv.org/abs/2507.20534</code>.
 MuonClip optimizer and QK-Clip (Section 2.1, Algorithm 1).</p>
+<p><span>Kimi Team</span>. : Open frontier intelligence, 2026.</p>
 <p><span>Kimi Team</span>, Yu Zhang, Zongyu Lin, Xingcheng Yao, Jiaxi
 Hu, Fanqing Meng, Chengyin Liu, Xin Men, Songlin Yang, Zhiyuan Li,
 Wentao Li, Enzhe Lu, Weizhou Liu, Yanru Chen, Weixin Xu, Longhui Yu,
@@ -2977,6 +3033,12 @@ Neural Information Processing Systems (NeurIPS)</em>, 2017. URL
 Steffen Schotthöfer. Tucker attention: A generalization of approximate
 attention mechanisms, 2026. URL
 <code>https://arxiv.org/abs/2603.30033</code>.</p>
+<p>Aran Komatsuzaki, Joan Puigcerver, James Lee-Thorp, Carlos Riquelme
+Ruiz, Basil Mustafa, Joshua Ainslie, and Neil Houlsby. Sparse upcycling:
+Training mixture-of-experts from dense checkpoints, 2023.</p>
+<p>Jakub Krajewski, Marcin Chochowski, and Daniel Korzekwa. Scaling
+fine-grained <span>MoE</span> beyond 50b parameters: Empirical
+evaluation and practical insights, 2025.</p>
 <p>Ales Kubicek, Andrea Caciolai, Liangzu Peng, Sukrit Sumant, Benjamin
 Hoover, Fraser Greenlee, Ruairidh M. Battleday, Radim Urban, Torsten
 Hoefler, and James C. R. Whittington. Latent sparse attention: Towards
@@ -2995,15 +3057,25 @@ Zhao. Minimax sparse attention, 2026. URL
 A systematic overview. <em>arXiv preprint arXiv:2101.09957</em>, 2021.
 doi: 10.48550/arXiv.2101.09957. URL
 <code>https://arxiv.org/abs/2101.09957</code>.</p>
+<p>Dmitry Lepikhin, HyoukJoong Lee, Yuanzhong Xu, Dehao Chen, Orhan
+Firat, Yanping Huang, Maxim Krikun, Noam Shazeer, and Zhifeng Chen. :
+Scaling giant models with conditional computation and automatic
+sharding, 2020.</p>
 <p>Mike Lewis, Shruti Bhosale, Tim Dettmers, Douwe Kiela, and Luke
 Zettlemoyer. Base layers: Simplifying training of large, sparse models,
 2021. URL <code>https://arxiv.org/abs/2103.16716</code>.</p>
+<p>Margaret Li, Sneha Kudugunta, Danielle Rothermel, and Luke
+Zettlemoyer. Slicing and dicing: Configuring optimal mixtures of
+experts, 2026.</p>
 <p>Zichong Li, Liming Liu, Chen Liang, Weizhu Chen, and Tuo Zhao.
 Normuon: Making muon more efficient and scalable, 2025. URL
 <code>https://arxiv.org/abs/2510.05491</code>.</p>
 <p>Kaizhao Liang, Lizhang Chen, Bo Liu, and Qiang Liu. Cautious
 optimizers: Improving training with one line of code, 2024. URL
 <code>https://arxiv.org/abs/2411.16085</code>. Version Number: 4.</p>
+<p>Seng Pei Liew, Kenta Shinzato, and Yuyang Dong. Towards principled
+design of mixture-of-experts language models under memory and inference
+constraints, 2026.</p>
 <p>Zhixuan Lin, Ke Wang, et al. Forgetting transformer: Softmax
 attention with a forget gate, 2025. URL
 <code>https://arxiv.org/abs/2503.02130</code>.</p>
@@ -3051,9 +3123,16 @@ Processing</em>, 2013. URL
 <p>Sushant Mehta, Raj Dandekar, Rajat Dandekar, and Sreedath Panat.
 Latent multi-head attention for small language models, 2025. URL
 <code>https://arxiv.org/abs/2506.09342</code>.</p>
+<p><span>Meituan LongCat Team</span>. technical report, 2025.</p>
 <p>Fanxu Meng. Gqla: Group-query latent attention for hardware-adaptive
 large language model decoding, 2026. URL
 <code>https://arxiv.org/abs/2605.15250</code>.</p>
+<p><span>Meta AI</span>. The <span>Llama</span> 4 herd: Multimodal
+intelligence at the frontier.
+<code>https://ai.meta.com/blog/llama-4-multimodal-intelligence/</code>,
+2025. Model cards:
+<code>meta-llama/Llama-4-Scout-17B-16E-Instruct</code> and
+<code>Llama-4-Maverick-17B-128E-Instruct</code>.</p>
 <p>Konstantin Mishchenko and Aaron Defazio. Prodigy: An expeditiously
 adaptive parameter-free learner, 2023. URL
 <code>https://arxiv.org/abs/2306.06101</code>. Version Number: 4.</p>
@@ -3075,6 +3154,8 @@ general, 2026. URL <code>http://arxiv.org/abs/2602.01418</code>.</p>
 <p>Matteo Pagliardini, Pierre Ablin, and David Grangier. The
 <span>AdEMAMix</span> optimizer: Better, faster, older, 2024. URL
 <code>https://arxiv.org/abs/2409.03137</code>. Version Number: 2.</p>
+<p><span>Pangu Team</span>. Pangu ultra moe: Scaling mixture-of-experts
+language models, 2025.</p>
 <p>Daniel S. Park, William Chan, Yu Zhang, Chung-Cheng Chiu, Barret
 Zoph, Ekin D. Cubuk, and Quoc V. Le. Spec<span>A</span>ugment: A simple
 data augmentation method for automatic speech recognition. In <em>Proc.
@@ -3110,7 +3191,13 @@ URL <code>http://arxiv.org/abs/2108.12409</code>.</p>
 <p>Zhen Qin, Xu Han, et al. Hgrn2: Gated linear rnns with state
 expansion, 2024. URL <code>https://arxiv.org/abs/2404.07904</code>.</p>
 <p>Yuxiang Qiu, Qwen Team, et al. Gated attention for large language
-models, 2025. URL <code>https://arxiv.org/abs/2505.06708</code>.</p>
+models, 2025<span>a</span>. URL
+<code>https://arxiv.org/abs/2505.06708</code>.</p>
+<p>Zihan Qiu, Huanqi Mao, Ziyang Huang, Zekun Wang, Bo Zheng, Kaiyue
+Wen, Yanghua Wang, Junyang Lin, and Xuanjing Huang. Demons in the
+detail: On implementing load balancing loss for training specialized
+mixture-of-expert models, 2025<span>b</span>.</p>
+<p><span>Qwen Team</span>. technical report, 2025.</p>
 <p>Shashank Raj and Kalyanmoy Deb. Eve: An alternate optimizer to adam,
 2026. URL <code>https://arxiv.org/abs/2609.35614</code>.</p>
 <p>Prajit Ramachandran, Barret Zoph, and Quoc V. Le. Searching for
@@ -3129,6 +3216,8 @@ Vahid Noroozi, He Huang, Oleksii Hrinchuk, Krishna Puvvada, Ankur Kumar,
 Jagadeesh Balam, and Boris Ginsburg. Fast conformer with linearly
 scalable attention for efficient speech recognition, 2023. URL
 <code>https://arxiv.org/abs/2305.05084</code>.</p>
+<p>Stephen Roller, Sainbayar Sukhbaatar, Arthur Szlam, and Jason Weston.
+Hash layers for large sparse models, 2021.</p>
 <p>Susmita Roy, Souvik Manna, Subhash Bagui, et al. : Non-parametric
 linearly scaled hyperbolic tangent activation function for neural
 networks. <em>arXiv preprint arXiv:1811.05870</em>, 2019. URL
@@ -3142,6 +3231,9 @@ arXiv:2002.05202</em>, 2020. URL
 <p>Noam Shazeer and Mitchell Stern. Adafactor: Adaptive learning rates
 with sublinear memory cost, 2018. URL
 <code>https://arxiv.org/abs/1804.04235</code>. Version Number: 1.</p>
+<p>Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc
+Le, Geoffrey Hinton, and Jeff Dean. Outrageously large neural networks:
+The sparsely-gated mixture-of-experts layer, 2017.</p>
 <p>Wei Shen, Ruichuan Huang, Minhui Huang, Cong Shen, and Jiawei Zhang.
 On the convergence analysis of muon, 2025. URL
 <code>https://arxiv.org/abs/2505.23737</code>. Version Number: 1.</p>
@@ -3199,6 +3291,9 @@ Lingxiao Ma, Fan Yang, Ruiping Wang, Yi Wu, and Furu Wei. : Scaling
 Qicheng Lao, Cong Fang, and Zhouchen Lin. Conda: Column-normalized adam
 for training large language models faster, 2025. URL
 <code>https://arxiv.org/abs/2509.24218</code>.</p>
+<p>Lean Wang, Huazuo Gao, Chenggang Zhao, Xu Sun, and Damai Dai.
+Auxiliary-loss-free load balancing strategy for mixture-of-experts,
+2024.</p>
 <p>Zhe Wang, Ming Liu, et al. Fasa: Frequency-aware sparse attention,
 2026. URL <code>https://arxiv.org/abs/2602.03152</code>.</p>
 <p>Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement
@@ -3278,6 +3373,9 @@ Chi-Chih Yao. Fast weight attention for continual learning,
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
 training by gradient low-rank projection, 2024. URL
 <code>https://arxiv.org/abs/2403.03507</code>. Version Number: 2.</p>
+<p>Yanqi Zhou, Tao Lei, Hanxiao Liu, Nan Du, Yanping Huang, Vincent
+Zhao, Andrew Dai, Quoc Le, James Laudon, Qirong Zhao, et al.
+Mixture-of-experts with expert choice routing, 2022.</p>
 <p>Hanqing Zhu, Zhenyu Zhang, Wenyan Cong, Xi Liu, Sem Park, Vikas
 Chandra, Bo Long, David Z. Pan, Zhangyang Wang, and Jinwon Lee. Apollo:
 Sgd-like memory, adamw-level performance, 2025<span>a</span>. URL
@@ -3289,6 +3387,9 @@ Zhuang Liu. Transformers without normalization, 2025<span>b</span>. URL
 Zilong Huang, Chen Chen, Lai Wei, Yutao Zeng, Ya Wang, Yi Lin, Yu Li,
 and Xinggang Wang. Mixture-of-depths attention, 2026. URL
 <code>https://arxiv.org/abs/2603.15619</code>.</p>
+<p>Barret Zoph, Irwan Bello, Sameer Kumar, Nan Du, Yanping Huang, Jeff
+Dean, Noam Shazeer, and William Fedus. : Designing stable and
+transferable sparse expert models, 2022.</p>
 </div>
 <h1 id="sec:annex-tutorial">Conceptual Introduction—Transformers and
 Attention for Beginners</h1>
@@ -20458,6 +20559,539 @@ list; and the ablation families should run at least three seeds, because
 their current spread is within seed noise. Finally, quantization should
 become the default deployment format: it cost 0.12 points of top-5 and
 sped up evaluation in half the runs.</p>
+<h1 id="app:moe">Mixture-of-Experts: Theory and Implementation</h1>
+<p>This appendix documents the Mixture-of-Experts (MoE) contract
+implemented by <code>src/model/moe/</code> and declared in
+<code>src/schema/_model/_moe.yaml</code>. The schema is the executable
+source of truth: every key discussed here exists in the schema, is
+flattened to a <code>FrankensteinModelConfig</code> field, and is
+exercised by the test suite. The text follows the anatomy of one MoE
+layer—router, routing strategy, load balancing, experts, layer layout,
+capacity, monitoring—and closes with the schema-contract and preset
+tables.</p>
+<h2 id="app:moe-overview">Overview and taxonomy</h2>
+<p>A dense feed-forward layer applies one function to every token. An
+MoE layer replaces it with <span class="math inline">\(E\)</span> expert
+networks <span class="math inline">\(\{E_e\}_{e=1}^{E}\)</span> and a
+router that selects <span class="math inline">\(k\)</span> of them per
+token, <span class="math display">\[y_t = g \sum_{j=1}^{k} \hat
+w_{t,j}\, E_{i_{t,j}}(x_t) + y^{\text{shared}}_t ,
+  \label{eq:moe-layer}\]</span> where <span
+class="math inline">\(i_{t,j}\)</span> are the selected expert indices,
+<span class="math inline">\(\hat w_{t,j}\)</span> their mixing weights,
+<span class="math inline">\(g\)</span> the routed scaling factor, and
+<span class="math inline">\(y^{\text{shared}}_t\)</span> the optional
+always-on shared-expert branch. Only the selected experts run, so total
+parameters grow with <span class="math inline">\(E\)</span> while
+per-token compute stays proportional to <span
+class="math inline">\(k\)</span> <span class="citation"
+data-cites="shazeer2017moe fedus2021switch"></span>. The design space
+has five axes: (i) how logits become weights (Section <a
+href="#app:moe-router" data-reference-type="ref"
+data-reference="app:moe-router">35.2</a>), (ii) who selects the experts
+(Section <a href="#app:moe-routing" data-reference-type="ref"
+data-reference="app:moe-routing">35.3</a>), (iii) how load is balanced
+(Section <a href="#app:moe-balancing" data-reference-type="ref"
+data-reference="app:moe-balancing">35.4</a>), (iv) what the experts look
+like (Section <a href="#app:moe-experts" data-reference-type="ref"
+data-reference="app:moe-experts">35.5</a>), and (v) which layers are MoE
+layers (Section <a href="#app:moe-layout" data-reference-type="ref"
+data-reference="app:moe-layout">35.6</a>).</p>
+<h2 id="app:moe-router">Router scoring: from logits to weights</h2>
+<p>The router projects each token to one logit per expert, <span
+class="math inline">\(z_t = W_r x_t \in \mathbb{R}^{E}\)</span>, with
+<span class="math inline">\(W_r \in \mathbb{R}^{E \times d}\)</span>. A
+gating function maps logits to scores, and the top-<span
+class="math inline">\(k\)</span> scores select the experts. The
+implementation supports the three gating functions used by current open
+models: <span class="math display">\[\begin{aligned}
+  \text{softmax}:&amp;\quad s_{t,e} = \frac{e^{z_{t,e}}}{\sum_{e&#39;}
+e^{z_{t,e&#39;}}}, \\
+  \text{sigmoid}:&amp;\quad s_{t,e} = \sigma(z_{t,e}), \\
+  \text{sqrt-softplus}:&amp;\quad s_{t,e} =
+\sqrt{\operatorname{softplus}(z_{t,e})}.
+\end{aligned}\]</span> All three are monotone in <span
+class="math inline">\(z_{t,e}\)</span>, so they rank experts
+identically; they differ in how much weight each selected expert
+receives <span class="citation"
+data-cites="deepseek2024v3 deepseek2026v4"></span>.
+<code>router.scoring</code> selects the function (default
+<code>softmax</code>).</p>
+<h4 id="output-scale.">Output scale.</h4>
+<p>Two knobs control the magnitude of the routed branch. With
+<code>router.renormalize</code> (default true), the selected scores are
+rescaled to sum to one, <span class="math display">\[\hat w_{t,j} =
+\frac{s_{t,i_{t,j}}}{\sum_{l=1}^{k} s_{t,i_{t,l}}},\]</span> which
+removes the token-to-token variation of the top-<span
+class="math inline">\(k\)</span> probability mass; renormalisation
+lowered validation loss in the granularity study of <span
+class="citation" data-cites="krajewski2025scaling"></span>. The routed
+scaling factor <span class="math inline">\(g\)</span>
+(<code>router.routed_scaling_factor</code>, default <span
+class="math inline">\(1\)</span>) then restores the expected
+root-mean-square of the routed output: for <span
+class="math inline">\(k\)</span> uncorrelated experts with equal RMS,
+equal weights shrink the output to <span
+class="math inline">\(1/\sqrt{k}\)</span> of one expert’s RMS, so <span
+class="math inline">\(g \approx \sqrt{k}\)</span> recovers it.
+DeepSeek-V3 uses <span class="math inline">\(g = 2.5\)</span> at <span
+class="math inline">\(k = 8\)</span> <span class="citation"
+data-cites="deepseek2024v3"></span>; Kimi K2 uses <span
+class="math inline">\(2.827 \approx \sqrt{8}\)</span>, and Kimi K3 uses
+<span class="math inline">\(g = 1.0\)</span> at <span
+class="math inline">\(k = 16\)</span> <span class="citation"
+data-cites="kimiteam2026k3"></span>.</p>
+<h4 id="pre-softmax.">Pre-softmax.</h4>
+<p>With <code>router.pre_softmax</code> the softmax is computed over all
+experts before the top-<span class="math inline">\(k\)</span> selection,
+so the kept weights are raw probabilities and are not renormalised. This
+is required for softmax routing at <span
+class="math inline">\(k=1\)</span>: the softmax over a single logit is
+always one, so a post-softmax top-1 weight carries no gradient. The
+configuration layer detects that combination, enables
+<code>pre_softmax</code> automatically, and emits a warning instead of
+rejecting legacy configs.</p>
+<h4 id="sharpness-and-precision.">Sharpness and precision.</h4>
+<p>Three mechanisms control how peaked the router is. Switch-style
+multiplicative input jitter (<code>router.jitter_eps</code>) adds <span
+class="math inline">\(x \cdot (1 + \epsilon(2u-1))\)</span> before the
+projection <span class="citation" data-cites="fedus2021switch"></span>.
+The router precision (<code>router.dtype</code>) defaults to
+<code>float32</code>: a bf16 router diverged in Switch Transformers, and
+tied top-<span class="math inline">\(k\)</span> logits are broken
+arbitrarily <span class="citation" data-cites="fedus2021switch"></span>.
+Finally, the ST-MoE z-loss penalises logit drift, <span
+class="math display">\[\mathcal{L}_z = \beta\,\frac{1}{T}\sum_{t=1}^{T}
+  \Bigl(\log \sum_{e=1}^{E} e^{z_{t,e}}\Bigr)^{2},
+  \label{eq:zloss}\]</span> where <span
+class="math inline">\(\beta\)</span> is <code>router.z_loss_coeff</code>
+(default <span class="math inline">\(0\)</span>; ST-MoE uses <span
+class="math inline">\(10^{-3}\)</span>) <span class="citation"
+data-cites="zoph2022stmoe"></span>. The loss is returned as
+<code>moe_router_z_loss</code> and added to the task loss.</p>
+<h2 id="app:moe-routing">Routing strategy: who selects, and how</h2>
+<h4 id="token-choice.">Token choice.</h4>
+<p>The default (<code>routing.type: token_choice</code>) has each token
+keep its <span class="math inline">\(k\)</span> best experts under <span
+class="math inline">\(s_t + b\)</span>, where <span
+class="math inline">\(b\)</span> is the balancing bias of Section <a
+href="#app:moe-balancing" data-reference-type="ref"
+data-reference="app:moe-balancing">35.4</a>. It is the strategy trained
+by Megatron and used by most open models <span class="citation"
+data-cites="fedus2021switch deepseek2024v3"></span>.</p>
+<h4 id="expert-choice.">Expert choice.</h4>
+<p>With <code>routing.type: expert_choice</code>, each expert keeps its
+best <span class="math inline">\(Tk/E\)</span> tokens <span
+class="citation" data-cites="zhou2022expertchoice"></span>. Loads are
+equal by construction, but a token’s assignment depends on later tokens,
+so inference routing differs from training. The schema therefore forbids
+combining expert choice with an auxiliary loss or an expert bias (it is
+self-balancing), and the appendix recommends it for encoder or training
+experiments rather than autoregressive serving.</p>
+<h4 id="hash-layers.">Hash layers.</h4>
+<p>The first <code>routing.hash_layers</code> MoE layers can select
+experts from a fixed token-id table <span
+class="math inline">\(\mathrm{tid} \rightarrow (e_1,\dots,e_k)\)</span>
+<span class="citation" data-cites="roller2021hash"></span>, as
+DeepSeek-V4 does in its first three MoE layers <span class="citation"
+data-cites="deepseek2026v4"></span>. The learned router is still used
+for the weights but receives no gradient from the selection. The table
+is built from a seeded random assignment
+(<code>hash_table: random</code>) or a round-robin cycle
+(<code>round_robin</code>); Roller et al. found random and
+frequency-greedy tables reach similar perplexity, with the greedy table
+better balanced <span class="citation"
+data-cites="roller2021hash"></span>. A hash table cannot be rebalanced,
+so the schema forbids combining it with
+<code>balancing.bias_update</code>.</p>
+<h2 id="app:moe-balancing">Load balancing</h2>
+<p>When many tokens pick the same expert, the busiest expert sets the
+step time and the remaining experts are under-trained. Two independent
+mechanisms are implemented; either can be used alone or combined, as
+DeepSeek-V3 does <span class="citation"
+data-cites="deepseek2024v3"></span>.</p>
+<h4 id="auxiliary-loss.">Auxiliary loss.</h4>
+<p>The auxiliary loss multiplies each expert’s share of the assignments
+by its mean router probability, <span
+class="math display">\[\mathcal{L}_{\text{aux}} = \alpha\,E
+\sum_{e=1}^{E} f_e P_e,
+  \qquad
+  f_e = \frac{1}{Tk}\sum_{t,j}\mathbb{1}[i_{t,j}=e],
+  \qquad
+  P_e = \frac{1}{T}\sum_{t} s_{t,e},
+  \label{eq:aux}\]</span> with <span
+class="math inline">\(\alpha\)</span> =
+<code>balancing.aux_loss_coeff</code>. The scope is selected by
+<code>balancing.aux_loss</code>: <code>batch</code> (one micro-batch,
+the default), <code>sequence</code> (one loss per sequence,
+DeepSeek-V3’s guard against a single sequence piling onto a few
+experts), or <code>none</code>. Balancing per sequence or per
+micro-batch can prevent domain experts from forming, whereas
+global-batch balancing leaves each device’s load uneven <span
+class="citation" data-cites="qiu2025demons"></span>; the single-device
+runtime implements the first two scopes and documents the global scope
+as future work. A coefficient that is too large costs language-model
+loss, while one that is too small leaves MaxVio high <span
+class="citation" data-cites="wang2024auxfree"></span>; the default is
+<span class="math inline">\(0.01\)</span>, close to Switch and
+DeepSeekMoE <span class="citation"
+data-cites="fedus2021switch dai2024deepseekmoe"></span>.</p>
+<h4 id="auxiliary-loss-free-bias.">Auxiliary-loss-free bias.</h4>
+<p>With <code>balancing.bias_update</code> set to <code>sign</code> or
+<code>centered_sign</code>, a per-expert bias <span
+class="math inline">\(b_e\)</span> is added to the scores before
+selection only—never to the mixing weights—and moved once per optimizer
+step: <span class="math display">\[b_e \leftarrow b_e +
+\gamma\,\operatorname{sign}\!\left(\bar c - c_e\right),
+  \qquad
+  \bar c = \frac{1}{E}\sum_{e&#39;} c_{e&#39;},
+  \label{eq:bias}\]</span> where <span
+class="math inline">\(c_e\)</span> counts the step’s assignments and
+<span class="math inline">\(\gamma\)</span> is
+<code>balancing.bias_update_rate</code> (default <span
+class="math inline">\(10^{-3}\)</span>). Overloaded experts (<span
+class="math inline">\(c_e &gt; \bar c\)</span>) step down and
+underloaded ones step up. The <code>centered_sign</code> variant
+subtracts the mean step so the bias mean does not drift, which matters
+when the bias is stored in reduced precision <span class="citation"
+data-cites="wang2024auxfree"></span>. The bias is a non-persistent fp32
+buffer: it is training state, never an inference parameter, and
+<code>eval()</code> freezes it. The update is applied by
+<code>update_moe_expert_bias()</code> after
+<code>optimizer.step()</code> in the trainer.</p>
+<h4 id="maxvio.">MaxVio.</h4>
+<p>Balance is read from the maximal violation, <span
+class="math display">\[\mathrm{MaxVio} = \frac{\max_e c_e - \bar c}{\bar
+c},\]</span> where <span class="math inline">\(0\)</span> is perfectly
+even and <span class="math inline">\(1\)</span> means the busiest expert
+receives twice the mean load <span class="citation"
+data-cites="wang2024auxfree"></span>. It is logged per layer as
+<code>moe/max_vio</code>.</p>
+<h2 id="app:moe-experts">Experts: count, width, latent space,
+sharing</h2>
+<h4 id="count-and-width.">Count and width.</h4>
+<p><code>num_experts</code> sets the routed pool and <code>top_k</code>
+the number used per token. <code>expert_hidden_size</code> sets each
+expert’s intermediate width; when unset it falls back to
+<code>ffn.hidden_size</code>. Keeping the two separate is essential for
+real architectures: DeepSeek-V3 has a dense width of 18432 but experts
+of width 2048 <span class="citation"
+data-cites="deepseek2024v3"></span>. Finer granularity (more, narrower
+experts at equal total and active parameters) improved loss up to 128
+experts of <span class="math inline">\(d/4\)</span> with top-8 in one
+study <span class="citation" data-cites="liew2026principled"></span>,
+while the same total and active parameters are predicted to favour a
+less sparse configuration once training throughput is accounted for
+<span class="citation" data-cites="krajewski2025scaling"></span>.</p>
+<h4 id="latent-moe.">Latent MoE.</h4>
+<p>LatentMoE projects each token from <span
+class="math inline">\(d\)</span> to a latent width <span
+class="math inline">\(\ell\)</span> before dispatch and back after
+combining, so each token copy carries <span
+class="math inline">\(\ell\)</span> numbers instead of <span
+class="math inline">\(d\)</span> <span class="citation"
+data-cites="elango2026latentmoe"></span>: <span
+class="math display">\[\ell_t = W_\downarrow x_t,\qquad
+  y_t = W_\uparrow \sum_{j=1}^{k} \hat w_{t,j} E_{i_{t,j}}(\ell_t).
+  \label{eq:latent}\]</span> With <span class="math inline">\(\alpha =
+d/\ell\)</span>, the same expert parameters, compute and traffic afford
+<span class="math inline">\(\alpha\)</span> times more experts and a
+larger top-<span class="math inline">\(k\)</span>; NVIDIA reports +5.65
+MMLU-Pro points at 95B total with <span class="math inline">\(\alpha =
+4\)</span>, and quality is preserved up to <span
+class="math inline">\(\alpha \leqslant 4\)</span> <span class="citation"
+data-cites="elango2026latentmoe"></span>. Kimi K3 adds an RMSNorm before
+the up-projection to stop routed-branch activation growth at 2.8T
+parameters, exposed as <code>latent.norm_before_up_proj</code> <span
+class="citation" data-cites="kimiteam2026k3"></span>.</p>
+<h4 id="shared-experts.">Shared experts.</h4>
+<p><code>shared.count</code> always-on experts run outside the router on
+every token, learning common patterns and leaving the routed experts
+free to specialise <span class="citation"
+data-cites="dai2024deepseekmoe"></span>. Their width is
+<code>shared.hidden_size</code> (default: the routed width). They are
+added at weight one, or multiplied by a learned per-token gate <span
+class="math inline">\(\sigma(w_s^{\top} x_t) \in (0,1)\)</span> when
+<code>shared.gate: sigmoid</code> (Qwen3-Next) <span class="citation"
+data-cites="qwen2025qwen3"></span>; the fixed-weight form matches
+DeepSeek-V3 <span class="citation" data-cites="deepseek2024v3"></span>.
+Shared experts are not free: adding one without reducing routed
+top-<span class="math inline">\(k\)</span> increases per-token compute,
+and measured quality gains are small and inconsistent <span
+class="citation" data-cites="li2026slicing"></span>.</p>
+<h4 id="activation-clamp.">Activation clamp.</h4>
+<p><code>experts.activation_clamp</code> upper-bounds the gated
+intermediate, <span class="math display">\[\mathrm{GatedFFN}(x) =
+W_{\text{down}}\!\left(
+  \phi\bigl(\operatorname{clamp}(xW_{\text{gate}}, -c, c)\bigr) \odot
+(xW_{\text{up}})
+  \right),\]</span> with <span class="math inline">\(c\)</span> =
+<code>activation_clamp</code> (<span class="math inline">\(0\)</span>
+disables it). DeepSeek-V4.1 uses <span class="math inline">\(c =
+10\)</span> and Step 5 Preview <span class="math inline">\(c =
+7\)</span>; Step 3.5 Flash found outlier experts whose output norms grew
+while the loss stayed flat, and clipping contained them at unchanged
+loss <span class="citation"
+data-cites="huang2026step35 deepseek2026v4flash"></span>. The exact
+SiTU-GLU smooth cap used by Kimi K3 is approximated here by a gate-input
+clamp and documented as a deviation <span class="citation"
+data-cites="kimiteam2026k3"></span>.</p>
+<h2 id="app:moe-layout">Layer layout</h2>
+<p><code>layout.dense_layers</code> keeps the first <span
+class="math inline">\(N\)</span> layers dense (DeepSeek-V3 and GLM keep
+three), and <code>layout.every_n_layers</code> interleaves dense and MoE
+layers (Llama 4 Maverick uses every second layer) <span class="citation"
+data-cites="deepseek2024v3"></span>. Dense layers use
+<code>ffn.hidden_size</code>; MoE layers use
+<code>expert_hidden_size</code>. The model config exposes
+<code>is_moe_layer(i)</code>, <code>moe_layer_mask()</code> and
+<code>moe_layer_count()</code>; the encoder, decoder, ViT and audio
+stacks build a routed or dense FFN per physical layer accordingly.
+Leading dense layers reduce the number of MoE layers at little cost at
+matched FLOPs <span class="citation"
+data-cites="krajewski2025scaling"></span>, but they do not by themselves
+fix early-layer imbalance; the first MoE layers after the prefix remain
+the ones to monitor.</p>
+<h2 id="app:moe-capacity">Capacity and token dropping</h2>
+<p>By default routing is dropless: an expert accepts every token the
+router sends it (<code>routing.capacity_factor: 0</code>). A positive
+factor <span class="math inline">\(\kappa\)</span> caps each expert at
+<span class="math display">\[C = \left\lceil \kappa\,\frac{Tk}{E}
+\right\rceil\]</span> assignments, keeping the highest-probability
+tokens and dropping the rest. The cap bounds memory and removes the
+hot-expert straggler, at a small quality cost: Pangu Ultra MoE dropped
+about 6–8% of tokens at <span class="math inline">\(\kappa =
+1.5\)</span> and its dropless run kept a lower loss, a gap that grew
+with the expert count <span class="citation"
+data-cites="pangu2025ultra"></span>, and MegaBlocks reached its lowest
+loss when no token was dropped <span class="citation"
+data-cites="gale2022megablocks"></span>. The layer logs
+<code>dropped_fraction</code>. Dropless remains the default and the
+recommended setting for fine-tuning, where dropped tokens can fall
+inside instruction responses.</p>
+<h2 id="app:moe-monitoring">Monitoring</h2>
+<p>Each <code>MoELayer</code> exposes <code>last_auxiliary_losses</code>
+(coefficient- weighted <code>moe_load_balancing_loss</code> and
+<code>moe_router_z_loss</code>) and <code>last_moe_stats</code>. The
+model aggregates them over layers through
+<code>aggregate_moe_aux_losses()</code> and adds the losses to the task
+loss; the trainer logs the scalars to the metrics callback and to
+Weights &amp; Biases. The signals are:</p>
+<ul>
+<li><p><strong>MaxVio</strong> (<code>moe/max_vio</code>) per layer:
+routing collapse shows up as a rising value.</p></li>
+<li><p><strong>Load-balancing loss</strong> and <strong>z-loss</strong>:
+coefficients already divided out in the logged statistics; the z-loss
+tracks logit drift.</p></li>
+<li><p><strong>Routing entropy</strong> and <strong>top-1
+weight</strong>: a flat gate, which averages its top-<span
+class="math inline">\(k\)</span> experts, shows up as entropy near <span
+class="math inline">\(\log k\)</span> and a top-1 weight near <span
+class="math inline">\(1/k\)</span>.</p></li>
+<li><p><strong>Expert-norm ratio</strong>: the largest per-expert output
+norm over the layer median; a rogue expert pushes it far above one, a
+dead expert pins the low end at zero <span class="citation"
+data-cites="huang2026step35"></span>.</p></li>
+<li><p><strong>Dropped fraction</strong>: share of assignments removed
+by the capacity factor.</p></li>
+</ul>
+<h2 id="app:moe-schema">Schema contract</h2>
+<p>Table <a href="#tab:moe-schema" data-reference-type="ref"
+data-reference="tab:moe-schema">[tab:moe-schema]</a> lists every
+<code>model.moe.*</code> key, its default, the flat
+<code>FrankensteinModelConfig</code> field produced by the flattener,
+and the governing reference. The JSON schema is the executable contract;
+runtime validation adds the cross-key rules: <span
+class="math inline">\(top\_\allowbreak k \leqslant num\_\allowbreak
+experts\)</span>, softmax at <span class="math inline">\(k=1\)</span>
+implies pre-softmax, the bias requires sigmoid or sqrt-softplus scoring,
+expert choice is incompatible with the balancing terms, hash layers
+require token choice and forbid the bias, the latent width must lie in
+<span class="math inline">\((0, d)\)</span>, and the layer count must be
+positive.</p>
+<div class="longtable">
+<p><span>@L<span>0.27</span>L<span>0.19</span>L<span>0.22</span>L<span>0.24</span>@</span></p>
+<p><br />
+<strong>Key</strong> &amp; <strong>Default</strong> &amp; <strong>Flat
+field</strong> &amp; <strong>Reference</strong><br />
+<strong>Key</strong> &amp; <strong>Default</strong> &amp; <strong>Flat
+field</strong> &amp; <strong>Reference</strong><br />
+<code>enabled</code> &amp; <code>true</code> &amp; <code>use_moe</code>
+&amp; <span class="citation" data-cites="shazeer2017moe"></span><br />
+<code>num_experts</code> &amp; 8 &amp; <code>num_experts</code> &amp;
+<span class="citation" data-cites="fedus2021switch"></span><br />
+<code>top_k</code> &amp; 2 &amp; <code>top_k_experts</code> &amp; <span
+class="citation" data-cites="fedus2021switch"></span><br />
+<code>expert_hidden_size</code> &amp; <code>null</code> &amp;
+<code>moe_expert_hidden_size</code> &amp; <span class="citation"
+data-cites="deepseek2024v3"></span><br />
+<code>router.scoring</code> &amp; <code>softmax</code> &amp;
+<code>moe_router_scoring</code> &amp; <span class="citation"
+data-cites="deepseek2024v3 deepseek2026v4"></span><br />
+<code>router.pre_softmax</code> &amp; <code>false</code> &amp;
+<code>moe_router_pre_softmax</code> &amp; <span class="citation"
+data-cites="fedus2021switch"></span><br />
+<code>router.renormalize</code> &amp; <code>true</code> &amp;
+<code>moe_router_renormalize</code> &amp; <span class="citation"
+data-cites="krajewski2025scaling"></span><br />
+<code>router.routed_scaling_factor</code> &amp; 1.0 &amp;
+<code>moe_routed_scaling_factor</code> &amp; <span class="citation"
+data-cites="deepseek2024v3 kimiteam2026k3"></span><br />
+<code>router.dtype</code> &amp; <code>float32</code> &amp;
+<code>moe_router_dtype</code> &amp; <span class="citation"
+data-cites="fedus2021switch zoph2022stmoe"></span><br />
+<code>router.jitter_eps</code> &amp; 0.0 &amp;
+<code>moe_router_jitter_eps</code> &amp; <span class="citation"
+data-cites="fedus2021switch"></span><br />
+<code>router.z_loss_coeff</code> &amp; 0.0 &amp;
+<code>moe_router_z_loss_coeff</code> &amp; <span class="citation"
+data-cites="zoph2022stmoe"></span><br />
+<code>routing.type</code> &amp; <code>token_choice</code> &amp;
+<code>moe_routing_type</code> &amp; <span class="citation"
+data-cites="zhou2022expertchoice"></span><br />
+<code>routing.capacity_factor</code> &amp; 0.0 &amp;
+<code>moe_capacity_factor</code> &amp; <span class="citation"
+data-cites="pangu2025ultra"></span><br />
+<code>routing.hash_layers</code> &amp; 0 &amp;
+<code>moe_hash_layers</code> &amp; <span class="citation"
+data-cites="roller2021hash deepseek2026v4"></span><br />
+<code>routing.hash_table</code> &amp; <code>random</code> &amp;
+<code>moe_hash_table</code> &amp; <span class="citation"
+data-cites="roller2021hash"></span><br />
+<code>routing.hash_seed</code> &amp; 42 &amp; <code>moe_hash_seed</code>
+&amp; <span class="citation" data-cites="roller2021hash"></span><br />
+<code>balancing.aux_loss</code> &amp; <code>batch</code> &amp;
+<code>moe_aux_loss_type</code> &amp; <span class="citation"
+data-cites="dai2024deepseekmoe deepseek2024v3"></span><br />
+<code>balancing.aux_loss_coeff</code> &amp; 0.01 &amp;
+<code>moe_aux_loss_coeff</code> &amp; <span class="citation"
+data-cites="deepseek2024v3"></span><br />
+<code>balancing.bias_update</code> &amp; <code>none</code> &amp;
+<code>moe_bias_update</code> &amp; <span class="citation"
+data-cites="wang2024auxfree"></span><br />
+<code>balancing.bias_update_rate</code> &amp; 0.001 &amp;
+<code>moe_bias_update_rate</code> &amp; <span class="citation"
+data-cites="wang2024auxfree"></span><br />
+<code>shared.count</code> &amp; 0 &amp;
+<code>moe_shared_experts_count</code> &amp; <span class="citation"
+data-cites="dai2024deepseekmoe"></span><br />
+<code>shared.hidden_size</code> &amp; <code>null</code> &amp;
+<code>moe_shared_expert_hidden_size</code> &amp; <span class="citation"
+data-cites="dai2024deepseekmoe"></span><br />
+<code>shared.gate</code> &amp; <code>none</code> &amp;
+<code>moe_shared_expert_gate</code> &amp; <span class="citation"
+data-cites="qwen2025qwen3"></span><br />
+<code>latent.enabled</code> &amp; <code>false</code> &amp;
+<code>moe_latent_enabled</code> &amp; <span class="citation"
+data-cites="elango2026latentmoe"></span><br />
+<code>latent.dim</code> &amp; <code>null</code> &amp;
+<code>moe_latent_dim</code> &amp; <span class="citation"
+data-cites="elango2026latentmoe"></span><br />
+<code>latent.norm_before_up_proj</code> &amp; <code>false</code> &amp;
+<code>moe_latent_norm_before_up_proj</code> &amp; <span class="citation"
+data-cites="kimiteam2026k3"></span><br />
+<code>layout.dense_layers</code> &amp; 0 &amp;
+<code>moe_dense_layers</code> &amp; <span class="citation"
+data-cites="deepseek2024v3"></span><br />
+<code>layout.every_n_layers</code> &amp; 1 &amp;
+<code>moe_layer_frequency</code> &amp; <span class="citation"
+data-cites="meta2025llama4"></span><br />
+<code>experts.activation_clamp</code> &amp; 0.0 &amp;
+<code>moe_activation_clamp</code> &amp; <span class="citation"
+data-cites="huang2026step35"></span><br />
+</p>
+</div>
+<h2 id="app:moe-presets">Named presets</h2>
+<p>The presets in <code>configs/</code> mirror the published
+configurations, with the documented single-device deviations. Table <a
+href="#tab:moe-presets" data-reference-type="ref"
+data-reference="tab:moe-presets">[tab:moe-presets]</a> summarises the
+MoE block of each MoE preset; the values were checked against the
+models’ Hugging Face <code>config.json</code> where available.</p>
+<div class="longtable">
+<p><span>@L<span>0.18</span>L<span>0.12</span>L<span>0.10</span>L<span>0.14</span>L<span>0.12</span>L<span>0.22</span>@</span></p>
+<p><br />
+<strong>Preset</strong> &amp; <strong>Experts / top-k</strong> &amp;
+<strong>Expert width</strong> &amp; <strong>Router</strong> &amp;
+<strong>Shared</strong> &amp; <strong>Balancing / layout</strong><br />
+<strong>Preset</strong> &amp; <strong>Experts / top-k</strong> &amp;
+<strong>Expert width</strong> &amp; <strong>Router</strong> &amp;
+<strong>Shared</strong> &amp; <strong>Balancing / layout</strong><br />
+DeepSeek-V2 &amp; 160 / 6 &amp; 1536 &amp; softmax, <span
+class="math inline">\(g{=}16\)</span> &amp; 2 &amp; seq-aux <span
+class="math inline">\(10^{-3}\)</span>; 1 dense<br />
+DeepSeek-V3 &amp; 256 / 8 &amp; 2048 &amp; sigmoid, <span
+class="math inline">\(g{=}2.5\)</span> &amp; 1 &amp; bias + seq-aux
+<span class="math inline">\(10^{-4}\)</span>; 3 dense<br />
+GLM-4.5/4.7 &amp; 160 / 8 &amp; 1536 &amp; sigmoid, <span
+class="math inline">\(g{=}2.5\)</span> &amp; 1 &amp; bias; 3 dense<br />
+GLM-5 &amp; 256 / 8 &amp; 2048 &amp; sigmoid, <span
+class="math inline">\(g{=}2.5\)</span> &amp; 1 &amp; bias; 3 dense<br />
+Kimi K2 &amp; 384 / 8 &amp; 2048 &amp; sigmoid, <span
+class="math inline">\(g{=}2.827\)</span> &amp; 1 &amp; bias + seq-aux; 1
+dense<br />
+Kimi K3 &amp; 896 / 16 &amp; 3072 &amp; sigmoid, <span
+class="math inline">\(g{=}1\)</span> &amp; 2 &amp; centred bias; latent
+3584; 1 dense<br />
+gpt-oss-120b &amp; 128 / 4 &amp; 2880 &amp; softmax &amp; 0 &amp; aux,
+clamp 7<br />
+Llama 4 Scout &amp; 16 / 1 &amp; 8192 &amp; softmax, pre &amp; 0 &amp;
+every layer<br />
+Llama 4 Maverick &amp; 128 / 1 &amp; 8192 &amp; softmax, pre &amp; 0
+&amp; every 2nd layer<br />
+MiniMax-Text-01 &amp; 32 / 2 &amp; 9216 &amp; sigmoid &amp; 0 &amp; aux
+<span class="math inline">\(10^{-3}\)</span><br />
+MiniMax-M2 &amp; 256 / 8 &amp; 1536 &amp; sigmoid &amp; 0 &amp; bias +
+aux <span class="math inline">\(10^{-3}\)</span><br />
+Qwen3-Next-80B &amp; 512 / 10 &amp; 512 &amp; softmax &amp; 1, gated
+&amp; aux <span class="math inline">\(10^{-3}\)</span><br />
+Qwen3.8 2.4T-A95B &amp; 512 / 10 &amp; 2048 &amp; softmax &amp; 1 &amp;
+aux <span class="math inline">\(10^{-3}\)</span><br />
+</p>
+</div>
+<h4 id="single-device-deviations.">Single-device deviations.</h4>
+<p>The runtime is CPU-first and single-device, so it implements the
+model-level semantics and leaves distributed mechanisms to future work.
+Documented deviations: DeepSeek-V2’s device-level loss is approximated
+by the batch auxiliary loss; Kimi K3’s quantile/PID balancing is
+approximated by the centred sign rule; Kimi K3’s SiTU-GLU smooth cap is
+approximated by <code>activation_clamp: 4</code>; Llama 4’s input-side
+score scaling is not applied (the router weights are applied to the
+expert output); group-limited routing, expert parallelism, token
+dispatchers, expert replicas/EPLB, and FP8/FP4 expert execution are out
+of scope. DeepSeek-V4’s hash layers are supported through
+<code>routing.hash_layers</code>.</p>
+<h2 id="app:moe-training">Training interaction</h2>
+<p>The expert bias is updated after the optimizer step from counts
+accumulated across the step’s forwards, so gradient accumulation and
+micro-batching do not change its semantics. The router receives no bias
+gradient, and the bias itself is a non-persistent buffer; exported
+checkpoints therefore remain inference-clean. Auxiliary losses are
+coefficient-weighted tensors in <code>last_auxiliary_losses</code> and
+are summed into the task loss by the trainer; they are excluded from
+evaluation. The router and the experts are categorised as
+<code>router</code> and <code>ffn</code> parameter blocks respectively,
+so per-block gradient norms and parameter counts match the estimator
+taxonomy. Finally, the MoE layer is token-wise and therefore cache-safe:
+the KV-cache parity suites keep the FFN dense because a discrete
+top-<span class="math inline">\(k\)</span> can flip under the tiny
+numerical differences between full and cached forwards, which is a
+property of discrete routing rather than of the cache.</p>
+<h2 id="app:moe-future">Related systems and future work</h2>
+<p>The appendix’s design follows the MoE handbook’s anatomy (router,
+routing, balancing, experts, layout, capacity) and the systems
+literature it surveys. Future work in this codebase: expert parallelism
+and all-to-all dispatchers <span class="citation"
+data-cites="lepikhin2020gshard fedus2021switch"></span>; global-batch
+auxiliary losses <span class="citation"
+data-cites="qiu2025demons"></span>; quantile/PID balancing <span
+class="citation" data-cites="jin2026idbalancing"></span>; dense-to-MoE
+upcycling and expert growth <span class="citation"
+data-cites="komatsuzaki2023upcycling"></span>; frequency-balanced hash
+tables <span class="citation" data-cites="roller2021hash"></span>; exact
+SiTU-GLU; and shortcut-connected or parallel MoE blocks that overlap
+dispatch with compute <span class="citation"
+data-cites="cai2024scmoe longcat2025flash"></span>.</p>
 <section id="footnotes" class="footnotes footnotes-end-of-document"
 role="doc-endnotes">
 <hr />
