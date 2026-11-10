@@ -1,4 +1,4 @@
-\begin{thebibliography}{176}
+\begin{thebibliography}{187}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -105,6 +105,13 @@ Thibaut Boissin, Thomas Massena, Franck Mamalet, and Mathieu Serrurier.
   pre-conditioning, 2025.
 \newblock URL \url{https://arxiv.org/abs/2512.04632}.
 \newblock Version Number: 1.
+
+\bibitem[Bottou(2010)]{bottou_2010}
+L{\'e}on Bottou.
+\newblock Large-scale machine learning with stochastic gradient descent.
+\newblock In Yves Lechevallier and Gilbert Saporta, editors, \emph{Proceedings
+  of COMPSTAT'2010}, pages 177--186. Physica-Verlag HD, 2010.
+\newblock \doi{10.1007/978-3-7908-2604-3_16}.
 
 \bibitem[Bradbury et~al.(2018)Bradbury, Frostig, Hawkins, Johnson, Leary,
   Maclaurin, Necula, Paszke, VanderPlas, Wanderman-Milne, and
@@ -253,6 +260,14 @@ Shiv~Ram Dubey, Satish~Kumar Singh, and Bidyut~Baran Chaudhuri.
 \newblock \doi{10.1016/j.neucom.2021.03.063}.
 \newblock URL \url{https://arxiv.org/abs/2109.14545}.
 
+\bibitem[Duchi et~al.(2011)Duchi, Hazan, and Singer]{duchi_adagrad_2011}
+John Duchi, Elad Hazan, and Yoram Singer.
+\newblock Adaptive subgradient methods for online learning and stochastic
+  optimization.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2121--2159,
+  2011.
+\newblock URL \url{https://jmlr.org/papers/v12/duchi11a.html}.
+
 \bibitem[Duvvuri et~al.(2026)Duvvuri, Ekbote, Bansal, Tiwari, Khatri,
   Brandfonbrener, Liang, Dhillon, and Zaheer]{duvvuri_iha_2026}
 Sai~Surya Duvvuri, Chanakya Ekbote, Rachit Bansal, Rishabh Tiwari, Devvrit
@@ -321,6 +336,14 @@ Yaosheng Fu, Guangxuan Xiao, Xin Dong, Song Han, and Oreste Villa.
 Trevor Gale, Deepak Narayanan, Cliff Young, and Matei Zaharia.
 \newblock {MegaBlocks}: Efficient sparse training with mixture-of-experts,
   2022.
+
+\bibitem[Ghojogh and Ghodsi(2024)]{ghojogh_ghodsi_2024}
+Benyamin Ghojogh and Ali Ghodsi.
+\newblock Backpropagation and optimization in deep learning: Tutorial and
+  survey.
+\newblock HAL preprint hal-04694956, 2024.
+\newblock URL \url{https://hal.science/hal-04694956v1}.
+\newblock University of Waterloo.
 
 \bibitem[Glorot et~al.(2011)Glorot, Bordes, and Bengio]{glorot2011softplus}
 Xavier Glorot, Antoine Bordes, and Yoshua Bengio.
@@ -395,6 +418,14 @@ Vineet Gupta, Tomer Koren, and Yoram Singer.
 \newblock URL \url{https://arxiv.org/abs/1802.09568}.
 \newblock Version Number: 2.
 
+\bibitem[Gutowska(2025)]{ibm_sgd_2025}
+Anna Gutowska.
+\newblock What is stochastic gradient descent?
+\newblock IBM Think, updated 18 February 2026, 2025.
+\newblock URL
+  \url{https://www.ibm.com/think/topics/stochastic-gradient-descent}.
+\newblock Accessed 2026-11-10.
+
 \bibitem[Han et~al.(2026)Han, Zhao, Zhou, Li, and Sun]{han2026qknormed}
 Yizhou Han, Yao Zhao, Jun Zhou, Longfei Li, and Ruoyu Sun.
 \newblock {QK}-normed {MLA}: {QK} normalization without full key caching, 2026.
@@ -448,6 +479,15 @@ Alex Henry, Prudhvi~Raj Dachapally, Shubham Pawar, and Yuxuan Chen.
 \newblock Query-key normalization for transformers, 2020.
 \newblock URL \url{https://arxiv.org/abs/2010.04245}.
 \newblock Findings of EMNLP 2020.
+
+\bibitem[Hinton et~al.(2012)Hinton, Srivastava, and
+  Swersky]{hinton_csc321_2012}
+Geoffrey~E. Hinton, Nitish Srivastava, and Kevin Swersky.
+\newblock Neural networks for machine learning, lecture 6: Overview of
+  mini-batch gradient descent, momentum, and {RMSProp}.
+\newblock CSC321 course slides, University of Toronto, 2012.
+\newblock URL
+  \url{https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf}.
 
 \bibitem[Hooper et~al.(2024)Hooper, Kim, Mohammadzadeh, Mahoney, Shao, Keutzer,
   and Gholami]{kvquant_hooper_2024}
@@ -568,6 +608,11 @@ Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip
   Lai, Yuxin Wu, Xinyu Zhou, Zhilin Yang, and Yulun Du.
 \newblock Kimi linear: An expressive, efficient attention architecture, 2025.
 \newblock URL \url{https://arxiv.org/abs/2510.26692}.
+
+\bibitem[Kingma and Ba(2014)]{kingma_adam_2014}
+Diederik~P. Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization, 2014.
+\newblock URL \url{https://arxiv.org/abs/1412.6980}.
 
 \bibitem[Klambauer et~al.(2017)Klambauer, Unterthiner, Mayr, and
   Hochreiter]{klambauer2017selu}
@@ -929,6 +974,13 @@ Dima Rekesh, Nithin~Rao Koluguri, Samuel Kriman, Somshubra Majumdar, Vahid
   recognition, 2023.
 \newblock URL \url{https://arxiv.org/abs/2305.05084}.
 
+\bibitem[Robbins and Monro(1951)]{robbins_monro_1951}
+Herbert Robbins and Sutton Monro.
+\newblock A stochastic approximation method.
+\newblock \emph{The Annals of Mathematical Statistics}, 22\penalty0
+  (3):\penalty0 400--407, 1951.
+\newblock \doi{10.1214/aoms/1177729586}.
+
 \bibitem[Roller et~al.(2021)Roller, Sukhbaatar, Szlam, and
   Weston]{roller2021hash}
 Stephen Roller, Sainbayar Sukhbaatar, Arthur Szlam, and Jason Weston.
@@ -940,6 +992,18 @@ Susmita Roy, Souvik Manna, Subhash Bagui, et~al.
   function for neural networks.
 \newblock \emph{arXiv preprint arXiv:1811.05870}, 2019.
 \newblock URL \url{https://arxiv.org/abs/1811.05870}.
+
+\bibitem[Ruder(2016)]{ruder_2016}
+Sebastian Ruder.
+\newblock An overview of gradient descent optimization algorithms, 2016.
+\newblock URL \url{https://arxiv.org/abs/1609.04747}.
+
+\bibitem[Rumelhart et~al.(1986)Rumelhart, Hinton, and
+  Williams]{rumelhart1986learning}
+David~E. Rumelhart, Geoffrey~E. Hinton, and Ronald~J. Williams.
+\newblock Learning representations by back-propagating errors.
+\newblock \emph{Nature}, 323\penalty0 (6088):\penalty0 533--536, 1986.
+\newblock \doi{10.1038/323533a0}.
 
 \bibitem[Samson(2026)]{samson_lightweight_2026}
 Hema~Hariharan Samson.
@@ -1021,6 +1085,14 @@ Yutao Sun et~al.
 \newblock Attention residuals.
 \newblock URL \url{http://arxiv.org/abs/2603.15031}.
 
+\bibitem[Sutskever et~al.(2013)Sutskever, Martens, Dahl, and
+  Hinton]{sutskever2013importance}
+Ilya Sutskever, James Martens, George Dahl, and Geoffrey Hinton.
+\newblock On the importance of initialization and momentum in deep learning.
+\newblock In \emph{Proceedings of the 30th International Conference on Machine
+  Learning}, volume~28 of \emph{PMLR}, pages 1139--1147, 2013.
+\newblock URL \url{https://proceedings.mlr.press/v28/sutskever13.html}.
+
 \bibitem[Tang et~al.(2026)Tang, Yang, Wang, and Lin]{tang_tuon_2026}
 Anda Tang, Xuanlin Yang, Junjie Wang, and Zhouchen Lin.
 \newblock Tuon: A tensor-aware optimizer utilizing tensor-svd and polarization
@@ -1036,6 +1108,14 @@ Shohei Taniguchi, Keno Harada, Gouki Minegishi, Yuta Oshima, Seong~Cheol Jeong,
   optimal rate, 2024.
 \newblock URL \url{https://arxiv.org/abs/2411.02853}.
 \newblock Version Number: 3.
+
+\bibitem[Tieleman and Hinton(2012)]{tieleman_hinton2012}
+Tijmen Tieleman and Geoffrey~E. Hinton.
+\newblock {RMSProp}: Divide the gradient by a running average of its recent
+  magnitude.
+\newblock CSC321 course slides, Lecture 6e, University of Toronto, 2012.
+\newblock URL
+  \url{https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf}.
 
 \bibitem[Trottier et~al.(2017)Trottier, Gigu{\`e}re, and
   Chaib-draa]{trottier2017pelu}

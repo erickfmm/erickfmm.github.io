@@ -927,6 +927,27 @@ id="toc-sec:annex-optimizers">Familias de Optimizadores</a>
 <li><a href="#la-evolución-de-la-optimización-en-redes-neuronales"
 id="toc-la-evolución-de-la-optimización-en-redes-neuronales">La
 Evolución de la Optimización en Redes Neuronales</a></li>
+<li><a href="#sec:opt-tutorial" id="toc-sec:opt-tutorial">Tutorial: De
+Descenso de Gradiente a Familias de Optimizadores</a>
+<ul>
+<li><a href="#sec:opt-tutorial-problem"
+id="toc-sec:opt-tutorial-problem">Un problema, muchas recetas</a></li>
+<li><a href="#sec:opt-tutorial-gd" id="toc-sec:opt-tutorial-gd">Descenso
+de gradiente: bajar la pendiente</a></li>
+<li><a href="#sec:opt-tutorial-backprop"
+id="toc-sec:opt-tutorial-backprop">De dónde sale el gradiente:
+retropropagación</a></li>
+<li><a href="#sec:opt-tutorial-sgd"
+id="toc-sec:opt-tutorial-sgd">Descenso de gradiente estocástico y por
+mini-lotes</a></li>
+<li><a href="#sec:opt-tutorial-knobs"
+id="toc-sec:opt-tutorial-knobs">Dos perillas que giran todos los métodos
+posteriores</a></li>
+<li><a href="#sec:opt-tutorial-families"
+id="toc-sec:opt-tutorial-families">En qué difieren las familias</a></li>
+<li><a href="#sec:opt-tutorial-diagnostics"
+id="toc-sec:opt-tutorial-diagnostics">Leer una curva de pérdida</a></li>
+</ul></li>
 <li><a href="#línea-base-estándar-y-optimizadores-adaptativos"
 id="toc-línea-base-estándar-y-optimizadores-adaptativos">Línea Base
 Estándar y Optimizadores Adaptativos</a></li>
@@ -2906,7 +2927,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>176</span> urlstyle</p>
+<p><span>187</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -2961,6 +2982,10 @@ extrapolation, 2025. URL
 Serrurier. Turbo-muon: Accelerating orthogonality-based optimization
 with pre-conditioning, 2025. URL
 <code>https://arxiv.org/abs/2512.04632</code>. Version Number: 1.</p>
+<p>L<span>é</span>on Bottou. Large-scale machine learning with
+stochastic gradient descent. In Yves Lechevallier and Gilbert Saporta,
+editors, <em>Proceedings of COMPSTAT’2010</em>, pages 177–186.
+Physica-Verlag HD, 2010. doi: 10.1007/978-3-7908-2604-3_16.</p>
 <p>James Bradbury, Roy Frostig, Peter Hawkins, Matthew J. Johnson, Chris
 Leary, Dougal Maclaurin, George Necula, Adam Paszke, Jake VanderPlas,
 Skye Wanderman-Milne, and Qiao Zhang. : composable transformations of
@@ -3036,6 +3061,10 @@ Activation functions in deep learning: A comprehensive survey and
 benchmark. <em>Neurocomputing</em>, 453: 1–24, 2021. doi:
 10.1016/j.neucom.2021.03.063. URL
 <code>https://arxiv.org/abs/2109.14545</code>.</p>
+<p>John Duchi, Elad Hazan, and Yoram Singer. Adaptive subgradient
+methods for online learning and stochastic optimization. <em>Journal of
+Machine Learning Research</em>, 12: 2121–2159, 2011. URL
+<code>https://jmlr.org/papers/v12/duchi11a.html</code>.</p>
 <p>Sai Surya Duvvuri, Chanakya Ekbote, Rachit Bansal, Rishabh Tiwari,
 Devvrit Khatri, David Brandfonbrener, Paul Liang, Inderjit Dhillon, and
 Manzil Zaheer. Interleaved head attention, 2026. URL
@@ -3072,6 +3101,10 @@ Sparda: Sparse decoupled attention for efficient long-context llm
 inference, 2026. URL <code>https://arxiv.org/abs/2606.04511</code>.</p>
 <p>Trevor Gale, Deepak Narayanan, Cliff Young, and Matei Zaharia. :
 Efficient sparse training with mixture-of-experts, 2022.</p>
+<p>Benyamin Ghojogh and Ali Ghodsi. Backpropagation and optimization in
+deep learning: Tutorial and survey. HAL preprint hal-04694956, 2024. URL
+<code>https://hal.science/hal-04694956v1</code>. University of
+Waterloo.</p>
 <p>Xavier Glorot, Antoine Bordes, and Yoshua Bengio. Deep sparse
 rectifier neural networks. <em>Proceedings of the 14th International
 Conference on Artificial Intelligence and Statistics (AISTATS)</em>,
@@ -3113,6 +3146,10 @@ recognition. In <em>Proc. Interspeech</em>, pages 5036–5040, 2020. doi:
 <p>Vineet Gupta, Tomer Koren, and Yoram Singer. Shampoo: Preconditioned
 stochastic tensor optimization, 2018. URL
 <code>https://arxiv.org/abs/1802.09568</code>. Version Number: 2.</p>
+<p>Anna Gutowska. What is stochastic gradient descent? IBM Think,
+updated 18 February 2026, 2025. URL
+<code>https://www.ibm.com/think/topics/stochastic-gradient-descent</code>.
+Accessed 2026-11-10.</p>
 <p>Yizhou Han, Yao Zhao, Jun Zhou, Longfei Li, and Ruoyu Sun. -normed
 <span>MLA</span>: <span>QK</span> normalization without full key
 caching, 2026. URL <code>https://arxiv.org/abs/2606.16310</code>.</p>
@@ -3142,6 +3179,11 @@ URL <code>https://arxiv.org/abs/1606.08415</code>.</p>
 Query-key normalization for transformers, 2020. URL
 <code>https://arxiv.org/abs/2010.04245</code>. Findings of EMNLP
 2020.</p>
+<p>Geoffrey E. Hinton, Nitish Srivastava, and Kevin Swersky. Neural
+networks for machine learning, lecture 6: Overview of mini-batch
+gradient descent, momentum, and <span>RMSProp</span>. CSC321 course
+slides, University of Toronto, 2012. URL
+<code>https://www.cs.toronto.edu/ tijmen/csc321/slides/lecture_slides_lec6.pdf</code>.</p>
 <p>Coleman Hooper, Sehoon Kim, Hiva Mohammadzadeh, Michael W. Mahoney,
 Yakun Sophia Shao, Kurt Keutzer, and Amir Gholami. : Towards 10 million
 context length <span>LLM</span> inference with <span>KV</span> cache
@@ -3206,6 +3248,9 @@ Longyu Guan, Jiawen Tao, Guohong Fu, Xinran Xu, Yuzhi Wang, Guokun Lai,
 Yuxin Wu, Xinyu Zhou, Zhilin Yang, and Yulun Du. Kimi linear: An
 expressive, efficient attention architecture, 2025. URL
 <code>https://arxiv.org/abs/2510.26692</code>.</p>
+<p>Diederik P. Kingma and Jimmy Ba. Adam: A method for stochastic
+optimization, 2014. URL
+<code>https://arxiv.org/abs/1412.6980</code>.</p>
 <p>G<span>ü</span>nter Klambauer, Thomas Unterthiner, Andreas Mayr, and
 Sepp Hochreiter. Self-normalizing neural networks. In <em>Advances in
 Neural Information Processing Systems (NeurIPS)</em>, 2017. URL
@@ -3397,12 +3442,20 @@ Vahid Noroozi, He Huang, Oleksii Hrinchuk, Krishna Puvvada, Ankur Kumar,
 Jagadeesh Balam, and Boris Ginsburg. Fast conformer with linearly
 scalable attention for efficient speech recognition, 2023. URL
 <code>https://arxiv.org/abs/2305.05084</code>.</p>
+<p>Herbert Robbins and Sutton Monro. A stochastic approximation method.
+<em>The Annals of Mathematical Statistics</em>, 22 (3): 400–407, 1951.
+doi: 10.1214/aoms/1177729586.</p>
 <p>Stephen Roller, Sainbayar Sukhbaatar, Arthur Szlam, and Jason Weston.
 Hash layers for large sparse models, 2021.</p>
 <p>Susmita Roy, Souvik Manna, Subhash Bagui, et al. : Non-parametric
 linearly scaled hyperbolic tangent activation function for neural
 networks. <em>arXiv preprint arXiv:1811.05870</em>, 2019. URL
 <code>https://arxiv.org/abs/1811.05870</code>.</p>
+<p>Sebastian Ruder. An overview of gradient descent optimization
+algorithms, 2016. URL <code>https://arxiv.org/abs/1609.04747</code>.</p>
+<p>David E. Rumelhart, Geoffrey E. Hinton, and Ronald J. Williams.
+Learning representations by back-propagating errors. <em>Nature</em>,
+323 (6088): 533–536, 1986. doi: 10.1038/323533a0.</p>
 <p>Hema Hariharan Samson. Lightweight transformer architectures for edge
 devices in real-time applications, 2026. URL
 <code>http://arxiv.org/abs/2601.03290</code>.</p>
@@ -3441,6 +3494,11 @@ transformer for large language models, 2023. URL
 <code>https://arxiv.org/abs/2307.08621</code>. Version Number: 4.</p>
 <p>Yutao Sun et al. Attention residuals. URL
 <code>http://arxiv.org/abs/2603.15031</code>.</p>
+<p>Ilya Sutskever, James Martens, George Dahl, and Geoffrey Hinton. On
+the importance of initialization and momentum in deep learning. In
+<em>Proceedings of the 30th International Conference on Machine
+Learning</em>, volume 28 of <em>PMLR</em>, pages 1139–1147, 2013. URL
+<code>https://proceedings.mlr.press/v28/sutskever13.html</code>.</p>
 <p>Anda Tang, Xuanlin Yang, Junjie Wang, and Zhouchen Lin. Tuon: A
 tensor-aware optimizer utilizing tensor-svd and polarization for large
 language model pretraining, 2026. URL
@@ -3450,6 +3508,10 @@ Seong Cheol Jeong, Go Nagahara, Tomoshi Iiyama, Masahiro Suzuki, Yusuke
 Iwasawa, and Yutaka Matsuo. : Modified adam can converge with any <span
 class="math inline">\(\beta_2\)</span> with the optimal rate, 2024. URL
 <code>https://arxiv.org/abs/2411.02853</code>. Version Number: 3.</p>
+<p>Tijmen Tieleman and Geoffrey E. Hinton. : Divide the gradient by a
+running average of its recent magnitude. CSC321 course slides, Lecture
+6e, University of Toronto, 2012. URL
+<code>https://www.cs.toronto.edu/ tijmen/csc321/slides/lecture_slides_lec6.pdf</code>.</p>
 <p>Ludovic Trottier, Philippe Gigu<span>è</span>re, and Brahim
 Chaib-draa. Parametric exponential linear unit for deep convolutional
 neural networks. In <em>Proceedings of the 16th IEEE International
@@ -8926,6 +8988,592 @@ adaptativas de primer orden, métodos de reducción de varianza, métodos
 eficientes en memoria, precondicionadores estructurados de segundo
 orden, métodos sin programación de tasa de aprendizaje y actualizaciones
 orientadas a ortogonalidad.</p>
+<h2 id="sec:opt-tutorial">Tutorial: De Descenso de Gradiente a Familias
+de Optimizadores</h2>
+<p>El resto de este apéndice es una referencia: una entrada por
+optimizador, con su regla de actualización, su pseudocódigo y su perfil
+de memoria. Esta subsección es la rampa de entrada. Presenta las cinco
+ideas que toda entrada reutiliza—la superficie de pérdida, el gradiente,
+el tamaño de paso, el lote y los dos estadísticos que añaden los métodos
+posteriores—y después compara las familias como familias, sin derivar
+ningún método concreto. Quien la termine debería poder abrir cualquiera
+de las secciones siguientes y reconocer cuál de las cinco ideas está
+modificando.</p>
+<h3 id="sec:opt-tutorial-problem">Un problema, muchas recetas</h3>
+<p>Entrenar una red neuronal es un problema de optimización envuelto en
+contabilidad. Sea <span class="math inline">\(\theta\)</span> el vector
+de todos los números entrenables (pesos y sesgos, decenas de millones
+para un transformer pequeño), <span
+class="math inline">\(L(\theta)\)</span> la pérdida y <span
+class="math inline">\(f(\theta)\)</span> el objetivo que realmente se
+minimiza, normalmente <span class="math inline">\(L\)</span> más un
+regularizador. La arquitectura solo decide <em>cuál</em> es la
+superficie <span class="math inline">\(L\)</span>: el número de capas,
+el patrón de atención, la normalización, la activación. El optimizador
+decide <em>cómo avanza el recorrido</em> sobre esa superficie. Todo
+optimizador de este apéndice se puede escribir en una línea, <span
+class="math display">\[\theta_{t+1} \;=\; \theta_t \;-\; \eta_t\, u_t,
+\qquad u_t = u\!\left(g_t, g_{t-1}, \dots,\, \theta_t\right),
+\label{eq:opt-tut-generic}\]</span> donde <span
+class="math inline">\(g_t=\nabla f(\theta_t)\)</span> es el gradiente y
+<span class="math inline">\(u_t\)</span> es una dirección construida a
+partir del gradiente actual y, quizá, de una pequeña cantidad de estado
+recordado. El descenso de gradiente toma <span
+class="math inline">\(u_t=g_t\)</span>. Momentum toma <span
+class="math inline">\(u_t\)</span> como un promedio decreciente de
+gradientes pasados. Los métodos adaptativos dividen <span
+class="math inline">\(u_t\)</span> coordenada a coordenada. Los métodos
+de segundo orden lo rotan con una estimación de la curvatura. Los
+métodos de ortogonalidad le dan forma de matriz. Nada más cambia: el
+signo delante de <span class="math inline">\(\eta_t\)</span> es siempre
+negativo, porque el gradiente apunta cuesta arriba.</p>
+<p>La imagen habitual es la de un excursionista que baja una montaña con
+niebla <span class="citation" data-cites="ibm_sgd_2025"></span>. Siente
+la pendiente bajo sus pies pero no ve el valle, así que la estrategia se
+reduce a tres preguntas: cuán fiable es la lectura de la pendiente (¿un
+ejemplo o mil?), cuán larga es la zancada y cuánta memoria del terreno
+merece la pena cargar. La Figura <a href="#fig:opt-tut-flow"
+data-reference-type="ref" data-reference="fig:opt-tut-flow">61</a>
+convierte esas preguntas en el mapa de las familias que siguen.</p>
+<figure id="fig:opt-tut-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-tutorial-flow.svg" alt="image" /></span></p>
+
+<figcaption>Todo el apéndice en una página. Los datos producen una
+pérdida, la retropropagación convierte la pérdida en un gradiente y todo
+optimizador aplica la misma regla de actualización con una respuesta
+distinta a una de seis preguntas. Las preguntas son independientes, y
+por eso los métodos se pueden combinar; también son la única dimensión
+en la que difieren las familias de la Sección <a
+href="#sec:annex-optimizers" data-reference-type="ref"
+data-reference="sec:annex-optimizers">20</a>.</figcaption>
+</figure>
+<h3 id="sec:opt-tutorial-gd">Descenso de gradiente: bajar la
+pendiente</h3>
+<p>Para un solo peso <span class="math inline">\(w\)</span>, la derivada
+<span class="math inline">\(f&#39;(w)\)</span> es la pendiente: positiva
+significa que la pérdida crece hacia la derecha, de modo que el
+movimiento útil es hacia la izquierda. En varias dimensiones el
+gradiente <span class="math inline">\(\nabla f\)</span> reúne todas las
+derivadas parciales y apunta en la dirección de máximo crecimiento; su
+negativa es la dirección de máximo descenso. Dar un paso de longitud
+<span class="math inline">\(\eta\)</span> en ella produce <span
+class="math display">\[\theta_{t+1} = \theta_t - \eta\,\nabla
+f(\theta_t),
+\label{eq:opt-tut-gd}\]</span> el algoritmo más antiguo del apéndice,
+que suele atribuirse a Cauchy en el siglo XIX y fue analizado por Curry
+en 1944 <span class="citation" data-cites="ghojogh_ghodsi_2024"></span>.
+El escalar <span class="math inline">\(\eta&gt;0\)</span> es la <em>tasa
+de aprendizaje</em> o tamaño de paso, y es el único número
+ajustable.</p>
+<p>Dos hechos explican casi todo lo que sigue. Primero, el tamaño de
+paso tiene un techo duro. Si el gradiente cambia como mucho <span
+class="math inline">\(L\)</span> veces más rápido de lo que cambian los
+parámetros (el gradiente es <em><span
+class="math inline">\(L\)</span>-suave</em>), entonces <a
+href="#eq:opt-tut-gd" data-reference-type="eqref"
+data-reference="eq:opt-tut-gd">[eq:opt-tut-gd]</a> disminuye la pérdida
+para <span class="math inline">\(\eta&lt;2/L\)</span> y diverge más
+allá; la elección monótona segura es <span class="math inline">\(\eta\le
+1/L\)</span> <span class="citation"
+data-cites="ghojogh_ghodsi_2024"></span>. Segundo, las curvas de nivel
+de una pérdida cuadrática son elipses cuyos ejes tienen longitudes muy
+distintas, y el gradiente negativo es perpendicular a la curva de nivel
+pero en general <em>no</em> apunta al mínimo—salvo cuando las elipses
+son círculos <span class="citation"
+data-cites="hinton_csc321_2012"></span>. El recorrido, por tanto,
+zigzaguea a través de la dirección abrupta mientras avanza a rastras por
+la plana. La Figura <a href="#fig:opt-tut-gd" data-reference-type="ref"
+data-reference="fig:opt-tut-gd">62</a> muestra los tres regímenes sobre
+el mismo cuenco, y la Figura <a href="#fig:opt-tut-lr"
+data-reference-type="ref" data-reference="fig:opt-tut-lr">63</a> muestra
+cómo se ven como curva de pérdida.</p>
+<figure id="fig:opt-tut-gd"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-gd-landscape.svg" alt="image" /></span></p>
+
+<figcaption>Descenso de gradiente sobre un cuenco cuadrático, mismo
+punto de partida, 26 pasos. (a) Un cuenco isótropo: el gradiente apunta
+al mínimo y el recorrido es una línea recta. (b) Un valle cuya curvatura
+difiere en un factor veinte entre sus ejes: la dirección abrupta se
+resuelve en pocos pasos y después el recorrido avanza a rastras por el
+fondo, porque el mismo <span class="math inline">\(\eta\)</span> es
+demasiado pequeño allí. (c) El mismo valle con <span
+class="math inline">\(\eta\)</span> empujado hacia el límite de
+estabilidad <span class="math inline">\(2/L\)</span>: la dirección
+abrupta alterna de signo y la trayectoria oscila. Un único tamaño de
+paso global no puede servir a ambas direcciones—la observación que
+motiva todos los métodos por coordenada de este apéndice <span
+class="citation" data-cites="hinton_csc321_2012"></span>.</figcaption>
+</figure>
+<figure id="fig:opt-tut-lr"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-learning-rate.svg" alt="image" /></span></p>
+
+<figcaption>El mismo valle, una sola perilla. Con <span
+class="math inline">\(\eta\)</span> muy por debajo de <span
+class="math inline">\(1/L\)</span> la pérdida apenas se mueve; en <span
+class="math inline">\(\eta\approx1/L\)</span> cae geométricamente; más
+allá de <span class="math inline">\(\eta=2/L\)</span> cada iteración
+multiplica el error por un factor mayor que uno y la ejecución diverge.
+Las dos tasas que importan—<span class="math inline">\(1/L\)</span> para
+un descenso monótono y <span class="math inline">\(2/L\)</span> para la
+estabilidad—dependen de la curvatura, que es justo lo que quien entrena
+no conoce de antemano.</figcaption>
+</figure>
+<p>Cuando la curvatura es desconocida, el remedio clásico es una
+<em>búsqueda lineal</em>: probar <span
+class="math inline">\(\eta=1\)</span>, dividirlo por dos hasta que la
+pérdida disminuya de verdad y repetir <span class="citation"
+data-cites="ghojogh_ghodsi_2024"></span>. El aprendizaje profundo rara
+vez lo hace, porque cada prueba cuesta una pasada completa sobre los
+datos; en su lugar programa <span class="math inline">\(\eta\)</span> a
+mano. La teoría proporciona el ritmo: para un objetivo convexo y <span
+class="math inline">\(L\)</span>-suave, el descenso de gradiente alcanza
+<span class="math inline">\(f(\theta_t)-f^\star\le
+2L\|\theta_0-\theta^\star\|^2/(t+1)\)</span>, es decir, <span
+class="math inline">\(O(1/t)\)</span> <span class="citation"
+data-cites="ghojogh_ghodsi_2024"></span>. Reducir a la mitad la
+distancia al óptimo cuesta duplicar las iteraciones—un resumen justo de
+por qué los métodos de primer orden necesitan tantos pasos.</p>
+<h3 id="sec:opt-tutorial-backprop">De dónde sale el gradiente:
+retropropagación</h3>
+<p>Nada de lo anterior dijo cómo obtener <span
+class="math inline">\(g_t\)</span>. Para una red con millones de pesos
+no hay fórmula que derivar a mano, y las diferencias finitas costarían
+una pasada hacia adelante por parámetro. La retropropagación calcula
+todas las derivadas parciales en un único barrido hacia atrás usando
+solo la regla de la cadena.</p>
+<p>En una red feed-forward cada capa alterna una aplicación afín y una
+activación, <span
+class="math inline">\(a^{(\ell)}=W^{(\ell)}z^{(\ell-1)}+b^{(\ell)}\)</span>
+y <span class="math inline">\(z^{(\ell)}=\sigma(a^{(\ell)})\)</span>. La
+pasada hacia adelante guarda todas las <span
+class="math inline">\(a\)</span> y las <span
+class="math inline">\(z\)</span>. La pasada hacia atrás propaga entonces
+un número por neurona, <span
+class="math inline">\(\delta^{(\ell)}=\partial e/\partial
+a^{(\ell)}\)</span>, desde la pérdida hacia la entrada, <span
+class="math display">\[\delta^{(L)} = \frac{\partial e}{\partial
+z^{(L)}}\odot\sigma&#39;(a^{(L)}),
+\qquad
+\delta^{(\ell)} = \sigma&#39;(a^{(\ell)})\odot
+\left(W^{(\ell+1)\top}\delta^{(\ell+1)}\right),
+\qquad
+\frac{\partial e}{\partial W^{(\ell)}} =
+\delta^{(\ell)}\,z^{(\ell-1)\top},
+\label{eq:opt-tut-backprop}\]</span> donde <span
+class="math inline">\(\odot\)</span> es el producto elemento a elemento.
+El gradiente de un peso es, por tanto, el producto de un número hacia
+atrás y un número hacia adelante—las dos cantidades dibujadas en la
+Figura <a href="#fig:opt-tut-backprop" data-reference-type="ref"
+data-reference="fig:opt-tut-backprop">64</a>. La recursión es lineal en
+el índice de capa, así que el barrido completo cuesta aproximadamente lo
+mismo que una pasada adicional hacia adelante, en torno al doble del
+coste de una pasada hacia adelante por paso, y debe mantener las
+activaciones de todas las capas en memoria hasta que se usan <span
+class="citation"
+data-cites="ghojogh_ghodsi_2024 rumelhart1986learning"></span>.</p>
+<figure id="fig:opt-tut-backprop"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-backprop.svg" alt="image" /></span></p>
+
+<figcaption>Un paso de entrenamiento sobre una red con dos capas ocultas
+y valores exactos. Los números en negro son las activaciones hacia
+adelante <span class="math inline">\(z\)</span>; los números en rojo son
+las cantidades hacia atrás <span class="math inline">\(\delta=\partial
+e/\partial a\)</span>. Cada gradiente de un peso es el producto de un
+número rojo y uno negro (Ecuación <a href="#eq:opt-tut-backprop"
+data-reference-type="ref"
+data-reference="eq:opt-tut-backprop">[eq:opt-tut-backprop]</a>), de modo
+que un solo barrido hacia atrás los produce todos a la vez. Panel (b):
+la pasada hacia atrás cuesta alrededor del doble que la pasada hacia
+adelante y mantiene vivas las activaciones, y por eso la memoria del
+optimizador no es la única factura de memoria del
+entrenamiento.</figcaption>
+</figure>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Entrada <span class="math inline">\(x\)</span>, objetivo <span
+class="math inline">\(y\)</span>, pesos <span
+class="math inline">\(\{W^{(\ell)},b^{(\ell)}\}_{\ell=1}^{L}\)</span>
+Gradientes <span class="math inline">\(\{\partial e/\partial
+W^{(\ell)}\}_{\ell=1}^{L}\)</span> Hacia adelante: <span
+class="math inline">\(z^{(0)}\gets x\)</span>; <strong>para</strong>
+<span class="math inline">\(\ell=1,\dots,L\)</span>
+<strong>hacer</strong> <span class="math inline">\(a^{(\ell)}\gets
+W^{(\ell)}z^{(\ell-1)}+b^{(\ell)}\)</span>, <span
+class="math inline">\(z^{(\ell)}\gets\sigma(a^{(\ell)})\)</span>
+Pérdida: <span class="math inline">\(e \gets \ell(z^{(L)}, y)\)</span>
+<span class="math inline">\(\delta^{(L)} \gets \partial e/\partial
+z^{(L)} \odot \sigma&#39;(a^{(L)})\)</span> <span
+class="math inline">\(\partial e/\partial W^{(\ell)} \gets
+\delta^{(\ell)} z^{(\ell-1)\top}\)</span> <span
+class="math inline">\(\partial e/\partial b^{(\ell)} \gets
+\delta^{(\ell)}\)</span> <span class="math inline">\(\delta^{(\ell-1)}
+\gets
+\sigma&#39;(a^{(\ell-1)})\odot\left(W^{(\ell)\top}\delta^{(\ell)}\right)\)</span>
+todos los gradientes de los pesos</p>
+</div>
+</div>
+<p>La consecuencia importante para este apéndice es que la
+retropropagación no es un optimizador. Es una fábrica de gradientes, y
+siempre devuelve el gradiente exacto del lote que se le entregue. Toda
+diferencia entre las familias que siguen vive después de la fábrica, en
+cómo se forma <span class="math inline">\(u_t\)</span> en <a
+href="#eq:opt-tut-generic" data-reference-type="eqref"
+data-reference="eq:opt-tut-generic">[eq:opt-tut-generic]</a>.</p>
+<h3 id="sec:opt-tutorial-sgd">Descenso de gradiente estocástico y por
+mini-lotes</h3>
+<p>Con <span class="math inline">\(n\)</span> ejemplos la pérdida es un
+promedio, <span class="math inline">\(f(\theta)=\frac1n\sum_i
+f_i(\theta)\)</span>, así que el gradiente exacto es un promedio de
+<span class="math inline">\(n\)</span> gradientes por ejemplo y un paso
+cuesta <span class="math inline">\(n\)</span> pasadas hacia atrás. Para
+un conjunto de mil millones de tokens eso es inasumible, y además
+derrochador: los ejemplos vecinos suelen decir casi lo mismo sobre los
+parámetros.</p>
+<p>El descenso de gradiente estocástico, en la línea de la aproximación
+estocástica de Robbins–Monro <span class="citation"
+data-cites="robbins_monro_1951"></span>, sustituye el promedio por un
+término, <span class="math inline">\(\hat g_t=\nabla
+f_{i_t}(\theta_t)\)</span> con <span class="math inline">\(i_t\)</span>
+extraído de forma uniforme, lo que da <span
+class="math display">\[\theta_{t+1} = \theta_t - \eta_t\,\nabla
+f_{i_t}(\theta_t).
+\label{eq:opt-tut-sgd}\]</span> La estimación es insesgada, <span
+class="math inline">\(\mathbb{E}[\hat g_t]=g_t\)</span>, así que en
+promedio apunta en la dirección correcta; su error cae como <span
+class="math inline">\(\sigma/\sqrt{b}\)</span> cuando se usa un lote de
+<span class="math inline">\(b\)</span> ejemplos en lugar de uno <span
+class="citation" data-cites="ghojogh_ghodsi_2024 bottou_2010"></span>.
+Las bibliotecas modernas llaman a este método <em>por mini-lotes</em>
+“SGD” y casi nunca usan <span class="math inline">\(b=1\)</span>: una
+pasada sobre los datos (una <em>época</em>) contiene entonces <span
+class="math inline">\(\lfloor n/b\rfloor\)</span> actualizaciones en
+lugar de una <span class="citation"
+data-cites="ibm_sgd_2025 ghojogh_ghodsi_2024"></span>. La Figura <a
+href="#fig:opt-tut-noise" data-reference-type="ref"
+data-reference="fig:opt-tut-noise">65</a> muestra las dos caras del
+compromiso: con el mismo número de pasos y el mismo tamaño de paso, los
+lotes pequeños vagan, y el ruido que inyectan es precisamente la
+cantidad que se reduce como <span
+class="math inline">\(1/\sqrt{b}\)</span>.</p>
+<figure id="fig:opt-tut-noise"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-batch-noise.svg" alt="image" /></span></p>
+
+<figcaption>(a) Una superficie de mínimos cuadrados real en dos pesos
+(rasgos correlacionados, así que el valle es genuino), con 45 pasos
+desde el mismo punto de partida y el mismo tamaño de paso. El lote
+completo desciende de forma suave; un mini-lote de 32 lo sigue con un
+vaivén visible; los gradientes de un solo ejemplo nunca se asientan. (b)
+Error relativo del gradiente por lote frente al gradiente completo,
+medido sobre los mismos datos: los puntos medidos siguen la ley <span
+class="math inline">\(1/\sqrt{b}\)</span>, y cuadruplicar el lote reduce
+el ruido a la mitad.</figcaption>
+</figure>
+<p>El ruido no es solo un coste. Como cada paso es una aproximación
+aleatoria, el iterado puede abandonar una cuenca poco profunda o
+deslizarse por un punto de silla que un método de lote completo trataría
+como punto de parada <span class="citation"
+data-cites="ibm_sgd_2025"></span>. El precio aparece en la tasa. Para un
+objetivo convexo y <span class="math inline">\(L\)</span>-suave, SGD con
+<span class="math inline">\(\eta_t\propto1/\sqrt t\)</span> satisface
+<span class="math inline">\(f(\theta_t)-f^\star=O(\log t/\sqrt
+t)\)</span>, y con un paso constante converge a un entorno de tamaño
+<span class="math inline">\(O(\eta)\)</span> y luego se estanca <span
+class="citation" data-cites="ghojogh_ghodsi_2024"></span>. El descenso
+de gradiente con lote completo es, por tanto, más preciso por iteración
+y mucho más lento por iteración; SGD es lo contrario. La Figura <a
+href="#fig:opt-tut-rates" data-reference-type="ref"
+data-reference="fig:opt-tut-rates">66</a> pone ambas afirmaciones sobre
+los mismos ejes, una vez por iteración y otra por unidad de tiempo de
+reloj, que es la comparación que de verdad importa cuando un paso cuesta
+<span class="math inline">\(n/b\)</span> veces menos.</p>
+<figure id="fig:opt-tut-rates"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-convergence.svg" alt="image" /></span></p>
+
+<figcaption>(a) Por iteración, el descenso de gradiente decae como <span
+class="math inline">\(O(1/t)\)</span> mientras que SGD decae como <span
+class="math inline">\(O(1/\sqrt t)\)</span> y, con un paso fijo, se
+aplana en una meseta de altura <span
+class="math inline">\(O(\eta)\)</span> <span class="citation"
+data-cites="ghojogh_ghodsi_2024"></span>. La meseta es la razón por la
+que toda receta práctica acaba reduciendo <span
+class="math inline">\(\eta\)</span>. (b) Las mismas curvas frente al
+tiempo de reloj, con un paso de lote completo costando cien pasos de
+mini-lote: SGD va por delante durante la mayor parte de la ejecución y
+el descenso de gradiente solo gana cuando la meseta manda. Las curvas
+son esquemáticas, con constantes elegidas para facilitar la
+lectura.</figcaption>
+</figure>
+<h3 id="sec:opt-tutorial-knobs">Dos perillas que giran todos los métodos
+posteriores</h3>
+<p>Todo lo que sigue es un refinamiento de dos observaciones sobre la
+Ecuación <a href="#eq:opt-tut-gd" data-reference-type="eqref"
+data-reference="eq:opt-tut-gd">[eq:opt-tut-gd]</a>, y merece la pena
+separarlas antes de conocer las familias.</p>
+<h4 id="memoria-del-pasado.">Memoria del pasado.</h4>
+<p>Una bola que rueda por el mismo valle conserva su velocidad: acumula
+rapidez a lo largo de una pendiente constante y cancela la oscilación
+cuando la pendiente cambia de signo continuamente. Momentum implementa
+exactamente eso, sustituyendo el gradiente por una suma decreciente de
+gradientes, <span class="math display">\[v_t = \beta\,v_{t-1} -
+\eta\,g_t,
+\qquad
+\theta_{t+1} = \theta_t + v_t,
+\label{eq:opt-tut-momentum}\]</span> con <span
+class="math inline">\(\beta\in[0,1)\)</span> el decaimiento. El paso
+efectivo es <span class="math inline">\(\eta/(1-\beta)\)</span> a lo
+largo de una dirección estable, que es como un <span
+class="math inline">\(\eta\)</span> pequeño puede aun así moverse
+deprisa. Momentum de Nesterov hace el mismo movimiento pero lee el
+gradiente en la posición hacia la que se dirige la velocidad, de modo
+que la corrección llega antes que el sobrepaso <span class="citation"
+data-cites="hinton_csc321_2012 sutskever2013importance"></span>. La
+Figura <a href="#fig:opt-tut-momentum" data-reference-type="ref"
+data-reference="fig:opt-tut-momentum">67</a> muestra la composición de
+los dos términos y su efecto sobre el valle.</p>
+<figure id="fig:opt-tut-momentum"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-momentum.svg" alt="image" /></span></p>
+
+<figcaption>Momentum como memoria. (a) Sobre el valle de la Figura <a
+href="#fig:opt-tut-gd" data-reference-type="ref"
+data-reference="fig:opt-tut-gd">62</a>(b), con el mismo tamaño de paso,
+el descenso de gradiente simple sigue avanzando a rastras por el fondo
+tras 120 pasos mientras que momentum y su variante de Nesterov alcanzan
+el mínimo. (b) La misma ejecución como curva de pérdida: la dirección
+recordada compra aproximadamente un orden de magnitud. (c) La
+actualización es la suma cabeza-cola de la velocidad amortiguada (azul)
+y el paso fresco del gradiente (rojo); el resultado (verde) es más suave
+que cualquiera de los dos términos por separado.</figcaption>
+</figure>
+<h4 id="un-tamaño-de-paso-por-coordenada.">Un tamaño de paso por
+coordenada.</h4>
+<p>La segunda observación es que el valle de la Figura <a
+href="#fig:opt-tut-gd" data-reference-type="ref"
+data-reference="fig:opt-tut-gd">62</a>(b) no tiene un <span
+class="math inline">\(\eta\)</span> bueno único: lo que es estable a lo
+largo del eje abrupto es despreciable a lo largo del plano. Los métodos
+adaptativos mantienen un promedio móvil de gradientes al cuadrado y
+dividen por su raíz cuadrada, de modo que una coordenada que ha recibido
+gradientes grandes recibe un paso menor y una coordenada tranquila
+recibe uno mayor, <span class="math display">\[s_t = \gamma\,s_{t-1} +
+(1-\gamma)\,g_t^2,
+\qquad
+\theta_{t+1} = \theta_t - \eta\,\frac{g_t}{\sqrt{s_t}+\epsilon}.
+\label{eq:opt-tut-rms}\]</span> El esquema nació de rprop, que usaba
+solo el signo del gradiente, y de su versión por mini-lotes,
+rmsprop <span class="citation"
+data-cites="hinton_csc321_2012 tieleman_hinton2012"></span>; AdaGrad es
+la versión acumulativa en lugar de decreciente <span class="citation"
+data-cites="duchi_adagrad_2011"></span>. La Figura <a
+href="#fig:opt-tut-adaptive" data-reference-type="ref"
+data-reference="fig:opt-tut-adaptive">68</a> muestra el efecto: los dos
+ejes del valle reciben desplazamientos comparables, a cambio de un
+estado por coordenada y de un paso que ya no se reduce por sí solo—el
+temblor residual de tamaño <span
+class="math inline">\(\approx\eta\)</span> alrededor del mínimo es lo
+que después motiva tamaños de paso decrecientes o sin programación.</p>
+<figure id="fig:opt-tut-adaptive"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-adaptive.svg" alt="image" /></span></p>
+
+<figcaption>Un tamaño de paso por coordenada. (a) Sobre un valle con una
+razón de curvatura de cien a uno, un tamaño de paso compartido o
+sobrepasa el eje abrupto o ignora el plano; normalizar cada coordenada
+por la raíz del promedio de sus gradientes recientes alcanza la cuenca y
+tiembla a su alrededor. (b) Desplazamiento del primer paso por
+coordenada, en eje logarítmico: el paso compartido produce un factor
+sesenta entre los ejes, el normalizado no produce ninguno.</figcaption>
+</figure>
+<p>Las dos perillas se componen, y su composición es la razón por la que
+AdamW es el valor por defecto en la práctica: un primer momento para la
+dirección, un segundo momento para la escala, una corrección de sesgo
+para los primeros pasos vacíos y un decaimiento de pesos desacoplado
+para la regularización <span class="citation"
+data-cites="kingma_adam_2014"></span>. Nada en las Ecuaciones <a
+href="#eq:opt-tut-momentum" data-reference-type="eqref"
+data-reference="eq:opt-tut-momentum">[eq:opt-tut-momentum]</a> y <a
+href="#eq:opt-tut-rms" data-reference-type="eqref"
+data-reference="eq:opt-tut-rms">[eq:opt-tut-rms]</a> es específico de
+los transformers; lo que difiere entre familias es qué estadísticos se
+guardan, cómo se combinan y cuántos bytes por parámetro cuesta. Una
+panorámica compacta del zoo resultante la ofrece <span class="citation"
+data-cites="ruder_2016"></span>.</p>
+<h3 id="sec:opt-tutorial-families">En qué difieren las familias</h3>
+<p>El apéndice que sigue contiene treinta y seis métodos, demasiados
+para retenerlos a la vez. Se recuerdan mejor como ocho familias, cada
+una respondiendo a una de las preguntas de la Figura <a
+href="#fig:opt-tut-flow" data-reference-type="ref"
+data-reference="fig:opt-tut-flow">61</a> y cada una distinguida por lo
+que recuerda y lo que paga.</p>
+<ul>
+<li><p><strong>Líneas base de primer orden</strong> (SGD con momentum,
+AdamW, RAdam) guardan uno o dos estadísticos por parámetro y suponen que
+el paisaje es lo bastante suave para un modelo localmente lineal. Son la
+referencia contra la que se mide todo lo demás.</p></li>
+<li><p><strong>Momentum y reducción de varianza</strong> (Adan, ADOPT,
+AdEMAMix, MARS, Cautious AdamW) guardan más de dos búferes, o una
+diferencia de gradientes, para reducir la varianza de la propia
+actualización. Compran estabilidad y velocidad a cambio de memoria y de
+una segunda evaluación del gradiente o de un historial más
+largo.</p></li>
+<li><p><strong>Eficientes en memoria y de rango bajo</strong>
+(Adafactor, GaLore, APOLLO, Lion, AdamPM) aceptan una peor estimación
+del segundo momento—factorizada, proyectada o inexistente—precisamente
+para encoger el estado. Lion llega a guardar solo el signo de la
+actualización.</p></li>
+<li><p><strong>Sin programación y sin parámetros</strong> (Schedule-Free
+AdamW, Prodigy, LAMB para lotes grandes) trasladan la carga de elegir
+<span class="math inline">\(\eta_t\)</span> de quien entrena al
+algoritmo, normalmente promediando iterados o estimando el paso a partir
+de la propia pérdida.</p></li>
+<li><p><strong>Curvatura y segundo orden</strong> (Sophia, Shampoo,
+SOAP) estiman cómo cambia el gradiente, no solo su tamaño, y
+precondicionan el paso con esa estimación. Convergen en menos
+iteraciones y cuestan más por iteración.</p></li>
+<li><p><strong>Geométricos y de ortogonalidad</strong> (Muon,
+Turbo-Muon, AF-Muon, ROOT, NorMuon, Dion3) tratan una matriz de pesos
+como una matriz: ortogonalizan o blanquean la actualización para que
+todas las direcciones singulares avancen a la misma tasa, que es un
+sustituto barato de la curvatura en parámetros con forma de
+matriz.</p></li>
+<li><p><strong>Adaptividad ajustable</strong> (Anon) mantiene el estado
+estándar pero adapta sus propios coeficientes, de modo que la cantidad
+de adaptividad es un hiperparámetro y no una decisión de diseño
+fija.</p></li>
+<li><p><strong>Evolutivos y de población</strong> (EvE, EA4LLM) no
+siguen ningún gradiente: muestrean perturbaciones o mantienen una
+población de modelos, lo que resulta atractivo cuando los gradientes son
+ruidosos, no están disponibles o hay que ajustar muchos hiperparámetros
+a la vez, y caro cuando el modelo es grande.</p></li>
+</ul>
+<p>El Cuadro <a href="#tab:opt-tut-families" data-reference-type="ref"
+data-reference="tab:opt-tut-families">[tab:opt-tut-families]</a> expresa
+la misma comparación en las dos monedas que deciden una ejecución real:
+qué se almacena por parámetro y cuánto cuesta cada paso. La Figura <a
+href="#fig:opt-tut-families" data-reference-type="ref"
+data-reference="fig:opt-tut-families">69</a> lo convierte en una huella:
+leer hacia abajo una fila dice qué ingredientes usa una familia, y leer
+a través de una columna dice qué familias comparten uno.</p>
+<div class="tabular">
+<p><span>@L<span>3.2cm</span>L<span>4.6cm</span>L<span>2.6cm</span>L<span>4.6cm</span>@</span>
+Familia &amp; Pregunta que responde &amp; Estado por parámetro &amp;
+Riesgo principal<br />
+Primer orden &amp; ¿Cuál es la pendiente? &amp; 0–2 &amp; exige
+programar la tasa<br />
+Momentum, varianza &amp; ¿Hacia dónde va? &amp; 2–3 &amp; más memoria y
+contabilidad<br />
+Memoria, rango bajo &amp; ¿Cabe en menos estado? &amp; <span
+class="math inline">\(\le1\)</span> &amp; segundo momento sesgado<br />
+Sin programación &amp; ¿Se elige <span
+class="math inline">\(\eta_t\)</span> por mí? &amp; 1 &amp; la teoría
+supone convexidad<br />
+Curvatura, 2.<sup>o</sup> orden &amp; ¿Cómo cambia la pendiente? &amp;
+<span class="math inline">\(2+2k\)</span> &amp; factorizaciones
+caras<br />
+Geométricos, ortogonalidad &amp; ¿Tiene buena forma el paso? &amp; 1
+&amp; solo matrices<br />
+Adaptividad ajustable &amp; ¿Cuánta adaptividad? &amp; 2 &amp;
+hiperparámetros extra<br />
+Evolutivos, población &amp; ¿Sin gradientes? &amp; <span
+class="math inline">\(P\times\)</span> &amp; prohibitivo a escala<br />
+</p>
+</div>
+<figure id="fig:opt-tut-families"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-families.svg" alt="image" /></span></p>
+
+<figcaption>Huella de las ocho familias. Una marca indica un ingrediente
+que la familia usa y una tilde uno que solo usan algunos miembros. La
+primera columna está marcada en todas partes—toda familia de este
+apéndice es un método de gradiente salvo la última—y las columnas
+restantes son los ejes reales de variación: memoria de dirección, escala
+por coordenada, curvatura, estructura matricial, población y un estado
+menor que el de Adam. El mapa es deliberadamente grueso; las entradas
+que siguen dan las reglas exactas.</figcaption>
+</figure>
+<p>El Algoritmo <a href="#alg:opt-tut-generic" data-reference-type="ref"
+data-reference="alg:opt-tut-generic">[alg:opt-tut-generic]</a> hace
+operativa la comparación: las familias difieren solo en qué ranuras
+rellenan. Leerlo junto al Cuadro <a href="#tab:opt-tut-knobs"
+data-reference-type="ref"
+data-reference="tab:opt-tut-knobs">[tab:opt-tut-knobs]</a> basta para
+situar cualquier método del resto del apéndice sin memorizar su
+álgebra.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros <span class="math inline">\(\theta_0\)</span>, tasa <span
+class="math inline">\(\eta\)</span>, ranuras <span
+class="math inline">\(\mathcal{S}\)</span> (estado), <span
+class="math inline">\(\mathcal{D}\)</span> (dirección), <span
+class="math inline">\(\mathcal{P}\)</span> (precondicionador), <span
+class="math inline">\(\mathcal{T}\)</span> (regla de paso) Parámetros
+actualizados <span class="math inline">\(\theta_T\)</span> Inicializar
+el estado que requiere <span class="math inline">\(\mathcal{S}\)</span>
+Muestrear un lote <span class="math inline">\(\mathcal{B}_t\)</span> y
+calcular <span class="math inline">\(g_t\gets\nabla
+f_{\mathcal{B}_t}(\theta_{t-1})\)</span> Actualizar el estado: <span
+class="math inline">\(\mathcal{S}\gets\textsc{Actualizar}(\mathcal{S},
+g_t, \theta_{t-1})\)</span> Formar la dirección <span
+class="math inline">\(u_t\gets\mathcal{D}(g_t,\mathcal{S})\)</span>
+Aplicar el precondicionador <span
+class="math inline">\(u_t\gets\mathcal{P}(u_t,\mathcal{S})\)</span>
+Elegir el paso <span class="math inline">\(\eta_t\gets\mathcal{T}(\eta,
+t, \mathcal{S})\)</span> <span
+class="math inline">\(\theta_t\gets\theta_{t-1}-\eta_t\,u_t\)</span>
+<span class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<div class="tabular">
+<p><span>@L<span>2.4cm</span>L<span>4.4cm</span>L<span>3.4cm</span>L<span>3.6cm</span>@</span>
+Ranura &amp; Qué decide &amp; Perilla girada &amp; Se ve en<br />
+<span class="math inline">\(\mathcal{B}_t\)</span> &amp; cuántos
+ejemplos por paso &amp; varianza &amp; SGD, mini-lote, lote
+completo<br />
+<span class="math inline">\(\mathcal{S}\)</span> &amp; qué se recuerda
+&amp; estado y memoria &amp; momentum, Adam, Sophia, Shampoo<br />
+<span class="math inline">\(\mathcal{D}\)</span> &amp; qué dirección se
+sigue &amp; suavizado &amp; momentum, Nesterov, métodos de signo<br />
+<span class="math inline">\(\mathcal{P}\)</span> &amp; cómo se reescalan
+las coordenadas &amp; acondicionamiento &amp; AdaGrad, RMSProp, Adam,
+Muon<br />
+<span class="math inline">\(\mathcal{T}\)</span> &amp; cuánto mide el
+paso &amp; programación &amp; coseno, calentamiento, sin programación,
+Prodigy<br />
+decaimiento &amp; cómo se regularizan los pesos &amp; generalización
+&amp; L2, decaimiento desacoplado<br />
+</p>
+</div>
+<h3 id="sec:opt-tutorial-diagnostics">Leer una curva de pérdida</h3>
+<p>El valor práctico de las cinco ideas es diagnóstico. Una sola curva
+de pérdida ya dice cuál de ellas está mal, y la respuesta suele ser
+visible en unos cientos de pasos (Figura <a href="#fig:opt-tut-diag"
+data-reference-type="ref" data-reference="fig:opt-tut-diag">70</a>).</p>
+<figure id="fig:opt-tut-diag"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-loss-diagnostics.svg" alt="image" /></span></p>
+
+<figcaption>Cuatro curvas de pérdida y la frase que pronuncia cada una.
+Una curva suave que sigue bajando es sana; los picos seguidos de una
+subida significan que el tamaño de paso cruzó <span
+class="math inline">\(2/L\)</span>; una curva suave pero demasiado alta
+significa que el tamaño de paso está muy por debajo de <span
+class="math inline">\(1/L\)</span> o que la programación decayó
+demasiado pronto; una curva que alcanza una banda ruidosa y deja de
+mejorar suele significar que el lote es demasiado pequeño o que el paso
+ha llegado a su meseta <span
+class="math inline">\(O(\eta)\)</span>.</figcaption>
+</figure>
+<p>Cinco reglas prácticas cierran el tutorial, todas consecuencias de
+las figuras anteriores y no de ningún método concreto.</p>
+<ol>
+<li><p>Empezar por una línea base de primer orden con ambos momentos
+(AdamW). Es la configuración más barata que sobrevive a curvatura
+heterogénea.</p></li>
+<li><p>Si el estado del optimizador no cabe en memoria, cambiar de
+familia antes que de hiperparámetros: las familias eficientes en memoria
+y de rango bajo existen exactamente para esa restricción.</p></li>
+<li><p>Si programar la tasa consume el presupuesto experimental, las
+familias sin programación y sin parámetros eliminan la perilla en lugar
+de ajustarla.</p></li>
+<li><p>Si la mayoría de los parámetros viven en matrices (proyecciones
+de atención y feed-forward), los métodos geométricos explotan una
+estructura que los métodos elemento a elemento ignoran; si el modelo es
+pequeño y la búsqueda abarca muchas configuraciones, los métodos de
+población se vuelven asequibles.</p></li>
+<li><p>Cambiar una ranura a la vez. Como las familias son composiciones
+ortogonales, una ejecución que cambia dos de ellas no puede atribuir su
+resultado.</p></li>
+</ol>
+<p>El resto de este apéndice es la referencia detrás de estas
+afirmaciones: una entrada por método, cada una indicando su regla de
+actualización, su pseudocódigo, su perfil de memoria y el compromiso que
+asume.</p>
 <h2 id="línea-base-estándar-y-optimizadores-adaptativos">Línea Base
 Estándar y Optimizadores Adaptativos</h2>
 <h4 id="sgd-con-momentum.">SGD con Momentum.</h4>
@@ -17608,7 +18256,7 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">89</a>) es el diagnóstico más
+data-reference="fig:r2-params-composition">99</a>) es el diagnóstico más
 útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -17912,8 +18560,8 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">97</a>) es
-el centro del experimento: una matriz en la que cada celda es un par
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">107</a>)
+es el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
 a columna—segundo mezclador fijo, primero variable—, el segundo
@@ -18954,7 +19602,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">116</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">126</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
