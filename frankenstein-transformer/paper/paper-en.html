@@ -208,7 +208,7 @@ to align. We present Frankenstein Transformer, a configuration-driven
 CLI toolkit (<code>frankenstein-transformer</code>) that unifies model
 definition, training, deployment, and inference behind a single strict
 YAML schema. The toolkit covers forty-nine sequence mixers across ten
-families and twenty-four optimizer families with per-parameter-group
+families and thirty-six optimizer families with per-parameter-group
 hyperparameter control, and supports encoder, decoder, Vision
 Transformer and audio model classes for masked language modeling, causal
 language modeling, sentence embeddings, image tasks, speech recognition
@@ -1482,9 +1482,8 @@ training choices as a single validated document. The project
 provides:</p>
 <ol>
 <li><p><strong>Schema-first design</strong>: a strict YAML contract
-supporting forty-nine sequence mixers across ten families and
-twenty-four optimizer families, enforced before training
-begins.</p></li>
+supporting forty-nine sequence mixers across ten families and thirty-six
+optimizer families, enforced before training begins.</p></li>
 <li><p><strong>Architecture-agnostic training</strong>: one pipeline for
 dense baselines, recurrent and retentive blocks, sparse patterns, gated
 mechanisms, latent compression, conditional memory, fast-weight
@@ -1742,8 +1741,9 @@ under cover the model, model class, tokenizer, optimizer, SBERT,
 training, and dataset blocks. The top-level objects are
 <code>base_model</code>, <code>tokenizer</code>,
 <code>model_class</code>, <code>model</code>, <code>training</code>,
-<code>image</code>, <code>vision_dataset</code>, and
-<code>text_dataset</code>.</p>
+<code>image</code>, <code>vision_dataset</code>, <code>audio</code>,
+<code>audio_dataset</code>, <code>text_dataset</code>,
+<code>inference</code>, and <code>plugins</code>.</p>
 <h4 id="model-class.">Model class.</h4>
 <p>The <code>model_class</code> field selects among three variants:</p>
 <ul>
@@ -1765,6 +1765,31 @@ the configuration requires the <code>image</code> and
 uses bidirectional attention for masked language modeling, and
 <code>decoder</code> uses causal masking for autoregressive
 prediction.</p>
+<h4 id="declarative-component-registry.">Declarative component
+registry.</h4>
+<p>The runtime configuration mirrors the validated document one-to-one:
+the nested <code>model:</code> block is materialised as a typed
+configuration tree and per-component knobs are bound through the
+component’s declarative record, with no nested-to-flat rewriting stage.
+Every pluggable component—sequence mixer, optimizer, normalization,
+activation, residual strategy, positional encoding and token-embedding
+variant—is described by one registry entry holding its name, lazily
+imported implementation, parameter schema fragment, runtime defaults,
+capability flags (KV-cache support, training-time sparsity,
+QK-normalization support, gated-FFN status) and bilingual documentation.
+The schema enumerations, per-mixer parameter objects, optimizer prefix
+reference and conditional prefix rules are <em>assembled from that
+registry</em> before validation, so a component is declared once and
+cannot drift across parallel lists; the closed-world validation
+guarantee (<code>additionalProperties: false</code>) holds for every
+registered component. The same mechanism is the extension surface: a
+plugin module registers new components through a public authoring API,
+either listed under the configuration’s <code>plugins:</code> key or
+discovered through the <code>frankenstein.plugins</code> entry-point
+group. Plugin-declared components therefore validate strictly, appear in
+the schema-generated web builder, and are dispatched by the same core
+code as the built-ins, while a plugin that does not declare KV-cache
+support simply falls back to the full-recompute path (decision D5).</p>
 <h4 id="mixer-selection.">Mixer selection.</h4>
 <p><code>model.dims.layer_pattern</code> is an ordered list of mixer
 identifiers drawn from the eight families described in Section <a
@@ -1777,7 +1802,7 @@ href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">38</a>.</p>
 <h4 id="optimizer-selection.">Optimizer selection.</h4>
 <p><code>training.optimizer.optimizer_class</code> selects one of
-twenty-four optimizer families, summarized in Section <a
+thirty-six optimizer families, summarized in Section <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> and detailed in
 Appendix <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2638,11 +2663,11 @@ href="#sec:annex-mhc" data-reference-type="ref"
 data-reference="sec:annex-mhc">27</a>).</p>
 <h2 id="optimizer-landscape-fragmentation">Optimizer Landscape
 Fragmentation</h2>
-<p>The support for twenty-four optimizer families across seven
-categories demonstrates comprehensiveness but also highlights the
-fragmented state of optimization research. Users face significant
-decision complexity when choosing among variance-reduction methods
-(Adan, MARS), memory-efficient variants (GaLore, Adafactor, APOLLO), and
+<p>The support for thirty-six optimizer families across seven categories
+demonstrates comprehensiveness but also highlights the fragmented state
+of optimization research. Users face significant decision complexity
+when choosing among variance-reduction methods (Adan, MARS),
+memory-efficient variants (GaLore, Adafactor, APOLLO), and
 curvature-aware approaches (Sophia, Shampoo). The prefixed
 hyperparameter system, while powerful, requires understanding of which
 parameters are relevant for each optimizer class.</p>
@@ -2703,7 +2728,7 @@ embedding.</p>
 <li><p><strong>Schema-First Design</strong>: A strict YAML-based
 configuration contract with validation and prefixed hyperparameter
 routing enabling reproducible experiments across forty-nine sequence
-mixers and twenty-four optimizer families.</p></li>
+mixers and thirty-six optimizer families.</p></li>
 <li><p><strong>Comprehensive Architecture Support</strong>:
 Implementation spanning dense baselines, recurrent and retentive blocks,
 sparse attention, gated mechanisms, latent compression, conditional
@@ -14539,11 +14564,11 @@ overhead (two-phase computation with online softmax merging).</p></li>
 implemented by <code>src/model/moe/</code> and declared in
 <code>src/schema/_model/_moe.yaml</code>. The schema is the executable
 source of truth: every key discussed here exists in the schema, is
-flattened to a <code>FrankensteinModelConfig</code> field, and is
-exercised by the test suite. The text follows the anatomy of one MoE
-layer—router, routing strategy, load balancing, experts, layer layout,
-capacity, monitoring—and closes with the schema-contract and preset
-tables.</p>
+materialised in the nested <code>FrankensteinModelConfig</code>
+<code>moe</code> block, and is exercised by the test suite. The text
+follows the anatomy of one MoE layer—router, routing strategy, load
+balancing, experts, layer layout, capacity, monitoring—and closes with
+the schema-contract and preset tables.</p>
 <h2 id="app:moe-overview">Overview and taxonomy</h2>
 <p>A dense feed-forward layer applies one function to every token. An
 MoE layer replaces it with <span class="math inline">\(E\)</span> expert
@@ -17163,9 +17188,9 @@ class="math inline">\(\mathrm{atol}=10^{-5}\)</span> in fp32 with
 quantizer <code>none</code> and BitNet disabled.</p>
 <div id="tab:kv-tests">
 <table>
-<caption>Validation matrix. The registry is also cross-checked against
-the schema’s layer-pattern enum so a new mixer cannot be added without a
-cache decision.</caption>
+<caption>Validation matrix. The capability registry and the schema’s
+layer-pattern enum are derived from the same component registry, so a
+new mixer cannot be added without a cache decision.</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;"><strong>Suite</strong></th>

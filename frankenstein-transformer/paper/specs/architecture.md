@@ -22,23 +22,23 @@ load.
 
 | Dimension | Count | Defined in |
 |---|---:|---|
-| `model.dims.layer_pattern` values | **47** (46 concrete mixers + `mamba`) | `src/schema/_model/_dims.yaml` |
+| `model.dims.layer_pattern` values | **49** (48 concrete mixers + `mamba`) | `src/schema/_model/_dims.yaml` |
 | Optimizer families | **36** | `src/schema/_optimizer.yaml` |
 | Normalization types | **6** | `src/schema/_model/_norm.yaml` |
 | Positional encodings | **12** (11 active + `none`) | `src/schema/_model/_positional_encoding.yaml` |
 | FFN activations | **43** | `src/schema/_model/_ffn.yaml` |
-| Model classes | **3** | `src/schema/_model_class.yaml` |
-| Training tasks | **7** | `src/schema/_training.yaml` |
+| Model classes | **4** | `src/schema/_model_class.yaml` |
+| Training tasks | **9** | `src/schema/_training.yaml` |
 | Residual strategies | **4** | `src/schema/_model/_residuals.yaml` |
-| Optimizer parameter groups | **4** | `src/model/optimizer/base.py` |
+| Optimizer parameter groups | **10** | `src/model/optimizer/base.py` (`GROUP_NAMES`) |
 | CLI subcommands | **4** | `src/cli.py` |
 | Deployment formats | **4** | `src/cli.py` (`deploy --format`) |
 
-> The schema enums are the executable contract for code. README badges say
-> "48 mixers / 11 positional encodings": the mixer badge follows the schema
-> enum (including the `mamba` placeholder), while the PE badge excludes the
-> `none` encoding. The mathematical definitions stay in the paper; this
-> document tracks what is actually wired up.
+> The schema enums are the executable contract for code. The README census
+> reports the same numbers: 49 `layer_pattern` values (including the `mamba`
+> placeholder) and 12 positional encodings (11 active + `none`). The
+> mathematical definitions stay in the paper; this document tracks what is
+> actually wired up.
 
 ## 2. System overview
 
@@ -80,7 +80,8 @@ The YAML file is the single source of truth for model/training settings.
 | `src/model/mhc.py`, `src/model/hyperloop.py` | Manifold-constrained hyper-connections and loop-level variants |
 | `src/model/residuals/**` | Residual strategies + factory |
 | `src/model/moe/**` | MoE router scoring, load balancing, experts, shared experts, LatentMoE, hash layers |
-| `src/model/attention/**` | 46 mixers: `gated/`, `latent/`, `sparse/`, top-level modules |
+| `src/model/numerics.py` | Fixed softmax / cross-entropy swaps (arXiv:2610.31642) |
+| `src/model/attention/**` | 49 mixers (48 classes + `mamba`): `gated/`, `latent/`, `sparse/`, top-level modules |
 | `src/model/norm/**` | 6 norms + factory |
 | `src/model/embeddings/**` | 12 positional encodings + factorized/dynamic (EELBERT) embeddings + factory |
 | `src/model/cache/**` | KV-cache manager, typed slots, capability registry, quantization codecs, eviction policies |
@@ -91,11 +92,13 @@ The YAML file is the single source of truth for model/training settings.
 | `src/training/streaming_mlm_dataset.py` | Streaming MLM dataset |
 | `src/training/vision_dataset.py` | Vision dataset |
 | `src/training/audio_dataset.py` | Audio dataset (HF `datasets` decode + char tokenizer, `DummyAudioDataset`, SpecAugment) |
+| `src/training/rnnt.py`, `src/training/metrics.py` | RNN-T loss, greedy CTC/RNN-T decoders, CER; imbalance-aware classification metrics |
 | `src/sbert/**` | SBERT training/inference |
 | `src/deploy/**` | Quantization, deployment, HF export, GGUF export, inference |
 | `src/streamlit_gui/app.py` | Schema-driven YAML builder |
 | `configs/**` | Presets (`configs/*.yaml`) and smoke-tested examples (`configs/examples/*.yaml`) |
-| `tests/**` | 46 files; see §12 for the gates that constrain extensions |
+| `tests/**` | 80 files; see §12 for the gates that constrain extensions |
+| `full_tests/**` | End-to-end harness (`run_e2e.py`), parameter-truth checks |
 
 > `src/model/frankenstein_model.py` **does not exist**. It was split and a
 > regression test (`tests/test_naming_conventions.py::test_shim_module_removed`)
@@ -151,42 +154,81 @@ and drop.
 | `vision_dataset` | `_vision_dataset.yaml` | Vision data loading |
 | `text_dataset` | `_text_dataset.yaml` | HF text dataset loading |
 
-### Flattening contract
+### Configuration contract (nested)
 
-`flatten_model_dict()` maps the nested `model:` tree to the flat dataclass used
-everywhere else. It is deliberately explicit: unknown mixer sub-keys are
-skipped, and `_ATTENTION_MIXER_RENAMES` maps each per-mixer leaf to its flat key.
+The runtime configuration is the **nested** `model:` shape itself: there is no
+nested-to-flat flattening step. `FrankensteinModelConfig`
+(`src/model/config.py`) mirrors the YAML blocks with typed dataclasses
+(`dims`, `norm`, `embedding`, `moe`, `bitnet`, `mixture_of_depths`, `ssmax`,
+`numerics`, `ffn`, `classification_head`, `mhc`, `residuals`, `image`,
+`audio`). Per-component knobs are mappings:
 
-| Nested path | Flat dataclass field |
+| Nested path | Runtime access |
 |---|---|
-| `model.dims.*` | same leaf name (`hidden_size`, `layer_pattern`, …) |
-| `model.norm.type` | `norm_type` |
-| `model.norm.partial_ratio` | `prms_partial_ratio` |
-| `model.norm.flashnorm_partial_ratio` | `flashnorm_partial_ratio` |
-| `model.norm.qk_norm.enabled` | `use_qk_norm` |
-| `model.norm.qk_norm.method` | `qk_norm_method` |
-| `model.norm.qk_norm.clip_tau` | `qk_clip_tau` |
-| `model.norm.qk_norm.clip_alpha` | `qk_clip_alpha` |
-| `model.norm.qk_norm.quack_tau` | `quack_tau` |
-| `model.norm.qk_norm.eps` | `qk_norm_eps` |
-| `model.embedding.factorized.enabled/dim` | `use_factorized_embedding`, `factorized_embedding_dim` |
-| `model.embedding.dynamic.enabled` | `use_dynamic_embedding` |
-| `model.embedding.dynamic.ngram_max/bucket/seed/precompute` | `dynamic_embedding_ngram_max`, `dynamic_embedding_bucket`, `dynamic_embedding_seed`, `dynamic_embedding_precompute` |
-| `model.embedding.conv.enabled/kernel` | `use_embedding_conv`, `embedding_conv_kernel` |
-| `model.attention.<mixer>.<leaf>` | `_ATTENTION_MIXER_RENAMES` (e.g. `mla.latent_rank` → `mla_latent_rank`) |
-| `model.moe.*` | `use_moe`, `num_experts`, `top_k_experts`, `moe_expert_hidden_size`, `moe_router_*`, `moe_routed_scaling_factor`, `moe_routing_type`, `moe_capacity_factor`, `moe_hash_*`, `moe_aux_loss_*`, `moe_bias_update*`, `moe_shared_*`, `moe_latent_*`, `moe_dense_layers`, `moe_layer_frequency`, `moe_activation_clamp` |
-| `model.bitnet.*` | `use_bitnet`, `bitnet_routers`, `use_bitnet_conv` |
-| `model.mixture_of_depths.*` | `use_mixture_of_depths`, `mixture_of_depths_*` |
-| `model.ssmax.*` | `use_ssmax`, `ssmax_s_init` |
-| `model.numerics.*` | `fixed_softmax`, `fixed_cross_entropy` |
-| `model.ffn.*` | `ffn_hidden_size`, `ffn_activation`, `ffn_activation_config` |
-| `model.classification_head.*` | `classification_head`, `num_labels`, `encoder_pooling_mode` |
-| `model.mhc.*` | `use_mhc`, `mhc_*` |
-| `model.residuals.*` | `residual_type`, `full_attn_*`, `block_attn_*`, `attnres_*` |
-| `image.*` (top-level) | `flatten_image_dict()` → `image_*`, `patch_size`, `pos_embedding_type`, … |
+| `model.dims.*` | `config.dims.*` (plus `config.hidden_size`, … read-only aliases) |
+| `model.norm.*` | `config.norm.*` (`type`, `partial_ratio`, `flashnorm_partial_ratio`, `qk_norm.*`) |
+| `model.attention.<mixer>.*` | bound through the mixer's `ComponentSpec` → `params.<leaf>` |
+| `model.positional_encoding_parameters.<pe>.*` | read by the encoding builder; `use_pe.<mixer>` toggles |
+| `model.embedding.type` | `config.embedding.type` (`standard`/`factorized`/`dynamic`) |
+| `model.moe/bitnet/mixture_of_depths/ssmax/numerics/ffn/…` | `config.<block>.*` |
+| `model.mhc` / `model.residuals` | `config.mhc.*` / `config.residuals.*` |
+| `image.*` / `audio.*` (top-level) | `config.image.*` / `config.audio.*` |
 
-If the input is already flat (old checkpoint `config.json`), the flattener
-returns it unchanged — checkpoints remain forward-compatible.
+`FrankensteinModelConfig.from_dict()` builds the tree from the raw blocks and
+validates the cross-field invariants (MoE anatomy, mHC × MoD exclusivity,
+residual/hyperloop compatibility, audio/ViT ranges, …). `from_flat()` remains
+as a migration path for legacy checkpoints, the exporters and the test suite;
+it routes historical flat names through `_FLAT_ALIASES` and per-component names
+into `model.attention.<mixer>`. Read-only `__getattr__`/`__setattr__` aliases
+keep `config.hidden_size`, `config.norm_type`, … working for structural code.
+
+### Component registry and plugin schema assembly
+
+`src/registry/` is the single source of truth for every pluggable component:
+
+```
+ComponentSpec (frozen dataclass)
+├── name / family / builder ("module:attr", lazily imported)
+├── params_schema   (inline dict or "schema/_model/<file>.yaml#/pointer")
+├── defaults        (runtime parameter defaults)
+├── description / description_es / references
+└── capabilities: training_free, cache, cache_implemented,
+    qk_norm_supported, qk_clip_supported, is_glu, supports_ffn_fusion, …
+```
+
+`resolve_schema()` (`src/utils/schema_loader.py`) resolves `$ref`s and then
+calls `src/registry/schema_assembly.py`, which injects:
+
+* `dims.layer_pattern.items.enum` ← mixer names (+ bilingual rows for any
+  component missing from the hand-written table);
+* `model.attention.properties.<mixer>` ← the spec's parameter fragment
+  (shared fragments such as `attention.falcon` are exposed too);
+* `norm.type`, `ffn.activation`, `residuals.type`, `positional_encoding`
+  (with aliases) and the new `embedding.type` enums;
+* `optimizer.optimizer_class.enum`, the use-case table rows, the
+  `x_parameter_reference.by_optimizer` map and one `^<name>-:` `if/then` rule
+  per optimizer;
+* `positional_encoding_parameters.use_pe.<mixer>_use_pe` defaults;
+* the top-level `plugins:` key.
+
+The assembled document is still closed (`additionalProperties: false`), so
+plugin components validate exactly like built-ins and appear automatically in
+the Streamlit builder. `frankenstein-transformer` can export the assembled
+snapshot for the website mirror and CI diffs.
+
+**Plugin loading** is layered (`src/plugins/loader.py`):
+
+1. installed distributions exposing the `frankenstein.plugins` entry-point
+   group — a failing entry point is logged and skipped;
+2. the config's top-level `plugins:` list (`./plugin.py`, `pkg.module`,
+   `pkg.module:register`) — failures are hard errors;
+3. in-repo built-ins (`src/registry/builtin/**`), registered by importing
+   `src.model` or calling `ensure_builtins()`.
+
+A plugin registers through `src/plugins/api.py`
+(`register_mixer`, `register_optimizer`, `register_norm`, …); see
+`examples/plugins/window_mixer.py` and
+`configs/examples/plugin_window_mixer.yaml`.
 
 ## 5. Model architecture
 
@@ -210,7 +252,7 @@ flowchart TD
 
     subgraph HYBRID["HybridLayer internals"]
       N1["norm1 = get_norm()"]
-      MX["mixer registry<br/>(45 names)"]
+      MX["mixer registry<br/>(48 classes + mamba)"]
       FF["FFN / GatedFFN / MoE"]
       N2["norm2 = get_norm()<br/>or FlashNormLinear fusion"]
       MOD["Mixture-of-Depths router"]
@@ -681,7 +723,7 @@ It is selected by `training.task: sbert` and configured under `training.sbert`.
 | `query_prefix`, `document_prefix` | `null` | Instruction prefixes |
 | `output_dir` | — | Checkpoint destination |
 | `pooling_mode` | — | `mean`, `cls`, `max` |
-| `optimizer.optimizer_class` | — | Same 26-family enum |
+| `optimizer.optimizer_class` | — | Same 36-family enum (`$ref` to `_optimizer.yaml`) |
 | `batch_size`, `num_epochs`, `learning_rate`, `warmup_steps` | — | Training schedule |
 | `evaluation_steps`, `checkpoint_save_steps`, `resume_from_checkpoint` | — | Checkpointing |
 | `use_amp`, `trust_remote_code`, `resample_balanced`, `standardize_scores` | — | Runtime options |
@@ -711,11 +753,16 @@ logical roles). Per-layer storage is typed:
 | `TokenTailSlot` | `token_tail` | last `n` token ids | engram |
 
 **Capability registry (D5).** `src/model/cache/capabilities.py` holds one
-`CacheSpec` per `layer_pattern` enum value (48). A layer caches only when
+`CacheSpec` per `layer_pattern` enum value (49). A layer caches only when
 the spec says `supported` **and** the mixer is in `IMPLEMENTED_MIXERS`
 (incremental branch implemented + parity-tested). Everything else receives
 `cache=None` and runs the legacy path — **inference never fails because of
-the cache**; `config_loader` warns about the fallback mixers.
+the cache**; `config_loader` warns about the fallback mixers. Two special
+cases sit beside the registry: `engram` is admitted directly by
+`is_cacheable()` (the manager's `TokenTailSlot` always provides the token
+tail), and `mamba` is listed in `IMPLEMENTED_MIXERS` only as a stateless
+passthrough — there is nothing to cache, so it is excluded from the parity
+parametrization.
 
 Implemented cached branches (parity-tested in
 `tests/test_kv_cache_mixers.py`): `standard`, `gqa`,
@@ -729,10 +776,10 @@ Implemented cached branches (parity-tested in
 table, never quantized), `fastconformer` (`RingSlot`: pinned head prefix
 covers the global tokens), `fpa` (`KVSlot` + two per-token scalars, exact by
 Prop. 2.4b of arXiv:2610.22714).
-Documented fallbacks: `mamba` (stateless), `ssog` (bidirectional
-vision grid, no causal formulation), `ode` (solver re-derives all
-intermediate states each step), `falcon*` (chunk-parallel rehearsal FIFO),
-`cca`/`ccgqa` (conv tails), `engram` (token tail),
+Documented fallbacks: `mamba` (stateless placeholder — nothing to cache),
+`ssog`/`conformer` (`supported=False`, never cached), `ode` (solver
+re-derives all intermediate states each step), `falcon*` (chunk-parallel
+rehearsal FIFO), `cca`/`ccgqa` (conv tails),
 `nsa`/`msa`/`sparda`/`sparge` (chunk-level block
 statistics are not row-local), `mtla` (dynamic merge schedule),
 `sparsek` (policy in F4), plus every PaPE-configured layer (D10).
@@ -998,161 +1045,58 @@ still builds from them.
 
 ## 11. Extending the software
 
+Every pluggable component follows one recipe: implement, declare a
+`ComponentSpec`, add an example, run the gates. The schema enum/tables,
+registries, factories, Streamlit pickers and e2e harness derive from the spec.
+
 ```mermaid
 flowchart LR
-    A["1. Schema<br/>src/schema/**"] --> B["2. Flatten<br/>config_flatten.py"]
-    B --> C["3. Dataclass field<br/>model/config.py"]
-    C --> D["4. Implement<br/>src/model/**"]
-    D --> E["5. Register<br/>registry / factory"]
-    E --> F["6. Example YAML<br/>configs/examples/"]
-    F --> G["7. Tests"]
-    G --> H["8. Document<br/>docs/architecture.md"]
-    H --> A
+    A["1. Implement<br/>src/model/**"] --> B["2. ComponentSpec<br/>src/registry/builtin/**"]
+    B --> C["3. Schema assembled<br/>src/registry/schema_assembly.py"]
+    C --> D["4. Factory dispatch<br/>registry lookup"]
+    D --> E["5. Example YAML"]
+    E --> F["6. Tests"]
 ```
 
-The order matters: schema first (the contract), implementation second, example
-last. Every step below ends with the gates in §12.
+### 11.1 Add or change a component (any family)
 
-### 11.1 Add an attention mixer
+1. Implement the module. Constructor/builder contracts:
+   * mixer — `builder(config, pos_encoder=None, params=None)` returning the
+     mixer; `forward(x, logical_layer_idx=None, pos_encoder=None)`;
+   * optimizer — `torch.optim.Optimizer` subclass taking `(param_groups, **kwargs)`;
+   * norm — `builder(config, params)`; activation — `builder(config, params, dim)`;
+   * residual — `builder(config, params)`; PE — `builder(config, params)`;
+   * embedding — `builder(config, params)`.
+2. Add a spec in `src/registry/builtin/<family>.py` (built-in) or call the
+   matching `register_*` from `src/plugins/api.py` (plugin). The spec carries
+   the name, lazy builder, parameter fragment, defaults, bilingual description
+   and capability flags.
+3. Add `configs/examples/<family>_<name>.yaml` when user-facing. For plugins,
+   list the module under the top-level `plugins:` key (or install it with the
+   `frankenstein.plugins` entry point).
+4. Run the gates in §12. No schema enum, `by_optimizer`, `if/then`, flatten
+   rename or `config.py` field edit is needed.
 
-1. Implement the module in `src/model/attention/<family>/<name>.py` (families:
-   `gated/`, `latent/`, `sparse/`, or top level) with the same constructor
-   signature as peers: `(config, pos_encoder=...)`.
-2. Export it from `src/model/attention/<family>/__init__.py` and
-   `src/model/attention/__init__.py` (`__all__`).
-3. Register it in the `mixer_registry` dict in `src/model/hybrid_layer.py`.
-4. Add the name to `src/schema/_model/_dims.yaml`:
-   `layer_pattern.items.enum` **and** both `description` / `description_es`
-   tables (the consistency test scans them).
-5. If it has knobs: add `src/schema/_model/_attention_<mixer>.yaml`, `$ref` it
-   under `model.attention` in `_model.yaml`, add the leaf renames to
-   `_ATTENTION_MIXER_RENAMES` in `src/utils/config_flatten.py`, and add flat
-   fields to `FrankensteinModelConfig` (`src/model/config.py`).
-6. Add `configs/examples/<family>_<mixer>_adamw.yaml`.
-7. If the mixer has an incremental branch, add a `CacheSpec` to
-   `src/model/cache/capabilities.py` and list it in `IMPLEMENTED_MIXERS`;
-   otherwise register `supported=False` (as `conformer` does) and rely
-   on the legacy full-recompute path.
-8. Test: `tests/test_schema_attention_layers.py`,
-   `tests/test_attention_refactor.py`, plus the family test
-   (`test_gated_attention.py`, `test_sparse_attention.py`,
-   `test_latent_attention.py`, `test_attention_modules.py`).
+### 11.2 Add a model class, task or dataset
 
-### 11.2 Add an optimizer
+Model classes and tasks stay structural (they force modes and own trainer
+losses): follow the historical recipe — implementation → `model/__init__.py`
+→ `_model_class.yaml` → `config_loader.py` rules → `engine.py` /
+`training/main.py` → `deploy/*` → `cli.py` → preset/example → tests. Datasets
+add `src/schema/_<name>.yaml`, a builder under `src/training/`, task wiring in
+`config_loader.py`/`trainer.py` and a dataset test.
 
-1. Implement `src/model/optimizer/<name>.py` as a `torch.optim.Optimizer`
-   subclass.
-2. Export from `src/model/optimizer/__init__.py`.
-3. Register in `factory.py`: import, `OPTIMIZER_REGISTRY[name]`, and add the
-   allowed keys to `OPTIMIZER_ALLOWED_KEYS` (shared per-group keys plus any
-   global suffixes).
-4. Extend `src/schema/_optimizer.yaml`: `optimizer_class.enum` and a
-   `parameters.x_parameter_reference.by_optimizer.<name>` entry with `prefix`.
-5. Add the matching `^<name>-:` `if/then` block to
-   `src/schema/_training.yaml` (the parity test requires exactly one).
-6. Add `configs/examples/*_<name>.yaml`.
-7. Test: `tests/test_optimizer_factory.py`, `tests/test_optimizer_base.py`,
-   `tests/test_schema_consistency.py`.
-8. Document the suffixes in `configs/README.md`.
+### 11.3 Capability declarations
 
-### 11.3 Add a normalization layer
-
-1. Implement `src/model/norm/<name>.py`.
-2. Import and dispatch in `src/model/norm/factory.py`.
-3. Add the enum value (and any parameters with defaults) to
-   `src/schema/_model/_norm.yaml`.
-4. Add flat fields to `FrankensteinModelConfig`; if the schema key is nested,
-   add the rename in `config_flatten.py`.
-5. Add a schema default ↔ dataclass parity entry in
-   `tests/test_schema_consistency.py::_DEFAULT_PAIRS` when a default is declared.
-6. Add `configs/examples/norm_<name>.yaml` and extend
-   `tests/test_common_modules.py`.
-7. If the norm can be fused into a projection (FlashNorm pattern), wire it in
-   `HybridLayer` and cover the fused path in `tests/test_hybrid_layer.py`.
-
-**QK normalization / logit control** is a separate axis (it does not add a
-`norm.type`). Adding a mixer to the supported set means: call
-`attach_qk_norm(self, config, head_dim)` in the mixer `__init__`, normalize
-`q`/`k` after the head split and before positional encoding, call
-`record_qk_max_logits(self, scores)` before softmax, and add the mixer name to
-`QK_NORM_MIXERS` (and `QK_CLIP_MIXERS` when it forms per-head logits) in
-`src/model/norm/qk.py`. Cover it in `tests/test_qk_norm.py`.
-
-### 11.4 Add a positional encoding
-
-1. Implement `src/model/embeddings/<name>.py`.
-2. Register it in `src/model/embeddings/factory.py`.
-3. Add the enum value and parameter sub-object to
-   `src/schema/_model/_positional_encoding.yaml`; add the mixer opt-out flag to
-   `positional_encoding_parameters.use_pe` if needed.
-4. Extend `_flatten_pe_parameters()` in `config_flatten.py` and the flat fields
-   in `FrankensteinModelConfig`.
-5. Add `configs/examples/pe_<name>.yaml` and tests in
-   `tests/test_positional_encodings.py`.
-6. For ViT, keep `image.pos_embedding_type` in sync with the unified enum.
-
-### 11.5 Add an activation
-
-1. Implement in `src/model/activation_function/<family>.py` (`common.py`,
-   `rectified.py`, `exponential.py`, `learnable.py`, `glu.py`).
-2. Add it to `ALL_ACTIVATIONS` and the dispatch in `factory.py`. GLU variants
-   must raise in `get_activation()` and be handled by `GatedFFN` in
-   `HybridLayer`.
-3. Add it to `_ffn.yaml` `activation.enum`; add any knobs to
-   `activation_config` and validate them in
-   `FrankensteinModelConfig._validate_ffn_activation_config`.
-4. Add `configs/examples/activation_<name>.yaml` and
-   `tests/test_activation_functions.py` cases.
-5. Update the paper annexes only when the activation is part of a release.
-
-### 11.6 Add a residual strategy
-
-1. Implement `src/model/residuals/<name>.py` subclassing `ResidualBase`.
-2. Add it to `RESIDUAL_TYPES` and `build_residual()` in
-   `src/model/residuals/factory.py`; export from `__init__.py`.
-3. Add the enum value and parameters to `_residuals.yaml`, then the flat fields
-   and flatten renames.
-4. Add an example and extend `tests/test_residuals.py`.
-
-### 11.7 Add a model class
-
-1. Implement `src/model/frankenstein_<class>.py` and export it from
-   `src/model/__init__.py`.
-2. Add the enum value and description to `_model_class.yaml`.
-3. Extend `valid_model_classes` and the task rules in
-   `src/training/config_loader.py`.
-4. Dispatch it in `src/engine.py` (`build_model`), `src/training/main.py`,
-   `src/deploy/{deploy,inference,transformers_export}.py`, and the CLI model
-   choices in `src/cli.py`.
-5. Add the preset + `configs/examples/` entry and tests
-   (`tests/test_model_variants.py`; `test_frankenstein_vit.py` and
-   `test_frankenstein_audio.py` are the current examples).
-6. Add the modality block (`image:` / `audio:`) to `src/schema.yaml`, the
-   flattener entry (`flatten_image_dict` / `flatten_audio_dict`) and the
-   `LoadedTrainingConfig` side channel.
-7. The Streamlit builder reads the schema, so no GUI change is needed beyond
-   field metadata; a new top-level block also needs its `render_object` titles.
-
-### 11.8 Add a config field
-
-1. Add the field to the correct `src/schema/**` module (keep
-   `additionalProperties: false`). Unknown keys keep loading with a
-   `[schema] … unknown key(s) ignored` warning, so a config can lead the
-   schema temporarily; never rely on that in-repo (the preset gate is
-   strict).
-2. If nested, map it in `config_flatten.py`; otherwise it passes through.
-3. Add the flat dataclass field in `src/model/config.py` with the same default.
-4. If the schema declares a default, add the pair to `_DEFAULT_PAIRS`.
-5. Add or update an example YAML; the smoke test picks it up automatically.
-6. Document it in §7 and in `configs/README.md` when it is user-facing.
-
-### 11.9 Add a dataset or task
-
-1. Add `src/schema/_<name>.yaml` and `$ref` it from `src/schema.yaml`.
-2. Add the builder under `src/training/` and wire it in `src/engine.py`.
-3. Extend `config_loader.py` task validation and
-   `src/training/trainer.py` loss methods.
-4. Add a preset/example and the matching `tests/test_*dataset*.py`.
+* **KV cache** — a mixer spec declares `cache=CacheSpec(...)` and
+  `cache_implemented=True` only when its incremental branch exists and passes
+  the parity suite; everything else falls back to the full-recompute path.
+* **Training-free** (`fasa`, `sparge`) — `training_free=True`; `HybridLayer`
+  substitutes dense attention in training mode via `mixer.dense_forward`.
+* **QK stabilization** — `qk_norm_supported` / `qk_clip_supported`; the loader
+  rejects patterns mixing unsupported mixers with `norm.qk_norm.enabled`.
+* **FFN fusion** — `supports_ffn_fusion` (FlashNorm pattern) is consumed by
+  `HybridLayer`.
 
 ## 12. Validation gates
 
@@ -1177,6 +1121,11 @@ Every extension must keep these green. Run them on CPU (see `AGENTS.md`).
 | `tests/test_conformer_attention.py` | Conformer mixer: shapes, causality, formula parity, PE on/off, Macaron on/off, BitNet, conv norms |
 | `tests/test_frankenstein_audio.py` | Audio model class: per-task forwards, forced mode, pooling, `logmel`/`spectrogram`/`raw` frontends |
 | `tests/test_audio_dataset.py`, `test_asr_losses.py`, `test_audio_loss.py`, `test_audio_training.py`, `test_audio_param_categories.py` | Audio datasets, SpecAugment, CTC/RNN-T losses, greedy decode + CER, trainer/engine smoke, estimator categories |
+| `tests/test_moe.py` | MoE router / balancing / expert contract |
+| `tests/test_qk_norm.py` | QK-norm methods, QK-Clip, QuacK controller |
+| `tests/test_fixed_numerics.py` | `fixed_softmax` / `fixed_cross_entropy` swaps |
+| `tests/test_block_grad_norms.py`, `test_test_split.py`, `test_metrics.py` | Per-block grad norms, stratified hold-out split, imbalance-aware metrics |
+| `tests/test_gpu_temp_guard*.py`, `test_supervisor_checkpoint_resume.py`, `test_trainer_thermal_offload.py` | Thermal guard, supervisor checkpoint flush, GPU→CPU switching |
 
 ## 13. Decisions
 
@@ -1206,13 +1155,15 @@ Every extension must keep these green. Run them on CPU (see `AGENTS.md`).
 - BitNet is experimental; ternary weights may degrade quality.
 - **KV cache (v1)**: not every mixer has an incremental branch. The
   registry (`src/model/cache/capabilities.py`) marks a mixer cacheable only
-  when `supported` *and* listed in `IMPLEMENTED_MIXERS`; the rest fall back
+  when `supported` *and* listed in `IMPLEMENTED_MIXERS` (or the `engram`
+  token-tail special case); the rest fall back
   to the full-recompute path (never an error, D5). Current fallbacks:
-  `mamba` (stateless), `ssog` (no causal formulation), `ode` (the
+  `mamba` (stateless placeholder, nothing to cache), `ssog` (no causal
+  formulation), `ode` (the
   solver re-derives every token's intermediate state each step, so a
   converged-state cache is not exact), the `falcon*` family (chunk-parallel
-  rehearsal FIFO), `cca`/`ccgqa` (conv tails), `engram`
-  (token tail), `nsa`/`msa`/`sparda`/`sparge` (their
+  rehearsal FIFO), `cca`/`ccgqa` (conv tails),
+  `nsa`/`msa`/`sparda`/`sparge` (their
   block-selection statistics are chunk-level, not row-local), `mtla`
   (dynamic hyper-network merge schedule; named risk R1), `sparsek`
   (eviction-policy work, F4), `conformer` (the depthwise-convolution

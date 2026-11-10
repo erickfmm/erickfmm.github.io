@@ -211,7 +211,7 @@ basado en configuración (<code>frankenstein-transformer</code>) que
 unifica la definición, el entrenamiento, el despliegue y la inferencia
 de modelos tras un único esquema YAML estricto. El conjunto de
 herramientas cubre cuarenta y nueve mezcladores de secuencia en diez
-familias y veinticuatro familias de optimizadores con control de
+familias y treinta y seis familias de optimizadores con control de
 hiperparámetros por grupo de parámetros, y soporta clases de modelo
 encoder, decoder, Vision Transformer y audio para masked language
 modeling, modelado causal de lenguaje, embeddings de oraciones, tareas
@@ -1518,7 +1518,7 @@ documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
 estricto que soporta cuarenta y nueve mezcladores de secuencia en diez
-familias y veinticuatro familias de optimizadores, validado antes de
+familias y treinta y seis familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
 único pipeline para líneas base densas, bloques recurrentes y
@@ -1797,8 +1797,9 @@ bajo cubren los bloques de modelo, clase de modelo, tokenizer,
 optimizador, SBERT, entrenamiento y datasets. Los objetos de primer
 nivel son <code>base_model</code>, <code>tokenizer</code>,
 <code>model_class</code>, <code>model</code>, <code>training</code>,
-<code>image</code>, <code>vision_dataset</code> y
-<code>text_dataset</code>.</p>
+<code>image</code>, <code>vision_dataset</code>, <code>audio</code>,
+<code>audio_dataset</code>, <code>text_dataset</code>,
+<code>inference</code> y <code>plugins</code>.</p>
 <h4 id="clase-de-modelo.">Clase de modelo.</h4>
 <p>El campo <code>model_class</code> selecciona entre tres
 variantes:</p>
@@ -1821,6 +1822,35 @@ enmascaramiento de encoder y la configuración requiere los bloques
 <code>encoder</code> usa atención bidireccional para masked language
 modeling y <code>decoder</code> usa enmascaramiento causal para
 predicción autorregresiva.</p>
+<h4 id="registro-declarativo-de-componentes.">Registro declarativo de
+componentes.</h4>
+<p>La configuración de ejecución refleja el documento validado uno a
+uno: el bloque anidado <code>model:</code> se materializa como un árbol
+de configuración tipado y los parámetros de cada componente se enlazan a
+través de su registro declarativo, sin una etapa de aplanado. Cada
+componente conectable—mezclador de secuencia, optimizador,
+normalización, activación, estrategia residual, codificación posicional
+y variante de embedding de token—se describe con una entrada de registro
+que contiene su nombre, implementación importada de forma perezosa,
+fragmento de esquema de parámetros, valores por defecto de ejecución,
+banderas de capacidad (soporte de caché KV, dispersión solo en
+entrenamiento, soporte de normalización QK, estatus de FFN con
+compuerta) y documentación bilingüe. Las enumeraciones del esquema, los
+objetos de parámetros por mezclador, la referencia de prefijos del
+optimizador y las reglas condicionales de prefijo se <em>ensamblan desde
+ese registro</em> antes de la validación, de modo que un componente se
+declara una sola vez y no puede desincronizarse entre listas paralelas;
+la garantía de validación de mundo cerrado
+(<code>additionalProperties: false</code>) se mantiene para todo
+componente registrado. El mismo mecanismo es la superficie de extensión:
+un módulo de plugin registra componentes nuevos mediante una API pública
+de autoría, ya sea listado en la clave <code>plugins:</code> de la
+configuración o descubierto a través del grupo de entry-points
+<code>frankenstein.plugins</code>. Los componentes declarados por
+plugins validan estrictamente, aparecen en el constructor web generado
+desde el esquema y son despachados por el mismo código central que los
+integrados, mientras que un plugin que no declara soporte de caché KV
+simplemente recurre a la ruta de recómputo completo (decisión D5).</p>
 <h4 id="selección-de-mezcladores.">Selección de mezcladores.</h4>
 <p><code>model.dims.layer_pattern</code> es una lista ordenada de
 identificadores de mezclador tomados de las ocho familias descritas en
@@ -1834,7 +1864,7 @@ href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">38</a>.</p>
 <h4 id="selección-de-optimizador.">Selección de optimizador.</h4>
 <p><code>training.optimizer.optimizer_class</code> selecciona una de
-veinticuatro familias de optimizadores, resumidas en la Sección <a
+treinta y seis familias de optimizadores, resumidas en la Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> y detalladas en el
 Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2761,7 +2791,7 @@ href="#sec:annex-mhc" data-reference-type="ref"
 data-reference="sec:annex-mhc">27</a>).</p>
 <h2 id="fragmentación-del-panorama-de-optimizadores">Fragmentación del
 Panorama de Optimizadores</h2>
-<p>El soporte para veinticuatro familias de optimizadores en siete
+<p>El soporte para treinta y seis familias de optimizadores en ocho
 categorías demuestra exhaustividad pero también resalta el estado
 fragmentado de la investigación en optimización. Los usuarios enfrentan
 una complejidad significativa de decisión al elegir entre métodos de
@@ -2832,7 +2862,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y nueve mezcladores de secuencia y veinticuatro familias de
+cuarenta y nueve mezcladores de secuencia y treinta y seis familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -15198,11 +15228,12 @@ inferencia (cómputo en dos fases con fusión online-softmax).</p></li>
 implementado en <code>src/model/moe/</code> y declarado en
 <code>src/schema/_model/_moe.yaml</code>. El esquema es la fuente de
 verdad ejecutable: cada clave discutida aquí existe en el esquema, se
-aplana a un campo de <code>FrankensteinModelConfig</code> y está
-cubierta por la suite de pruebas. El texto sigue la anatomía de una capa
-MoE—router, estrategia de ruteo, balanceo de carga, expertos,
-disposición por capas, capacidad y monitoreo—y cierra con las tablas del
-contrato de esquema y de los presets.</p>
+materializa en el bloque anidado <code>moe</code> de
+<code>FrankensteinModelConfig</code> y está cubierta por la suite de
+pruebas. El texto sigue la anatomía de una capa MoE—router, estrategia
+de ruteo, balanceo de carga, expertos, disposición por capas, capacidad
+y monitoreo—y cierra con las tablas del contrato de esquema y de los
+presets.</p>
 <h2 id="app:moe-overview-es">Visión general y taxonomía</h2>
 <p>Una capa feed-forward densa aplica una única función a cada token.
 Una capa MoE la reemplaza por <span class="math inline">\(E\)</span>
@@ -17879,10 +17910,10 @@ class="math inline">\(\mathrm{atol}=10^{-5}\)</span> en fp32 con
 cuantizador <code>none</code> y BitNet deshabilitado.</p>
 <div id="tab:kv-tests">
 <table>
-<caption>Matriz de validación. El registro también se verifica
-cruzadamente contra el enum de patrones de capa del esquema, de modo que
-un mezclador nuevo no puede añadirse sin una decisión de
-caché.</caption>
+<caption>Matriz de validación. El registro de capacidades y la
+enumeración de patrones de capas del esquema derivan del mismo registro
+de componentes, de modo que un mezclador nuevo no puede añadirse sin una
+decisión de caché.</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;"><strong>Suite</strong></th>
