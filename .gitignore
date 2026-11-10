@@ -26,3 +26,6 @@ Gemfile.lock
 
 # Experiment datasets live in the Hugging Face bucket, not in the repo.
 frankenstein-transformer/experiments/*/data/
+
+__pycache__/
+*.pyc
