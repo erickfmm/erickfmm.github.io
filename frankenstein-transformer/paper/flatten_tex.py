@@ -42,12 +42,18 @@ INCLUDE_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
 LABEL_RE = re.compile(r"\\label\{(fig:[^}]+)\}")
 
 
-def _flatten_inputs(text: str, base_dir: Path) -> str:
+def _flatten_inputs(text: str, base_dir: Path, root_dir: Path | None = None) -> str:
+    # LaTeX resolves \input relative to the main document, but a nested include
+    # may also be written relative to its own file; try both.
+    if root_dir is None:
+        root_dir = base_dir
+
     def inline(m):
-        target = base_dir / (m.group(1) + ".tex")
-        if target.exists():
-            sub = target.read_text(encoding="utf-8", errors="replace")
-            return _flatten_inputs(sub, target.parent)
+        rel = m.group(1) + ".tex"
+        for target in (base_dir / rel, root_dir / rel):
+            if target.exists():
+                sub = target.read_text(encoding="utf-8", errors="replace")
+                return _flatten_inputs(sub, target.parent, root_dir)
         return m.group(0)
 
     return re.sub(r"\\input\{([^}]+)\}", inline, text)
