@@ -6,6 +6,26 @@ Portafolio personal de Erick Francisco Merino Menares, AI Engineer especializado
 
 **URL**: [https://erickfmm.github.io](https://erickfmm.github.io)
 
+## 📄 Currículum
+
+- 🇨🇱 [CV en español (PDF)](cv.pdf)
+- 🇬🇧 [CV en inglés (PDF)](cv-en.pdf)
+
+**Perfil**: Ingeniero Civil Informático con mención en Gestión y Diseño de Bases de Datos (Universidad de Valparaíso) y Diplomado de Postítulo en Data Science. Actualmente me desempeño como Profesional del Centro de Innovación del Ministerio de Educación (MINEDUC), trabajando en gobernanza de datos, gestión de proyectos de software y pruebas de concepto con modelos de IA (LLM, RAG, BERT, T5).
+
+**Formación**:
+
+- Ingeniería Civil Informática, Universidad de Valparaíso — titulado con Distinción Máxima (6.22), 2019.
+- Diplomado de Postítulo en Data Science, Universidad de Valparaíso — aprobado con Distinción Máxima (6.1), 2023.
+
+**Experiencia destacada**: MINEDUC (jul 2022 – presente) — mantenimiento y desarrollo del sistema de verificación del Estándar de Datos para la Educación (Libro de Clases Digital), gobernanza de datos (TOGAF, DAMA, Archimate) y gestión de proyectos TI.
+
+**Habilidades**: Python (avanzado), PostgreSQL, MongoDB, Qdrant; Django, FastAPI, Flask, Scikit-Learn, Transformers, Sentence-Transformers, LangChain; Docker, Tableau, Power BI, Looker.
+
+**Proyectos**: [Frankenstein Transformer](frankenstein-transformer/), [ANMetaL](anmetal/), DashAI Frankenstein.
+
+> Los PDFs se actualizan junto con el sitio; la versión vigente del CV corresponde a la última actualización publicada en esta carpeta.
+
 ## 📋 Archivos para Visibilidad y SEO
 
 Este sitio incluye los siguientes archivos para mejorar su visibilidad en buscadores, agentes de IA y otros sistemas:
