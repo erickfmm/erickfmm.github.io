@@ -356,13 +356,12 @@ Futuras</a></li>
 id="toc-sec:annex-tutorial">Introducción Conceptual—Transformers y
 Atención para Principiantes</a>
 <ul>
-<li><a href="#qué-es-un-transformer" id="toc-qué-es-un-transformer">¿Qué
-es un Transformer?</a></li>
-<li><a href="#el-mecanismo-de-atención-una-analogía"
-id="toc-el-mecanismo-de-atención-una-analogía">El Mecanismo de Atención:
-Una Analogía</a></li>
-<li><a href="#ejemplo-práctico-paso-a-paso"
-id="toc-ejemplo-práctico-paso-a-paso">Ejemplo Práctico Paso a Paso</a>
+<li><a href="#subsec:tut-context" id="toc-subsec:tut-context">¿Qué es un
+Transformer? Palabras en Contexto</a></li>
+<li><a href="#subsec:tut-attention" id="toc-subsec:tut-attention">El
+Mecanismo de Atención: Una Voz en una Habitación Ruidosa</a></li>
+<li><a href="#subsec:tut-example" id="toc-subsec:tut-example">Ejemplo
+Práctico: Las Dos Vidas de “come”</a>
 <ul>
 <li><a href="#contexto-1-el-gato-come-pescado"
 id="toc-contexto-1-el-gato-come-pescado">Contexto 1: “El gato come
@@ -371,9 +370,8 @@ pescado”</a></li>
 id="toc-contexto-2-el-restaurante-come-los-márgenes-de-beneficio">Contexto
 2: “El restaurante come los márgenes de beneficio”</a></li>
 </ul></li>
-<li><a href="#cómo-funciona-la-atención-matemáticamente-versión-simple"
-id="toc-cómo-funciona-la-atención-matemáticamente-versión-simple">Cómo
-Funciona la Atención Matemáticamente (Versión Simple)</a>
+<li><a href="#subsec:tut-math" id="toc-subsec:tut-math">Cómo Funciona la
+Atención: Una Biblioteca Llamada Atención</a>
 <ul>
 <li><a href="#paso-1-consultas-claves-y-valores"
 id="toc-paso-1-consultas-claves-y-valores">Paso 1: Consultas, Claves y
@@ -385,14 +383,15 @@ Enfoque</a></li>
 <li><a href="#paso-4-combinar" id="toc-paso-4-combinar">Paso 4:
 Combinar</a></li>
 </ul></li>
-<li><a href="#múltiples-cabezas-de-atención-múltiples-perspectivas"
-id="toc-múltiples-cabezas-de-atención-múltiples-perspectivas">Múltiples
-Cabezas de Atención: Múltiples Perspectivas</a></li>
-<li><a href="#apilar-capas" id="toc-apilar-capas">Apilar Capas</a></li>
+<li><a href="#subsec:tut-heads" id="toc-subsec:tut-heads">Múltiples
+Cabezas de Atención: Un Equipo de Analistas</a></li>
+<li><a href="#subsec:tut-layers" id="toc-subsec:tut-layers">Apilar
+Capas: Editar el Ensayo en Pasadas</a></li>
 <li><a href="#por-qué-es-importante" id="toc-por-qué-es-importante">¿Por
 Qué es Importante?</a></li>
-<li><a href="#desafíos-prácticos" id="toc-desafíos-prácticos">Desafíos
-Prácticos</a>
+<li><a href="#subsec:tut-challenges"
+id="toc-subsec:tut-challenges">Desafíos Prácticos: El Precio de Escuchar
+a Todos</a>
 <ul>
 <li><a href="#complejidad-computacional"
 id="toc-complejidad-computacional">Complejidad Computacional</a></li>
@@ -401,8 +400,9 @@ id="toc-requisitos-de-memoria">Requisitos de Memoria</a></li>
 <li><a href="#eficiencia-del-dispositivo"
 id="toc-eficiencia-del-dispositivo">Eficiencia del Dispositivo</a></li>
 </ul></li>
-<li><a href="#soluciones-modernas"
-id="toc-soluciones-modernas">Soluciones Modernas</a></li>
+<li><a href="#subsec:tut-solutions"
+id="toc-subsec:tut-solutions">Soluciones Modernas: Formas Más
+Inteligentes de Escuchar</a></li>
 <li><a href="#conclusiones-clave"
 id="toc-conclusiones-clave">Conclusiones Clave</a></li>
 </ul></li>
@@ -1147,7 +1147,9 @@ id="toc-resultados-reportados-1">Resultados Reportados</a></li>
 implementación</a>
 <ul>
 <li><a href="#app:moe-overview-es" id="toc-app:moe-overview-es">Visión
-general y taxonomía</a></li>
+general: qué es una capa de Mezcla de Expertos</a></li>
+<li><a href="#app:moe-failures-es" id="toc-app:moe-failures-es">Los dos
+modos de falla: colapso y rezagado</a></li>
 <li><a href="#app:moe-router-es" id="toc-app:moe-router-es">Puntuación
 del router: de logits a pesos</a></li>
 <li><a href="#app:moe-routing-es" id="toc-app:moe-routing-es">Estrategia
@@ -1550,7 +1552,9 @@ constructor de configuración en Streamlit que renderiza los metadatos
 del esquema como formularios, valida la entrada en vivo, previsualiza el
 YAML resultante y genera el comando CLI equivalente, sirviendo tanto de
 ayuda a la configuración como de documentación del espacio de diseño
-disponible.</p>
+disponible; una instancia alojada está disponible en <a
+href="https://erickfmm.github.io/frankenstein-transformer/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/index.html</a>.</p>
 <h2 id="guía-de-lectura">Guía de Lectura</h2>
 <p>Este documento se organiza como una referencia técnica:</p>
 <ol>
@@ -3673,222 +3677,394 @@ transferable sparse expert models, 2022.</p>
 </div>
 <h1 id="sec:annex-tutorial">Introducción Conceptual—Transformers y
 Atención para Principiantes</h1>
-<p>Este apéndice proporciona una introducción accesible a los conceptos
-fundamentales de los transformers y el mecanismo de atención, dirigido a
-lectores sin conocimientos profundos previos en aprendizaje profundo.
-Los transformers son el motor detrás de los sistemas modernos de
-inteligencia artificial como ChatGPT, pero su funcionamiento puede
-entenderse mediante analogías del mundo real.</p>
-<h2 id="qué-es-un-transformer">¿Qué es un Transformer?</h2>
-<p>Un transformer es una arquitectura neuronal que procesa texto o
-secuencias de datos interpretando el significado de cada palabra
-mientras considera todas las demás palabras en contexto. Imagina que
-lees una oración:</p>
+<p>Este apéndice es la rampa de entrada al artículo: explica qué es un
+transformer y cómo funciona la atención, para lectores sin conocimientos
+previos de aprendizaje profundo. Cada mecanismo se introduce mediante
+una analogía del mundo real y — este es el objetivo del apéndice — la
+<em>misma</em> analogía regresa cada vez que el mecanismo regresa, de
+modo que una sola imagen mental te lleva de la primera intuición hasta
+las matemáticas. La Tabla <a href="#tab:tut-analogies"
+data-reference-type="ref" data-reference="tab:tut-analogies">2</a>
+presenta el reparto; el ejemplo recurrente es siempre la misma oración:
+“El gato come pescado”.</p>
+<div id="tab:tut-analogies">
+<table>
+<caption>El reparto de analogías de este tutorial. Cada fila se
+introduce una vez y luego se reutiliza tal cual en todas las secciones
+posteriores, incluidas las conclusiones.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Mecanismo</strong></th>
+<th style="text-align: left;"><strong>Analogía reutilizada</strong></th>
+<th style="text-align: left;"><strong>Se introduce en</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Atención</td>
+<td style="text-align: left;">escuchar una voz en una habitación
+ruidosa</td>
+<td style="text-align: left;">§<a href="#subsec:tut-attention"
+data-reference-type="ref"
+data-reference="subsec:tut-attention">12.2</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Consultas, claves, valores</td>
+<td style="text-align: left;">visitante, ficha de catálogo y libro en
+una biblioteca</td>
+<td style="text-align: left;">§<a href="#subsec:tut-math"
+data-reference-type="ref" data-reference="subsec:tut-math">12.4</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cabezas de atención</td>
+<td style="text-align: left;">un equipo de analistas, una pregunta cada
+uno</td>
+<td style="text-align: left;">§<a href="#subsec:tut-heads"
+data-reference-type="ref"
+data-reference="subsec:tut-heads">12.5</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Capas apiladas</td>
+<td style="text-align: left;">editar un ensayo en pasadas sucesivas</td>
+<td style="text-align: left;">§<a href="#subsec:tut-layers"
+data-reference-type="ref"
+data-reference="subsec:tut-layers">12.6</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="subsec:tut-context">¿Qué es un Transformer? Palabras en
+Contexto</h2>
+<p>Un transformer es una arquitectura neuronal que procesa texto (o
+cualquier secuencia) interpretando el significado de cada palabra <em>a
+la luz de todas las que la rodean</em>. El problema que resuelve se ve
+mejor con una palabra ambigua. Lee esto:</p>
 <div class="center">
 <p><em>“El banco estaba lleno de gente esperando. María fue al
 banco.”</em></p>
 </div>
-<p>¿Qué significa “banco” en cada caso? En la primera oración, se
-refiere a una institución financiera (o un asiento). En la segunda, no
-está claro sin contexto. Un transformer resuelve esto automáticamente al
-mirar todas las palabras circundantes. En la segunda oración, al ver
-“María fue”, el modelo comprende mejor que probablemente se trata de una
-ribera (donde va a nadar) o una institución financiera (donde va a
-realizar una transacción).</p>
-<p>Esta capacidad de entender el significado completo de una palabra
-considerando toda la oración se llama <em>contextualización</em>, y es
-el corazón de cómo funcionan los transformers modernos.</p>
-<h2 id="el-mecanismo-de-atención-una-analogía">El Mecanismo de Atención:
-Una Analogía</h2>
-<p>El mecanismo de atención es el “truco mágico” que permite a los
-transformers entender el contexto. Piensa en ello como participar en una
-conversación importante en una habitación ruidosa:</p>
+<p>¿Qué significa “banco” en cada caso? Sola, la palabra tiene tres
+significados sin relación: una institución financiera, un asiento para
+sentarse, la orilla de un río. Dentro de la primera oración, los vecinos
+(“lleno de gente esperando”) votan por la sucursal. Dentro de la
+segunda, “María fue al…” deja dos lecturas vivas — podía ir a la
+ventanilla o al río. La Figura <a href="#fig:tut-context"
+data-reference-type="ref" data-reference="fig:tut-context">13</a>
+contrasta las dos situaciones.</p>
+<figure id="fig:tut-context"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-context-es.svg" alt="image" /></span></p>
+
+<figcaption>La contextualización en una imagen: la palabra “banco” sola
+tiene tres significados sin relación (arriba); dentro de su oración, las
+palabras vecinas votan y eligen la lectura (en medio). Un transformer
+hace esto con todas las palabras a la vez.</figcaption>
+</figure>
+<p>Esta capacidad de releer cada palabra a la luz de toda la oración se
+llama <em>contextualización</em>, y es el corazón de todo transformer
+moderno. La pregunta que responde este apéndice es <em>cómo</em> decide
+el modelo a qué vecinos escuchar. La respuesta es la atención.</p>
+<h2 id="subsec:tut-attention">El Mecanismo de Atención: Una Voz en una
+Habitación Ruidosa</h2>
+<p>La atención es el “truco mágico” detrás de la contextualización.
+Piensa en una conversación en una habitación ruidosa:</p>
 <ol>
-<li><p><strong>Mucho ruido</strong>: Alguien está hablando y es muy
-importante para ti.</p></li>
-<li><p><strong>Ignoras el resto</strong>: Tu cerebro automáticamente
-enfoca la atención en esa persona, ignorando otros sonidos.</p></li>
-<li><p><strong>Entiendes mejor</strong>: Al concentrarte, captas cada
-palabra claramente.</p></li>
+<li><p><strong>Mucho ruido</strong>: varias personas hablan a la vez,
+pero una te importa.</p></li>
+<li><p><strong>Ignoras al resto</strong>: tu cerebro enfoca
+automáticamente esa voz y filtra las demás.</p></li>
+<li><p><strong>Entiendes mejor</strong>: al concentrarte, captas cada
+palabra con claridad.</p></li>
 </ol>
-<p>El mecanismo de atención neuronal funciona de la misma manera: cada
-palabra “pregunta” qué tan importante es cada otra palabra para entender
-su significado, luego “enfoca” su atención en las más relevantes.</p>
-<h2 id="ejemplo-práctico-paso-a-paso">Ejemplo Práctico Paso a Paso</h2>
-<p>Veamos cómo un transformer entiende la palabra “come” en dos
-contextos diferentes:</p>
+<p>El mecanismo neuronal funciona igual, con un giro: <em>cada palabra
+de la oración es uno de esos escuchas</em>. Cada palabra “pregunta” qué
+tan importante es cada otra para entenderse, y luego enfoca su atención
+en las más relevantes. La habitación es la oración, las voces son las
+palabras y la capacidad de enfocar es la atención. Conserva esta imagen:
+cada fórmula de abajo es solo la versión aritmética de escuchar
+selectivamente.</p>
+<h2 id="subsec:tut-example">Ejemplo Práctico: Las Dos Vidas de
+“come”</h2>
+<p>Veamos el mecanismo trabajando sobre una palabra en dos oraciones
+distintas. Los números son ilustrativos, pero son exactamente el tipo de
+tabla que un transformer entrenado calcula — la Figura <a
+href="#fig:tut-heatmap" data-reference-type="ref"
+data-reference="fig:tut-heatmap">14</a> muestra ambos casos.</p>
 <h3 id="contexto-1-el-gato-come-pescado">Contexto 1: “El gato come
 pescado”</h3>
-<p>El transformer, al procesar “come”, pregunta internamente:</p>
+<p>Al procesar “come”, la palabra-oyente pregunta por cada otra voz de
+la habitación:</p>
 <ul>
-<li><p>¿Qué tan relevante es “El”? Poco (es solo un artículo).
-<strong>Atención baja</strong>.</p></li>
-<li><p>¿Qué tan relevante es “gato”? Muy relevante (es el sujeto, quien
-come). <strong>Atención alta</strong>.</p></li>
-<li><p>¿Qué tan relevante es “pescado”? Muy relevante (es lo que se
-come). <strong>Atención alta</strong>.</p></li>
+<li><p>¿Qué tan relevante es “El”? Poco — es solo un artículo.
+<strong>Atención baja: 5%</strong>.</p></li>
+<li><p>¿Qué tan relevante es “gato”? Mucha — es el sujeto, quien come.
+<strong>Atención alta: 55%</strong>.</p></li>
+<li><p>¿Y “come” mismo? Un poco — él mismo. <strong>Atención baja:
+5%</strong>.</p></li>
+<li><p>¿Qué tan relevante es “pescado”? Mucha — es lo que se come.
+<strong>Atención alta: 35%</strong>.</p></li>
 </ul>
-<p>Por lo tanto, la representación mental de “come” se enfoca
-principalmente en “gato” y “pescado”.</p>
+<p>La nueva representación de “come” queda dominada por “gato” y
+“pescado”: una acción, con su sujeto y su objeto.</p>
 <h3
 id="contexto-2-el-restaurante-come-los-márgenes-de-beneficio">Contexto
 2: “El restaurante come los márgenes de beneficio”</h3>
-<p>Aquí el transformer pregunta en un contexto diferente:</p>
+<p>La misma palabra, otra habitación. Ahora los oyentes que importan son
+otros:</p>
 <ul>
-<li><p>¿Qué tan relevante es “restaurante”? Muy relevante (es el
-sujeto). <strong>Atención alta</strong>.</p></li>
-<li><p>¿Qué tan relevante es “beneficio”? Muy relevante (se ve
-afectado). <strong>Atención alta</strong>.</p></li>
-<li><p>¿Qué tan relevante es “márgenes”? Muy relevante (es lo que se
-consume). <strong>Atención alta</strong>.</p></li>
+<li><p>“restaurante” (el sujeto): <strong>30%</strong>.</p></li>
+<li><p>“márgenes” (lo que se consume): <strong>30%</strong>.</p></li>
+<li><p>“beneficio” (lo afectado): <strong>27%</strong>.</p></li>
+<li><p>“El”, “los”, “de” y “come” mismo: el <strong>13%</strong>
+restante.</p></li>
 </ul>
-<p>La palabra “come” obtiene una representación completamente diferente
-porque “atiende” a palabras distintas en contextos distintos.</p>
-<h2 id="cómo-funciona-la-atención-matemáticamente-versión-simple">Cómo
-Funciona la Atención Matemáticamente (Versión Simple)</h2>
-<p>Detrás del cambio de atención hay matemáticas. Aquí está la versión
-simplificada sin demasiado detalle técnico:</p>
+<figure id="fig:tut-heatmap"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tut-attention-heatmap-es.svg" alt="image" /></span></p>
+
+<figcaption>Dos matrices de atención (filas: palabra que pregunta;
+columnas: palabra escuchada; la fila resaltada es “come”). En (a) la
+palabra “come” escucha sobre todo a “gato” (55%) y “pescado” (35%); en
+(b) la misma palabra escucha a “restaurante”, “márgenes” y “beneficio”.
+Misma palabra, distinta habitación, distinto enfoque — la
+contextualización en acción. Cada fila suma 100% porque la atención es
+un presupuesto limitado.</figcaption>
+</figure>
+<p>La palabra “come” termina con una representación completamente
+distinta en cada oración porque <em>atiende</em> a palabras diferentes.
+Ese es todo el truco: una palabra, muchos significados posibles, y la
+atención elige a los vecinos correctos para definirla.</p>
+<h2 id="subsec:tut-math">Cómo Funciona la Atención: Una Biblioteca
+Llamada Atención</h2>
+<p>Detrás de la escucha hay aritmética. La analogía estándar — y la que
+este artículo mantiene — es una biblioteca, mostrada en la Figura <a
+href="#fig:tut-qkv" data-reference-type="ref"
+data-reference="fig:tut-qkv">15</a>.</p>
+<figure id="fig:tut-qkv"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-qkv-library-es.svg" alt="image" /></span></p>
+
+<figcaption>Consultas, claves y valores como una visita a la biblioteca.
+El visitante lleva una pregunta (Q), cada libro se anuncia con su ficha
+de catálogo (K), el bibliotecario compara pregunta y fichas (la
+atención), y el visitante se va con una mezcla ponderada de los
+contenidos (V).</figcaption>
+</figure>
 <h3 id="paso-1-consultas-claves-y-valores">Paso 1: Consultas, Claves y
 Valores</h3>
-<p>Cada palabra en la oración se transforma en tres versiones:</p>
+<p>Cada palabra se transforma en tres versiones de sí misma:</p>
 <ul>
-<li><p><strong>Consulta</strong>: “¿Qué información necesito
-saber?”</p></li>
-<li><p><strong>Clave</strong>: “¿Qué información tengo?”</p></li>
-<li><p><strong>Valor</strong>: “Aquí está mi información
-importante.”</p></li>
+<li><p><strong>Consulta (Q)</strong>: la pregunta del visitante — “¿qué
+información necesito?”</p></li>
+<li><p><strong>Clave (K)</strong>: la ficha del catálogo — “¿qué
+información ofrezco?”</p></li>
+<li><p><strong>Valor (V)</strong>: el contenido del libro — “aquí está
+mi información real.”</p></li>
 </ul>
-<p>Imagina en una biblioteca, cada visitante es una “consulta”, cada
-libro es una “clave” y el contenido es el “valor”. El bibliotecario
-(atención) empareja las consultas con las claves más relevantes para
-acceder al valor correcto.</p>
+<p>Lo crucial: cada palabra juega los tres roles a la vez — pregunta
+(Q), se anuncia (K), entrega (V). Una visita a la biblioteca donde cada
+libro es, al mismo tiempo, visitante y estante.</p>
 <h3 id="paso-2-compatibilidad">Paso 2: Compatibilidad</h3>
-<p>El sistema examina qué tan <em>compatible</em> es cada consulta con
-cada clave. Las consultas similares a las claves obtienen un puntaje de
-compatibilidad <em>alto</em>. Esto se calcula multiplicando la consulta
-por la clave (matemáticamente, el producto punto).</p>
+<p>El bibliotecario compara la pregunta con cada ficha. Las preguntas
+parecidas a una ficha obtienen un puntaje alto; el puntaje se calcula
+multiplicando la consulta por la clave (un <em>producto punto</em>).
+Para nuestra consulta “come”: <span
+class="math inline">\(\mathrm{s}(\text{come} \rightarrow \text{gato}) =
+3{,}40\)</span>, <span class="math inline">\(\mathrm{s}(\text{come}
+\rightarrow \text{pescado}) = 2{,}95\)</span>, <span
+class="math inline">\(\mathrm{s}(\text{come} \rightarrow \text{El}) =
+1{,}00\)</span>. La Figura <a href="#fig:tut-attention-steps"
+data-reference-type="ref"
+data-reference="fig:tut-attention-steps">16</a> reúne los cuatro pasos
+en un solo cauce.</p>
+<figure id="fig:tut-attention-steps"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-attention-steps-es.svg" alt="image" /></span></p>
+
+<figcaption>El paso de atención completo para la consulta “come” en “El
+gato come pescado”: tres copias por palabra (Paso 1), un producto punto
+por pareja consulta–clave (Paso 2), softmax convirtiendo puntajes en
+porcentajes (Paso 3) y la combinación ponderada de los valores (Paso 4).
+Los números son los mismos de las Figuras <a href="#fig:tut-heatmap"
+data-reference-type="ref" data-reference="fig:tut-heatmap">14</a> y <a
+href="#fig:tut-softmax" data-reference-type="ref"
+data-reference="fig:tut-softmax">17</a>.</figcaption>
+</figure>
 <h3 id="paso-3-enfoque">Paso 3: Enfoque</h3>
-<p>Los puntajes de compatibilidad se convierten en “pesos de enfoque”.
-Las compatibilidades altas significan “enfocar atención aquí”, y las
-bajas significan “ignorar esto”. Matemáticamente, una función llamada
-<code>softmax</code> convierte los puntajes en porcentajes (como: 40%
-atención aquí, 35% aquí, 25% allá).</p>
+<p>Los puntajes crudos son solo números; la atención es un
+<em>presupuesto</em>. Una función llamada <code>softmax</code> convierte
+los puntajes en porcentajes que siempre suman 100%: la consulta “come”
+convierte los puntajes anteriores en <strong>5% / 55% / 5% /
+35%</strong> sobre “El / gato / come / pescado”. La Figura <a
+href="#fig:tut-softmax" data-reference-type="ref"
+data-reference="fig:tut-softmax">17</a> muestra la conversión.
+Compatibilidad alta significa “enfoca la atención aquí”; compatibilidad
+baja significa “ignora esto” — de vuelta en la habitación ruidosa, la
+voz que decidiste filtrar.</p>
+<figure id="fig:tut-softmax"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tut-softmax-focus-es.svg" alt="image" /></span></p>
+
+<figcaption>Paso 2 <span class="math inline">\(\rightarrow\)</span> Paso
+3 en números. Arriba: los cuatro puntajes crudos de compatibilidad
+(productos punto) para la consulta “come”. Abajo: tras
+<code>softmax</code>, los mismos cuatro números se vuelven un
+presupuesto de atención que suma exactamente 100%.</figcaption>
+</figure>
 <h3 id="paso-4-combinar">Paso 4: Combinar</h3>
-<p>Finalmente, el sistema combina todos los valores, ponderados por los
-pesos de enfoque. Si una palabra tiene un 80% de atención en el sujeto,
-el 80% de la información del sujeto se mezcla en la representación de
-esa palabra.</p>
-<h2 id="múltiples-cabezas-de-atención-múltiples-perspectivas">Múltiples
-Cabezas de Atención: Múltiples Perspectivas</h2>
-<p>Una característica clave es que los transformers no usan una única
-atención sino <em>múltiples cabezas de atención</em> en paralelo. Es
-como si tuvieras 8 personas analizando la oración
-<em>simultáneamente</em>, cada una prestando atención a diferentes
-aspectos:</p>
+<p>Finalmente, el visitante se va de la biblioteca con una mezcla
+ponderada de contenidos. Si “come” pone 55% de su presupuesto en “gato”
+y 35% en “pescado”, entonces 55% del valor de gato y 35% del valor de
+pescado se mezclan en la nueva representación de “come”: <span
+class="math display">\[\text{nuevo ``come&#39;&#39;} \;=\; 5\%\cdot
+v_{\text{El}} + 55\%\cdot v_{\text{gato}} + 5\%\cdot v_{\text{come}} +
+35\%\cdot v_{\text{pescado}}.
+\label{eq:tut-mix}\]</span> Ese vector mezclado es lo que ve el resto de
+la red: una representación de “come” que ya contiene quién come y qué se
+come.</p>
+<h2 id="subsec:tut-heads">Múltiples Cabezas de Atención: Un Equipo de
+Analistas</h2>
+<p>Los transformers nunca ejecutan una sola atención sino <em>muchas
+cabezas en paralelo</em> — como si la oración la analizara un equipo de
+especialistas, cada uno con una pregunta distinta (Figura <a
+href="#fig:tut-heads" data-reference-type="ref"
+data-reference="fig:tut-heads">18</a>):</p>
 <ul>
-<li><p><strong>Persona 1</strong>: “Me enfoco en las relaciones
-sujeto-verbo.”</p></li>
-<li><p><strong>Persona 2</strong>: “Busco el objeto directo.”</p></li>
-<li><p><strong>Persona 3</strong>: “Sigo la información sobre el tiempo
-verbal.”</p></li>
-<li><p><strong>Persona 4</strong>: “Busco modificadores y
-adjetivos.”</p></li>
+<li><p><strong>Analista 1 (gramática)</strong>: “¿quién lo hace?” —
+enlaza <em>gato</em> <span class="math inline">\(\rightarrow\)</span>
+<em>come</em>.</p></li>
+<li><p><strong>Analista 2 (objeto)</strong>: “¿qué lo recibe?” — enlaza
+<em>come</em> <span class="math inline">\(\rightarrow\)</span>
+<em>pescado</em>.</p></li>
+<li><p><strong>Analista 3 (tiempo)</strong>: “¿cuándo / con qué
+frecuencia?” — sigue el tiempo verbal y las marcas de tiempo.</p></li>
+<li><p><strong>Analista 4 (estilo)</strong>: “¿qué artículos y
+modificadores?” — sigue “el”, “un”, los adjetivos.</p></li>
 </ul>
-<p>Cada “cabeza” aprende a enfocarse en diferentes patrones del
-lenguaje. Juntas, capturan una comprensión mucho más rica que una sola
-cabeza.</p>
-<h2 id="apilar-capas">Apilar Capas</h2>
-<p>Los transformers procesan información en <em>múltiples capas</em>
-(generalmente de 12 a 48 para modelos prácticos). Imagina editar un
-ensayo:</p>
+<figure id="fig:tut-heads"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-heads-es.svg" alt="image" /></span></p>
+
+<figcaption>Varias cabezas leen la misma oración simultáneamente, como
+un equipo de analistas con una pregunta cada una. Sus informes se
+concatenan y se remezclan en una sola representación mucho más
+rica.</figcaption>
+</figure>
+<p>Cada cabeza aprende su propio patrón de enfoque a partir de los
+datos, y sus informes se concatenan y remezclan con una proyección
+aprendida. Juntas capturan mucho más que una sola cabeza — gramática,
+papeles, tiempo y estilo a la vez.</p>
+<h2 id="subsec:tut-layers">Apilar Capas: Editar el Ensayo en
+Pasadas</h2>
+<p>Un paso de atención todavía ve patrones someros, así que los
+transformers apilan el mismo bloque muchas veces (de 12 a 48 en modelos
+prácticos). La analogía: editar un ensayo en pasadas sucesivas
+(Figura <a href="#fig:tut-layers" data-reference-type="ref"
+data-reference="fig:tut-layers">19</a>).</p>
 <ol>
-<li><p><strong>Primera pasada</strong>: Corriges ortografía y gramática
-básica.</p></li>
-<li><p><strong>Segunda pasada</strong>: Mejoras la claridad y la
-estructura de las oraciones.</p></li>
-<li><p><strong>Tercera pasada</strong>: Aseguras consistencia y flujo
-narrativo.</p></li>
+<li><p><strong>Primera pasada</strong> — corregir ortografía y gramática
+básica: reconocer palabras, formas, género.</p></li>
+<li><p><strong>Segunda pasada</strong> — aclarar cada oración: quién
+hace qué y a quién.</p></li>
+<li><p><strong>Tercera pasada</strong> — asegurar consistencia y flujo
+narrativo: modismos, relaciones, significado abstracto.</p></li>
 </ol>
-<p>Los transformers funcionan de la misma manera: cada capa refina la
-comprensión del texto. La primera capa captura características básicas
-(palabras simples, géneros), mientras que las capas posteriores
-entienden conceptos complejos (relaciones entre palabras, significados
-abstractos).</p>
+<figure id="fig:tut-layers"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-layers-es.svg" alt="image" /></span></p>
+
+<figcaption>Las capas como pasadas de edición: el texto crudo entra
+arriba y cada capa refina la lectura de la anterior — de las palabras y
+sus formas, pasando por la estructura de la oración, hasta el
+significado abstracto. El bloque se repite 12–48 veces en la
+práctica.</figcaption>
+</figure>
+<p>Cada capa relee lo que produjo la anterior y lo refina: las primeras
+capturan características básicas, las posteriores entienden relaciones
+complejas y conceptos abstractos. Ninguna capa recibe instrucciones
+sobre qué buscar — las pasadas se organizan solas durante el
+entrenamiento.</p>
 <h2 id="por-qué-es-importante">¿Por Qué es Importante?</h2>
 <p>El mecanismo de atención fue revolucionario porque:</p>
 <ol>
-<li><p><strong>Paralelismo</strong>: Encuentra contexto para
-<em>cualquier palabra con cualquier otra palabra</em>, sin procesarlas
-secuencialmente (a diferencia de sistemas anteriores). Esto lo hace muy
-rápido.</p></li>
-<li><p><strong>Flexibilidad</strong>: Aprende qué patrones buscar
-automáticamente a partir de los datos, sin necesidad de programar reglas
-manualmente.</p></li>
-<li><p><strong>Escalabilidad</strong>: Funciona desde textos pequeños
-hasta contextos con millones de palabras.</p></li>
-<li><p><strong>Capacidades generales</strong>: El mismo mecanismo
-funciona para traducción, resumen, preguntas-respuestas, generación de
-texto, visión por computadora y más.</p></li>
+<li><p><strong>Paralelismo</strong>: cualquier palabra puede compararse
+con cualquier otra <em>a la vez</em> (sin procesamiento secuencial, a
+diferencia de los sistemas recurrentes anteriores) — rápido en hardware
+moderno.</p></li>
+<li><p><strong>Flexibilidad</strong>: los patrones se aprenden de los
+datos; nadie programa las reglas.</p></li>
+<li><p><strong>Escalabilidad</strong>: el mismo mecanismo va de una
+oración a millones de palabras de contexto.</p></li>
+<li><p><strong>Generalidad</strong>: traducción, resumen,
+preguntas-respuestas, generación, visión por computadora, audio — un
+mecanismo, muchas tareas.</p></li>
 </ol>
-<h2 id="desafíos-prácticos">Desafíos Prácticos</h2>
-<p>A pesar del extraordinario éxito de los transformers, presentan
-desafíos:</p>
+<h2 id="subsec:tut-challenges">Desafíos Prácticos: El Precio de Escuchar
+a Todos</h2>
+<p>La atención densa compra su poder comparando <em>cada</em> palabra
+con <em>todas</em> las demás, y ese precio crece rápido.</p>
 <h3 id="complejidad-computacional">Complejidad Computacional</h3>
-<p>Si una oración tiene 1,000 palabras, el mecanismo de atención
-estándar debe comparar cada palabra con las otras 1,000 palabras. Eso es
-<span class="math inline">\(1,000 \times 1,000 = 1,000,000\)</span> de
-comparaciones. Para documentos largos con millones de palabras, esto se
-vuelve prohibitivamente costoso en tiempo y memoria.</p>
+<p>Un documento de 1.000 palabras obliga a <span
+class="math inline">\(1.000 \times 1.000 = 1.000.000\)</span> de
+comparaciones palabra a palabra, y el costo se cuadruplica al crecer el
+documento. La Figura <a href="#fig:tut-complexity"
+data-reference-type="ref" data-reference="fig:tut-complexity">20</a>
+muestra ese crecimiento frente a las alternativas más amables que se
+comentan abajo.</p>
+<figure id="fig:tut-complexity"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tut-complexity-growth-es.svg" alt="image" /></span></p>
+
+<figcaption>Comparaciones palabra a palabra frente a la longitud de la
+oración. La atención densa compara cada palabra con todas las demás
+(<span class="math inline">\(n^2\)</span>): con <span
+class="math inline">\(n = 1.000\)</span> ya son un millón de
+comparaciones. Las variantes dispersas (<span class="math inline">\(n
+\log_2 n\)</span>) y los modelos lineales / recurrentes (<span
+class="math inline">\(n\)</span>) crecen con mucha más
+suavidad.</figcaption>
+</figure>
 <h3 id="requisitos-de-memoria">Requisitos de Memoria</h3>
-<p>Especialmente durante la inferencia (cuando se usan modelos
-entrenados), almacenar la matriz de atención completa puede consumir
-enormes cantidades de RAM o memoria de GPU, limitando las longitudes de
-secuencia que se pueden procesar.</p>
+<p>Durante la inferencia (al usar un modelo entrenado), hay que guardar
+las claves y valores de cada palabra pasada — la biblioteca mantiene
+todos los libros sobre la mesa por si una consulta posterior los
+necesita. En contextos largos, esa caché domina la memoria de GPU.</p>
 <h3 id="eficiencia-del-dispositivo">Eficiencia del Dispositivo</h3>
-<p>Los transformers fueron diseñados para TPUs y GPUs potentes.
-Ejecutarlos en teléfonos o dispositivos integrados es un desafío.</p>
-<h2 id="soluciones-modernas">Soluciones Modernas</h2>
-<p>Para resolver estos desafíos, la investigación ha propuesto muchas
-variantes:</p>
+<p>Los transformers se diseñaron para TPUs y GPUs potentes; ejecutarlos
+en teléfonos o dispositivos integrados es un desafío.</p>
+<h2 id="subsec:tut-solutions">Soluciones Modernas: Formas Más
+Inteligentes de Escuchar</h2>
+<p>El resto de este artículo es un catálogo de formas de conservar los
+beneficios de la atención pagando menos. Cada una conserva nuestras
+analogías:</p>
 <ul>
-<li><p><strong>Atención Dispersa</strong>: En lugar de comparar cada
-palabra con TODAS las demás, compara solo con un subconjunto estratégico
-(vecinos cercanos, patrones periódicos). Reduce la complejidad de <span
+<li><p><strong>Atención dispersa</strong>: deja de revisar <em>cada</em>
+ficha de la biblioteca — visita solo los estantes cercanos y algunos
+estratégicos. La complejidad baja de <span
 class="math inline">\(\mathcal{O}(n^2)\)</span> a <span
 class="math inline">\(\mathcal{O}(n \log n)\)</span> o <span
 class="math inline">\(\mathcal{O}(n)\)</span>.</p></li>
-<li><p><strong>Modelos Recurrentes</strong>: Como Mamba, incorporan
-aspectos de las antiguas redes neuronales recurrentes pero con mejor
-eficiencia moderna.</p></li>
-<li><p><strong>Atención con Compuerta</strong>: Mecanismos que aprenden
-selectivamente qué información pasar hacia adelante, reduciendo las
-necesidades de almacenamiento.</p></li>
-<li><p><strong>Cuantización</strong>: Usar números más pequeños (enteros
-en lugar de decimales) para reducir la memoria sin perder demasiada
-precisión.</p></li>
+<li><p><strong>Modelos recurrentes</strong> (p. ej. Mamba): toma apuntes
+mientras lees, en vez de reescuchar toda la habitación por cada palabra
+nueva — una idea vieja (la recurrencia) reconstruida con eficiencia
+moderna.</p></li>
+<li><p><strong>Atención con compuerta</strong>: un portero decide qué
+apuntes valen la pena conservar y cuáles desvanecer, así hay que guardar
+menos.</p></li>
+<li><p><strong>Cuantización</strong>: escribe cada número con menos
+dígitos (enteros pequeños en lugar de decimales anchos), reduciendo la
+memoria con pérdida mínima de precisión.</p></li>
 </ul>
-<p>Estas innovaciones son lo que este kit de herramientas (Frankenstein)
-te permite experimentar fácilmente.</p>
+<p>Estas innovaciones son exactamente las que este kit de herramientas
+(Frankenstein) te permite experimentar, y los apéndices que siguen son
+recorridos guiados por cada familia.</p>
 <h2 id="conclusiones-clave">Conclusiones Clave</h2>
 <ul>
-<li><p>Un <strong>transformer</strong> es una red neuronal que entiende
-el contexto del lenguaje muy bien.</p></li>
-<li><p>El <strong>mecanismo de atención</strong> permite que cada
-palabra “se enfoque” en qué otras palabras son relevantes para entender
-su significado.</p></li>
-<li><p>La atención funciona calculando la
-<strong>compatibilidad</strong> entre cada palabra (consulta) y todas
-las demás (claves), luego combinando información basada en esa
-compatibilidad (valores).</p></li>
-<li><p><strong>Múltiples cabezas</strong> de atención exploran
-diferentes patrones en paralelo.</p></li>
-<li><p><strong>Múltiples capas</strong> refinan progresivamente la
-comprensión.</p></li>
-<li><p>El principal desafío es que la atención estándar tiene
-complejidad cuadrática, lo que es costoso para textos largos.</p></li>
-<li><p>Muchas <strong>soluciones modernas</strong> (atención dispersa,
-modelos recurrentes, cuantización) abordan estos desafíos, y este kit de
-herramientas te permite explorarlas todas.</p></li>
+<li><p>Un <strong>transformer</strong> contextualiza: rele cada palabra
+a la luz de todos sus vecinos (el “banco” ambiguo).</p></li>
+<li><p>La <strong>atención</strong> es escucha selectiva: cada palabra
+reparte su presupuesto limitado del 100% entre los vecinos que la
+definen (la habitación ruidosa).</p></li>
+<li><p>La aritmética es una visita a la biblioteca: la
+<strong>consulta</strong> pregunta, la <strong>clave</strong> se
+anuncia, el <strong>valor</strong> entrega; los productos punto puntúan
+la compatibilidad, <code>softmax</code> convierte puntajes en un
+presupuesto del 100%, y los valores se mezclan según ese
+presupuesto.</p></li>
+<li><p>Las <strong>múltiples cabezas</strong> son un equipo de analistas
+con una pregunta cada una; las <strong>capas apiladas</strong> son
+pasadas de edición sucesivas, cada una refinando la anterior.</p></li>
+<li><p>El problema: la atención densa compara a todos con todos — <span
+class="math inline">\(\mathcal{O}(n^2)\)</span> — y por eso existen las
+variantes dispersas, recurrentes, con compuerta y cuantizadas.</p></li>
+<li><p>Cada apéndice posterior es un recorrido más profundo por una de
+esas variantes; las analogías de la Tabla <a href="#tab:tut-analogies"
+data-reference-type="ref" data-reference="tab:tut-analogies">2</a>
+seguirán volviendo.</p></li>
 </ul>
 <h1 id="sec:annex-transformer">Transformadores Densos, Recurrentes y
 Aumentados con Memoria</h1>
@@ -9080,7 +9256,7 @@ la pendiente bajo sus pies pero no ve el valle, así que la estrategia se
 reduce a tres preguntas: cuán fiable es la lectura de la pendiente (¿un
 ejemplo o mil?), cuán larga es la zancada y cuánta memoria del terreno
 merece la pena cargar. La Figura <a href="#fig:opt-tut-flow"
-data-reference-type="ref" data-reference="fig:opt-tut-flow">61</a>
+data-reference-type="ref" data-reference="fig:opt-tut-flow">69</a>
 convierte esas preguntas en el mapa de las familias que siguen.</p>
 <figure id="fig:opt-tut-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-tutorial-flow.svg" alt="image" /></span></p>
 
@@ -9129,9 +9305,9 @@ son círculos <span class="citation"
 data-cites="hinton_csc321_2012"></span>. El recorrido, por tanto,
 zigzaguea a través de la dirección abrupta mientras avanza a rastras por
 la plana. La Figura <a href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">62</a> muestra los tres regímenes sobre
+data-reference="fig:opt-tut-gd">70</a> muestra los tres regímenes sobre
 el mismo cuenco, y la Figura <a href="#fig:opt-tut-lr"
-data-reference-type="ref" data-reference="fig:opt-tut-lr">63</a> muestra
+data-reference-type="ref" data-reference="fig:opt-tut-lr">71</a> muestra
 cómo se ven como curva de pérdida.</p>
 <figure id="fig:opt-tut-gd"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-gd-landscape.svg" alt="image" /></span></p>
 
@@ -9208,7 +9384,7 @@ class="math inline">\(\odot\)</span> es el producto elemento a elemento.
 El gradiente de un peso es, por tanto, el producto de un número hacia
 atrás y un número hacia adelante—las dos cantidades dibujadas en la
 Figura <a href="#fig:opt-tut-backprop" data-reference-type="ref"
-data-reference="fig:opt-tut-backprop">64</a>. La recursión es lineal en
+data-reference="fig:opt-tut-backprop">72</a>. La recursión es lineal en
 el índice de capa, así que el barrido completo cuesta aproximadamente lo
 mismo que una pasada adicional hacia adelante, en torno al doble del
 coste de una pasada hacia adelante por paso, y debe mantener las
@@ -9293,7 +9469,7 @@ class="math inline">\(\lfloor n/b\rfloor\)</span> actualizaciones en
 lugar de una <span class="citation"
 data-cites="ibm_sgd_2025 ghojogh_ghodsi_2024"></span>. La Figura <a
 href="#fig:opt-tut-noise" data-reference-type="ref"
-data-reference="fig:opt-tut-noise">65</a> muestra las dos caras del
+data-reference="fig:opt-tut-noise">73</a> muestra las dos caras del
 compromiso: con el mismo número de pasos y el mismo tamaño de paso, los
 lotes pequeños vagan, y el ruido que inyectan es precisamente la
 cantidad que se reduce como <span
@@ -9324,7 +9500,7 @@ class="citation" data-cites="ghojogh_ghodsi_2024"></span>. El descenso
 de gradiente con lote completo es, por tanto, más preciso por iteración
 y mucho más lento por iteración; SGD es lo contrario. La Figura <a
 href="#fig:opt-tut-rates" data-reference-type="ref"
-data-reference="fig:opt-tut-rates">66</a> pone ambas afirmaciones sobre
+data-reference="fig:opt-tut-rates">74</a> pone ambas afirmaciones sobre
 los mismos ejes, una vez por iteración y otra por unidad de tiempo de
 reloj, que es la comparación que de verdad importa cuando un paso cuesta
 <span class="math inline">\(n/b\)</span> veces menos.</p>
@@ -9369,13 +9545,13 @@ gradiente en la posición hacia la que se dirige la velocidad, de modo
 que la corrección llega antes que el sobrepaso <span class="citation"
 data-cites="hinton_csc321_2012 sutskever2013importance"></span>. La
 Figura <a href="#fig:opt-tut-momentum" data-reference-type="ref"
-data-reference="fig:opt-tut-momentum">67</a> muestra la composición de
+data-reference="fig:opt-tut-momentum">75</a> muestra la composición de
 los dos términos y su efecto sobre el valle.</p>
 <figure id="fig:opt-tut-momentum"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-momentum.svg" alt="image" /></span></p>
 
 <figcaption>Momentum como memoria. (a) Sobre el valle de la Figura <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">62</a>(b), con el mismo tamaño de paso,
+data-reference="fig:opt-tut-gd">70</a>(b), con el mismo tamaño de paso,
 el descenso de gradiente simple sigue avanzando a rastras por el fondo
 tras 120 pasos mientras que momentum y su variante de Nesterov alcanzan
 el mínimo. (b) La misma ejecución como curva de pérdida: la dirección
@@ -9388,7 +9564,7 @@ que cualquiera de los dos términos por separado.</figcaption>
 coordenada.</h4>
 <p>La segunda observación es que el valle de la Figura <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">62</a>(b) no tiene un <span
+data-reference="fig:opt-tut-gd">70</a>(b) no tiene un <span
 class="math inline">\(\eta\)</span> bueno único: lo que es estable a lo
 largo del eje abrupto es despreciable a lo largo del plano. Los métodos
 adaptativos mantienen un promedio móvil de gradientes al cuadrado y
@@ -9405,7 +9581,7 @@ data-cites="hinton_csc321_2012 tieleman_hinton2012"></span>; AdaGrad es
 la versión acumulativa en lugar de decreciente <span class="citation"
 data-cites="duchi_adagrad_2011"></span>. La Figura <a
 href="#fig:opt-tut-adaptive" data-reference-type="ref"
-data-reference="fig:opt-tut-adaptive">68</a> muestra el efecto: los dos
+data-reference="fig:opt-tut-adaptive">76</a> muestra el efecto: los dos
 ejes del valle reciben desplazamientos comparables, a cambio de un
 estado por coordenada y de un paso que ya no se reduce por sí solo—el
 temblor residual de tamaño <span
@@ -9440,7 +9616,7 @@ data-cites="ruder_2016"></span>.</p>
 para retenerlos a la vez. Se recuerdan mejor como ocho familias, cada
 una respondiendo a una de las preguntas de la Figura <a
 href="#fig:opt-tut-flow" data-reference-type="ref"
-data-reference="fig:opt-tut-flow">61</a> y cada una distinguida por lo
+data-reference="fig:opt-tut-flow">69</a> y cada una distinguida por lo
 que recuerda y lo que paga.</p>
 <ul>
 <li><p><strong>Líneas base de primer orden</strong> (SGD con momentum,
@@ -9488,7 +9664,7 @@ data-reference="tab:opt-tut-families">[tab:opt-tut-families]</a> expresa
 la misma comparación en las dos monedas que deciden una ejecución real:
 qué se almacena por parámetro y cuánto cuesta cada paso. La Figura <a
 href="#fig:opt-tut-families" data-reference-type="ref"
-data-reference="fig:opt-tut-families">69</a> lo convierte en una huella:
+data-reference="fig:opt-tut-families">77</a> lo convierte en una huella:
 leer hacia abajo una fila dice qué ingredientes usa una familia, y leer
 a través de una columna dice qué familias comparten uno.</p>
 <div class="tabular">
@@ -9582,7 +9758,7 @@ decaimiento &amp; cómo se regularizan los pesos &amp; generalización
 <p>El valor práctico de las cinco ideas es diagnóstico. Una sola curva
 de pérdida ya dice cuál de ellas está mal, y la respuesta suele ser
 visible en unos cientos de pasos (Figura <a href="#fig:opt-tut-diag"
-data-reference-type="ref" data-reference="fig:opt-tut-diag">70</a>).</p>
+data-reference-type="ref" data-reference="fig:opt-tut-diag">78</a>).</p>
 <figure id="fig:opt-tut-diag"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-loss-diagnostics.svg" alt="image" /></span></p>
 
 <figcaption>Cuatro curvas de pérdida y la frase que pronuncia cada una.
@@ -11727,7 +11903,7 @@ siguiendo Moonlight; esta implementación deja que las tasas de
 aprendizaje por grupo absorban esa calibración, por lo que no se aplica
 ninguna constante de escala. Las formas ausentes de la Tabla <a
 href="#tab:root-coefficients" data-reference-type="ref"
-data-reference="tab:root-coefficients">8</a> usan los coeficientes fijos
+data-reference="tab:root-coefficients">9</a> usan los coeficientes fijos
 de Muon, y el cuantil dinámico cuesta un ordenamiento adicional de <span
 class="math inline">\(|M_t|\)</span> por matriz y por paso.</p>
 <h4 id="contras.-27">Contras.</h4>
@@ -15247,204 +15423,442 @@ implementado en <code>src/model/moe/</code> y declarado en
 verdad ejecutable: cada clave discutida aquí existe en el esquema, se
 materializa en el bloque anidado <code>moe</code> de
 <code>FrankensteinModelConfig</code> y está cubierta por la suite de
-pruebas. El texto sigue la anatomía de una capa MoE—router, estrategia
-de ruteo, balanceo de carga, expertos, disposición por capas, capacidad
-y monitoreo—y cierra con las tablas del contrato de esquema y de los
-presets.</p>
-<h2 id="app:moe-overview-es">Visión general y taxonomía</h2>
-<p>Una capa feed-forward densa aplica una única función a cada token.
-Una capa MoE la reemplaza por <span class="math inline">\(E\)</span>
-redes expertas <span class="math inline">\(\{E_e\}_{e=1}^{E}\)</span> y
-un router que selecciona <span class="math inline">\(k\)</span> de ellas
-por token, <span class="math display">\[y_t = g \sum_{j=1}^{k} \hat
-w_{t,j}\, E_{i_{t,j}}(x_t) + y^{\text{shared}}_t ,
-  \label{eq:moe-layer-es}\]</span> donde <span
-class="math inline">\(i_{t,j}\)</span> son los índices de expertos
-seleccionados, <span class="math inline">\(\hat w_{t,j}\)</span> sus
-pesos de mezcla, <span class="math inline">\(g\)</span> el factor de
-escala ruteado y <span
-class="math inline">\(y^{\text{shared}}_t\)</span> la rama opcional de
-expertos compartidos siempre activa. Solo se ejecutan los expertos
-seleccionados, así que los parámetros totales crecen con <span
-class="math inline">\(E\)</span> mientras el cómputo por token queda
-proporcional a <span class="math inline">\(k\)</span> <span
-class="citation" data-cites="shazeer2017moe fedus2021switch"></span>. El
-espacio de diseño tiene cinco ejes: (i) cómo los logits se convierten en
-pesos (Sección <a href="#app:moe-router-es" data-reference-type="ref"
-data-reference="app:moe-router-es">29.2</a>), (ii) quién selecciona los
-expertos (Sección <a href="#app:moe-routing-es"
-data-reference-type="ref" data-reference="app:moe-routing-es">29.3</a>),
-(iii) cómo se balancea la carga (Sección <a href="#app:moe-balancing-es"
+pruebas. Las dos primeras secciones son la rampa de entrada: explican
+qué hace una capa MoE—una ecuación, una analogía, un ejemplo numérico—y
+después los dos modos de falla (el colapso de ruteo y el rezagado del
+experto caliente) que fuerzan casi todo el diseño. El resto es la
+referencia: puntuación del router, estrategia de ruteo, balanceo de
+carga, expertos, disposición por capas, capacidad y monitoreo, y cierra
+con las tablas del contrato de esquema y de los presets. Quien termine
+la Sección <a href="#app:moe-failures-es" data-reference-type="ref"
+data-reference="app:moe-failures-es">29.2</a> debería poder abrir
+cualquier sección posterior y saber cuál de las dos fallas, o cuál de
+las siete preguntas de diseño, está respondiendo.</p>
+<h2 id="app:moe-overview-es">Visión general: qué es una capa de Mezcla
+de Expertos</h2>
+<p>La mitad feed-forward de un bloque transformer es <em>densa</em>: una
+única red, aplicada igual a cada token, sin importar qué sea el token.
+Eso es una clínica con un solo médico que debe atender todas las
+consultas. Una capa MoE convierte la clínica en una nómina de <span
+class="math inline">\(E\)</span> especialistas con una recepcionista: el
+<em>router</em> lee cada token y lo envía a los <span
+class="math inline">\(k\)</span> especialistas más pertinentes, los
+<em>expertos</em> <span
+class="math inline">\(\{E_e\}_{e=1}^{E}\)</span>. En términos formales,
+<span class="math display">\[y_t = g \sum_{j=1}^{k} \hat w_{t,j}\,
+E_{i_{t,j}}(x_t) + y^{\text{shared}}_t ,
+  \label{eq:moe-layer-es}\]</span> leída de adentro hacia afuera: el
+experto <span class="math inline">\(i_{t,j}\)</span> procesa el token y
+produce un vector, el peso de mezcla <span class="math inline">\(\hat
+w_{t,j}\)</span> lo escala, las <span class="math inline">\(k\)</span>
+contribuciones se suman, el factor de escala ruteado <span
+class="math inline">\(g\)</span> restaura la magnitud de la rama
+(Sección <a href="#app:moe-router-es" data-reference-type="ref"
+data-reference="app:moe-router-es">29.3</a>) e <span
+class="math inline">\(y^{\text{shared}}_t\)</span> es la rama opcional
+de expertos compartidos siempre activa (Sección <a
+href="#app:moe-experts-es" data-reference-type="ref"
+data-reference="app:moe-experts-es">29.6</a>). Solo se ejecutan los
+expertos seleccionados, y ese es todo el trato: los parámetros totales
+crecen con <span class="math inline">\(E\)</span> mientras el cómputo
+por token queda proporcional a <span class="math inline">\(k\)</span>
+<span class="citation"
+data-cites="shazeer2017moe fedus2021switch"></span>.</p>
+<p>El trato en números: con <span class="math inline">\(E = 8\)</span>
+expertos del ancho denso y <span class="math inline">\(k = 2\)</span>,
+la capa almacena <span class="math inline">\(8\times\)</span> los
+parámetros feed-forward pero cada token lo procesan solo <span
+class="math inline">\(2\)</span> expertos—el <span
+class="math inline">\(25\%\)</span> del pool—más un router de <span
+class="math inline">\(d \times E\)</span> pesos, despreciable frente a
+cualquier experto. La memoria crece con <span
+class="math inline">\(E\)</span>; los FLOPs crecen con <span
+class="math inline">\(k\)</span>. Esos son dos presupuestos
+independientes, y la mayor parte del esquema es la maquinaria para
+gastarlos bien.</p>
+<p>Siete preguntas abarcan el espacio de diseño, y la Tabla <a
+href="#tab:moe-questions-es" data-reference-type="ref"
+data-reference="tab:moe-questions-es">[tab:moe-questions-es]</a> mapea
+cada una a sus perillas y a su sección: (i) cómo los logits se
+convierten en pesos, (ii) quién selecciona a los expertos, (iii) cómo se
+mantiene la carga balanceada, (iv) cómo son los expertos, (v) qué capas
+son MoE, (vi) qué pasa cuando un experto se desborda y (vii) cómo se
+observa todo esto durante el entrenamiento.</p>
+<div class="tabular">
+<p><span>@L<span>2.2cm</span>L<span>4.8cm</span>L<span>4.6cm</span>L<span>1.6cm</span>@</span>
+<strong>Eje</strong> &amp; <strong>Pregunta</strong> &amp;
+<strong>Perillas</strong> &amp; <strong>Sección</strong><br />
+Puntuación &amp; ¿cuánto pesa cada experto seleccionado? &amp;
+<code>router.*</code> &amp; <a href="#app:moe-router-es"
 data-reference-type="ref"
-data-reference="app:moe-balancing-es">29.4</a>), (iv) cómo son los
-expertos (Sección <a href="#app:moe-experts-es"
-data-reference-type="ref" data-reference="app:moe-experts-es">29.5</a>)
-y (v) qué capas son MoE (Sección <a href="#app:moe-layout-es"
+data-reference="app:moe-router-es">29.3</a><br />
+Ruteo &amp; ¿quién elige a quién? &amp; <code>routing.type</code>,
+<code>routing.hash_</code> &amp; <a href="#app:moe-routing-es"
 data-reference-type="ref"
-data-reference="app:moe-layout-es">29.6</a>).</p>
+data-reference="app:moe-routing-es">29.4</a><br />
+Balanceo &amp; ¿cómo mantenemos empleado a cada experto? &amp;
+<code>balancing.*</code> &amp; <a href="#app:moe-balancing-es"
+data-reference-type="ref"
+data-reference="app:moe-balancing-es">29.5</a><br />
+Expertos &amp; ¿cuántos, qué ancho, compartidos o latentes? &amp;
+<code>num_experts</code>, <code>expert_hidden_size</code>,
+<code>shared.*</code>, <code>latent.*</code>, <code>experts.*</code>
+&amp; <a href="#app:moe-experts-es" data-reference-type="ref"
+data-reference="app:moe-experts-es">29.6</a><br />
+Disposición &amp; ¿qué capas son MoE? &amp; <code>layout.*</code> &amp;
+<a href="#app:moe-layout-es" data-reference-type="ref"
+data-reference="app:moe-layout-es">29.7</a><br />
+Capacidad &amp; ¿qué pasa cuando un experto se desborda? &amp;
+<code>routing.capacity_factor</code> &amp; <a
+href="#app:moe-capacity-es" data-reference-type="ref"
+data-reference="app:moe-capacity-es">29.8</a><br />
+Monitoreo &amp; ¿cómo se observa todo? &amp; escalares registrados &amp;
+<a href="#app:moe-monitoring-es" data-reference-type="ref"
+data-reference="app:moe-monitoring-es">29.9</a><br />
+</p>
+</div>
+<h2 id="app:moe-failures-es">Los dos modos de falla: colapso y
+rezagado</h2>
+<p>Cuatro de las siete preguntas existen por dos modos de falla. Ambos
+se siguen de una sola decisión de diseño—el router se aprende y es libre
+de concentrarse—y cada mecanismo del resto del anexo (pérdida auxiliar,
+sesgo de experto, elección por experto, capas hash, factor de capacidad)
+responde a uno de ellos.</p>
+<h4 id="colapso.">Colapso.</h4>
+<p>Las decisiones de ruteo no están coordinadas: cada token elige de
+forma independiente sus <span class="math inline">\(k\)</span> favoritos
+y nada impide que todos los tokens elijan al mismo experto. El bucle se
+refuerza solo. Un experto que arranca levemente adelante recibe más
+tokens; más tokens significan más gradiente, así que mejora más rápido
+que los demás; al mejorar más rápido, gana aún más tokens en el
+siguiente lote. Lleve el bucle hacia adelante y una capa construida con
+<span class="math inline">\(E\)</span> expertos rutea a través de dos o
+tres, y el resto nunca se entrena. Switch Transformers observó capas
+enteras colapsadas a un único experto <span class="citation"
+data-cites="fedus2021switch"></span>. Esta es la trayectoria por defecto
+de un MoE sin balancear, no un accidente raro, y es la razón de que
+exista la Sección <a href="#app:moe-balancing-es"
+data-reference-type="ref"
+data-reference="app:moe-balancing-es">29.5</a>: la pérdida auxiliar y el
+sesgo de experto son dos formas independientes de romper el bucle, la
+elección por experto (Sección <a href="#app:moe-routing-es"
+data-reference-type="ref" data-reference="app:moe-routing-es">29.4</a>)
+lo elimina por construcción y las capas hash lo eliminan fijando la
+selección de raíz.</p>
+<h4 id="el-rezagado.">El rezagado.</h4>
+<p>Incluso una capa que balancea bien en promedio fluctúa por paso: un
+lote puede enviar un tercio de sus tokens a un solo experto. Siguen dos
+costos. El paso no puede terminar hasta que termina el experto más
+ocupado, así que un único experto caliente fija el tiempo de todo, y en
+entrenamiento distribuido—donde distintos expertos viven en distintos
+dispositivos—el desbalance se vuelve filas de dispositivos ociosos
+esperando a uno. Y un experto que recibe un ráfaga necesita memoria de
+búfer proporcional a la ráfaga. El factor de capacidad (Sección <a
+href="#app:moe-capacity-es" data-reference-type="ref"
+data-reference="app:moe-capacity-es">29.8</a>) acota ambos limitando
+cuántas asignaciones debe honrar un experto. El indicador de ambos modos
+de falla es MaxVio (Sección <a href="#app:moe-balancing-es"
+data-reference-type="ref"
+data-reference="app:moe-balancing-es">29.5</a>): el colapso y el
+rezagado se leen ambos como el experto más ocupado despegándose de la
+media.</p>
 <h2 id="app:moe-router-es">Puntuación del router: de logits a pesos</h2>
-<p>El router proyecta cada token a un logit por experto, <span
-class="math inline">\(z_t = W_r x_t \in \mathbb{R}^{E}\)</span>, con
-<span class="math inline">\(W_r \in \mathbb{R}^{E \times d}\)</span>.
-Una función de compuerta mapea logits a puntuaciones, y el top-<span
-class="math inline">\(k\)</span> selecciona los expertos. La
-implementación soporta las tres funciones de compuerta usadas por los
-modelos abiertos actuales: <span class="math display">\[\begin{aligned}
+<p>El router es una única capa lineal, <span class="math inline">\(z_t =
+W_r x_t \in \mathbb{R}^{E}\)</span> con <span class="math inline">\(W_r
+\in \mathbb{R}^{E \times d}\)</span>: un logit por experto. Una función
+de compuerta convierte los <span class="math inline">\(E\)</span> logits
+en <span class="math inline">\(E\)</span> puntuaciones, y el top-<span
+class="math inline">\(k\)</span> de las puntuaciones selecciona los
+expertos. Conviene separar los dos oficios de la función de compuerta:
+<em>ordena</em> (qué expertos se seleccionan) y <em>pondera</em> (cuánto
+contribuye cada experto seleccionado). La implementación soporta las
+tres funciones de compuerta usadas por los modelos abiertos actuales:
+<span class="math display">\[\begin{aligned}
   \text{softmax}:&amp;\quad s_{t,e} = \frac{e^{z_{t,e}}}{\sum_{e&#39;}
 e^{z_{t,e&#39;}}}, \\
   \text{sigmoid}:&amp;\quad s_{t,e} = \sigma(z_{t,e}), \\
   \text{sqrt-softplus}:&amp;\quad s_{t,e} =
 \sqrt{\operatorname{softplus}(z_{t,e})}.
 \end{aligned}\]</span> Las tres son monótonas en <span
-class="math inline">\(z_{t,e}\)</span>, por lo que ordenan los expertos
-de forma idéntica; difieren en cuánto peso recibe cada experto
-seleccionado <span class="citation"
-data-cites="deepseek2024v3 deepseek2026v4"></span>.
-<code>router.scoring</code> elige la función (por defecto
+class="math inline">\(z_{t,e}\)</span>—un logit mayor siempre da una
+puntuación mayor—y las funciones monótonas nunca reordenan. Así que para
+un <span class="math inline">\(z_t\)</span> dado las tres seleccionan
+<em>exactamente los mismos expertos</em>; la elección de la función de
+compuerta es una elección sobre los pesos, no sobre la selección. En
+palabras:</p>
+<ul>
+<li><p><strong>softmax</strong> hace competir a los expertos por un
+pastel fijo. Las puntuaciones suman uno, así que la puntuación del
+experto <span class="math inline">\(e\)</span> depende de todos los
+demás logits a través del denominador: subir un logit baja a todos los
+otros. A medida que los logits crecen, la distribución se afila hacia el
+ganador se lleva todo.</p></li>
+<li><p><strong>sigmoid</strong> juzga a cada experto aislado. <span
+class="math inline">\(\sigma(z_{t,e})\)</span> depende solo de su propio
+logit, así que no hay competencia: todos los expertos pueden puntuar
+bajo a la vez (los pesos seleccionados suman menos de uno y la rama
+ruteada se encoge) o alto a la vez. La renormalización y el factor de
+escala de abajo existen en gran parte para gestionar justamente esa
+libertad <span class="citation"
+data-cites="deepseek2024v3"></span>.</p></li>
+<li><p><strong>sqrt-softplus</strong> queda entre las dos: como sigmoid
+es por experto, pero <span
+class="math inline">\(\sqrt{\operatorname{softplus}(z)}\)</span> decae
+más suave por el lado negativo y nunca se satura en exactamente cero
+<span class="citation" data-cites="deepseek2026v4"></span>.</p></li>
+</ul>
+<p><code>router.scoring</code> elige la función (por defecto
 <code>softmax</code>).</p>
 <h4 id="escala-de-salida.">Escala de salida.</h4>
-<p>Dos controles fijan la magnitud de la rama ruteada. Con
-<code>router.renormalize</code> (por defecto verdadero), las
-puntuaciones seleccionadas se reescalan para sumar uno, <span
-class="math display">\[\hat w_{t,j} =
-\frac{s_{t,i_{t,j}}}{\sum_{l=1}^{k} s_{t,i_{t,l}}},\]</span> lo que
-elimina la variación entre tokens de la masa de probabilidad top-<span
-class="math inline">\(k\)</span>; renormalizar redujo la pérdida de
+<p>Dos controles fijan la magnitud de la rama ruteada, y solo tienen
+sentido en pareja. Con <code>router.renormalize</code> (por defecto
+verdadero), las puntuaciones seleccionadas se reescalan para sumar uno,
+<span class="math display">\[\hat w_{t,j} =
+\frac{s_{t,i_{t,j}}}{\sum_{l=1}^{k} s_{t,i_{t,l}}},\]</span> de modo que
+la rama ruteada pasa a ser un <em>promedio</em> ponderado de <span
+class="math inline">\(k\)</span> salidas de expertos y no una suma.
+Promediar encoge. Tome <span class="math inline">\(k = 4\)</span>
+expertos cuyas salidas tienen cada una valor eficaz <span
+class="math inline">\(1\)</span> y son incorrelacionadas, con pesos casi
+iguales de <span class="math inline">\(\approx 1/4\)</span>: la varianza
+del promedio es <span class="math inline">\(\tfrac{1}{4^2}(1+1+1+1) =
+\tfrac{1}{4}\)</span>, así que su RMS es <span
+class="math inline">\(1/\sqrt{k} = 0.5\)</span>. El promedio mide la
+mitad que la respuesta de cualquier experto individual, y el
+encogimiento empeora a medida que crece <span
+class="math inline">\(k\)</span>. Renormalizar aun así se paga
+solo—elimina la variación entre tokens de la masa de probabilidad
+top-<span class="math inline">\(k\)</span> y redujo la pérdida de
 validación en el estudio de granularidad de <span class="citation"
-data-cites="krajewski2025scaling"></span>. El factor de escala ruteado
-<span class="math inline">\(g\)</span>
+data-cites="krajewski2025scaling"></span>—así que el factor de escala
+ruteado <span class="math inline">\(g\)</span>
 (<code>router.routed_scaling_factor</code>, por defecto <span
-class="math inline">\(1\)</span>) restaura luego el valor eficaz
-esperado de la salida ruteada: con <span
-class="math inline">\(k\)</span> expertos incorrelacionados de igual
-RMS, pesos iguales reducen la salida a <span
-class="math inline">\(1/\sqrt{k}\)</span> del RMS de un experto, así que
-<span class="math inline">\(g \approx \sqrt{k}\)</span> lo recupera.
-DeepSeek-V3 usa <span class="math inline">\(g = 2.5\)</span> con <span
-class="math inline">\(k = 8\)</span> <span class="citation"
-data-cites="deepseek2024v3"></span>; Kimi K2 usa <span
-class="math inline">\(2.827 \approx \sqrt{8}\)</span> y Kimi K3 usa
+class="math inline">\(1\)</span>) existe para deshacer el encogimiento:
+<span class="math inline">\(g \approx \sqrt{k}\)</span> recupera el RMS
+de un experto individual. Los valores publicados coinciden con la
+derivación. Kimi K2 usa <span class="math inline">\(2.827 \approx
+\sqrt{8}\)</span>; DeepSeek-V3 usa <span class="math inline">\(g =
+2.5\)</span> con <span class="math inline">\(k = 8\)</span>, levemente
+por debajo de <span class="math inline">\(\sqrt{8} \approx 2.83\)</span>
+porque las salidas reales de los expertos están parcialmente
+correlacionadas y se cancelan menos que unas independientes <span
+class="citation" data-cites="deepseek2024v3"></span>; y Kimi K3 usa
 <span class="math inline">\(g = 1.0\)</span> con <span
-class="math inline">\(k = 16\)</span> <span class="citation"
+class="math inline">\(k = 16\)</span> y dos expertos compartidos que
+cargan parte de la rama <span class="citation"
 data-cites="kimiteam2026k3"></span>.</p>
 <h4 id="pre-softmax.">Pre-softmax.</h4>
-<p>Con <code>router.pre_softmax</code> el softmax se calcula sobre todos
-los expertos antes de la selección top-<span
-class="math inline">\(k\)</span>, de modo que los pesos conservados son
-probabilidades crudas y no se renormalizan. Esto es necesario para ruteo
-softmax con <span class="math inline">\(k=1\)</span>: el softmax sobre
-un único logit siempre vale uno, así que un peso top-1 post-softmax no
-tiene gradiente. La capa de configuración detecta esa combinación,
-activa <code>pre_softmax</code> automáticamente y emite una advertencia
-en vez de rechazar configuraciones heredadas.</p>
+<p>Con <code>router.pre_softmax</code> el softmax se calcula sobre los
+<span class="math inline">\(E\)</span> expertos <em>antes</em> del corte
+top-<span class="math inline">\(k\)</span>, de modo que los pesos
+conservados son probabilidades crudas de la distribución completa y no
+se renormalizan. Para ver por qué el ruteo softmax con <span
+class="math inline">\(k{=}1\)</span> lo necesita, recorra el camino por
+defecto paso a paso: seleccionar primero y después aplicar softmax solo
+sobre los logits <em>seleccionados</em>. Con un único logit seleccionado
+ese softmax es <span class="math inline">\(e^{z}/e^{z} =
+1\)</span>—siempre, sin importar qué tan bien matchee el experto con el
+token. Un peso que vale constantemente uno tiene derivada cero, así que
+el router no recibiría gradiente y nunca podría aprender a qué experto
+preferir: la selección quedaría congelada en su inicialización.
+Pre-softmax lo repara: el peso conservado es la probabilidad máxima del
+softmax completo, un número genuino en <span
+class="math inline">\((0,1)\)</span> que se mueve cuando se mueve
+cualquier logit, y por ahí fluye el gradiente. La capa de configuración
+detecta esa combinación, activa <code>pre_softmax</code> automáticamente
+y emite una advertencia en vez de rechazar configuraciones
+heredadas.</p>
 <h4 id="agudeza-y-precisión.">Agudeza y precisión.</h4>
-<p>Tres mecanismos controlan cuán puntiagudo es el router. El jitter
-multiplicativo estilo Switch (<code>router.jitter_eps</code>) suma <span
-class="math inline">\(x \cdot (1 + \epsilon(2u-1))\)</span> antes de la
-proyección <span class="citation" data-cites="fedus2021switch"></span>.
-La precisión del router (<code>router.dtype</code>) es
-<code>float32</code> por defecto: un router bf16 divergió en Switch
-Transformers y los empates del top-<span
+<p>Tres mecanismos controlan cuán puntiagudo, y numéricamente confiable,
+es el router. El <em>jitter de entrada</em>
+(<code>router.jitter_eps</code>) multiplica el token por <span
+class="math inline">\(x \cdot (1 + \epsilon(2u-1))\)</span> con <span
+class="math inline">\(u\)</span> uniforme antes de la proyección: ruido
+multiplicativo aleatorio que penaliza decisiones de ruteo construidas
+sobre direcciones frágiles de <span class="math inline">\(x_t\)</span>,
+un regularizador con el que Switch fue entrenada <span class="citation"
+data-cites="fedus2021switch"></span>. La <em>precisión del router</em>
+(<code>router.dtype</code>) es <code>float32</code> por defecto; el
+router es diminuto (<span class="math inline">\(d \times E\)</span>
+parámetros), así que la precisión completa no cuesta nada, y lo que
+compra es estabilidad—un router bf16 divergió en Switch Transformers y
+en baja precisión los empates del top-<span
 class="math inline">\(k\)</span> se rompen arbitrariamente <span
 class="citation" data-cites="fedus2021switch"></span>. Finalmente, la
-z-loss de ST-MoE penaliza la deriva de logits, <span
-class="math display">\[\mathcal{L}_z = \beta\,\frac{1}{T}\sum_{t=1}^{T}
+<em>z-loss</em> de ST-MoE penaliza la deriva de logits. El log-sum-exp
+es un máximo suave de los logits (grande siempre que <em>algún</em>
+logit sea grande), así que <span class="math display">\[\mathcal{L}_z =
+\beta\,\frac{1}{T}\sum_{t=1}^{T}
   \Bigl(\log \sum_{e=1}^{E} e^{z_{t,e}}\Bigr)^{2},
-  \label{eq:zloss-es}\]</span> donde <span
+  \label{eq:zloss-es}\]</span> crece cuadráticamente siempre que
+cualquier logit del router crezca en magnitud. Minimizarla mantiene los
+logits pequeños, el softmax sin saturar y al router lejos de la
+sobreconfianza <span class="citation"
+data-cites="zoph2022stmoe"></span>. Aquí <span
 class="math inline">\(\beta\)</span> es <code>router.z_loss_coeff</code>
 (por defecto <span class="math inline">\(0\)</span>; ST-MoE usa <span
-class="math inline">\(10^{-3}\)</span>) <span class="citation"
-data-cites="zoph2022stmoe"></span>. La pérdida se devuelve como
+class="math inline">\(10^{-3}\)</span>); la pérdida se devuelve como
 <code>moe_router_z_loss</code> y se suma a la pérdida de tarea.</p>
 <h2 id="app:moe-routing-es">Estrategia de ruteo: quién selecciona y
 cómo</h2>
+<p>La Sección <a href="#app:moe-router-es" data-reference-type="ref"
+data-reference="app:moe-router-es">29.3</a> fijó <em>cuánto</em> pesa
+cada experto elegido; esta fija <em>quién elige a quién</em>. La
+literatura tiene tres respuestas, y cada una tiene una consecuencia
+estructural.</p>
 <h4 id="elección-por-token.">Elección por token.</h4>
-<p>La opción por defecto (<code>routing.type: token_choice</code>) hace
-que cada token conserve sus <span class="math inline">\(k\)</span>
+<p>La opción por defecto (<code>routing.type: token_choice</code>): cada
+token conserva sus propios <span class="math inline">\(k\)</span>
 mejores expertos bajo <span class="math inline">\(s_t + b\)</span>,
 donde <span class="math inline">\(b\)</span> es el sesgo de balanceo de
 la Sección <a href="#app:moe-balancing-es" data-reference-type="ref"
-data-reference="app:moe-balancing-es">29.4</a>. Es la estrategia
+data-reference="app:moe-balancing-es">29.5</a>. La consecuencia es que
+nadie garantiza trabajo a ningún experto: un experto puede ganar todos
+los tokens o ninguno, que es exactamente el bucle de colapso de la
+Sección <a href="#app:moe-failures-es" data-reference-type="ref"
+data-reference="app:moe-failures-es">29.2</a>. La elección por token
+sale por eso acompañada de un mecanismo de balanceo. Es la estrategia
 entrenada por Megatron y usada por la mayoría de los modelos abiertos
 <span class="citation"
 data-cites="fedus2021switch deepseek2024v3"></span>.</p>
 <h4 id="elección-por-experto.">Elección por experto.</h4>
-<p>Con <code>routing.type: expert_choice</code>, cada experto conserva
-sus mejores <span class="math inline">\(Tk/E\)</span> tokens <span
-class="citation" data-cites="zhou2022expertchoice"></span>. Las cargas
-son iguales por construcción, pero la asignación de un token depende de
-tokens posteriores, así que el ruteo en inferencia difiere del de
-entrenamiento. El esquema prohíbe por ello combinar elección por experto
-con una pérdida auxiliar o un sesgo de experto (se autobalancea), y el
-anexo la recomienda para experimentos de encoder o de entrenamiento, no
-para serving autorregresivo.</p>
+<p>Invierta la dirección de la decisión: con
+<code>routing.type: expert_choice</code>, cada experto conserva sus
+mejores <span class="math inline">\(Tk/E\)</span> tokens <span
+class="citation" data-cites="zhou2022expertchoice"></span>. Cada experto
+recibe exactamente el mismo número de tokens, así que las cargas son
+iguales por construcción y la maquinaria de balanceo no es solo
+innecesaria sino contradictoria—el esquema prohíbe combinar elección por
+experto con una pérdida auxiliar o un sesgo de experto. El precio es la
+causalidad: si a un token se le sirve depende de los <em>otros</em>
+tokens del lote, incluidos los posteriores. Eso es inofensivo en un
+encoder, donde toda la secuencia está disponible a la vez, y fatal en
+decodificación autorregresiva, donde el token <span
+class="math inline">\(t\)</span> debe rutearse antes de que existan los
+tokens <span class="math inline">\(t{+}1, t{+}2, \dots\)</span>; el
+ruteo de entrenamiento y el de inferencia discreparían por construcción.
+De ahí la recomendación: experimentos de encoder y de entrenamiento sí,
+serving autorregresivo no.</p>
 <h4 id="capas-hash.">Capas hash.</h4>
-<p>Las primeras <code>routing.hash_layers</code> capas MoE pueden
-seleccionar expertos desde una tabla fija id de token <span
-class="math inline">\(\rightarrow (e_1,\dots,e_k)\)</span> <span
-class="citation" data-cites="roller2021hash"></span>, como hace
-DeepSeek-V4 en sus tres primeras capas MoE <span class="citation"
-data-cites="deepseek2026v4"></span>. El router aprendido se sigue usando
-para los pesos pero no recibe gradiente de la selección. La tabla se
+<p>Prescinda de la decisión aprendida por completo: las primeras
+<code>routing.hash_layers</code> capas MoE seleccionan expertos desde
+una tabla fija <span class="math inline">\(\mathrm{tid} \rightarrow
+(e_1,\dots,e_k)\)</span> <span class="citation"
+data-cites="roller2021hash"></span>, como hace DeepSeek-V4 en sus tres
+primeras capas MoE <span class="citation"
+data-cites="deepseek2026v4"></span>. La observación detrás: en las
+primeras capas los tokens siguen cerca de sus embeddings y la decisión
+de ruteo es en su mayoría identidad de superficie—qué token es, no qué
+significa—y una tabla de búsqueda captura eso. La tabla nunca cambia,
+así que no puede colapsar. El router aprendido sigue produciendo los
+pesos de mezcla, así que sigue entrenándose a través de ellos;
+simplemente no recibe gradiente de la selección misma. La tabla se
 construye con una asignación aleatoria con semilla
 (<code>hash_table: random</code>) o un ciclo round-robin
 (<code>round_robin</code>); Roller et al. hallaron que las tablas
 aleatorias y las voraces por frecuencia alcanzan perplejidad similar,
 con mejor balance la voraz <span class="citation"
-data-cites="roller2021hash"></span>. Una tabla hash no puede
-rebalancearse, así que el esquema prohíbe combinarla con
+data-cites="roller2021hash"></span>. Como una tabla fija nunca puede
+rebalancearse, el esquema prohíbe combinarla con
 <code>balancing.bias_update</code>.</p>
 <h2 id="app:moe-balancing-es">Balanceo de carga</h2>
-<p>Cuando muchos tokens eligen el mismo experto, el experto más ocupado
-fija el tiempo del paso y los demás quedan subentrenados. Se implementan
-dos mecanismos independientes; cualquiera puede usarse solo o
-combinarse, como hace DeepSeek-V3 <span class="citation"
-data-cites="deepseek2024v3"></span>.</p>
+<p>La Sección <a href="#app:moe-failures-es" data-reference-type="ref"
+data-reference="app:moe-failures-es">29.2</a> describió el bucle de
+colapso: un experto levemente adelante recibe más tokens, entrena más
+rápido y se adelanta más. Se implementan dos remedios independientes;
+cualquiera funciona solo, y DeepSeek-V3 combina ambos <span
+class="citation" data-cites="deepseek2024v3"></span>. Difieren en
+<em>cómo</em> alcanzan el ruteo: la pérdida auxiliar trabaja a través
+del gradiente, el sesgo trabaja por fuera de él.</p>
 <h4 id="pérdida-auxiliar.">Pérdida auxiliar.</h4>
-<p>La pérdida auxiliar multiplica la fracción de asignaciones de cada
-experto por su probabilidad media de router, <span
-class="math display">\[\mathcal{L}_{\text{aux}} = \alpha\,E
-\sum_{e=1}^{E} f_e P_e,
+<p>El obstáculo para arreglar el desbalance directamente es que lo que
+hay que arreglar—cuántas veces fue elegido cada experto—es un conteo, y
+los conteos no tienen derivada: ser elegido <span
+class="math inline">\(500\)</span> veces en vez de <span
+class="math inline">\(499\)</span> no es una operación que la
+retropropagación pueda influir. El sustituto de Switch <span
+class="citation" data-cites="fedus2021switch"></span> multiplica la
+fracción de asignaciones de cada experto por su probabilidad media de
+router, <span class="math display">\[\mathcal{L}_{\text{aux}} =
+\alpha\,E \sum_{e=1}^{E} f_e P_e,
   \qquad
   f_e = \frac{1}{Tk}\sum_{t,j}\mathbb{1}[i_{t,j}=e],
   \qquad
   P_e = \frac{1}{T}\sum_{t} s_{t,e},
-  \label{eq:aux-es}\]</span> con <span
-class="math inline">\(\alpha\)</span> =
-<code>balancing.aux_loss_coeff</code>. El alcance se elige con
-<code>balancing.aux_loss</code>: <code>batch</code> (un micro-batch, por
-defecto), <code>sequence</code> (una pérdida por secuencia, la guarda de
-DeepSeek-V3 contra que una sola secuencia se apile en pocos expertos) o
-<code>none</code>. Balancear por secuencia o por micro-batch puede
-impedir que se formen expertos de dominio, mientras que balancear sobre
-el batch global deja desigual la carga por dispositivo <span
-class="citation" data-cites="qiu2025demons"></span>; el runtime de un
-solo dispositivo implementa los dos primeros alcances y documenta el
-global como trabajo futuro. Un coeficiente demasiado grande cuesta
-pérdida de lenguaje, y uno demasiado pequeño deja MaxVio alto <span
-class="citation" data-cites="wang2024auxfree"></span>; el valor por
-defecto es <span class="math inline">\(0.01\)</span>, cercano a Switch y
-DeepSeekMoE <span class="citation"
-data-cites="fedus2021switch dai2024deepseekmoe"></span>.</p>
+  \label{eq:aux-es}\]</span> donde <span
+class="math inline">\(f_e\)</span> (la fracción de las <span
+class="math inline">\(Tk\)</span> asignaciones) carga el desbalance pero
+no el gradiente, y <span class="math inline">\(P_e\)</span> (la
+puntuación media) sí carga gradiente. El producto es el truco: bajar la
+pérdida significa bajar <span class="math inline">\(P_e\)</span>
+precisamente donde <span class="math inline">\(f_e\)</span> es alto, así
+que el optimizador presiona las probabilidades del router exactamente
+por los expertos sobrecargados, y las selecciones futuras se reparten.
+Con puntuación softmax las puntuaciones suman uno por token y el mínimo
+está en la distribución uniforme, <span class="math inline">\(f_e =
+k/E\)</span> y <span class="math inline">\(P_e = 1/E\)</span>; el
+prefactor <span class="math inline">\(E\)</span> hace entonces que la
+pérdida en el mínimo no dependa del número de expertos (exactamente
+<span class="math inline">\(\alpha\)</span> con <span
+class="math inline">\(k{=}1\)</span>), así que un mismo coeficiente
+significa lo mismo con <span class="math inline">\(E{=}8\)</span> y con
+<span class="math inline">\(E{=}256\)</span>. El coeficiente mismo es un
+compromiso: demasiado grande pelea contra la pérdida de lenguaje,
+demasiado pequeño deja a MaxVio alto <span class="citation"
+data-cites="wang2024auxfree"></span>; el valor por defecto es <span
+class="math inline">\(0.01\)</span>, cercano a Switch y DeepSeekMoE
+<span class="citation"
+data-cites="fedus2021switch dai2024deepseekmoe"></span>. El alcance se
+elige con <code>balancing.aux_loss</code>: <code>batch</code> (un
+micro-batch, por defecto), <code>sequence</code> (una pérdida por
+secuencia, la guarda de DeepSeek-V3 contra que una sola secuencia se
+apile en pocos expertos—balancee el batch y aun así un documento largo
+puede monopolizar sus expertos favoritos) o <code>none</code>. Balancear
+por secuencia o por micro-batch puede impedir que se formen expertos de
+dominio, mientras que balancear sobre el batch global deja desigual la
+carga por dispositivo <span class="citation"
+data-cites="qiu2025demons"></span>; el runtime de un solo dispositivo
+implementa los dos primeros alcances y documenta el global como trabajo
+futuro.</p>
 <h4 id="sesgo-libre-de-pérdida-auxiliar.">Sesgo libre de pérdida
 auxiliar.</h4>
-<p>Con <code>balancing.bias_update</code> en <code>sign</code> o
-<code>centered_sign</code>, un sesgo por experto <span
-class="math inline">\(b_e\)</span> se suma a las puntuaciones solo antes
-de la selección —nunca a los pesos de mezcla— y se mueve una vez por
-paso de optimizador: <span class="math display">\[b_e \leftarrow b_e +
-\gamma\,\operatorname{sign}\!\left(\bar c - c_e\right),
+<p>El segundo remedio ignora los gradientes por completo y funciona como
+un termostato: mida la temperatura, mueva la perilla, repita. Con
+<code>balancing.bias_update</code> en <code>sign</code> o
+<code>centered_sign</code>, cada experto lleva un sesgo <span
+class="math inline">\(b_e\)</span> que se suma a las puntuaciones
+<em>solo antes de la selección—nunca a los pesos de mezcla</em>—y se
+mueve una vez por paso de optimizador: <span class="math display">\[b_e
+\leftarrow b_e + \gamma\,\operatorname{sign}\!\left(\bar c - c_e\right),
   \qquad
   \bar c = \frac{1}{E}\sum_{e&#39;} c_{e&#39;},
   \label{eq:bias-es}\]</span> donde <span
 class="math inline">\(c_e\)</span> cuenta las asignaciones del paso y
 <span class="math inline">\(\gamma\)</span> es
 <code>balancing.bias_update_rate</code> (por defecto <span
-class="math inline">\(10^{-3}\)</span>). Los expertos sobrecargados
-(<span class="math inline">\(c_e &gt; \bar c\)</span>) bajan y los
-subcargados suben. La variante <code>centered_sign</code> resta el paso
-medio para que la media del sesgo no derive, lo que importa cuando el
-sesgo se guarda en precisión reducida <span class="citation"
+class="math inline">\(10^{-3}\)</span>). A un experto por encima de la
+carga media (<span class="math inline">\(c_e &gt; \bar c\)</span>) se le
+baja el sesgo en <span class="math inline">\(\gamma\)</span>, así que
+gana menos tokens en el siguiente paso; a uno por debajo se le sube.
+Como el sesgo nunca toca los pesos de mezcla, redirige tráfico sin
+cambiar lo que aportan los expertos seleccionados—por eso no cuesta
+pérdida de lenguaje, a diferencia de la pérdida auxiliar <span
+class="citation" data-cites="wang2024auxfree"></span>.</p>
+<p>Por qué el esquema restringe el sesgo a la puntuación sigmoid o
+sqrt-softplus: bajo softmax cada puntuación depende de cada logit a
+través del denominador, así que mover el logit de un experto reescala
+las <span class="math inline">\(E\)</span> puntuaciones a la vez y el
+sesgo dirigiría la selección <em>y</em> distorsionaría todos los pesos
+de mezcla simultáneamente. Bajo sigmoid o sqrt-softplus cada puntuación
+es función de su propio logit nada más, así que <span
+class="math inline">\(b_e\)</span> mueve al experto <span
+class="math inline">\(e\)</span> en el ranking y no toca nada más—el
+direccionamiento queda puro.</p>
+<p>La variante <code>centered_sign</code> resta el paso medio (<span
+class="math inline">\(\tfrac{1}{E}\sum_{e}\operatorname{sign}(\bar c -
+c_e) = 0\)</span> en aritmética exacta, no necesariamente en precisión
+reducida) para que la media del sesgo no derive, lo que importa cuando
+el sesgo se guarda en precisión reducida <span class="citation"
 data-cites="wang2024auxfree"></span>. El sesgo es un buffer fp32 no
 persistente: es estado de entrenamiento, nunca un parámetro de
 inferencia, y <code>eval()</code> lo congela. La actualización la aplica
@@ -15453,54 +15867,91 @@ inferencia, y <code>eval()</code> lo congela. La actualización la aplica
 <h4 id="maxvio.">MaxVio.</h4>
 <p>El balance se lee con la violación máxima, <span
 class="math display">\[\mathrm{MaxVio} = \frac{\max_e c_e - \bar c}{\bar
-c},\]</span> donde <span class="math inline">\(0\)</span> es
-perfectamente parejo y <span class="math inline">\(1\)</span> significa
-que el experto más ocupado recibe el doble de la carga media <span
-class="citation" data-cites="wang2024auxfree"></span>. Se registra por
-capa como <code>moe/max_vio</code>.</p>
+c},\]</span> un único número por capa, registrado como
+<code>moe/max_vio</code>. Cómo leerlo: <span
+class="math inline">\(0\)</span> es perfectamente parejo; <span
+class="math inline">\(0.2\)</span>–<span
+class="math inline">\(0.5\)</span> es fluctuación ordinaria; <span
+class="math inline">\(1\)</span> significa que el experto más ocupado
+recibe el doble de la carga media <span class="citation"
+data-cites="wang2024auxfree"></span>. El valor absoluto importa menos
+que la tendencia—un MaxVio que sube a lo largo de los pasos es el bucle
+de colapso de la Sección <a href="#app:moe-failures-es"
+data-reference-type="ref" data-reference="app:moe-failures-es">29.2</a>
+corriendo en tiempo real.</p>
 <h2 id="app:moe-experts-es">Expertos: cantidad, ancho, espacio latente y
 compartición</h2>
 <h4 id="cantidad-y-ancho.">Cantidad y ancho.</h4>
-<p><code>num_experts</code> fija el pool ruteado y <code>top_k</code>
-cuántos se usan por token. <code>expert_hidden_size</code> fija el ancho
-intermedio de cada experto; cuando no se define, cae a
-<code>ffn.hidden_size</code>. Mantener ambos separados es esencial para
-las arquitecturas reales: DeepSeek-V3 tiene ancho denso 18432 pero
-expertos de ancho 2048 <span class="citation"
-data-cites="deepseek2024v3"></span>. Una granularidad más fina (más
-expertos, más angostos, con igual total y activos) mejoró la pérdida
-hasta 128 expertos de <span class="math inline">\(d/4\)</span> con top-8
-en un estudio <span class="citation"
-data-cites="liew2026principled"></span>, mientras que con igual total y
-activos se predice favorecer una configuración menos dispersa al
-contabilizar el throughput de entrenamiento <span class="citation"
-data-cites="krajewski2025scaling"></span>.</p>
+<p>Los dos presupuestos de la Sección <a href="#app:moe-overview-es"
+data-reference-type="ref" data-reference="app:moe-overview-es">29.1</a>
+se gastan aquí por separado: <code>num_experts</code> <span
+class="math inline">\(\times\)</span> <code>expert_hidden_size</code> es
+(aproximadamente) el total de parámetros ruteados—lo que paga la
+memoria—mientras que <code>top_k</code> <span
+class="math inline">\(\times\)</span> <code>expert_hidden_size</code> es
+el cómputo por token—lo que paga el usuario.
+<code>expert_hidden_size</code> fija el ancho intermedio de cada experto
+y cae a <code>ffn.hidden_size</code> cuando no se define. Mantener los
+dos anchos separados es esencial para las arquitecturas reales:
+DeepSeek-V3 tiene un ancho denso de <span
+class="math inline">\(18432\)</span> pero expertos de ancho <span
+class="math inline">\(2048\)</span> <span class="citation"
+data-cites="deepseek2024v3"></span>—sus capas densas son nueve veces más
+anchas que sus expertos. La granularidad es el refinamiento del mismo
+compromiso: con un presupuesto fijo de parámetros, “<span
+class="math inline">\(16\)</span> expertos de ancho <span
+class="math inline">\(4096\)</span>” y “<span
+class="math inline">\(64\)</span> expertos de ancho <span
+class="math inline">\(1024\)</span>” almacenan lo mismo. La división más
+fina deja a cada experto especializarse más estrechamente, lo que mejoró
+la pérdida hasta <span class="math inline">\(128\)</span> expertos de
+ancho <span class="math inline">\(d/4\)</span> con top-8 en un estudio
+<span class="citation" data-cites="liew2026principled"></span>; pero los
+expertos más angostos también ven menos tokens cada uno por paso, y al
+contabilizar el throughput de entrenamiento se predice que los mismos
+total y activos favorecen una configuración <em>menos</em> dispersa
+<span class="citation" data-cites="krajewski2025scaling"></span>. El
+resumen honesto: más fino ayuda con FLOPs fijos, y la evidencia con
+reloj fijo es mixta.</p>
 <h4 id="moe-latente.">MoE latente.</h4>
-<p>LatentMoE proyecta cada token de <span
-class="math inline">\(d\)</span> a un ancho latente <span
-class="math inline">\(\ell\)</span> antes del despacho y de vuelta
-después de combinar, así que cada copia del token lleva <span
-class="math inline">\(\ell\)</span> números en vez de <span
-class="math inline">\(d\)</span> <span class="citation"
-data-cites="elango2026latentmoe"></span>: <span
+<p>Envíe una copia comprimida en lugar del token completo. LatentMoE
+envuelve a los expertos entre una proyección de bajada y una de subida:
+cada token se proyecta de <span class="math inline">\(d\)</span> a un
+ancho latente <span class="math inline">\(\ell\)</span> antes del
+despacho, y el resultado combinado se proyecta de vuelta después <span
+class="citation" data-cites="elango2026latentmoe"></span>, <span
 class="math display">\[\ell_t = W_\downarrow x_t,\qquad
   y_t = W_\uparrow \sum_{j=1}^{k} \hat w_{t,j} E_{i_{t,j}}(\ell_t).
-  \label{eq:latent-es}\]</span> Con <span class="math inline">\(\alpha =
-d/\ell\)</span>, los mismos parámetros, cómputo y tráfico de expertos
-permiten <span class="math inline">\(\alpha\)</span> veces más expertos
-y un top-<span class="math inline">\(k\)</span> mayor; NVIDIA reporta
-+5.65 puntos de MMLU-Pro a 95B totales con <span
-class="math inline">\(\alpha = 4\)</span>, y la calidad se conserva
-hasta <span class="math inline">\(\alpha \leqslant 4\)</span> <span
-class="citation" data-cites="elango2026latentmoe"></span>. Kimi K3
-agrega un RMSNorm antes de la proyección de salida para detener el
-crecimiento de activaciones de la rama ruteada a 2.8T parámetros,
-expuesto como <code>latent.norm_before_up_proj</code> <span
-class="citation" data-cites="kimiteam2026k3"></span>.</p>
+  \label{eq:latent-es}\]</span> Cada una de las <span
+class="math inline">\(k\)</span> copias despachadas lleva ahora <span
+class="math inline">\(\ell\)</span> números en vez de <span
+class="math inline">\(d\)</span>. Con razón de compresión <span
+class="math inline">\(\alpha = d/\ell\)</span>, mover y procesar una
+copia cuesta <span class="math inline">\(\alpha\)</span> veces menos,
+así que los mismos parámetros, cómputo y tráfico de expertos permiten
+<span class="math inline">\(\alpha\)</span> veces más expertos y un
+top-<span class="math inline">\(k\)</span> mayor. La apuesta es que los
+expertos pueden trabajar sobre un boceto con pérdida del token; NVIDIA
+reporta que aguanta hasta <span class="math inline">\(\alpha \leqslant
+4\)</span> (<span class="math inline">\(+5.65\)</span> puntos de
+MMLU-Pro a 95B totales con <span class="math inline">\(\alpha =
+4\)</span>) <span class="citation"
+data-cites="elango2026latentmoe"></span>. Kimi K3 agrega un RMSNorm
+antes de la proyección de subida para detener el crecimiento de
+activaciones de la rama ruteada a 2.8T parámetros, expuesto como
+<code>latent.norm_before_up_proj</code> <span class="citation"
+data-cites="kimiteam2026k3"></span>.</p>
 <h4 id="expertos-compartidos.">Expertos compartidos.</h4>
-<p>Los expertos siempre activos de <code>shared.count</code> corren
-fuera del router sobre cada token, aprenden patrones comunes y dejan
-libres a los expertos ruteados para especializarse <span
+<p>Una capa ruteada no garantiza que el conocimiento común quede
+representado: cada experto aprende lo que sus visitantes necesitan, así
+que <span class="math inline">\(E\)</span> expertos pueden re-aprender
+cada uno la misma sintaxis y puntuación. Los expertos siempre activos de
+<code>shared.count</code> corren fuera del router sobre <em>cada</em>
+token—los médicos generalistas de la clínica de la Sección <a
+href="#app:moe-overview-es" data-reference-type="ref"
+data-reference="app:moe-overview-es">29.1</a>—absorbiendo el
+conocimiento que todo token necesita y liberando a los especialistas
+ruteados para gastar su capacidad en lo que difiere entre tokens <span
 class="citation" data-cites="dai2024deepseekmoe"></span>. Su ancho es
 <code>shared.hidden_size</code> (por defecto, el ancho ruteado). Se
 suman con peso uno, o multiplicados por una compuerta aprendida por
@@ -15508,33 +15959,43 @@ token <span class="math inline">\(\sigma(w_s^{\top} x_t) \in
 (0,1)\)</span> cuando <code>shared.gate: sigmoid</code> (Qwen3-Next)
 <span class="citation" data-cites="qwen2025qwen3"></span>; la forma de
 peso fijo coincide con DeepSeek-V3 <span class="citation"
-data-cites="deepseek2024v3"></span>. No son gratis: agregar uno sin
-reducir el top-<span class="math inline">\(k\)</span> ruteado aumenta el
-cómputo por token, y las ganancias de calidad medidas son pequeñas e
+data-cites="deepseek2024v3"></span>. No son gratis: un experto
+compartido corre sobre cada token, así que el cómputo por token crece
+con su ancho, y las ganancias de calidad medidas son pequeñas e
 inconsistentes <span class="citation"
-data-cites="li2026slicing"></span>.</p>
+data-cites="li2026slicing"></span>. Agregue uno cuando de otro modo
+subiría <code>top_k</code>, no encima de él.</p>
 <h4 id="tope-de-activación.">Tope de activación.</h4>
-<p><code>experts.activation_clamp</code> acota superiormente el
-intermedio con compuerta, <span
-class="math display">\[\mathrm{GatedFFN}(x) = W_{\text{down}}\!\left(
+<p>Una patología rara pero real: expertos individuales cuyas normas de
+salida crecen mientras la pérdida queda plana—Step 3.5 Flash encontró
+esos atípicos y el recorte los contuvo sin cambiar la pérdida <span
+class="citation" data-cites="huang2026step35"></span>.
+<code>experts.activation_clamp</code> acota el intermedio con compuerta,
+<span class="math display">\[\mathrm{GatedFFN}(x) =
+W_{\text{down}}\!\left(
   \phi\bigl(\operatorname{clamp}(xW_{\text{gate}}, -c, c)\bigr) \odot
 (xW_{\text{up}})
   \right),\]</span> con <span class="math inline">\(c\)</span> =
 <code>activation_clamp</code> (<span class="math inline">\(0\)</span> lo
 desactiva). DeepSeek-V4.1 usa <span class="math inline">\(c =
-10\)</span> y Step 5 Preview <span class="math inline">\(c = 7\)</span>;
-Step 3.5 Flash encontró expertos atípicos cuyas normas de salida crecían
-mientras la pérdida quedaba plana, y el recorte los contuvo sin cambiar
-la pérdida <span class="citation"
-data-cites="huang2026step35 deepseek2026v4flash"></span>. El tope suave
-exacto de SiTU-GLU que usa Kimi K3 se aproxima aquí con un recorte de la
-entrada de la compuerta y se documenta como desviación <span
-class="citation" data-cites="kimiteam2026k3"></span>.</p>
+10\)</span> y Step 5 Preview <span class="math inline">\(c = 7\)</span>
+<span class="citation" data-cites="deepseek2026v4flash"></span>. Trátelo
+como un seguro contra expertos atípicos, no como un valor por defecto:
+existe para que la señal de monitoreo de la Sección <a
+href="#app:moe-monitoring-es" data-reference-type="ref"
+data-reference="app:moe-monitoring-es">29.9</a> (razón de normas de
+expertos creciendo) tenga un remedio barato. El tope suave exacto de
+SiTU-GLU que usa Kimi K3 se aproxima aquí con un recorte de la entrada
+de la compuerta y se documenta como desviación <span class="citation"
+data-cites="kimiteam2026k3"></span>.</p>
 <h2 id="app:moe-layout-es">Disposición por capas</h2>
-<p><code>layout.dense_layers</code> mantiene densas las primeras <span
+<p>No toda capa necesita ser MoE. Las primeras capas de un transformer
+computan características genéricas que todo token necesita sin importar
+su contenido; la especialización paga después.
+<code>layout.dense_layers</code> mantiene densas las primeras <span
 class="math inline">\(N\)</span> capas (DeepSeek-V3 y GLM conservan
 tres), y <code>layout.every_n_layers</code> intercala capas densas y MoE
-(Llama 4 Maverick usa una de cada dos) <span class="citation"
+(Llama 4 Maverick hace MoE una de cada dos capas) <span class="citation"
 data-cites="deepseek2024v3 meta2025llama4"></span>. Las capas densas
 usan <code>ffn.hidden_size</code>; las MoE usan
 <code>expert_hidden_size</code>. La configuración del modelo expone
@@ -15544,23 +16005,47 @@ audio construyen una FFN ruteada o densa por capa física. Las capas
 densas iniciales reducen el número de capas MoE a bajo costo con FLOPs
 igualados <span class="citation"
 data-cites="krajewski2025scaling"></span>, pero no corrigen por sí solas
-el desbalance de las primeras capas; las primeras capas MoE tras el
-prefijo siguen siendo las que hay que monitorear.</p>
+el desbalance de las primeras capas: las primeras capas MoE tras el
+prefijo siguen siendo las más propensas al colapso y las que hay que
+monitorear.</p>
 <h2 id="app:moe-capacity-es">Capacidad y descarte de tokens</h2>
 <p>Por defecto el ruteo es dropless: un experto acepta todos los tokens
-que el router le envía (<code>routing.capacity_factor: 0</code>). Un
-factor positivo <span class="math inline">\(\kappa\)</span> limita cada
-experto a <span class="math display">\[C = \left\lceil
-\kappa\,\frac{Tk}{E} \right\rceil\]</span> asignaciones, conservando los
-tokens de mayor probabilidad y descartando el resto. El tope acota la
-memoria y elimina el rezago del experto caliente, a un costo pequeño de
-calidad: Pangu Ultra MoE descartó cerca de 6–8% de tokens con <span
-class="math inline">\(\kappa = 1.5\)</span> y su corrida dropless
-mantuvo menor pérdida, con una brecha que crecía con el número de
-expertos <span class="citation" data-cites="pangu2025ultra"></span>, y
-MegaBlocks alcanzó su menor pérdida cuando no se descartó ningún token
-<span class="citation" data-cites="gale2022megablocks"></span>. La capa
-registra <code>dropped_fraction</code>. Dropless sigue siendo el valor
+que el router le envía (<code>routing.capacity_factor: 0</code>) y las
+cargas por paso fluctúan libremente. Un factor positivo <span
+class="math inline">\(\kappa\)</span> limita cada experto a <span
+class="math display">\[C = \left\lceil \kappa\,\frac{Tk}{E}
+\right\rceil\]</span> asignaciones. La fórmula es la carga media con
+holgura: <span class="math inline">\(T\)</span> tokens hacen <span
+class="math inline">\(k\)</span> solicitudes cada uno, dando <span
+class="math inline">\(Tk\)</span> asignaciones repartidas entre <span
+class="math inline">\(E\)</span> expertos, así que la media es <span
+class="math inline">\(Tk/E\)</span> y <span
+class="math inline">\(\kappa\)</span> es el margen. Ejemplo trabajado:
+<span class="math inline">\(T = 4096\)</span> tokens, <span
+class="math inline">\(E = 8\)</span>, <span class="math inline">\(k =
+2\)</span> da <span class="math inline">\(8192\)</span> asignaciones y
+una media de <span class="math inline">\(1024\)</span> por experto;
+<span class="math inline">\(\kappa = 1.5\)</span> fija <span
+class="math inline">\(C = 1536\)</span>. Un experto que recibe <span
+class="math inline">\(2000\)</span> solicitudes atiende sus <span
+class="math inline">\(1536\)</span> de mayor puntuación y descarta las
+otras <span class="math inline">\(464\)</span>: esos tokens salen de la
+capa sin la contribución de ese experto (su peso se pone en cero), y
+<code>dropped_fraction</code> registra la fracción de asignaciones
+eliminadas (<span class="math inline">\(464\)</span> de <span
+class="math inline">\(8192 \approx 5.7\%\)</span> en el ejemplo). Lo que
+compra el tope es el remedio al rezagado de la Sección <a
+href="#app:moe-failures-es" data-reference-type="ref"
+data-reference="app:moe-failures-es">29.2</a>: un límite duro al búfer
+de cada experto (memoria) y, en entrenamiento distribuido, la garantía
+de que ningún experto caliente fija el tiempo del paso. El costo es
+pérdida de calidad silenciosa: Pangu Ultra MoE descartó cerca de 6–8% de
+tokens con <span class="math inline">\(\kappa = 1.5\)</span> y su
+corrida dropless mantuvo menor pérdida, con una brecha que crecía con el
+número de expertos <span class="citation"
+data-cites="pangu2025ultra"></span>, y MegaBlocks alcanzó su menor
+pérdida cuando no se descartó ningún token <span class="citation"
+data-cites="gale2022megablocks"></span>. Dropless sigue siendo el valor
 por defecto y la opción recomendada para fine-tuning, donde los tokens
 descartados pueden caer dentro de respuestas de instrucción.</p>
 <h2 id="app:moe-monitoring-es">Monitoreo</h2>
@@ -15570,30 +16055,76 @@ descartados pueden caer dentro de respuestas de instrucción.</p>
 <code>last_moe_stats</code>. El modelo las agrega sobre las capas
 mediante <code>aggregate_moe_aux_losses()</code> y suma las pérdidas a
 la de tarea; el entrenador registra los escalares en el callback de
-métricas y en Weights &amp; Biases. Las señales son:</p>
+métricas y en Weights &amp; Biases. Léase como cinco preguntas, una
+señal cada una:</p>
 <ul>
-<li><p><strong>MaxVio</strong> (<code>moe/max_vio</code>) por capa: el
-colapso de ruteo se ve como un valor creciente.</p></li>
-<li><p><strong>Pérdida de balanceo</strong> y <strong>z-loss</strong>:
-los coeficientes ya están divididos en las estadísticas registradas; la
-z-loss sigue la deriva de logits.</p></li>
-<li><p><strong>Entropía de ruteo</strong> y <strong>peso top-1</strong>:
-una compuerta plana, que promedia sus <span
-class="math inline">\(k\)</span> expertos, se ve como entropía cercana a
+<li><p><strong>¿Está pareja la carga?</strong> MaxVio
+(<code>moe/max_vio</code>) por capa: cerca de <span
+class="math inline">\(0\)</span> sano, <span
+class="math inline">\(\geqslant 1\)</span> severo (Sección <a
+href="#app:moe-balancing-es" data-reference-type="ref"
+data-reference="app:moe-balancing-es">29.5</a>); un valor que sube a lo
+largo de los pasos es el bucle de colapso en marcha.</p></li>
+<li><p><strong>¿Se comprometió el router?</strong> Entropía de ruteo y
+peso top-1. Una compuerta plana que apenas promedia sus <span
+class="math inline">\(k\)</span> expertos se ve como entropía cercana a
 <span class="math inline">\(\log k\)</span> y peso top-1 cercano a <span
-class="math inline">\(1/k\)</span>.</p></li>
-<li><p><strong>Razón de normas de expertos</strong>: la mayor norma de
-salida por experto sobre la mediana de la capa; un experto atípico la
-empuja muy por encima de uno y uno muerto la fija en cero <span
-class="citation" data-cites="huang2026step35"></span>.</p></li>
-<li><p><strong>Fracción descartada</strong>: proporción de asignaciones
-eliminadas por el factor de capacidad.</p></li>
+class="math inline">\(1/k\)</span> (sin especialización); una compuerta
+de ganador se lleva todo muestra entropía cercana a <span
+class="math inline">\(0\)</span> y top-1 cercano a <span
+class="math inline">\(1\)</span>. Un entrenamiento sano deriva del
+primer estado hacia un ruteo comprometido y estructurado sin llegar al
+segundo extremo.</p></li>
+<li><p><strong>¿Están sanos los expertos?</strong> La razón de normas de
+expertos: la mayor norma de salida por experto sobre la mediana de la
+capa. Muy por encima de uno, un experto atípico dominando la rama—la
+patología que contiene el tope de activación; clavada en cero, un
+experto muerto que nadie selecciona <span class="citation"
+data-cites="huang2026step35"></span>.</p></li>
+<li><p><strong>¿Con cuánta fuerza tira el balanceo y está derivando el
+router?</strong> La pérdida de balanceo y la z-loss (coeficientes ya
+divididos en las estadísticas registradas): la primera debe relajarse a
+medida que mejora el balance, la segunda sigue la deriva de
+logits.</p></li>
+<li><p><strong>¿Está apretando la capacidad?</strong> La fracción
+descartada: proporción de asignaciones eliminadas por el factor de
+capacidad; es <span class="math inline">\(0\)</span> salvo que
+<code>routing.capacity_factor</code> sea positivo.</p></li>
 </ul>
+<p>Cinco reglas prácticas cierran la rampa, cada una consecuencia de las
+secciones anteriores y no maquinaria nueva:</p>
+<ol>
+<li><p>Arranque con los valores por defecto: ruteo dropless, pérdida
+auxiliar de alcance batch en <span class="math inline">\(0.01\)</span>,
+sin sesgo. Son la configuración a la que convergen la mayoría de los
+presets tras sus propias desviaciones.</p></li>
+<li><p>Si el problema es el balance, vaya primero al sesgo antes que a
+subir el coeficiente auxiliar: el sesgo redirige tráfico solo a través
+de la selección y no cuesta pérdida de lenguaje <span class="citation"
+data-cites="wang2024auxfree"></span>, mientras que un <span
+class="math inline">\(\alpha\)</span> mayor pelea contra la pérdida de
+tarea.</p></li>
+<li><p>Vigile MaxVio en las primeras capas MoE tras cualquier prefijo
+denso; ahí empieza el colapso (Sección <a href="#app:moe-layout-es"
+data-reference-type="ref"
+data-reference="app:moe-layout-es">29.7</a>).</p></li>
+<li><p>Softmax con <span class="math inline">\(k{=}1\)</span> necesita
+<code>pre_softmax</code> o el router nunca aprende (Sección <a
+href="#app:moe-router-es" data-reference-type="ref"
+data-reference="app:moe-router-es">29.3</a>); el cargador lo repara,
+pero la advertencia vale la pena entenderla.</p></li>
+<li><p>Presupueste el cómputo como <span
+class="math inline">\(\texttt{top\_\allowbreak k} \times
+\texttt{expert\_\allowbreak hidden\_\allowbreak size} +
+        \texttt{shared}\)</span> antes de habilitar: los expertos
+compartidos y el ancho latente cambian la factura por token, y el
+remedio más barato para expertos lentos es un presupuesto menor, no más
+maquinaria.</p></li>
+</ol>
 <h2 id="app:moe-schema-es">Contrato de esquema</h2>
 <p>La Tabla <a href="#tab:moe-schema-es" data-reference-type="ref"
 data-reference="tab:moe-schema-es">[tab:moe-schema-es]</a> lista cada
-clave <code>model.moe.*</code>, su valor por defecto, el campo plano de
-<code>FrankensteinModelConfig</code> que produce el aplanador y la
+clave <code>model.moe.*</code>, su valor por defecto, qué controla y la
 referencia que la gobierna. El esquema JSON es el contrato ejecutable;
 la validación en runtime agrega las reglas entre claves: <span
 class="math inline">\(top\_\allowbreak k \leqslant num\_\allowbreak
@@ -15604,95 +16135,97 @@ de balanceo, las capas hash requieren elección por token y prohíben el
 sesgo, el ancho latente debe estar en <span class="math inline">\((0,
 d)\)</span> y el número de capas debe ser positivo.</p>
 <div class="longtable">
-<p><span>@L<span>0.27</span>L<span>0.19</span>L<span>0.22</span>L<span>0.24</span>@</span></p>
+<p><span>@L<span>0.27</span>L<span>0.13</span>L<span>0.32</span>L<span>0.20</span>@</span></p>
 <p><br />
 <strong>Clave</strong> &amp; <strong>Defecto</strong> &amp;
-<strong>Campo plano</strong> &amp; <strong>Referencia</strong><br />
+<strong>Controla</strong> &amp; <strong>Referencia</strong><br />
 <strong>Clave</strong> &amp; <strong>Defecto</strong> &amp;
-<strong>Campo plano</strong> &amp; <strong>Referencia</strong><br />
-<code>enabled</code> &amp; <code>true</code> &amp; <code>use_moe</code>
+<strong>Controla</strong> &amp; <strong>Referencia</strong><br />
+<code>enabled</code> &amp; <code>true</code> &amp; FFN ruteada vs. densa
 &amp; <span class="citation" data-cites="shazeer2017moe"></span><br />
-<code>num_experts</code> &amp; 8 &amp; <code>num_experts</code> &amp;
+<code>num_experts</code> &amp; 8 &amp; tamaño del pool ruteado &amp;
 <span class="citation" data-cites="fedus2021switch"></span><br />
-<code>top_k</code> &amp; 2 &amp; <code>top_k_experts</code> &amp; <span
+<code>top_k</code> &amp; 2 &amp; expertos usados por token &amp; <span
 class="citation" data-cites="fedus2021switch"></span><br />
-<code>expert_hidden_size</code> &amp; <code>null</code> &amp;
-<code>moe_expert_hidden_size</code> &amp; <span class="citation"
-data-cites="deepseek2024v3"></span><br />
-<code>router.scoring</code> &amp; <code>softmax</code> &amp;
-<code>moe_router_scoring</code> &amp; <span class="citation"
+<code>expert_hidden_size</code> &amp; <code>null</code> &amp; ancho del
+experto (cae a <code>ffn.hidden_size</code>) &amp; <span
+class="citation" data-cites="deepseek2024v3"></span><br />
+<code>router.scoring</code> &amp; <code>softmax</code> &amp; función
+logits<span class="math inline">\(\to\)</span>puntuaciones &amp; <span
+class="citation"
 data-cites="deepseek2024v3 deepseek2026v4"></span><br />
-<code>router.pre_softmax</code> &amp; <code>false</code> &amp;
-<code>moe_router_pre_softmax</code> &amp; <span class="citation"
-data-cites="fedus2021switch"></span><br />
-<code>router.renormalize</code> &amp; <code>true</code> &amp;
-<code>moe_router_renormalize</code> &amp; <span class="citation"
+<code>router.pre_softmax</code> &amp; <code>false</code> &amp; softmax
+antes del corte top-<span class="math inline">\(k\)</span> &amp; <span
+class="citation" data-cites="fedus2021switch"></span><br />
+<code>router.renormalize</code> &amp; <code>true</code> &amp; pesos
+seleccionados suman uno &amp; <span class="citation"
 data-cites="krajewski2025scaling"></span><br />
-<code>router.routed_scaling_factor</code> &amp; 1.0 &amp;
-<code>moe_routed_scaling_factor</code> &amp; <span class="citation"
+<code>router.routed_scaling_factor</code> &amp; 1.0 &amp; magnitud de la
+rama ruteada <span class="math inline">\(g\)</span> &amp; <span
+class="citation"
 data-cites="deepseek2024v3 kimiteam2026k3"></span><br />
-<code>router.dtype</code> &amp; <code>float32</code> &amp;
-<code>moe_router_dtype</code> &amp; <span class="citation"
+<code>router.dtype</code> &amp; <code>float32</code> &amp; precisión de
+cómputo del router &amp; <span class="citation"
 data-cites="fedus2021switch zoph2022stmoe"></span><br />
-<code>router.jitter_eps</code> &amp; 0.0 &amp;
-<code>moe_router_jitter_eps</code> &amp; <span class="citation"
+<code>router.jitter_eps</code> &amp; 0.0 &amp; fuerza del jitter de
+entrada &amp; <span class="citation"
 data-cites="fedus2021switch"></span><br />
-<code>router.z_loss_coeff</code> &amp; 0.0 &amp;
-<code>moe_router_z_loss_coeff</code> &amp; <span class="citation"
-data-cites="zoph2022stmoe"></span><br />
-<code>routing.type</code> &amp; <code>token_choice</code> &amp;
-<code>moe_routing_type</code> &amp; <span class="citation"
+<code>router.z_loss_coeff</code> &amp; 0.0 &amp; penalización de deriva
+de logits <span class="math inline">\(\beta\)</span> &amp; <span
+class="citation" data-cites="zoph2022stmoe"></span><br />
+<code>routing.type</code> &amp; <code>token_choice</code> &amp; quién
+elige a quién &amp; <span class="citation"
 data-cites="zhou2022expertchoice"></span><br />
-<code>routing.capacity_factor</code> &amp; 0.0 &amp;
-<code>moe_capacity_factor</code> &amp; <span class="citation"
-data-cites="pangu2025ultra"></span><br />
-<code>routing.hash_layers</code> &amp; 0 &amp;
-<code>moe_hash_layers</code> &amp; <span class="citation"
+<code>routing.capacity_factor</code> &amp; 0.0 &amp; tope por experto
+<span class="math inline">\(\kappa\)</span> (0: dropless) &amp; <span
+class="citation" data-cites="pangu2025ultra"></span><br />
+<code>routing.hash_layers</code> &amp; 0 &amp; primeras <span
+class="math inline">\(N\)</span> capas ruteadas por tabla &amp; <span
+class="citation"
 data-cites="roller2021hash deepseek2026v4"></span><br />
 <code>routing.hash_table</code> &amp; <code>random</code> &amp;
-<code>moe_hash_table</code> &amp; <span class="citation"
+construcción de la tabla &amp; <span class="citation"
 data-cites="roller2021hash"></span><br />
-<code>routing.hash_seed</code> &amp; 42 &amp; <code>moe_hash_seed</code>
-&amp; <span class="citation" data-cites="roller2021hash"></span><br />
-<code>balancing.aux_loss</code> &amp; <code>batch</code> &amp;
-<code>moe_aux_loss_type</code> &amp; <span class="citation"
+<code>routing.hash_seed</code> &amp; 42 &amp; semilla de la tabla &amp;
+<span class="citation" data-cites="roller2021hash"></span><br />
+<code>balancing.aux_loss</code> &amp; <code>batch</code> &amp; alcance
+de la pérdida &amp; <span class="citation"
 data-cites="dai2024deepseekmoe deepseek2024v3"></span><br />
-<code>balancing.aux_loss_coeff</code> &amp; 0.01 &amp;
-<code>moe_aux_loss_coeff</code> &amp; <span class="citation"
-data-cites="deepseek2024v3"></span><br />
+<code>balancing.aux_loss_coeff</code> &amp; 0.01 &amp; peso de la
+pérdida <span class="math inline">\(\alpha\)</span> &amp; <span
+class="citation" data-cites="deepseek2024v3"></span><br />
 <code>balancing.bias_update</code> &amp; <code>none</code> &amp;
-<code>moe_bias_update</code> &amp; <span class="citation"
-data-cites="wang2024auxfree"></span><br />
-<code>balancing.bias_update_rate</code> &amp; 0.001 &amp;
-<code>moe_bias_update_rate</code> &amp; <span class="citation"
-data-cites="wang2024auxfree"></span><br />
-<code>shared.count</code> &amp; 0 &amp;
-<code>moe_shared_experts_count</code> &amp; <span class="citation"
+termostato off / <code>sign</code> / centrado &amp; <span
+class="citation" data-cites="wang2024auxfree"></span><br />
+<code>balancing.bias_update_rate</code> &amp; 0.001 &amp; paso del
+termostato <span class="math inline">\(\gamma\)</span> &amp; <span
+class="citation" data-cites="wang2024auxfree"></span><br />
+<code>shared.count</code> &amp; 0 &amp; expertos siempre activos &amp;
+<span class="citation" data-cites="dai2024deepseekmoe"></span><br />
+<code>shared.hidden_size</code> &amp; <code>null</code> &amp; ancho del
+experto compartido &amp; <span class="citation"
 data-cites="dai2024deepseekmoe"></span><br />
-<code>shared.hidden_size</code> &amp; <code>null</code> &amp;
-<code>moe_shared_expert_hidden_size</code> &amp; <span class="citation"
-data-cites="dai2024deepseekmoe"></span><br />
-<code>shared.gate</code> &amp; <code>none</code> &amp;
-<code>moe_shared_expert_gate</code> &amp; <span class="citation"
+<code>shared.gate</code> &amp; <code>none</code> &amp; peso fijo o
+compuerta aprendida &amp; <span class="citation"
 data-cites="qwen2025qwen3"></span><br />
-<code>latent.enabled</code> &amp; <code>false</code> &amp;
-<code>moe_latent_enabled</code> &amp; <span class="citation"
+<code>latent.enabled</code> &amp; <code>false</code> &amp; comprimir
+antes del despacho &amp; <span class="citation"
 data-cites="elango2026latentmoe"></span><br />
-<code>latent.dim</code> &amp; <code>null</code> &amp;
-<code>moe_latent_dim</code> &amp; <span class="citation"
+<code>latent.dim</code> &amp; <code>null</code> &amp; ancho latente
+<span class="math inline">\(\ell\)</span> &amp; <span class="citation"
 data-cites="elango2026latentmoe"></span><br />
 <code>latent.norm_before_up_proj</code> &amp; <code>false</code> &amp;
-<code>moe_latent_norm_before_up_proj</code> &amp; <span class="citation"
-data-cites="kimiteam2026k3"></span><br />
-<code>layout.dense_layers</code> &amp; 0 &amp;
-<code>moe_dense_layers</code> &amp; <span class="citation"
+RMSNorm antes de <span class="math inline">\(W_\uparrow\)</span> &amp;
+<span class="citation" data-cites="kimiteam2026k3"></span><br />
+<code>layout.dense_layers</code> &amp; 0 &amp; prefijo denso <span
+class="math inline">\(N\)</span> &amp; <span class="citation"
 data-cites="deepseek2024v3"></span><br />
-<code>layout.every_n_layers</code> &amp; 1 &amp;
-<code>moe_layer_frequency</code> &amp; <span class="citation"
+<code>layout.every_n_layers</code> &amp; 1 &amp; MoE cada <span
+class="math inline">\(n\)</span>-ésima capa &amp; <span class="citation"
 data-cites="meta2025llama4"></span><br />
-<code>experts.activation_clamp</code> &amp; 0.0 &amp;
-<code>moe_activation_clamp</code> &amp; <span class="citation"
-data-cites="huang2026step35"></span><br />
+<code>experts.activation_clamp</code> &amp; 0.0 &amp; recorte de la
+entrada de compuerta <span class="math inline">\(c\)</span> (0: off)
+&amp; <span class="citation" data-cites="huang2026step35"></span><br />
 </p>
 </div>
 <h2 id="app:moe-presets-es">Presets con nombre</h2>
@@ -15702,7 +16235,10 @@ La Tabla <a href="#tab:moe-presets-es" data-reference-type="ref"
 data-reference="tab:moe-presets-es">[tab:moe-presets-es]</a> resume el
 bloque MoE de cada preset MoE; los valores se verificaron contra el
 <code>config.json</code> de Hugging Face de cada modelo cuando estaba
-disponible.</p>
+disponible. Leída contra la Sección <a href="#app:moe-failures-es"
+data-reference-type="ref" data-reference="app:moe-failures-es">29.2</a>:
+todo preset frontera reciente responde al colapso con el sesgo, la
+pérdida auxiliar o ambos.</p>
 <div class="longtable">
 <p><span>@L<span>0.18</span>L<span>0.12</span>L<span>0.10</span>L<span>0.14</span>L<span>0.12</span>L<span>0.22</span>@</span></p>
 <p><br />
@@ -15769,18 +16305,19 @@ hash de DeepSeek-V4 se soportan con
 partir de los conteos acumulados en los forwards del paso, así que la
 acumulación de gradiente y el micro-batching no cambian su semántica. El
 router no recibe gradiente del sesgo y el sesgo es un buffer no
-persistente; los checkpoints exportados quedan por tanto limpios para
-inferencia. Las pérdidas auxiliares son tensores ponderados por
-coeficiente en <code>last_auxiliary_losses</code> y el entrenador las
-suma a la pérdida de tarea; se excluyen de la evaluación. El router y
-los expertos se categorizan como bloques <code>router</code> y
-<code>ffn</code> respectivamente, así que las normas de gradiente por
-bloque y los conteos de parámetros coinciden con la taxonomía del
-estimador. Finalmente, la capa MoE es token-wise y por tanto segura para
-caché: las suites de paridad de caché KV mantienen la FFN densa porque
-un top-<span class="math inline">\(k\)</span> discreto puede cambiar
-bajo las diferencias numéricas mínimas entre forwards completos y con
-caché, lo que es una propiedad del ruteo discreto, no de la caché.</p>
+persistente; los checkpoints exportados no contienen por tanto estado de
+entrenamiento—quedan limpios para inferencia. Las pérdidas auxiliares
+son tensores ponderados por coeficiente en
+<code>last_auxiliary_losses</code> y el entrenador las suma a la pérdida
+de tarea; se excluyen de la evaluación. El router y los expertos se
+categorizan como bloques <code>router</code> y <code>ffn</code>
+respectivamente, así que las normas de gradiente por bloque y los
+conteos de parámetros coinciden con la taxonomía del estimador.
+Finalmente, la capa MoE es token-wise y por tanto segura para caché: las
+suites de paridad de caché KV mantienen la FFN densa porque un top-<span
+class="math inline">\(k\)</span> discreto puede cambiar bajo las
+diferencias numéricas mínimas entre forwards completos y con caché—una
+propiedad del ruteo discreto, no de la caché.</p>
 <h2 id="app:moe-future-es">Sistemas relacionados y trabajo futuro</h2>
 <p>El diseño de este anexo sigue la anatomía del manual de MoE (router,
 ruteo, balanceo, expertos, disposición, capacidad) y la literatura de
@@ -16355,7 +16892,7 @@ no atada conserva <span class="math inline">\(3.94\)</span>M, dejando
 contabilidad del paper, donde la cabeza se descarta solo para el
 despliegue.</p>
 <p>La Tabla <a href="#tab:eelbert-results-es" data-reference-type="ref"
-data-reference="tab:eelbert-results-es">10</a> resume los resultados de
+data-reference="tab:eelbert-results-es">11</a> resume los resultados de
 referencia reportados por <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results-es">
@@ -18095,7 +18632,7 @@ Nada de esta cadena necesita GPU.</figcaption>
 <h2 id="el-libro-de-etapas-de-la-ronda-2">El libro de etapas de la
 ronda 2</h2>
 <p>La Tabla <a href="#tab:stage-ledger" data-reference-type="ref"
-data-reference="tab:stage-ledger">14</a> reproduce el libro. El
+data-reference="tab:stage-ledger">15</a> reproduce el libro. El
 entrenamiento domina tanto el conteo de registros como el coste:
 1<span>,</span>039 intentos, de los cuales 868 tuvieron éxito y 171
 fallaron, con una mediana de 68 minutos y un P90 de 84 minutos por
@@ -18304,8 +18841,8 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">99</a>) es el diagnóstico más
-útil de la sección. Los embeddings y la cabeza de salida son costes
+data-reference="fig:r2-params-composition">107</a>) es el diagnóstico
+más útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
 componentes que los experimentos realmente varían. Los transformers de
@@ -18349,10 +18886,10 @@ de evaluación, un token afortunado o desafortunado reescribe el ranking.
 Por eso se reportan ambas señales a lo largo del apéndice, y las tablas
 de inferencia deben leerse como control de fallos catastróficos y no
 como clasificación. La Tabla <a href="#tab:r2-top-loss"
-data-reference-type="ref" data-reference="tab:r2-top-loss">15</a> lista
+data-reference-type="ref" data-reference="tab:r2-top-loss">16</a> lista
 los diez mejores pares por pérdida final y la Tabla <a
 href="#tab:r2-top-acc" data-reference-type="ref"
-data-reference="tab:r2-top-acc">16</a> los diez mejores por precisión de
+data-reference="tab:r2-top-acc">17</a> los diez mejores por precisión de
 validación; las dos tablas no comparten ningún par.</p>
 <div id="tab:r2-top-loss">
 <table>
@@ -18608,7 +19145,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">107</a>)
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">115</a>)
 es el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -18643,7 +19180,7 @@ entrenan.</figcaption>
 <h4 id="qué-segundo-mezclador-elegir.">Qué segundo mezclador
 elegir.</h4>
 <p>La Tabla <a href="#tab:r2-best-b" data-reference-type="ref"
-data-reference="tab:r2-best-b">17</a> ordena los segundos mezcladores
+data-reference="tab:r2-best-b">18</a> ordena los segundos mezcladores
 por pérdida final media en todos los pares que los contienen. La columna
 <em>Pares</em> es el tamaño de muestra detrás de cada media y debe
 leerse junto con ella: una media de un solo par (por ejemplo
@@ -18934,7 +19471,7 @@ validación.</figcaption>
 ronda: 23 optimizadores, el mismo esqueleto de 210k y un rango de
 pérdida final de solo 10,10–10,77 nats (Tabla <a
 href="#tab:r2-optimizers" data-reference-type="ref"
-data-reference="tab:r2-optimizers">19</a>). <code>q_apollo</code> gana
+data-reference="tab:r2-optimizers">20</a>). <code>q_apollo</code> gana
 con 10,098 y <code>galore_adamw</code> cierra la tabla con 10,772, pero
 una docena de optimizadores aterrizan exactamente en 10,404—la corrida
 es demasiado corta para que la elección del optimizador se separe del
@@ -19114,13 +19651,13 @@ pagan el sobrecoste visible.</figcaption>
 <h4 id="normalización-y-codificación-posicional.">Normalización y
 codificación posicional.</h4>
 <p>Entre las normalizaciones (Tabla <a href="#tab:r2-norms"
-data-reference-type="ref" data-reference="tab:r2-norms">20</a>),
+data-reference-type="ref" data-reference="tab:r2-norms">21</a>),
 <code>flash_norm</code> gana con claridad con 9,749 nats—medio nat por
 delante del segundo, un margen grande según los estándares de esta
 ronda—, mientras que <code>prms_norm</code> y <code>rms_norm</code>
 quedan atrás. En las codificaciones posicionales (Tabla <a
 href="#tab:r2-pe" data-reference-type="ref"
-data-reference="tab:r2-pe">21</a>), la familia PAPE
+data-reference="tab:r2-pe">22</a>), la familia PAPE
 (<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
 barre el podio y RoPE clásico queda a media tabla. Ambos resultados
 sirven de calibración: “moderno” no es automáticamente mejor en una
@@ -19277,7 +19814,7 @@ y RoPE clásico queda a media tabla a esta escala.</figcaption>
 </figure>
 <h4 id="conmutadores-estructurales.">Conmutadores estructurales.</h4>
 <p>Los conmutadores estructurales (Tabla <a href="#tab:r2-trans"
-data-reference-type="ref" data-reference="tab:r2-trans">22</a>) se
+data-reference-type="ref" data-reference="tab:r2-trans">23</a>) se
 separan más que los optimizadores—evidencia de que, a esta escala, la
 arquitectura es una palanca más fuerte que la regla de actualización.
 Las tres victorias son los embeddings factorizados (9,623), la FFN
@@ -19650,7 +20187,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">126</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">134</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
@@ -19750,7 +20287,7 @@ arquitectónicos. Los campos obligatorios son
 <code>dims.vocab_size</code>, <code>dims.hidden_size</code>,
 <code>dims.num_layers</code>, <code>dims.num_heads</code> y
 <code>dims.layer_pattern</code>. La Tabla <a href="#tab:model-fields"
-data-reference-type="ref" data-reference="tab:model-fields">24</a>
+data-reference-type="ref" data-reference="tab:model-fields">25</a>
 enumera todos los campos del modelo con sus tipos y descripciones.</p>
 <div id="tab:model-fields">
 <table>
@@ -20587,7 +21124,7 @@ planas en <code>model.*</code>.</p>
 <p>El array <code>model.dims.layer_pattern</code> acepta los siguientes
 48 códigos de mezclador. Cada elemento define una capa física en la pila
 del modelo. La Tabla <a href="#tab:layer-pattern-enum"
-data-reference-type="ref" data-reference="tab:layer-pattern-enum">25</a>
+data-reference-type="ref" data-reference="tab:layer-pattern-enum">26</a>
 enumera todos los tipos disponibles con su soporte de entrenamiento e
 inferencia.</p>
 <div id="tab:layer-pattern-enum">
@@ -20902,7 +21439,7 @@ class="math inline">\(\mathcal{O}(NK)\)</span> tiempo lineal</td>
 <p>El objeto <code>training</code> controla todo el pipeline de
 entrenamiento. El único campo obligatorio es <code>task</code>. La
 Tabla <a href="#tab:training-fields" data-reference-type="ref"
-data-reference="tab:training-fields">26</a> enumera todos los campos de
+data-reference="tab:training-fields">27</a> enumera todos los campos de
 entrenamiento.</p>
 <div id="tab:training-fields">
 <table>
@@ -21290,7 +21827,7 @@ modo que la matriz de embeddings siempre coincide con el tokenizador. En
 este modo <code>name_or_path</code> debe omitirse.</p></li>
 </ul>
 <p>La Tabla <a href="#tab:tokenizer-training" data-reference-type="ref"
-data-reference="tab:tokenizer-training">27</a> enumera los campos del
+data-reference="tab:tokenizer-training">28</a> enumera los campos del
 sub-objeto <code>tokenizer.training</code>.</p>
 <div id="tab:tokenizer-training">
 <table>
@@ -21419,7 +21956,7 @@ dedicados.</p>
 Específicos del Optimizador</h3>
 <p>La Tabla <a href="#tab:optimizer-specific-suffixes"
 data-reference-type="ref"
-data-reference="tab:optimizer-specific-suffixes">28</a> enumera los
+data-reference="tab:optimizer-specific-suffixes">29</a> enumera los
 sufijos globales adicionales soportados por cada optimizador (prefijados
 por el nombre del optimizador).</p>
 <div id="tab:optimizer-specific-suffixes">
@@ -22677,9 +23214,12 @@ data-reference-type="ref" data-reference="sec:annex-audio">33</a>) &amp;
 role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a
-href="https://erickfmm.github.io/frankenstein-transformer/charts/index.html"
-class="uri">https://erickfmm.github.io/frankenstein-transformer/charts/index.html</a><a
+<li id="fn1"><p>La ronda 2 está publicada en <a
+href="https://erickfmm.github.io/frankenstein-transformer/experiments/2/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/experiments/2/index.html</a>,
+y todas las rondas están indexadas en <a
+href="https://erickfmm.github.io/frankenstein-transformer/experiments/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/experiments/index.html</a>.<a
 href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>

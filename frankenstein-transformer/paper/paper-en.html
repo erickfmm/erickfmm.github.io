@@ -349,14 +349,12 @@ Directions</a></li>
 <li><a href="#sec:annex-tutorial" id="toc-sec:annex-tutorial">Conceptual
 Introduction—Transformers and Attention for Beginners</a>
 <ul>
-<li><a href="#what-is-a-transformer" id="toc-what-is-a-transformer">What
-is a Transformer?</a></li>
-<li><a href="#the-attention-mechanism-an-analogy"
-id="toc-the-attention-mechanism-an-analogy">The Attention Mechanism: An
-Analogy</a></li>
-<li><a href="#practical-example-step-by-step"
-id="toc-practical-example-step-by-step">Practical Example
-Step-by-Step</a>
+<li><a href="#subsec:tut-context" id="toc-subsec:tut-context">What Is a
+Transformer? Words in Context</a></li>
+<li><a href="#subsec:tut-attention" id="toc-subsec:tut-attention">The
+Attention Mechanism: One Voice in a Noisy Room</a></li>
+<li><a href="#subsec:tut-example" id="toc-subsec:tut-example">A Worked
+Example: The Two Lives of “eats”</a>
 <ul>
 <li><a href="#context-1-the-cat-eats-fish"
 id="toc-context-1-the-cat-eats-fish">Context 1: “The cat eats
@@ -365,9 +363,8 @@ fish”</a></li>
 id="toc-context-2-the-restaurant-eats-into-profit-margins">Context 2:
 “The restaurant eats into profit margins”</a></li>
 </ul></li>
-<li><a href="#how-attention-works-mathematically-simple-version"
-id="toc-how-attention-works-mathematically-simple-version">How Attention
-Works Mathematically (Simple Version)</a>
+<li><a href="#subsec:tut-math" id="toc-subsec:tut-math">How Attention
+Works Mathematically: A Library Called Attention</a>
 <ul>
 <li><a href="#step-1-queries-keys-and-values"
 id="toc-step-1-queries-keys-and-values">Step 1: Queries, Keys, and
@@ -378,15 +375,15 @@ Values</a></li>
 <li><a href="#step-4-combine" id="toc-step-4-combine">Step 4:
 Combine</a></li>
 </ul></li>
-<li><a href="#multiple-attention-heads-multiple-perspectives"
-id="toc-multiple-attention-heads-multiple-perspectives">Multiple
-Attention Heads: Multiple Perspectives</a></li>
-<li><a href="#stacking-layers" id="toc-stacking-layers">Stacking
-Layers</a></li>
+<li><a href="#subsec:tut-heads" id="toc-subsec:tut-heads">Multiple
+Attention Heads: A Team of Analysts</a></li>
+<li><a href="#subsec:tut-layers" id="toc-subsec:tut-layers">Stacking
+Layers: Editing the Essay in Passes</a></li>
 <li><a href="#why-does-it-matter" id="toc-why-does-it-matter">Why Does
 It Matter?</a></li>
-<li><a href="#practical-challenges"
-id="toc-practical-challenges">Practical Challenges</a>
+<li><a href="#subsec:tut-challenges"
+id="toc-subsec:tut-challenges">Practical Challenges: The Price of
+Listening to Everyone</a>
 <ul>
 <li><a href="#computational-complexity"
 id="toc-computational-complexity">Computational Complexity</a></li>
@@ -395,8 +392,8 @@ Requirements</a></li>
 <li><a href="#device-efficiency" id="toc-device-efficiency">Device
 Efficiency</a></li>
 </ul></li>
-<li><a href="#modern-solutions" id="toc-modern-solutions">Modern
-Solutions</a></li>
+<li><a href="#subsec:tut-solutions" id="toc-subsec:tut-solutions">Modern
+Solutions: Smarter Ways to Listen</a></li>
 <li><a href="#key-takeaways" id="toc-key-takeaways">Key
 Takeaways</a></li>
 </ul></li>
@@ -1125,8 +1122,10 @@ Results</a></li>
 <li><a href="#app:moe" id="toc-app:moe">Mixture-of-Experts: Theory and
 Implementation</a>
 <ul>
-<li><a href="#app:moe-overview" id="toc-app:moe-overview">Overview and
-taxonomy</a></li>
+<li><a href="#app:moe-overview" id="toc-app:moe-overview">Overview: what
+a Mixture-of-Experts layer is</a></li>
+<li><a href="#app:moe-failures" id="toc-app:moe-failures">The two
+failure modes: collapse and the straggler</a></li>
 <li><a href="#app:moe-router" id="toc-app:moe-router">Router scoring:
 from logits to weights</a></li>
 <li><a href="#app:moe-routing" id="toc-app:moe-routing">Routing
@@ -1512,7 +1511,9 @@ four subcommands: <code>train</code>, <code>deploy</code>,
 Streamlit configuration builder that renders schema metadata as forms,
 validates input live, previews the resulting YAML, and generates the
 equivalent CLI command, serving both as a configuration aid and as
-documentation of the available design space.</p>
+documentation of the available design space; a hosted instance runs at
+<a href="https://erickfmm.github.io/frankenstein-transformer/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/index.html</a>.</p>
 <h2 id="reading-guide">Reading Guide</h2>
 <p>This document is organized as a technical reference:</p>
 <ol>
@@ -3537,209 +3538,378 @@ transferable sparse expert models, 2022.</p>
 </div>
 <h1 id="sec:annex-tutorial">Conceptual Introduction—Transformers and
 Attention for Beginners</h1>
-<p>This appendix provides an accessible introduction to the fundamental
-concepts of transformers and the attention mechanism, aimed at readers
-without deep prior knowledge in deep learning. Transformers are the
-engine behind modern artificial intelligence systems like ChatGPT, but
-their operation can be understood through real-world analogies.</p>
-<h2 id="what-is-a-transformer">What is a Transformer?</h2>
-<p>A transformer is a neural architecture that processes text or data
-sequences by interpreting the meaning of each word while considering all
-other words in context. Imagine you read a sentence:</p>
+<p>This appendix is the on-ramp to the paper: it explains what a
+transformer is and how attention works, for readers with no
+deep-learning background. Every mechanism is introduced through one
+real-world analogy, and — this is the point of the appendix — the
+<em>same</em> analogy returns every time the mechanism returns, so a
+single mental image carries you from the first intuition to the
+mathematics. Table <a href="#tab:tut-analogies"
+data-reference-type="ref" data-reference="tab:tut-analogies">2</a> lists
+the cast; the running example is always the same sentence, “The cat eats
+fish”.</p>
+<div id="tab:tut-analogies">
+<table>
+<caption>The cast of analogies of this tutorial. Each row is introduced
+once and then reused verbatim in every later section, including the
+takeaways.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Mechanism</strong></th>
+<th style="text-align: left;"><strong>Analogy reused
+throughout</strong></th>
+<th style="text-align: left;"><strong>Introduced in</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Attention</td>
+<td style="text-align: left;">listening to one voice in a noisy
+room</td>
+<td style="text-align: left;">§<a href="#subsec:tut-attention"
+data-reference-type="ref"
+data-reference="subsec:tut-attention">12.2</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Queries, keys, values</td>
+<td style="text-align: left;">visitor, catalog card, and book in a
+library</td>
+<td style="text-align: left;">§<a href="#subsec:tut-math"
+data-reference-type="ref" data-reference="subsec:tut-math">12.4</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Attention heads</td>
+<td style="text-align: left;">a team of analysts, one question each</td>
+<td style="text-align: left;">§<a href="#subsec:tut-heads"
+data-reference-type="ref"
+data-reference="subsec:tut-heads">12.5</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stacked layers</td>
+<td style="text-align: left;">editing an essay in successive passes</td>
+<td style="text-align: left;">§<a href="#subsec:tut-layers"
+data-reference-type="ref"
+data-reference="subsec:tut-layers">12.6</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="subsec:tut-context">What Is a Transformer? Words in Context</h2>
+<p>A transformer is a neural architecture that processes text (or any
+sequence) by interpreting the meaning of each word <em>in the light of
+all the other words around it</em>. The problem it solves is easiest to
+see with an ambiguous word. Read this:</p>
 <div class="center">
 <p><em>“The bank was full of people waiting. Mary went to the
 bank.”</em></p>
 </div>
-<p>What does “bank” mean in each case? In the first sentence, it refers
-to a financial institution (or a bench). In the second, it is less clear
-without context. A transformer solves this automatically by looking at
-all surrounding words. In the second sentence, seeing “Mary went”, the
-model better understands that it probably is a riverbank (where she goes
-to swim) or a financial institution (where she goes to conduct a
-transaction).</p>
-<p>This ability to understand the complete meaning of a word by
-considering the entire sentence is called <em>contextualization</em>,
-and it is the heart of how modern transformers work.</p>
-<h2 id="the-attention-mechanism-an-analogy">The Attention Mechanism: An
-Analogy</h2>
-<p>The attention mechanism is the “magic trick” that allows transformers
-to understand context. Think of it as participating in an important
+<p>What does “bank” mean in each case? Taken alone, the word has three
+unrelated meanings: a financial institution, a bench to sit on, the
+ground beside a river. Inside the first sentence, the neighbors (“full
+of people waiting”) vote for the branch office. Inside the second, “Mary
+went to the…” leaves two readings alive — she could be heading to the
+counter or to the river. Figure <a href="#fig:tut-context"
+data-reference-type="ref" data-reference="fig:tut-context">13</a>
+contrasts the two situations.</p>
+<figure id="fig:tut-context"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-context.svg" alt="image" /></span></p>
+
+<figcaption>Contextualization in one picture: the word “bank” alone has
+three unrelated meanings (top); inside its sentence, the neighboring
+words vote and select the reading (middle). A transformer does this for
+every word simultaneously.</figcaption>
+</figure>
+<p>This ability to re-read every word in the light of the whole sentence
+is called <em>contextualization</em>, and it is the heart of every
+modern transformer. The question this appendix answers is <em>how</em>
+the model decides which neighbors to listen to. The answer is
+attention.</p>
+<h2 id="subsec:tut-attention">The Attention Mechanism: One Voice in a
+Noisy Room</h2>
+<p>Attention is the “magic trick” behind contextualization. Think of a
 conversation in a noisy room:</p>
 <ol>
-<li><p><strong>Lots of noise</strong>: Someone is speaking and being
-very important to you.</p></li>
-<li><p><strong>You ignore the rest</strong>: Your brain automatically
-focuses attention on that person, ignoring other sounds.</p></li>
-<li><p><strong>You understand better</strong>: By concentrating, you
+<li><p><strong>Lots of noise</strong>: many people talk at once, but one
+of them matters to you.</p></li>
+<li><p><strong>You ignore the rest</strong>: your brain automatically
+focuses on that one voice and filters the rest.</p></li>
+<li><p><strong>You understand better</strong>: by concentrating, you
 catch every word clearly.</p></li>
 </ol>
-<p>The neural attention mechanism works the same way: each word “asks”
-how important every other word is to understanding its meaning, then
-“focuses” its attention on the most relevant ones.</p>
-<h2 id="practical-example-step-by-step">Practical Example
-Step-by-Step</h2>
-<p>Let’s see how a transformer understands the word “eats” in two
-different contexts:</p>
+<p>The neural mechanism works the same way, with one twist: <em>every
+word in the sentence is such a listener</em>. Each word “asks” how
+important every other word is for understanding it, then focuses its
+attention on the most relevant ones. The room is the sentence, the
+voices are the words, and the focusing ability is attention. Keep this
+image: every formula below is just the arithmetic version of listening
+selectively.</p>
+<h2 id="subsec:tut-example">A Worked Example: The Two Lives of
+“eats”</h2>
+<p>Let us watch the mechanism work on one word in two different
+sentences. The numbers that follow are illustrative, but they are
+exactly the kind of table a trained transformer computes — Figure <a
+href="#fig:tut-heatmap" data-reference-type="ref"
+data-reference="fig:tut-heatmap">14</a> shows both cases.</p>
 <h3 id="context-1-the-cat-eats-fish">Context 1: “The cat eats fish”</h3>
-<p>The transformer, when processing “eats”, internally asks:</p>
+<p>Processing “eats”, the word-as-listener asks about every other voice
+in the room:</p>
 <ul>
-<li><p>How relevant is “The”? Little (it’s just an article). <strong>Low
-attention</strong>.</p></li>
-<li><p>How relevant is “cat”? Very relevant (it’s the subject, who
-eats). <strong>High attention</strong>.</p></li>
-<li><p>How relevant is “fish”? Very relevant (it’s what is eaten).
-<strong>High attention</strong>.</p></li>
+<li><p>How relevant is “The”? Little — it is just an article.
+<strong>Low attention: 5%</strong>.</p></li>
+<li><p>How relevant is “cat”? Very — it is the subject, who eats.
+<strong>High attention: 55%</strong>.</p></li>
+<li><p>How relevant is “eats”? A little — itself. <strong>Low attention:
+5%</strong>.</p></li>
+<li><p>How relevant is “fish”? Very — it is what gets eaten.
+<strong>High attention: 35%</strong>.</p></li>
 </ul>
-<p>Thus, the mental representation of “eats” focuses primarily on “cat”
-and “fish”.</p>
+<p>The new representation of “eats” is dominated by “cat” and “fish”: an
+action, with its subject and its object.</p>
 <h3 id="context-2-the-restaurant-eats-into-profit-margins">Context 2:
 “The restaurant eats into profit margins”</h3>
-<p>Here the transformer asks in a different context:</p>
+<p>Same word, different room. Now the listeners that matter are
+different:</p>
 <ul>
-<li><p>How relevant is “restaurant”? Very relevant (it’s the subject).
-<strong>High attention</strong>.</p></li>
-<li><p>How relevant is “profit”? Very relevant (it’s affected).
-<strong>High attention</strong>.</p></li>
-<li><p>How relevant is “margins”? Very relevant (it’s what’s being
-consumed). <strong>High attention</strong>.</p></li>
+<li><p>“restaurant” (the subject): <strong>30%</strong>.</p></li>
+<li><p>“profit” (what is affected): <strong>25%</strong>.</p></li>
+<li><p>“margins” (what gets consumed): <strong>35%</strong>.</p></li>
+<li><p>“The”, “into”, and “eats” itself: the remaining
+<strong>10%</strong>.</p></li>
 </ul>
-<p>The word “eats” gets a completely different representation because it
-“attends” to different words in different contexts.</p>
-<h2 id="how-attention-works-mathematically-simple-version">How Attention
-Works Mathematically (Simple Version)</h2>
-<p>Behind the attention shift is mathematics. Here is the simplified
-version without too much technical detail:</p>
+<figure id="fig:tut-heatmap"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tut-attention-heatmap.svg" alt="image" /></span></p>
+
+<figcaption>Two attention matrices (rows: asking word; columns: word
+attended to; the highlighted row is “eats”). In (a) the word “eats”
+listens mostly to “cat” (55%) and “fish” (35%); in (b) the same word
+listens to “restaurant”, “profit” and “margins”. Same word, different
+room, different focus — contextualization in action. Every row sums to
+100% because attention is a limited budget.</figcaption>
+</figure>
+<p>The word “eats” ends up with a completely different representation in
+each sentence because it <em>attends</em> to different words. That is
+the whole trick: one word, many possible meanings, and attention picking
+the right neighbors to define it.</p>
+<h2 id="subsec:tut-math">How Attention Works Mathematically: A Library
+Called Attention</h2>
+<p>Behind the listening there is arithmetic. The standard analogy — and
+the one this paper sticks to — is a library, shown in Figure <a
+href="#fig:tut-qkv" data-reference-type="ref"
+data-reference="fig:tut-qkv">15</a>.</p>
+<figure id="fig:tut-qkv"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-qkv-library.svg" alt="image" /></span></p>
+
+<figcaption>Queries, keys and values as a library visit. The visitor
+carries a question (Q), every book advertises itself with a catalog card
+(K), the librarian compares question and cards (the attention), and the
+visitor leaves with a weighted mix of the book contents
+(V).</figcaption>
+</figure>
 <h3 id="step-1-queries-keys-and-values">Step 1: Queries, Keys, and
 Values</h3>
-<p>Each word in the sentence is transformed into three versions:</p>
+<p>Each word is transformed into three versions of itself:</p>
 <ul>
-<li><p><strong>Query</strong>: “What information do I need to
-know?”</p></li>
-<li><p><strong>Key</strong>: “What information do I have?”</p></li>
-<li><p><strong>Value</strong>: “Here is my important
-information.”</p></li>
+<li><p><strong>Query (Q)</strong>: the visitor’s question — “what
+information do I need?”</p></li>
+<li><p><strong>Key (K)</strong>: the catalog card — “what information do
+I offer?”</p></li>
+<li><p><strong>Value (V)</strong>: the book’s content — “here is my
+actual information.”</p></li>
 </ul>
-<p>Imagine in a library, each visitor is a “query”, each book is a
-“key”, and the content is the “value”. The librarian (attention) matches
-queries with the most relevant keys to access the correct value.</p>
+<p>Crucially, every word plays all three roles at once: it asks (Q), it
+advertises (K), it delivers (V). One visit to the library, with every
+book simultaneously a visitor and a shelf.</p>
 <h3 id="step-2-compatibility">Step 2: Compatibility</h3>
-<p>The system examines how <em>compatible</em> each query is with each
-key. Queries similar to keys get a <em>high</em> compatibility score.
-This is calculated by multiplying the query by the key (mathematically,
-the dot product).</p>
+<p>The librarian compares the question with every card. Questions
+similar to a card get a high compatibility score; the score is computed
+by multiplying the query by the key (a <em>dot product</em>). For our
+“eats” query: <span class="math inline">\(\mathrm{s}(\text{eats}
+\rightarrow \text{cat}) = 3.40\)</span>, <span
+class="math inline">\(\mathrm{s}(\text{eats} \rightarrow \text{fish}) =
+2.95\)</span>, <span class="math inline">\(\mathrm{s}(\text{eats}
+\rightarrow \text{The}) = 1.00\)</span>. Figure <a
+href="#fig:tut-attention-steps" data-reference-type="ref"
+data-reference="fig:tut-attention-steps">16</a> places the four steps in
+one pipeline.</p>
+<figure id="fig:tut-attention-steps"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-attention-steps.svg" alt="image" /></span></p>
+
+<figcaption>The full attention step for the query “eats” in “The cat
+eats fish”: three copies per word (Step 1), one dot product per
+query–key pair (Step 2), softmax turning scores into percentages (Step
+3), and the weighted combination of values (Step 4). The numbers are the
+same as in Figures <a href="#fig:tut-heatmap" data-reference-type="ref"
+data-reference="fig:tut-heatmap">14</a> and <a href="#fig:tut-softmax"
+data-reference-type="ref"
+data-reference="fig:tut-softmax">17</a>.</figcaption>
+</figure>
 <h3 id="step-3-focus">Step 3: Focus</h3>
-<p>The compatibility scores are converted into “focus weights”. High
-compatibilities mean “focus attention here”, and low ones mean “ignore
-this”. Mathematically, a function called <code>softmax</code> converts
-scores into percentages (like: 40% attention here, 35% here, 25%
-there).</p>
+<p>Raw scores are just numbers; attention is a <em>budget</em>. A
+function called <code>softmax</code> converts the scores into
+percentages that always sum to 100%: the “eats” query turns the scores
+above into <strong>5% / 55% / 5% / 35%</strong> over “The / cat / eats /
+fish”. Figure <a href="#fig:tut-softmax" data-reference-type="ref"
+data-reference="fig:tut-softmax">17</a> shows the conversion. High
+compatibility means “focus attention here”; low compatibility means
+“ignore this” — back in the noisy room, the voice you decided to filter
+out.</p>
+<figure id="fig:tut-softmax"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tut-softmax-focus.svg" alt="image" /></span></p>
+
+<figcaption>Step 2 <span class="math inline">\(\rightarrow\)</span> Step
+3 in numbers. Top: the four raw compatibility scores (dot products) for
+the query “eats”. Bottom: after <code>softmax</code>, the same four
+numbers become an attention budget that sums to exactly
+100%.</figcaption>
+</figure>
 <h3 id="step-4-combine">Step 4: Combine</h3>
-<p>Finally, the system combines all values, weighted by the focus
-weights. If a word has 80% attention on the subject, 80% of the
-subject’s information gets blended into that word’s representation.</p>
-<h2 id="multiple-attention-heads-multiple-perspectives">Multiple
-Attention Heads: Multiple Perspectives</h2>
-<p>A key feature is that transformers do not use a single attention but
-<em>multiple attention heads</em> in parallel. It’s as if you had 8
-people analyzing the sentence <em>simultaneously</em>, each paying
-attention to different aspects:</p>
+<p>Finally the visitor leaves the library with a weighted mix of
+contents. If “eats” places 55% of its budget on “cat” and 35% on “fish”,
+then 55% of cat’s value and 35% of fish’s value are blended into the new
+representation of “eats”: <span class="math display">\[\text{new
+``eats&#39;&#39;} \;=\; 5\%\cdot v_{\text{The}} + 55\%\cdot
+v_{\text{cat}} + 5\%\cdot v_{\text{eats}} + 35\%\cdot v_{\text{fish}}.
+\label{eq:tut-mix}\]</span> That blended vector is what the rest of the
+network sees: a representation of “eats” that already contains who eats
+and what gets eaten.</p>
+<h2 id="subsec:tut-heads">Multiple Attention Heads: A Team of
+Analysts</h2>
+<p>Transformers never run one attention but <em>many heads in
+parallel</em> — as if the sentence were analyzed by a team of
+specialists, each asking a different question about it (Figure <a
+href="#fig:tut-heads" data-reference-type="ref"
+data-reference="fig:tut-heads">18</a>):</p>
 <ul>
-<li><p><strong>Person 1</strong>: “I focus on subject-verb
-relationships.”</p></li>
-<li><p><strong>Person 2</strong>: “I search for the direct
-object.”</p></li>
-<li><p><strong>Person 3</strong>: “I track information about verb
-tense.”</p></li>
-<li><p><strong>Person 4</strong>: “I search for modifiers and
-adjectives.”</p></li>
+<li><p><strong>Analyst 1 (grammar)</strong>: “who does it?” — links
+<em>cat</em> <span class="math inline">\(\rightarrow\)</span>
+<em>eats</em>.</p></li>
+<li><p><strong>Analyst 2 (object)</strong>: “what receives it?” — links
+<em>eats</em> <span class="math inline">\(\rightarrow\)</span>
+<em>fish</em>.</p></li>
+<li><p><strong>Analyst 3 (time)</strong>: “when / how often?” — tracks
+verb tense and time words.</p></li>
+<li><p><strong>Analyst 4 (style)</strong>: “which articles and
+modifiers?” — tracks “the”, “a”, adjectives.</p></li>
 </ul>
-<p>Each “head” learns to focus on different language patterns. Together,
-they capture much richer understanding than a single head.</p>
-<h2 id="stacking-layers">Stacking Layers</h2>
-<p>Transformers process information in <em>multiple layers</em> (usually
-12 to 48 for practical models). Imagine editing an essay:</p>
+<figure id="fig:tut-heads"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-heads.svg" alt="image" /></span></p>
+
+<figcaption>Several heads read the same sentence simultaneously, like a
+team of analysts with one question each. Their reports are concatenated
+and re-mixed into a single, much richer representation.</figcaption>
+</figure>
+<p>Each head learns its own focus pattern from data, and their reports
+are concatenated and re-mixed by one learned projection. Together they
+capture far more than any single head could — grammar, roles, time and
+style at once.</p>
+<h2 id="subsec:tut-layers">Stacking Layers: Editing the Essay in
+Passes</h2>
+<p>One attention step still sees shallow patterns, so transformers stack
+the same block many times (12 to 48 in practical models). The analogy:
+editing an essay in successive passes (Figure <a href="#fig:tut-layers"
+data-reference-type="ref" data-reference="fig:tut-layers">19</a>).</p>
 <ol>
-<li><p><strong>First pass</strong>: You fix spelling and basic
-grammar.</p></li>
-<li><p><strong>Second pass</strong>: You improve clarity and sentence
-structure.</p></li>
-<li><p><strong>Third pass</strong>: You ensure consistency and narrative
-flow.</p></li>
+<li><p><strong>First pass</strong> — fix spelling and basic grammar:
+recognize words, forms, gender.</p></li>
+<li><p><strong>Second pass</strong> — improve clarity of each sentence:
+who does what to whom.</p></li>
+<li><p><strong>Third pass</strong> — ensure consistency and narrative
+flow: idioms, relations, abstract meaning.</p></li>
 </ol>
-<p>Transformers work the same way: each layer refines text
-understanding. The first layer captures basic features (simple words,
-genders), while later layers understand complex concepts (word
-relationships, abstract meanings).</p>
+<figure id="fig:tut-layers"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tutorial-layers.svg" alt="image" /></span></p>
+
+<figcaption>Layers as editing passes: the raw text enters at the top and
+each layer refines the previous layer’s reading — from words and forms,
+through sentence structure, to abstract meaning. The block repeats 12–48
+times in practice.</figcaption>
+</figure>
+<p>Each layer re-reads what the previous layer produced and refines it:
+early layers capture basic features, later layers understand complex
+relations and abstract concepts. No layer is told what to look for — the
+passes organize themselves during training.</p>
 <h2 id="why-does-it-matter">Why Does It Matter?</h2>
 <p>The attention mechanism was revolutionary because:</p>
 <ol>
-<li><p><strong>Parallelism</strong>: It finds context for <em>any word
-with any other word</em>, without processing them sequentially (unlike
-earlier systems). This makes it very fast.</p></li>
-<li><p><strong>Flexibility</strong>: It learns what patterns to look for
-automatically from data, without you needing to program rules
-manually.</p></li>
-<li><p><strong>Scalability</strong>: It works from small texts to
-contexts with millions of words.</p></li>
-<li><p><strong>General Capabilities</strong>: The same mechanism works
-for translation, summarization, question-answering, text generation,
-computer vision, and more.</p></li>
+<li><p><strong>Parallelism</strong>: any word can be compared with any
+other word <em>at once</em> (no sequential processing, unlike earlier
+recurrent systems) — fast on modern hardware.</p></li>
+<li><p><strong>Flexibility</strong>: the patterns are learned from data;
+nobody programs the rules.</p></li>
+<li><p><strong>Scalability</strong>: the same mechanism works from a
+sentence to millions of words of context.</p></li>
+<li><p><strong>Generality</strong>: translation, summarization, question
+answering, generation, computer vision, audio — one mechanism, many
+tasks.</p></li>
 </ol>
-<h2 id="practical-challenges">Practical Challenges</h2>
-<p>Despite the extraordinary success of transformers, they present
-challenges:</p>
+<h2 id="subsec:tut-challenges">Practical Challenges: The Price of
+Listening to Everyone</h2>
+<p>Dense attention buys its power by comparing <em>every</em> word with
+<em>every</em> other word, and that price grows fast.</p>
 <h3 id="computational-complexity">Computational Complexity</h3>
-<p>If a sentence has 1,000 words, the standard attention mechanism must
-compare each word with all other 1,000 words. That’s <span
-class="math inline">\(1,000 \times 1,000 = 1,000,000\)</span>
-comparisons. For long documents with millions of words, this becomes
-prohibitively expensive in time and memory.</p>
+<p>A 1,000-word document forces <span class="math inline">\(1{,}000
+\times 1{,}000 = 1{,}000{,}000\)</span> word-to-word comparisons, and
+the cost squares as the document grows. Figure <a
+href="#fig:tut-complexity" data-reference-type="ref"
+data-reference="fig:tut-complexity">20</a> shows the growth against the
+friendlier alternatives discussed below.</p>
+<figure id="fig:tut-complexity"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/tutorial/tut-complexity-growth.svg" alt="image" /></span></p>
+
+<figcaption>Word-to-word comparisons versus sentence length. Dense
+attention compares every word with every other (<span
+class="math inline">\(n^2\)</span>): at <span class="math inline">\(n =
+1{,}000\)</span> that is already one million comparisons. Sparse
+variants (<span class="math inline">\(n \log_2 n\)</span>) and
+linear-time / recurrent models (<span class="math inline">\(n\)</span>)
+grow far more gently.</figcaption>
+</figure>
 <h3 id="memory-requirements">Memory Requirements</h3>
-<p>Especially during inference (when using trained models), storing the
-entire attention matrix can consume enormous amounts of RAM or GPU
-memory, limiting the sequence lengths you can process.</p>
+<p>During inference (using a trained model), the keys and values of
+every past word must be stored — the library keeps every book on the
+table just in case a later query needs it. For long contexts this cache
+dominates GPU memory.</p>
 <h3 id="device-efficiency">Device Efficiency</h3>
-<p>Transformers were designed for powerful TPUs and GPUs. Running them
+<p>Transformers were designed for powerful TPUs and GPUs; running them
 on phones or embedded devices is challenging.</p>
-<h2 id="modern-solutions">Modern Solutions</h2>
-<p>To solve these challenges, research has proposed many variants:</p>
+<h2 id="subsec:tut-solutions">Modern Solutions: Smarter Ways to
+Listen</h2>
+<p>The rest of this paper is a catalog of ways to keep the benefits of
+attention while paying less. Each keeps our analogies:</p>
 <ul>
-<li><p><strong>Sparse Attention</strong>: Instead of comparing each word
-with ALL others, it compares only with a strategic subset (nearby
-neighbors, periodic patterns). Reduces complexity from <span
+<li><p><strong>Sparse attention</strong>: stop browsing <em>every</em>
+card in the library — visit only nearby shelves and a few strategic
+ones. Complexity drops from <span
 class="math inline">\(\mathcal{O}(n^2)\)</span> to <span
 class="math inline">\(\mathcal{O}(n \log n)\)</span> or <span
 class="math inline">\(\mathcal{O}(n)\)</span>.</p></li>
-<li><p><strong>Recurrent Models</strong>: Like Mamba, they incorporate
-aspects of old recurrent neural networks but with better modern
-efficiency.</p></li>
-<li><p><strong>Gated Attention</strong>: Mechanisms that selectively
-learn what information to pass forward, reducing storage needs.</p></li>
-<li><p><strong>Quantization</strong>: Use smaller numbers (integers
-instead of decimals) to reduce memory without losing too much
-precision.</p></li>
+<li><p><strong>Recurrent models</strong> (e.g. Mamba): take notes as you
+read, instead of re-listening to the whole room for every new word — an
+old idea (recurrence) rebuilt with modern efficiency.</p></li>
+<li><p><strong>Gated attention</strong>: a gatekeeper decides which of
+your notes are worth keeping and which to fade out, so less needs to be
+stored.</p></li>
+<li><p><strong>Quantization</strong>: write each number with fewer
+digits (small integers instead of wide decimals), shrinking memory with
+minimal loss of precision.</p></li>
 </ul>
-<p>These innovations are what this toolkit (Frankenstein) allows you to
-experiment with easily.</p>
+<p>These innovations are exactly what this toolkit (Frankenstein) lets
+you experiment with, and the annexes that follow are guided tours of
+each family.</p>
 <h2 id="key-takeaways">Key Takeaways</h2>
 <ul>
-<li><p>A <strong>transformer</strong> is a neural network that
-understands language context very well.</p></li>
-<li><p>The <strong>attention mechanism</strong> allows each word to
-“focus” on which other words are relevant to understanding its
-meaning.</p></li>
-<li><p>Attention works by computing <strong>compatibility</strong>
-between each word (query) and all others (keys), then combining
-information based on that compatibility (values).</p></li>
-<li><p><strong>Multiple heads</strong> of attention explore different
-patterns in parallel.</p></li>
-<li><p><strong>Multiple layers</strong> progressively refine
-understanding.</p></li>
-<li><p>The main challenge is that standard attention has quadratic
-complexity, which is expensive for long texts.</p></li>
-<li><p>Many <strong>modern solutions</strong> (sparse attention,
-recurrent models, quantization) address these challenges, and this
-toolkit lets you explore all of them.</p></li>
+<li><p>A <strong>transformer</strong> is a network that contextualizes:
+it re-reads every word in the light of all its neighbors (the ambiguous
+“bank”).</p></li>
+<li><p><strong>Attention</strong> is selective listening: each word
+focuses its limited 100% budget on the neighbors that define it (the
+noisy room).</p></li>
+<li><p>The arithmetic is a library visit: <strong>query</strong> asks,
+<strong>key</strong> advertises, <strong>value</strong> delivers; dot
+products score compatibility, <code>softmax</code> turns scores into a
+100% budget, and the values are mixed by that budget.</p></li>
+<li><p><strong>Multiple heads</strong> are a team of analysts with one
+question each; <strong>stacked layers</strong> are successive editing
+passes, each refining the last.</p></li>
+<li><p>The catch: dense attention compares everyone with everyone —
+<span class="math inline">\(\mathcal{O}(n^2)\)</span> — which is why
+sparse, recurrent, gated and quantized variants exist.</p></li>
+<li><p>Every later annex of this paper is a deeper tour of one of those
+variants; the analogies of Table <a href="#tab:tut-analogies"
+data-reference-type="ref" data-reference="tab:tut-analogies">2</a> will
+keep coming back.</p></li>
 </ul>
 <h1 id="sec:annex-transformer">Dense, Recurrent, and Memory-Augmented
 Transformers</h1>
@@ -8700,7 +8870,7 @@ slope underfoot but cannot see the valley, so the strategy reduces to
 three questions: how confident is the slope reading (one example or a
 thousand?), how long is the stride, and how much memory of the terrain
 is worth carrying. Figure <a href="#fig:opt-tut-flow"
-data-reference-type="ref" data-reference="fig:opt-tut-flow">61</a> turns
+data-reference-type="ref" data-reference="fig:opt-tut-flow">69</a> turns
 those questions into the map of the families that follow.</p>
 <figure id="fig:opt-tut-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-tutorial-flow.svg" alt="image" /></span></p>
 
@@ -8746,9 +8916,9 @@ the negative gradient is perpendicular to the contour but generally does
 circles <span class="citation" data-cites="hinton_csc321_2012"></span>.
 The walk therefore zig-zags across the steep direction while creeping
 along the flat one. Figure <a href="#fig:opt-tut-gd"
-data-reference-type="ref" data-reference="fig:opt-tut-gd">62</a> shows
+data-reference-type="ref" data-reference="fig:opt-tut-gd">70</a> shows
 the three regimes on the same bowl, and Figure <a href="#fig:opt-tut-lr"
-data-reference-type="ref" data-reference="fig:opt-tut-lr">63</a> shows
+data-reference-type="ref" data-reference="fig:opt-tut-lr">71</a> shows
 what they look like as a loss curve.</p>
 <figure id="fig:opt-tut-gd"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-gd-landscape.svg" alt="image" /></span></p>
 
@@ -8822,7 +8992,7 @@ class="math inline">\(\odot\)</span> is the element-wise product. The
 gradient of a weight is therefore the product of a backward number and a
 forward number—the two quantities drawn in Figure <a
 href="#fig:opt-tut-backprop" data-reference-type="ref"
-data-reference="fig:opt-tut-backprop">64</a>. The recursion is linear in
+data-reference="fig:opt-tut-backprop">72</a>. The recursion is linear in
 the layer index, so the whole sweep costs about the same as one extra
 forward pass, roughly twice the forward cost per step, and it must keep
 the activations of every layer in memory until they are used <span
@@ -8904,7 +9074,7 @@ class="math inline">\(\lfloor n/b\rfloor\)</span> updates rather than
 one <span class="citation"
 data-cites="ibm_sgd_2025 ghojogh_ghodsi_2024"></span>. Figure <a
 href="#fig:opt-tut-noise" data-reference-type="ref"
-data-reference="fig:opt-tut-noise">65</a> shows both faces of the trade:
+data-reference="fig:opt-tut-noise">73</a> shows both faces of the trade:
 with the same number of steps and the same step size, small batches
 wander, and the noise they inject is precisely the quantity that shrinks
 as <span class="math inline">\(1/\sqrt{b}\)</span>.</p>
@@ -8933,7 +9103,7 @@ class="citation" data-cites="ghojogh_ghodsi_2024"></span>. Full-batch
 gradient descent is therefore more accurate per iteration and much
 slower per iteration; SGD is the opposite. Figure <a
 href="#fig:opt-tut-rates" data-reference-type="ref"
-data-reference="fig:opt-tut-rates">66</a> puts the two statements on the
+data-reference="fig:opt-tut-rates">74</a> puts the two statements on the
 same axes, once per iteration and once per unit of wall-clock, which is
 the comparison that actually matters when a step costs <span
 class="math inline">\(n/b\)</span> times less.</p>
@@ -8976,13 +9146,13 @@ velocity is heading towards, so the correction arrives before the
 overshoot does <span class="citation"
 data-cites="hinton_csc321_2012 sutskever2013importance"></span>. Figure
 <a href="#fig:opt-tut-momentum" data-reference-type="ref"
-data-reference="fig:opt-tut-momentum">67</a> shows the composition of
+data-reference="fig:opt-tut-momentum">75</a> shows the composition of
 the two terms and its effect on the valley.</p>
 <figure id="fig:opt-tut-momentum"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-momentum.svg" alt="image" /></span></p>
 
 <figcaption>Momentum as memory. (a) On the valley of Figure <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">62</a>(b), with the same step size,
+data-reference="fig:opt-tut-gd">70</a>(b), with the same step size,
 plain gradient descent still crawls along the floor after 120 steps
 while momentum and its Nesterov variant reach the minimum. (b) The same
 run as a loss curve: the remembered direction buys roughly an order of
@@ -8994,7 +9164,7 @@ smoother than either term alone.</figcaption>
 coordinate.</h4>
 <p>The second observation is that the valley of Figure <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">62</a>(b) has no single good <span
+data-reference="fig:opt-tut-gd">70</a>(b) has no single good <span
 class="math inline">\(\eta\)</span>: what is stable along the steep axis
 is negligible along the flat one. Adaptive methods keep a running
 average of squared gradients and divide by its square root, so a
@@ -9010,7 +9180,7 @@ data-cites="hinton_csc321_2012 tieleman_hinton2012"></span>; AdaGrad is
 the cumulative rather than decaying version <span class="citation"
 data-cites="duchi_adagrad_2011"></span>. Figure <a
 href="#fig:opt-tut-adaptive" data-reference-type="ref"
-data-reference="fig:opt-tut-adaptive">68</a> shows the effect: the two
+data-reference="fig:opt-tut-adaptive">76</a> shows the effect: the two
 axes of the valley receive comparable displacements, at the cost of a
 per-coordinate state and a step that no longer shrinks on its own—the
 residual jitter of size <span class="math inline">\(\approx\eta\)</span>
@@ -9044,7 +9214,7 @@ class="citation" data-cites="ruder_2016"></span>.</p>
 many to hold in mind at once. They are easier to remember as eight
 families, each answering one of the questions in Figure <a
 href="#fig:opt-tut-flow" data-reference-type="ref"
-data-reference="fig:opt-tut-flow">61</a> and each distinguished by what
+data-reference="fig:opt-tut-flow">69</a> and each distinguished by what
 it remembers and what it pays.</p>
 <ul>
 <li><p><strong>First-order baselines</strong> (SGD with momentum, AdamW,
@@ -9088,7 +9258,7 @@ data-reference="tab:opt-tut-families">[tab:opt-tut-families]</a> states
 the same comparison in the two currencies that decide a real training
 run: what is stored per parameter and what each step costs. Figure <a
 href="#fig:opt-tut-families" data-reference-type="ref"
-data-reference="fig:opt-tut-families">69</a> turns it into a
+data-reference="fig:opt-tut-families">77</a> turns it into a
 fingerprint: reading down a row tells you which ingredients a family
 uses, reading across a column tells you which families share one.</p>
 <div class="tabular">
@@ -9180,7 +9350,7 @@ L2, decoupled weight decay<br />
 <p>The practical value of the five ideas is diagnostic. A single loss
 curve already says which of them is wrong, and the answer is usually
 visible within a few hundred steps (Figure <a href="#fig:opt-tut-diag"
-data-reference-type="ref" data-reference="fig:opt-tut-diag">70</a>).</p>
+data-reference-type="ref" data-reference="fig:opt-tut-diag">78</a>).</p>
 <figure id="fig:opt-tut-diag"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-loss-diagnostics.svg" alt="image" /></span></p>
 
 <figcaption>Four loss curves and the sentence each one is saying. A
@@ -11239,7 +11409,7 @@ apply a <span class="math inline">\(0.2\)</span> update-RMS scaling
 factor following Moonlight; this implementation lets the per-group
 learning rates absorb that calibration, so no scale constant is applied.
 Shapes absent from Table <a href="#tab:root-coefficients"
-data-reference-type="ref" data-reference="tab:root-coefficients">8</a>
+data-reference-type="ref" data-reference="tab:root-coefficients">9</a>
 fall back to Muon’s fixed coefficients, and the dynamic quantile costs
 an additional sort of <span class="math inline">\(|M_t|\)</span> per
 matrix per step.</p>
@@ -14587,183 +14757,387 @@ implemented by <code>src/model/moe/</code> and declared in
 <code>src/schema/_model/_moe.yaml</code>. The schema is the executable
 source of truth: every key discussed here exists in the schema, is
 materialised in the nested <code>FrankensteinModelConfig</code>
-<code>moe</code> block, and is exercised by the test suite. The text
-follows the anatomy of one MoE layer—router, routing strategy, load
-balancing, experts, layer layout, capacity, monitoring—and closes with
-the schema-contract and preset tables.</p>
-<h2 id="app:moe-overview">Overview and taxonomy</h2>
-<p>A dense feed-forward layer applies one function to every token. An
-MoE layer replaces it with <span class="math inline">\(E\)</span> expert
-networks <span class="math inline">\(\{E_e\}_{e=1}^{E}\)</span> and a
-router that selects <span class="math inline">\(k\)</span> of them per
-token, <span class="math display">\[y_t = g \sum_{j=1}^{k} \hat
+<code>moe</code> block, and is exercised by the test suite. The first
+two sections are the on-ramp: they explain what an MoE layer does—one
+equation, one analogy, one worked example—and then the two failure modes
+(routing collapse and the hot-expert straggler) that force most of the
+design. The rest is the reference: router scoring, routing strategy,
+load balancing, experts, layer layout, capacity and monitoring, closing
+with the schema-contract and preset tables. A reader who finishes
+Section <a href="#app:moe-failures" data-reference-type="ref"
+data-reference="app:moe-failures">29.2</a> should be able to open any
+later section and know which of the two failures, or which of the seven
+design questions, it is answering.</p>
+<h2 id="app:moe-overview">Overview: what a Mixture-of-Experts layer
+is</h2>
+<p>The feed-forward half of a transformer block is <em>dense</em>: one
+network, applied identically to every token, no matter what the token
+is. That is a clinic with a single physician who must treat every
+complaint. An MoE layer turns the clinic into a roster of <span
+class="math inline">\(E\)</span> specialists with a receptionist: the
+<em>router</em> reads each token and sends it to the <span
+class="math inline">\(k\)</span> most relevant specialists, the
+<em>experts</em> <span class="math inline">\(\{E_e\}_{e=1}^{E}\)</span>.
+Formally, <span class="math display">\[y_t = g \sum_{j=1}^{k} \hat
 w_{t,j}\, E_{i_{t,j}}(x_t) + y^{\text{shared}}_t ,
-  \label{eq:moe-layer}\]</span> where <span
-class="math inline">\(i_{t,j}\)</span> are the selected expert indices,
-<span class="math inline">\(\hat w_{t,j}\)</span> their mixing weights,
-<span class="math inline">\(g\)</span> the routed scaling factor, and
-<span class="math inline">\(y^{\text{shared}}_t\)</span> the optional
-always-on shared-expert branch. Only the selected experts run, so total
+  \label{eq:moe-layer}\]</span> read from the inside out: expert <span
+class="math inline">\(i_{t,j}\)</span> processes the token and produces
+a vector, the mixing weight <span class="math inline">\(\hat
+w_{t,j}\)</span> scales it, the <span class="math inline">\(k\)</span>
+contributions are summed, the routed scaling factor <span
+class="math inline">\(g\)</span> restores the branch’s magnitude
+(Section <a href="#app:moe-router" data-reference-type="ref"
+data-reference="app:moe-router">29.3</a>), and <span
+class="math inline">\(y^{\text{shared}}_t\)</span> is the optional
+always-on shared-expert branch (Section <a href="#app:moe-experts"
+data-reference-type="ref" data-reference="app:moe-experts">29.6</a>).
+Only the selected experts run, which is the whole bargain: total
 parameters grow with <span class="math inline">\(E\)</span> while
 per-token compute stays proportional to <span
 class="math inline">\(k\)</span> <span class="citation"
-data-cites="shazeer2017moe fedus2021switch"></span>. The design space
-has five axes: (i) how logits become weights (Section <a
-href="#app:moe-router" data-reference-type="ref"
-data-reference="app:moe-router">29.2</a>), (ii) who selects the experts
-(Section <a href="#app:moe-routing" data-reference-type="ref"
-data-reference="app:moe-routing">29.3</a>), (iii) how load is balanced
-(Section <a href="#app:moe-balancing" data-reference-type="ref"
-data-reference="app:moe-balancing">29.4</a>), (iv) what the experts look
-like (Section <a href="#app:moe-experts" data-reference-type="ref"
-data-reference="app:moe-experts">29.5</a>), and (v) which layers are MoE
-layers (Section <a href="#app:moe-layout" data-reference-type="ref"
-data-reference="app:moe-layout">29.6</a>).</p>
+data-cites="shazeer2017moe fedus2021switch"></span>.</p>
+<p>The bargain in numbers: with <span class="math inline">\(E =
+8\)</span> experts of the dense width and <span class="math inline">\(k
+= 2\)</span>, the layer stores <span
+class="math inline">\(8\times\)</span> the feed-forward parameters but
+each token is processed by only <span class="math inline">\(2\)</span>
+experts—<span class="math inline">\(25\%\)</span> of the pool—plus a
+router of <span class="math inline">\(d
+\times E\)</span> weights, which is negligible next to any expert.
+Memory grows with <span class="math inline">\(E\)</span>; FLOPs grow
+with <span class="math inline">\(k\)</span>. Those are two independent
+budgets, and most of the schema is the machinery for spending them
+well.</p>
+<p>Seven questions span the design space, and Table <a
+href="#tab:moe-questions" data-reference-type="ref"
+data-reference="tab:moe-questions">[tab:moe-questions]</a> maps each to
+its knobs and its section: (i) how logits become weights, (ii) who
+selects the experts, (iii) how load is kept balanced, (iv) what the
+experts look like, (v) which layers are MoE at all, (vi) what happens
+when an expert overflows, and (vii) how all of it is observed during
+training.</p>
+<div class="tabular">
+<p><span>@L<span>2.2cm</span>L<span>4.8cm</span>L<span>4.6cm</span>L<span>1.6cm</span>@</span>
+<strong>Axis</strong> &amp; <strong>Question</strong> &amp;
+<strong>Knobs</strong> &amp; <strong>Section</strong><br />
+Scoring &amp; how much weight does each selected expert get? &amp;
+<code>router.*</code> &amp; <a href="#app:moe-router"
+data-reference-type="ref" data-reference="app:moe-router">29.3</a><br />
+Routing &amp; who picks whom? &amp; <code>routing.type</code>,
+<code>routing.hash_</code> &amp; <a href="#app:moe-routing"
+data-reference-type="ref"
+data-reference="app:moe-routing">29.4</a><br />
+Balancing &amp; how do we keep every expert employed? &amp;
+<code>balancing.*</code> &amp; <a href="#app:moe-balancing"
+data-reference-type="ref"
+data-reference="app:moe-balancing">29.5</a><br />
+Experts &amp; how many, how wide, shared or latent? &amp;
+<code>num_experts</code>, <code>expert_hidden_size</code>,
+<code>shared.*</code>, <code>latent.*</code>, <code>experts.*</code>
+&amp; <a href="#app:moe-experts" data-reference-type="ref"
+data-reference="app:moe-experts">29.6</a><br />
+Layout &amp; which layers are MoE at all? &amp; <code>layout.*</code>
+&amp; <a href="#app:moe-layout" data-reference-type="ref"
+data-reference="app:moe-layout">29.7</a><br />
+Capacity &amp; what happens when an expert overflows? &amp;
+<code>routing.capacity_factor</code> &amp; <a href="#app:moe-capacity"
+data-reference-type="ref"
+data-reference="app:moe-capacity">29.8</a><br />
+Monitoring &amp; how is all of it observed? &amp; logged scalars &amp;
+<a href="#app:moe-monitoring" data-reference-type="ref"
+data-reference="app:moe-monitoring">29.9</a><br />
+</p>
+</div>
+<h2 id="app:moe-failures">The two failure modes: collapse and the
+straggler</h2>
+<p>Four of the seven questions exist because of two failure modes. Both
+follow from one design decision—the router is learned and free to
+concentrate—and every mechanism in the rest of this appendix (auxiliary
+loss, expert bias, expert choice, hash tables, capacity factor) is an
+answer to one of them.</p>
+<h4 id="collapse.">Collapse.</h4>
+<p>Routing decisions are uncoordinated: each token independently picks
+its own <span class="math inline">\(k\)</span> favourites, and nothing
+stops every token from picking the same expert. The loop is
+self-reinforcing. An expert that starts slightly ahead receives more
+tokens; more tokens mean more gradient, so it improves faster than the
+others; improving faster, it wins even more tokens on the next batch.
+Run the loop forward and a layer built with <span
+class="math inline">\(E\)</span> experts routes through two or three of
+them, and the rest never train at all. Switch Transformers observed
+whole layers collapsing to a single expert <span class="citation"
+data-cites="fedus2021switch"></span>. This is the default trajectory of
+an unbalanced MoE, not a rare accident, and it is why Section <a
+href="#app:moe-balancing" data-reference-type="ref"
+data-reference="app:moe-balancing">29.5</a> exists: the auxiliary loss
+and the expert bias are two independent ways to break the loop, expert
+choice (Section <a href="#app:moe-routing" data-reference-type="ref"
+data-reference="app:moe-routing">29.4</a>) removes it by construction,
+and hash layers remove it by fixing the selection outright.</p>
+<h4 id="the-straggler.">The straggler.</h4>
+<p>Even a layer that balances well on average fluctuates per step: one
+batch may send a third of its tokens to one expert. Two costs follow.
+The step cannot finish until the busiest expert finishes, so a single
+hot expert sets the time of everything, and in distributed
+training—where different experts live on different devices—the imbalance
+becomes rows of idle devices waiting for one. And an expert that
+receives a burst needs buffer memory proportional to the burst. The
+capacity factor (Section <a href="#app:moe-capacity"
+data-reference-type="ref" data-reference="app:moe-capacity">29.8</a>)
+bounds both by capping how many assignments an expert must honour. The
+gauge for both failure modes is MaxVio (Section <a
+href="#app:moe-balancing" data-reference-type="ref"
+data-reference="app:moe-balancing">29.5</a>): collapse and stragglers
+both read as the busiest expert pulling away from the mean.</p>
 <h2 id="app:moe-router">Router scoring: from logits to weights</h2>
-<p>The router projects each token to one logit per expert, <span
-class="math inline">\(z_t = W_r x_t \in \mathbb{R}^{E}\)</span>, with
-<span class="math inline">\(W_r \in \mathbb{R}^{E \times d}\)</span>. A
-gating function maps logits to scores, and the top-<span
-class="math inline">\(k\)</span> scores select the experts. The
-implementation supports the three gating functions used by current open
-models: <span class="math display">\[\begin{aligned}
+<p>The router is one linear layer, <span class="math inline">\(z_t = W_r
+x_t \in \mathbb{R}^{E}\)</span> with <span class="math inline">\(W_r \in
+\mathbb{R}^{E \times d}\)</span>: one logit per expert. A gating
+function converts the <span class="math inline">\(E\)</span> logits into
+<span class="math inline">\(E\)</span> scores, and the top-<span
+class="math inline">\(k\)</span> scores select the experts. It helps to
+separate the two jobs of the gating function: it <em>ranks</em> (which
+experts are selected) and it <em>weights</em> (how much each selected
+expert contributes). The implementation supports the three gating
+functions used by current open models: <span
+class="math display">\[\begin{aligned}
   \text{softmax}:&amp;\quad s_{t,e} = \frac{e^{z_{t,e}}}{\sum_{e&#39;}
 e^{z_{t,e&#39;}}}, \\
   \text{sigmoid}:&amp;\quad s_{t,e} = \sigma(z_{t,e}), \\
   \text{sqrt-softplus}:&amp;\quad s_{t,e} =
 \sqrt{\operatorname{softplus}(z_{t,e})}.
 \end{aligned}\]</span> All three are monotone in <span
-class="math inline">\(z_{t,e}\)</span>, so they rank experts
-identically; they differ in how much weight each selected expert
-receives <span class="citation"
-data-cites="deepseek2024v3 deepseek2026v4"></span>.
-<code>router.scoring</code> selects the function (default
+class="math inline">\(z_{t,e}\)</span>—a larger logit always yields a
+larger score—and monotone functions never reorder. So for a given <span
+class="math inline">\(z_t\)</span> all three select <em>exactly the same
+experts</em>; the choice of gating function is a choice about the
+weights, not about the selection. In words:</p>
+<ul>
+<li><p><strong>softmax</strong> makes experts compete for a fixed pie.
+The scores sum to one, so expert <span
+class="math inline">\(e\)</span>’s score depends on every other logit
+through the denominator: raising one logit lowers all the others. As
+logits grow, the distribution sharpens towards
+winner-takes-all.</p></li>
+<li><p><strong>sigmoid</strong> judges each expert in isolation. <span
+class="math inline">\(\sigma(z_{t,e})\)</span> depends only on its own
+logit, so there is no competition: all experts can score low together
+(the selected weights sum to less than one and the routed branch
+shrinks) or high together. The renormalisation and scaling factor below
+exist largely to manage exactly this freedom <span class="citation"
+data-cites="deepseek2024v3"></span>.</p></li>
+<li><p><strong>sqrt-softplus</strong> sits between the two: like sigmoid
+it is per-expert, but <span
+class="math inline">\(\sqrt{\operatorname{softplus}(z)}\)</span> decays
+more gently on the negative side and never saturates at exactly zero
+<span class="citation" data-cites="deepseek2026v4"></span>.</p></li>
+</ul>
+<p><code>router.scoring</code> selects the function (default
 <code>softmax</code>).</p>
 <h4 id="output-scale.">Output scale.</h4>
-<p>Two knobs control the magnitude of the routed branch. With
-<code>router.renormalize</code> (default true), the selected scores are
-rescaled to sum to one, <span class="math display">\[\hat w_{t,j} =
-\frac{s_{t,i_{t,j}}}{\sum_{l=1}^{k} s_{t,i_{t,l}}},\]</span> which
-removes the token-to-token variation of the top-<span
-class="math inline">\(k\)</span> probability mass; renormalisation
-lowered validation loss in the granularity study of <span
-class="citation" data-cites="krajewski2025scaling"></span>. The routed
+<p>Two knobs control the magnitude of the routed branch, and they only
+make sense as a pair. With <code>router.renormalize</code> (default
+true), the selected scores are rescaled to sum to one, <span
+class="math display">\[\hat w_{t,j} =
+\frac{s_{t,i_{t,j}}}{\sum_{l=1}^{k} s_{t,i_{t,l}}},\]</span> so the
+routed branch becomes a weighted <em>average</em> of <span
+class="math inline">\(k\)</span> expert outputs rather than a sum.
+Averaging shrinks. Take <span class="math inline">\(k = 4\)</span>
+experts whose outputs each have root-mean-square <span
+class="math inline">\(1\)</span> and are uncorrelated, and near-equal
+weights of <span class="math inline">\(\approx 1/4\)</span>: the
+variance of the average is <span
+class="math inline">\(\tfrac{1}{4^2}(1+1+1+1) = \tfrac{1}{4}\)</span>,
+so its RMS is <span class="math inline">\(1/\sqrt{k} = 0.5\)</span>. The
+average is half the size of any single expert’s answer, and the
+shrinkage worsens as <span class="math inline">\(k\)</span> grows.
+Renormalisation still pays for itself—it removes the token-to-token
+variation of the top-<span class="math inline">\(k\)</span> probability
+mass and lowered validation loss in the granularity study of <span
+class="citation" data-cites="krajewski2025scaling"></span>—so the routed
 scaling factor <span class="math inline">\(g\)</span>
 (<code>router.routed_scaling_factor</code>, default <span
-class="math inline">\(1\)</span>) then restores the expected
-root-mean-square of the routed output: for <span
-class="math inline">\(k\)</span> uncorrelated experts with equal RMS,
-equal weights shrink the output to <span
-class="math inline">\(1/\sqrt{k}\)</span> of one expert’s RMS, so <span
-class="math inline">\(g \approx \sqrt{k}\)</span> recovers it.
-DeepSeek-V3 uses <span class="math inline">\(g = 2.5\)</span> at <span
-class="math inline">\(k = 8\)</span> <span class="citation"
-data-cites="deepseek2024v3"></span>; Kimi K2 uses <span
-class="math inline">\(2.827 \approx \sqrt{8}\)</span>, and Kimi K3 uses
-<span class="math inline">\(g = 1.0\)</span> at <span
-class="math inline">\(k = 16\)</span> <span class="citation"
+class="math inline">\(1\)</span>) is there to undo the shrinkage: <span
+class="math inline">\(g \approx \sqrt{k}\)</span> restores the RMS of a
+single expert. The published values match the derivation. Kimi K2 uses
+<span class="math inline">\(2.827 \approx \sqrt{8}\)</span>; DeepSeek-V3
+uses <span class="math inline">\(g = 2.5\)</span> at <span
+class="math inline">\(k = 8\)</span>, slightly below <span
+class="math inline">\(\sqrt{8} \approx 2.83\)</span> because real expert
+outputs are partly correlated and cancel less than independent ones
+<span class="citation" data-cites="deepseek2024v3"></span>; and Kimi K3
+uses <span class="math inline">\(g = 1.0\)</span> at <span
+class="math inline">\(k = 16\)</span> with two shared experts carrying
+part of the branch <span class="citation"
 data-cites="kimiteam2026k3"></span>.</p>
 <h4 id="pre-softmax.">Pre-softmax.</h4>
-<p>With <code>router.pre_softmax</code> the softmax is computed over all
-experts before the top-<span class="math inline">\(k\)</span> selection,
-so the kept weights are raw probabilities and are not renormalised. This
-is required for softmax routing at <span
-class="math inline">\(k=1\)</span>: the softmax over a single logit is
-always one, so a post-softmax top-1 weight carries no gradient. The
-configuration layer detects that combination, enables
-<code>pre_softmax</code> automatically, and emits a warning instead of
-rejecting legacy configs.</p>
+<p>With <code>router.pre_softmax</code> the softmax runs over all <span
+class="math inline">\(E\)</span> experts <em>before</em> the top-<span
+class="math inline">\(k\)</span> cut, so the kept weights are raw
+probabilities from the full distribution and are not renormalised. To
+see why softmax routing at <span class="math inline">\(k{=}1\)</span>
+requires this, trace the default path step by step: select first, then
+softmax over the <em>selected</em> logits only. With one selected logit
+that softmax is <span class="math inline">\(e^{z}/e^{z} =
+1\)</span>—always, regardless of how well the expert matches the token.
+A weight that is constantly one has derivative zero, so the router would
+receive no gradient and could never learn which expert to prefer:
+selection would be frozen at its initialisation. Pre-softmax repairs it:
+the kept weight is the top probability of the full softmax, a genuine
+number in <span class="math inline">\((0,1)\)</span> that moves whenever
+any logit moves, so the gradient flows. The configuration layer detects
+that combination, enables <code>pre_softmax</code> automatically, and
+emits a warning instead of rejecting legacy configs.</p>
 <h4 id="sharpness-and-precision.">Sharpness and precision.</h4>
-<p>Three mechanisms control how peaked the router is. Switch-style
-multiplicative input jitter (<code>router.jitter_eps</code>) adds <span
-class="math inline">\(x \cdot (1 + \epsilon(2u-1))\)</span> before the
-projection <span class="citation" data-cites="fedus2021switch"></span>.
-The router precision (<code>router.dtype</code>) defaults to
-<code>float32</code>: a bf16 router diverged in Switch Transformers, and
-tied top-<span class="math inline">\(k\)</span> logits are broken
-arbitrarily <span class="citation" data-cites="fedus2021switch"></span>.
-Finally, the ST-MoE z-loss penalises logit drift, <span
+<p>Three mechanisms control how peaked, and how numerically trustworthy,
+the router is. <em>Input jitter</em> (<code>router.jitter_eps</code>)
+multiplies the token by <span class="math inline">\(x \cdot (1 +
+\epsilon(2u-1))\)</span> with <span class="math inline">\(u\)</span>
+uniform before the projection: random multiplicative noise that
+penalises routing decisions built on fragile directions of <span
+class="math inline">\(x_t\)</span>, a regulariser Switch was trained
+with <span class="citation" data-cites="fedus2021switch"></span>.
+<em>Router precision</em> (<code>router.dtype</code>) defaults to
+<code>float32</code>; the router is tiny (<span class="math inline">\(d
+\times E\)</span> parameters), so full precision costs nothing, and what
+it buys is stability—a bf16 router diverged in Switch Transformers, and
+in low precision tied top-<span class="math inline">\(k\)</span> logits
+are broken arbitrarily <span class="citation"
+data-cites="fedus2021switch"></span>. Finally, the <em>z-loss</em> of
+ST-MoE penalises logit drift. The log-sum-exp is a smooth maximum of the
+logits (large whenever <em>any</em> logit is large), so <span
 class="math display">\[\mathcal{L}_z = \beta\,\frac{1}{T}\sum_{t=1}^{T}
   \Bigl(\log \sum_{e=1}^{E} e^{z_{t,e}}\Bigr)^{2},
-  \label{eq:zloss}\]</span> where <span
+  \label{eq:zloss}\]</span> grows quadratically whenever any router
+logit grows in magnitude. Minimising it keeps the logits small, the
+softmax unsaturated and the router from becoming overconfident <span
+class="citation" data-cites="zoph2022stmoe"></span>. Here <span
 class="math inline">\(\beta\)</span> is <code>router.z_loss_coeff</code>
 (default <span class="math inline">\(0\)</span>; ST-MoE uses <span
-class="math inline">\(10^{-3}\)</span>) <span class="citation"
-data-cites="zoph2022stmoe"></span>. The loss is returned as
+class="math inline">\(10^{-3}\)</span>); the loss is returned as
 <code>moe_router_z_loss</code> and added to the task loss.</p>
 <h2 id="app:moe-routing">Routing strategy: who selects, and how</h2>
+<p>Section <a href="#app:moe-router" data-reference-type="ref"
+data-reference="app:moe-router">29.3</a> fixed <em>how much</em> each
+chosen expert weighs; this one fixes <em>who chooses whom</em>. The
+literature has three answers, and each has a structural consequence.</p>
 <h4 id="token-choice.">Token choice.</h4>
-<p>The default (<code>routing.type: token_choice</code>) has each token
-keep its <span class="math inline">\(k\)</span> best experts under <span
-class="math inline">\(s_t + b\)</span>, where <span
+<p>The default (<code>routing.type: token_choice</code>): each token
+keeps its own <span class="math inline">\(k\)</span> best experts under
+<span class="math inline">\(s_t + b\)</span>, where <span
 class="math inline">\(b\)</span> is the balancing bias of Section <a
 href="#app:moe-balancing" data-reference-type="ref"
-data-reference="app:moe-balancing">29.4</a>. It is the strategy trained
-by Megatron and used by most open models <span class="citation"
+data-reference="app:moe-balancing">29.5</a>. The consequence is that
+nobody guarantees any expert work: an expert can win every token or
+none, which is exactly the collapse loop of Section <a
+href="#app:moe-failures" data-reference-type="ref"
+data-reference="app:moe-failures">29.2</a>. Token choice therefore ships
+with a balancing mechanism. It is the strategy trained by Megatron and
+used by most open models <span class="citation"
 data-cites="fedus2021switch deepseek2024v3"></span>.</p>
 <h4 id="expert-choice.">Expert choice.</h4>
-<p>With <code>routing.type: expert_choice</code>, each expert keeps its
-best <span class="math inline">\(Tk/E\)</span> tokens <span
-class="citation" data-cites="zhou2022expertchoice"></span>. Loads are
-equal by construction, but a token’s assignment depends on later tokens,
-so inference routing differs from training. The schema therefore forbids
-combining expert choice with an auxiliary loss or an expert bias (it is
-self-balancing), and the appendix recommends it for encoder or training
-experiments rather than autoregressive serving.</p>
+<p>Flip the direction of the decision: with
+<code>routing.type: expert_choice</code>, each expert keeps its best
+<span class="math inline">\(Tk/E\)</span> tokens <span class="citation"
+data-cites="zhou2022expertchoice"></span>. Every expert receives exactly
+the same number of tokens, so loads are equal by construction and the
+balancing machinery is not merely unnecessary but contradictory—the
+schema forbids combining expert choice with an auxiliary loss or an
+expert bias. The price is causality: whether a token is served now
+depends on the <em>other</em> tokens in the batch, including later ones.
+That is harmless in an encoder, where the whole sequence is available at
+once, and fatal in autoregressive decoding, where token <span
+class="math inline">\(t\)</span> must be routed before tokens <span
+class="math inline">\(t{+}1, t{+}2,
+\dots\)</span> exist; training-time and inference-time routing would
+disagree by construction. Hence the recommendation: encoder and training
+experiments yes, autoregressive serving no.</p>
 <h4 id="hash-layers.">Hash layers.</h4>
-<p>The first <code>routing.hash_layers</code> MoE layers can select
-experts from a fixed token-id table <span
-class="math inline">\(\mathrm{tid} \rightarrow (e_1,\dots,e_k)\)</span>
-<span class="citation" data-cites="roller2021hash"></span>, as
-DeepSeek-V4 does in its first three MoE layers <span class="citation"
-data-cites="deepseek2026v4"></span>. The learned router is still used
-for the weights but receives no gradient from the selection. The table
-is built from a seeded random assignment
+<p>Dispense with the learned decision altogether: the first
+<code>routing.hash_layers</code> MoE layers select experts from a fixed
+table <span class="math inline">\(\mathrm{tid} \rightarrow
+(e_1,\dots,e_k)\)</span> <span class="citation"
+data-cites="roller2021hash"></span>, as DeepSeek-V4 does in its first
+three MoE layers <span class="citation"
+data-cites="deepseek2026v4"></span>. The observation behind it: in the
+first layers, tokens are still close to their embeddings and the routing
+decision is mostly surface identity—which token it is, not what it
+means—and a lookup table captures that. The table never changes, so it
+cannot collapse. The learned router still produces the mixing weights,
+so it keeps training through them; it just receives no gradient from the
+selection itself. The table is built from a seeded random assignment
 (<code>hash_table: random</code>) or a round-robin cycle
 (<code>round_robin</code>); Roller et al. found random and
 frequency-greedy tables reach similar perplexity, with the greedy table
 better balanced <span class="citation"
-data-cites="roller2021hash"></span>. A hash table cannot be rebalanced,
-so the schema forbids combining it with
+data-cites="roller2021hash"></span>. Because a fixed table can never be
+rebalanced, the schema forbids combining it with
 <code>balancing.bias_update</code>.</p>
 <h2 id="app:moe-balancing">Load balancing</h2>
-<p>When many tokens pick the same expert, the busiest expert sets the
-step time and the remaining experts are under-trained. Two independent
-mechanisms are implemented; either can be used alone or combined, as
-DeepSeek-V3 does <span class="citation"
-data-cites="deepseek2024v3"></span>.</p>
+<p>Section <a href="#app:moe-failures" data-reference-type="ref"
+data-reference="app:moe-failures">29.2</a> described the collapse loop:
+an expert slightly ahead receives more tokens, trains faster, and pulls
+further ahead. Two independent remedies are implemented; either works
+alone, and DeepSeek-V3 combines both <span class="citation"
+data-cites="deepseek2024v3"></span>. They differ in <em>how</em> they
+reach the routing: the auxiliary loss works through the gradient, the
+bias works around it.</p>
 <h4 id="auxiliary-loss.">Auxiliary loss.</h4>
-<p>The auxiliary loss multiplies each expert’s share of the assignments
-by its mean router probability, <span
+<p>The obstacle to fixing imbalance directly is that the thing to
+fix—how many times each expert was chosen—is a count, and counts have no
+derivative: being chosen <span class="math inline">\(500\)</span> times
+instead of <span class="math inline">\(499\)</span> is not an operation
+backpropagation can influence. The Switch surrogate <span
+class="citation" data-cites="fedus2021switch"></span> multiplies each
+expert’s share of the assignments by its mean router probability, <span
 class="math display">\[\mathcal{L}_{\text{aux}} = \alpha\,E
 \sum_{e=1}^{E} f_e P_e,
   \qquad
   f_e = \frac{1}{Tk}\sum_{t,j}\mathbb{1}[i_{t,j}=e],
   \qquad
   P_e = \frac{1}{T}\sum_{t} s_{t,e},
-  \label{eq:aux}\]</span> with <span
-class="math inline">\(\alpha\)</span> =
-<code>balancing.aux_loss_coeff</code>. The scope is selected by
-<code>balancing.aux_loss</code>: <code>batch</code> (one micro-batch,
-the default), <code>sequence</code> (one loss per sequence,
+  \label{eq:aux}\]</span> where <span class="math inline">\(f_e\)</span>
+(the fraction of the <span class="math inline">\(Tk\)</span>
+assignments) carries the imbalance but no gradient, and <span
+class="math inline">\(P_e\)</span> (the mean score) carries gradient.
+The product is the trick: lowering the loss means lowering <span
+class="math inline">\(P_e\)</span> precisely where <span
+class="math inline">\(f_e\)</span> is high, so the optimiser leans on
+the router’s probabilities for exactly the overloaded experts, and
+future selections spread. Under softmax scoring the scores sum to one
+per token and the minimum sits at the uniform distribution, <span
+class="math inline">\(f_e = k/E\)</span> and <span
+class="math inline">\(P_e = 1/E\)</span>; the prefactor <span
+class="math inline">\(E\)</span> then makes the loss at the minimum
+independent of the expert count (exactly <span
+class="math inline">\(\alpha\)</span> at <span
+class="math inline">\(k{=}1\)</span>), so one coefficient means the same
+thing at <span class="math inline">\(E{=}8\)</span> and <span
+class="math inline">\(E{=}256\)</span>. The coefficient itself is a
+trade-off: too large and it fights the language-model loss, too small
+and MaxVio stays high <span class="citation"
+data-cites="wang2024auxfree"></span>; the default is <span
+class="math inline">\(0.01\)</span>, close to Switch and DeepSeekMoE
+<span class="citation"
+data-cites="fedus2021switch dai2024deepseekmoe"></span>. The scope is
+selected by <code>balancing.aux_loss</code>: <code>batch</code> (one
+micro-batch, the default), <code>sequence</code> (one loss per sequence,
 DeepSeek-V3’s guard against a single sequence piling onto a few
-experts), or <code>none</code>. Balancing per sequence or per
+experts—balance the batch and one long document can still monopolise its
+favourite experts), or <code>none</code>. Balancing per sequence or per
 micro-batch can prevent domain experts from forming, whereas
 global-batch balancing leaves each device’s load uneven <span
 class="citation" data-cites="qiu2025demons"></span>; the single-device
 runtime implements the first two scopes and documents the global scope
-as future work. A coefficient that is too large costs language-model
-loss, while one that is too small leaves MaxVio high <span
-class="citation" data-cites="wang2024auxfree"></span>; the default is
-<span class="math inline">\(0.01\)</span>, close to Switch and
-DeepSeekMoE <span class="citation"
-data-cites="fedus2021switch dai2024deepseekmoe"></span>.</p>
+as future work.</p>
 <h4 id="auxiliary-loss-free-bias.">Auxiliary-loss-free bias.</h4>
-<p>With <code>balancing.bias_update</code> set to <code>sign</code> or
-<code>centered_sign</code>, a per-expert bias <span
-class="math inline">\(b_e\)</span> is added to the scores before
-selection only—never to the mixing weights—and moved once per optimizer
-step: <span class="math display">\[b_e \leftarrow b_e +
+<p>The second remedy ignores gradients entirely and works like a
+thermostat: measure the temperature, nudge the knob, repeat. With
+<code>balancing.bias_update</code> set to <code>sign</code> or
+<code>centered_sign</code>, each expert carries a bias <span
+class="math inline">\(b_e\)</span> added to the scores <em>before
+selection only—never to the mixing weights</em>—and moved once per
+optimizer step: <span class="math display">\[b_e \leftarrow b_e +
 \gamma\,\operatorname{sign}\!\left(\bar c - c_e\right),
   \qquad
   \bar c = \frac{1}{E}\sum_{e&#39;} c_{e&#39;},
@@ -14771,11 +15145,29 @@ step: <span class="math display">\[b_e \leftarrow b_e +
 class="math inline">\(c_e\)</span> counts the step’s assignments and
 <span class="math inline">\(\gamma\)</span> is
 <code>balancing.bias_update_rate</code> (default <span
-class="math inline">\(10^{-3}\)</span>). Overloaded experts (<span
-class="math inline">\(c_e &gt; \bar c\)</span>) step down and
-underloaded ones step up. The <code>centered_sign</code> variant
-subtracts the mean step so the bias mean does not drift, which matters
-when the bias is stored in reduced precision <span class="citation"
+class="math inline">\(10^{-3}\)</span>). An expert above the mean load
+(<span class="math inline">\(c_e &gt; \bar c\)</span>) has its bias
+lowered by <span class="math inline">\(\gamma\)</span>, so it wins fewer
+tokens on the next step; an expert below the mean has its bias raised.
+Because the bias never touches the mixing weights, it redirects traffic
+without changing what the selected experts contribute—which is why it
+costs no language-model loss, unlike the auxiliary loss <span
+class="citation" data-cites="wang2024auxfree"></span>.</p>
+<p>Why the schema restricts the bias to sigmoid or sqrt-softplus
+scoring: under softmax every score depends on every logit through the
+denominator, so shifting one expert’s logit rescales all <span
+class="math inline">\(E\)</span> scores at once and the bias would steer
+the selection <em>and</em> distort every mixing weight at the same time.
+Under sigmoid or sqrt-softplus each score is a function of its own logit
+alone, so <span class="math inline">\(b_e\)</span> moves expert <span
+class="math inline">\(e\)</span> in the ranking and touches nothing
+else—steering stays pure.</p>
+<p>The <code>centered_sign</code> variant subtracts the mean update
+(<span
+class="math inline">\(\tfrac{1}{E}\sum_{e}\operatorname{sign}(\bar c -
+c_e) = 0\)</span> in exact arithmetic, not necessarily in reduced
+precision) so the bias mean does not drift, which matters when the bias
+is stored in reduced precision <span class="citation"
 data-cites="wang2024auxfree"></span>. The bias is a non-persistent fp32
 buffer: it is training state, never an inference parameter, and
 <code>eval()</code> freezes it. The update is applied by
@@ -14784,52 +15176,86 @@ buffer: it is training state, never an inference parameter, and
 <h4 id="maxvio.">MaxVio.</h4>
 <p>Balance is read from the maximal violation, <span
 class="math display">\[\mathrm{MaxVio} = \frac{\max_e c_e - \bar c}{\bar
-c},\]</span> where <span class="math inline">\(0\)</span> is perfectly
-even and <span class="math inline">\(1\)</span> means the busiest expert
-receives twice the mean load <span class="citation"
-data-cites="wang2024auxfree"></span>. It is logged per layer as
-<code>moe/max_vio</code>.</p>
+c},\]</span> a single number per layer, logged as
+<code>moe/max_vio</code>. How to read it: <span
+class="math inline">\(0\)</span> is perfectly even; <span
+class="math inline">\(0.2\)</span>–<span
+class="math inline">\(0.5\)</span> is ordinary fluctuation; <span
+class="math inline">\(1\)</span> means the busiest expert receives twice
+the mean load <span class="citation"
+data-cites="wang2024auxfree"></span>. The absolute value matters less
+than the trend—a MaxVio that climbs over steps is the collapse loop of
+Section <a href="#app:moe-failures" data-reference-type="ref"
+data-reference="app:moe-failures">29.2</a> running in real time.</p>
 <h2 id="app:moe-experts">Experts: count, width, latent space,
 sharing</h2>
 <h4 id="count-and-width.">Count and width.</h4>
-<p><code>num_experts</code> sets the routed pool and <code>top_k</code>
-the number used per token. <code>expert_hidden_size</code> sets each
-expert’s intermediate width; when unset it falls back to
-<code>ffn.hidden_size</code>. Keeping the two separate is essential for
-real architectures: DeepSeek-V3 has a dense width of 18432 but experts
-of width 2048 <span class="citation"
-data-cites="deepseek2024v3"></span>. Finer granularity (more, narrower
-experts at equal total and active parameters) improved loss up to 128
-experts of <span class="math inline">\(d/4\)</span> with top-8 in one
-study <span class="citation" data-cites="liew2026principled"></span>,
-while the same total and active parameters are predicted to favour a
-less sparse configuration once training throughput is accounted for
-<span class="citation" data-cites="krajewski2025scaling"></span>.</p>
+<p>The two budgets of Section <a href="#app:moe-overview"
+data-reference-type="ref" data-reference="app:moe-overview">29.1</a> are
+spent separately here: <code>num_experts</code> <span
+class="math inline">\(\times\)</span> <code>expert_hidden_size</code> is
+(roughly) the total routed parameters—what memory pays—while
+<code>top_k</code> <span class="math inline">\(\times\)</span>
+<code>expert_hidden_size</code> is the per-token compute—what the user
+pays. <code>expert_hidden_size</code> sets each expert’s intermediate
+width and falls back to <code>ffn.hidden_size</code> when unset. Keeping
+the two widths separate is essential for real architectures: DeepSeek-V3
+has a dense width of <span class="math inline">\(18432\)</span> but
+experts of width <span class="math inline">\(2048\)</span> <span
+class="citation" data-cites="deepseek2024v3"></span>—its dense layers
+are nine times wider than its experts. Granularity is the refinement of
+the same trade: at a fixed parameter budget, “<span
+class="math inline">\(16\)</span> experts of width <span
+class="math inline">\(4096\)</span>” and “<span
+class="math inline">\(64\)</span> experts of width <span
+class="math inline">\(1024\)</span>” hold the same total. The finer
+split lets each expert specialise more narrowly, which improved loss up
+to <span class="math inline">\(128\)</span> experts of width <span
+class="math inline">\(d/4\)</span> with top-<span
+class="math inline">\(8\)</span> in one study <span class="citation"
+data-cites="liew2026principled"></span>; but narrower experts also see
+fewer tokens each per step, and once training throughput is priced in,
+the same total and active parameters are predicted to favour a
+<em>less</em> sparse configuration <span class="citation"
+data-cites="krajewski2025scaling"></span>. The honest summary: finer
+helps at fixed FLOPs, and the evidence at fixed wall-clock is mixed.</p>
 <h4 id="latent-moe.">Latent MoE.</h4>
-<p>LatentMoE projects each token from <span
-class="math inline">\(d\)</span> to a latent width <span
-class="math inline">\(\ell\)</span> before dispatch and back after
-combining, so each token copy carries <span
-class="math inline">\(\ell\)</span> numbers instead of <span
-class="math inline">\(d\)</span> <span class="citation"
-data-cites="elango2026latentmoe"></span>: <span
+<p>Ship a compressed copy instead of the whole token. LatentMoE wraps
+the experts between a down- and an up-projection: each token is
+projected from <span class="math inline">\(d\)</span> to a latent width
+<span class="math inline">\(\ell\)</span> before dispatch, and the
+combined result is projected back after <span class="citation"
+data-cites="elango2026latentmoe"></span>, <span
 class="math display">\[\ell_t = W_\downarrow x_t,\qquad
   y_t = W_\uparrow \sum_{j=1}^{k} \hat w_{t,j} E_{i_{t,j}}(\ell_t).
-  \label{eq:latent}\]</span> With <span class="math inline">\(\alpha =
-d/\ell\)</span>, the same expert parameters, compute and traffic afford
-<span class="math inline">\(\alpha\)</span> times more experts and a
-larger top-<span class="math inline">\(k\)</span>; NVIDIA reports +5.65
-MMLU-Pro points at 95B total with <span class="math inline">\(\alpha =
-4\)</span>, and quality is preserved up to <span
-class="math inline">\(\alpha \leqslant 4\)</span> <span class="citation"
+  \label{eq:latent}\]</span> Each of the <span
+class="math inline">\(k\)</span> dispatched copies now carries <span
+class="math inline">\(\ell\)</span> numbers instead of <span
+class="math inline">\(d\)</span>. With compression ratio <span
+class="math inline">\(\alpha = d/\ell\)</span>, moving and processing
+one copy costs <span class="math inline">\(\alpha\)</span> times less,
+so the same expert parameters, compute and traffic afford <span
+class="math inline">\(\alpha\)</span> times more experts and a larger
+top-<span class="math inline">\(k\)</span>. The bet is that experts can
+work on a lossy sketch of the token; NVIDIA reports it holds up to <span
+class="math inline">\(\alpha \leqslant 4\)</span> (<span
+class="math inline">\(+5.65\)</span> MMLU-Pro points at 95B total with
+<span class="math inline">\(\alpha = 4\)</span>) <span class="citation"
 data-cites="elango2026latentmoe"></span>. Kimi K3 adds an RMSNorm before
 the up-projection to stop routed-branch activation growth at 2.8T
 parameters, exposed as <code>latent.norm_before_up_proj</code> <span
 class="citation" data-cites="kimiteam2026k3"></span>.</p>
 <h4 id="shared-experts.">Shared experts.</h4>
-<p><code>shared.count</code> always-on experts run outside the router on
-every token, learning common patterns and leaving the routed experts
-free to specialise <span class="citation"
+<p>A routed layer has no guarantee that common knowledge gets
+represented: each expert learns whatever its visitors need, so <span
+class="math inline">\(E\)</span> experts may each re-learn the same
+syntax and punctuation. <code>shared.count</code> always-on experts run
+outside the router on <em>every</em> token—the general practitioners of
+the clinic in Section <a href="#app:moe-overview"
+data-reference-type="ref"
+data-reference="app:moe-overview">29.1</a>—absorbing the knowledge every
+token needs and freeing the routed specialists to spend their capacity
+on what differs across tokens <span class="citation"
 data-cites="dai2024deepseekmoe"></span>. Their width is
 <code>shared.hidden_size</code> (default: the routed width). They are
 added at weight one, or multiplied by a learned per-token gate <span
@@ -14837,13 +15263,18 @@ class="math inline">\(\sigma(w_s^{\top} x_t) \in (0,1)\)</span> when
 <code>shared.gate: sigmoid</code> (Qwen3-Next) <span class="citation"
 data-cites="qwen2025qwen3"></span>; the fixed-weight form matches
 DeepSeek-V3 <span class="citation" data-cites="deepseek2024v3"></span>.
-Shared experts are not free: adding one without reducing routed
-top-<span class="math inline">\(k\)</span> increases per-token compute,
-and measured quality gains are small and inconsistent <span
-class="citation" data-cites="li2026slicing"></span>.</p>
+They are not free: a shared expert runs on every token, so per-token
+compute grows by its width, and measured quality gains are small and
+inconsistent <span class="citation" data-cites="li2026slicing"></span>.
+Add one when you would otherwise raise <code>top_k</code>, not on top of
+it.</p>
 <h4 id="activation-clamp.">Activation clamp.</h4>
-<p><code>experts.activation_clamp</code> upper-bounds the gated
-intermediate, <span class="math display">\[\mathrm{GatedFFN}(x) =
+<p>A rare but real pathology: individual experts whose output norms grow
+while the loss stays flat—Step 3.5 Flash found such outliers, and their
+growth was contained by clipping at unchanged loss <span
+class="citation" data-cites="huang2026step35"></span>.
+<code>experts.activation_clamp</code> bounds the gated intermediate,
+<span class="math display">\[\mathrm{GatedFFN}(x) =
 W_{\text{down}}\!\left(
   \phi\bigl(\operatorname{clamp}(xW_{\text{gate}}, -c, c)\bigr) \odot
 (xW_{\text{up}})
@@ -14851,19 +15282,23 @@ W_{\text{down}}\!\left(
 <code>activation_clamp</code> (<span class="math inline">\(0\)</span>
 disables it). DeepSeek-V4.1 uses <span class="math inline">\(c =
 10\)</span> and Step 5 Preview <span class="math inline">\(c =
-7\)</span>; Step 3.5 Flash found outlier experts whose output norms grew
-while the loss stayed flat, and clipping contained them at unchanged
-loss <span class="citation"
-data-cites="huang2026step35 deepseek2026v4flash"></span>. The exact
-SiTU-GLU smooth cap used by Kimi K3 is approximated here by a gate-input
-clamp and documented as a deviation <span class="citation"
-data-cites="kimiteam2026k3"></span>.</p>
+7\)</span> <span class="citation"
+data-cites="deepseek2026v4flash"></span>. Treat it as insurance against
+rogue experts, not as a default: it exists so that the monitoring signal
+of Section <a href="#app:moe-monitoring" data-reference-type="ref"
+data-reference="app:moe-monitoring">29.9</a> (expert-norm ratio rising)
+has a cheap remedy. The exact SiTU-GLU smooth cap used by Kimi K3 is
+approximated here by a gate-input clamp and documented as a deviation
+<span class="citation" data-cites="kimiteam2026k3"></span>.</p>
 <h2 id="app:moe-layout">Layer layout</h2>
-<p><code>layout.dense_layers</code> keeps the first <span
-class="math inline">\(N\)</span> layers dense (DeepSeek-V3 and GLM keep
-three), and <code>layout.every_n_layers</code> interleaves dense and MoE
-layers (Llama 4 Maverick uses every second layer) <span class="citation"
-data-cites="deepseek2024v3"></span>. Dense layers use
+<p>Not every layer needs to be an MoE layer. The first layers of a
+transformer compute generic features that every token needs regardless
+of content; specialisation pays later. <code>layout.dense_layers</code>
+keeps the first <span class="math inline">\(N\)</span> layers dense
+(DeepSeek-V3 and GLM keep three), and <code>layout.every_n_layers</code>
+interleaves dense and MoE layers (Llama 4 Maverick makes every second
+layer an MoE layer) <span class="citation"
+data-cites="deepseek2024v3 meta2025llama4"></span>. Dense layers use
 <code>ffn.hidden_size</code>; MoE layers use
 <code>expert_hidden_size</code>. The model config exposes
 <code>is_moe_layer(i)</code>, <code>moe_layer_mask()</code> and
@@ -14872,58 +15307,121 @@ stacks build a routed or dense FFN per physical layer accordingly.
 Leading dense layers reduce the number of MoE layers at little cost at
 matched FLOPs <span class="citation"
 data-cites="krajewski2025scaling"></span>, but they do not by themselves
-fix early-layer imbalance; the first MoE layers after the prefix remain
-the ones to monitor.</p>
+fix early-layer imbalance: the first MoE layers after the prefix are
+still the most collapse-prone and remain the ones to monitor.</p>
 <h2 id="app:moe-capacity">Capacity and token dropping</h2>
 <p>By default routing is dropless: an expert accepts every token the
-router sends it (<code>routing.capacity_factor: 0</code>). A positive
-factor <span class="math inline">\(\kappa\)</span> caps each expert at
-<span class="math display">\[C = \left\lceil \kappa\,\frac{Tk}{E}
-\right\rceil\]</span> assignments, keeping the highest-probability
-tokens and dropping the rest. The cap bounds memory and removes the
-hot-expert straggler, at a small quality cost: Pangu Ultra MoE dropped
-about 6–8% of tokens at <span class="math inline">\(\kappa =
-1.5\)</span> and its dropless run kept a lower loss, a gap that grew
-with the expert count <span class="citation"
+router sends it (<code>routing.capacity_factor: 0</code>), and per-step
+loads fluctuate freely. A positive factor <span
+class="math inline">\(\kappa\)</span> caps each expert at <span
+class="math display">\[C = \left\lceil \kappa\,\frac{Tk}{E}
+\right\rceil\]</span> assignments. The formula is the mean load with
+headroom: <span class="math inline">\(T\)</span> tokens each make <span
+class="math inline">\(k\)</span> requests, giving <span
+class="math inline">\(Tk\)</span> assignments shared by <span
+class="math inline">\(E\)</span> experts, so the mean is <span
+class="math inline">\(Tk/E\)</span> and <span
+class="math inline">\(\kappa\)</span> is the slack. Worked example:
+<span class="math inline">\(T = 4096\)</span> tokens, <span
+class="math inline">\(E = 8\)</span>, <span class="math inline">\(k =
+2\)</span> gives <span class="math inline">\(8192\)</span> assignments
+and a mean of <span class="math inline">\(1024\)</span> per expert;
+<span class="math inline">\(\kappa =
+1.5\)</span> sets <span class="math inline">\(C = 1536\)</span>. An
+expert that receives <span class="math inline">\(2000\)</span> requests
+serves its <span class="math inline">\(1536\)</span> highest-scoring
+ones and drops the other <span class="math inline">\(464\)</span>: those
+tokens leave the layer without that expert’s contribution (its weight is
+zeroed), and <code>dropped_fraction</code> records the share of removed
+assignments (<span class="math inline">\(464\)</span> of <span
+class="math inline">\(8192 \approx 5.7\%\)</span> in the example). What
+the cap buys is the straggler remedy of Section <a
+href="#app:moe-failures" data-reference-type="ref"
+data-reference="app:moe-failures">29.2</a>: a hard upper bound on each
+expert’s buffer (memory) and, in distributed training, the guarantee
+that no hot expert sets the step time. The cost is silent quality loss:
+Pangu Ultra MoE dropped about 6–8% of tokens at <span
+class="math inline">\(\kappa = 1.5\)</span> and its dropless run kept a
+lower loss, a gap that grew with the expert count <span class="citation"
 data-cites="pangu2025ultra"></span>, and MegaBlocks reached its lowest
 loss when no token was dropped <span class="citation"
-data-cites="gale2022megablocks"></span>. The layer logs
-<code>dropped_fraction</code>. Dropless remains the default and the
-recommended setting for fine-tuning, where dropped tokens can fall
-inside instruction responses.</p>
+data-cites="gale2022megablocks"></span>. Dropless remains the default
+and the recommended setting for fine-tuning, where dropped tokens can
+fall inside instruction responses.</p>
 <h2 id="app:moe-monitoring">Monitoring</h2>
 <p>Each <code>MoELayer</code> exposes <code>last_auxiliary_losses</code>
-(coefficient- weighted <code>moe_load_balancing_loss</code> and
+(coefficient-weighted <code>moe_load_balancing_loss</code> and
 <code>moe_router_z_loss</code>) and <code>last_moe_stats</code>. The
 model aggregates them over layers through
 <code>aggregate_moe_aux_losses()</code> and adds the losses to the task
 loss; the trainer logs the scalars to the metrics callback and to
-Weights &amp; Biases. The signals are:</p>
+Weights &amp; Biases. Read as five questions, one signal each:</p>
 <ul>
-<li><p><strong>MaxVio</strong> (<code>moe/max_vio</code>) per layer:
-routing collapse shows up as a rising value.</p></li>
-<li><p><strong>Load-balancing loss</strong> and <strong>z-loss</strong>:
-coefficients already divided out in the logged statistics; the z-loss
-tracks logit drift.</p></li>
-<li><p><strong>Routing entropy</strong> and <strong>top-1
-weight</strong>: a flat gate, which averages its top-<span
-class="math inline">\(k\)</span> experts, shows up as entropy near <span
-class="math inline">\(\log k\)</span> and a top-1 weight near <span
-class="math inline">\(1/k\)</span>.</p></li>
-<li><p><strong>Expert-norm ratio</strong>: the largest per-expert output
-norm over the layer median; a rogue expert pushes it far above one, a
-dead expert pins the low end at zero <span class="citation"
-data-cites="huang2026step35"></span>.</p></li>
-<li><p><strong>Dropped fraction</strong>: share of assignments removed
-by the capacity factor.</p></li>
+<li><p><strong>Is the load even?</strong> MaxVio
+(<code>moe/max_vio</code>) per layer: near <span
+class="math inline">\(0\)</span> healthy, <span
+class="math inline">\(\geqslant 1\)</span> severe (Section <a
+href="#app:moe-balancing" data-reference-type="ref"
+data-reference="app:moe-balancing">29.5</a>); a value rising across
+steps is the collapse loop in progress.</p></li>
+<li><p><strong>Has the router committed?</strong> Routing entropy and
+top-1 weight. A flat gate that merely averages its top-<span
+class="math inline">\(k\)</span> experts shows up as entropy near <span
+class="math inline">\(\log k\)</span> and top-1 weight near <span
+class="math inline">\(1/k\)</span> (no specialisation); a
+winner-takes-all gate shows entropy near <span
+class="math inline">\(0\)</span> and top-1 near <span
+class="math inline">\(1\)</span>. Healthy training drifts from the first
+state towards committed, structured routing without reaching the second
+extreme.</p></li>
+<li><p><strong>Are the experts healthy?</strong> The expert-norm ratio:
+the largest per-expert output norm over the layer median. Far above one
+means a rogue expert dominating the branch—the pathology the activation
+clamp contains; pinned at zero means a dead expert nobody selects <span
+class="citation" data-cites="huang2026step35"></span>.</p></li>
+<li><p><strong>How hard is balancing pulling, and is the router
+drifting?</strong> The load-balancing loss and the z-loss (coefficients
+already divided out in the logged statistics): the first should relax as
+balance improves, the second tracks logit drift.</p></li>
+<li><p><strong>Is capacity binding?</strong> The dropped fraction: share
+of assignments removed by the capacity factor; it is <span
+class="math inline">\(0\)</span> unless
+<code>routing.capacity_factor</code> is positive.</p></li>
 </ul>
+<p>Five rules of thumb close the on-ramp, each a consequence of the
+sections above rather than new machinery:</p>
+<ol>
+<li><p>Start with the defaults: dropless routing, batch-scope auxiliary
+loss at <span class="math inline">\(0.01\)</span>, no bias. They are the
+configuration most presets converge to after their own
+deviations.</p></li>
+<li><p>If balance is the problem, reach for the bias before raising the
+auxiliary coefficient: the bias redirects traffic through the selection
+only and costs no language-model loss <span class="citation"
+data-cites="wang2024auxfree"></span>, while a larger <span
+class="math inline">\(\alpha\)</span> fights the task loss.</p></li>
+<li><p>Watch MaxVio on the first MoE layers after any dense prefix; that
+is where collapse starts (Section <a href="#app:moe-layout"
+data-reference-type="ref"
+data-reference="app:moe-layout">29.7</a>).</p></li>
+<li><p>Softmax at <span class="math inline">\(k{=}1\)</span> needs
+<code>pre_softmax</code> or the router never learns (Section <a
+href="#app:moe-router" data-reference-type="ref"
+data-reference="app:moe-router">29.3</a>); the loader repairs it, but
+the warning is worth understanding.</p></li>
+<li><p>Budget compute as <span
+class="math inline">\(\texttt{top\_\allowbreak k} \times
+\texttt{expert\_\allowbreak hidden\_\allowbreak size}
+        + \texttt{shared}\)</span> before enabling: shared experts and
+latent width change the per-token bill, and the cheapest fix for slow
+experts is a smaller budget, not more machinery.</p></li>
+</ol>
 <h2 id="app:moe-schema">Schema contract</h2>
 <p>Table <a href="#tab:moe-schema" data-reference-type="ref"
 data-reference="tab:moe-schema">[tab:moe-schema]</a> lists every
-<code>model.moe.*</code> key, its default, the flat
-<code>FrankensteinModelConfig</code> field produced by the flattener,
-and the governing reference. The JSON schema is the executable contract;
-runtime validation adds the cross-key rules: <span
+<code>model.moe.*</code> key, its default, what it controls, and the
+governing reference. The JSON schema is the executable contract; runtime
+validation adds the cross-key rules: <span
 class="math inline">\(top\_\allowbreak k \leqslant num\_\allowbreak
 experts\)</span>, softmax at <span class="math inline">\(k=1\)</span>
 implies pre-softmax, the bias requires sigmoid or sqrt-softplus scoring,
@@ -14932,95 +15430,96 @@ require token choice and forbid the bias, the latent width must lie in
 <span class="math inline">\((0, d)\)</span>, and the layer count must be
 positive.</p>
 <div class="longtable">
-<p><span>@L<span>0.27</span>L<span>0.19</span>L<span>0.22</span>L<span>0.24</span>@</span></p>
+<p><span>@L<span>0.27</span>L<span>0.13</span>L<span>0.32</span>L<span>0.20</span>@</span></p>
 <p><br />
-<strong>Key</strong> &amp; <strong>Default</strong> &amp; <strong>Flat
-field</strong> &amp; <strong>Reference</strong><br />
-<strong>Key</strong> &amp; <strong>Default</strong> &amp; <strong>Flat
-field</strong> &amp; <strong>Reference</strong><br />
-<code>enabled</code> &amp; <code>true</code> &amp; <code>use_moe</code>
+<strong>Key</strong> &amp; <strong>Default</strong> &amp;
+<strong>Controls</strong> &amp; <strong>Reference</strong><br />
+<strong>Key</strong> &amp; <strong>Default</strong> &amp;
+<strong>Controls</strong> &amp; <strong>Reference</strong><br />
+<code>enabled</code> &amp; <code>true</code> &amp; routed vs. dense FFN
 &amp; <span class="citation" data-cites="shazeer2017moe"></span><br />
-<code>num_experts</code> &amp; 8 &amp; <code>num_experts</code> &amp;
+<code>num_experts</code> &amp; 8 &amp; size of the routed pool &amp;
 <span class="citation" data-cites="fedus2021switch"></span><br />
-<code>top_k</code> &amp; 2 &amp; <code>top_k_experts</code> &amp; <span
+<code>top_k</code> &amp; 2 &amp; experts used per token &amp; <span
 class="citation" data-cites="fedus2021switch"></span><br />
-<code>expert_hidden_size</code> &amp; <code>null</code> &amp;
-<code>moe_expert_hidden_size</code> &amp; <span class="citation"
-data-cites="deepseek2024v3"></span><br />
-<code>router.scoring</code> &amp; <code>softmax</code> &amp;
-<code>moe_router_scoring</code> &amp; <span class="citation"
+<code>expert_hidden_size</code> &amp; <code>null</code> &amp; expert
+width (falls back to <code>ffn.hidden_size</code>) &amp; <span
+class="citation" data-cites="deepseek2024v3"></span><br />
+<code>router.scoring</code> &amp; <code>softmax</code> &amp; logits<span
+class="math inline">\(\to\)</span>scores function &amp; <span
+class="citation"
 data-cites="deepseek2024v3 deepseek2026v4"></span><br />
-<code>router.pre_softmax</code> &amp; <code>false</code> &amp;
-<code>moe_router_pre_softmax</code> &amp; <span class="citation"
-data-cites="fedus2021switch"></span><br />
-<code>router.renormalize</code> &amp; <code>true</code> &amp;
-<code>moe_router_renormalize</code> &amp; <span class="citation"
+<code>router.pre_softmax</code> &amp; <code>false</code> &amp; softmax
+before the top-<span class="math inline">\(k\)</span> cut &amp; <span
+class="citation" data-cites="fedus2021switch"></span><br />
+<code>router.renormalize</code> &amp; <code>true</code> &amp; selected
+weights sum to one &amp; <span class="citation"
 data-cites="krajewski2025scaling"></span><br />
-<code>router.routed_scaling_factor</code> &amp; 1.0 &amp;
-<code>moe_routed_scaling_factor</code> &amp; <span class="citation"
+<code>router.routed_scaling_factor</code> &amp; 1.0 &amp; routed-branch
+magnitude <span class="math inline">\(g\)</span> &amp; <span
+class="citation"
 data-cites="deepseek2024v3 kimiteam2026k3"></span><br />
-<code>router.dtype</code> &amp; <code>float32</code> &amp;
-<code>moe_router_dtype</code> &amp; <span class="citation"
+<code>router.dtype</code> &amp; <code>float32</code> &amp; router
+compute precision &amp; <span class="citation"
 data-cites="fedus2021switch zoph2022stmoe"></span><br />
-<code>router.jitter_eps</code> &amp; 0.0 &amp;
-<code>moe_router_jitter_eps</code> &amp; <span class="citation"
-data-cites="fedus2021switch"></span><br />
-<code>router.z_loss_coeff</code> &amp; 0.0 &amp;
-<code>moe_router_z_loss_coeff</code> &amp; <span class="citation"
+<code>router.jitter_eps</code> &amp; 0.0 &amp; input jitter strength
+&amp; <span class="citation" data-cites="fedus2021switch"></span><br />
+<code>router.z_loss_coeff</code> &amp; 0.0 &amp; logit-drift penalty
+<span class="math inline">\(\beta\)</span> &amp; <span class="citation"
 data-cites="zoph2022stmoe"></span><br />
-<code>routing.type</code> &amp; <code>token_choice</code> &amp;
-<code>moe_routing_type</code> &amp; <span class="citation"
+<code>routing.type</code> &amp; <code>token_choice</code> &amp; who
+picks whom &amp; <span class="citation"
 data-cites="zhou2022expertchoice"></span><br />
-<code>routing.capacity_factor</code> &amp; 0.0 &amp;
-<code>moe_capacity_factor</code> &amp; <span class="citation"
-data-cites="pangu2025ultra"></span><br />
-<code>routing.hash_layers</code> &amp; 0 &amp;
-<code>moe_hash_layers</code> &amp; <span class="citation"
+<code>routing.capacity_factor</code> &amp; 0.0 &amp; per-expert cap
+<span class="math inline">\(\kappa\)</span> (0: dropless) &amp; <span
+class="citation" data-cites="pangu2025ultra"></span><br />
+<code>routing.hash_layers</code> &amp; 0 &amp; first <span
+class="math inline">\(N\)</span> layers routed by table &amp; <span
+class="citation"
 data-cites="roller2021hash deepseek2026v4"></span><br />
-<code>routing.hash_table</code> &amp; <code>random</code> &amp;
-<code>moe_hash_table</code> &amp; <span class="citation"
+<code>routing.hash_table</code> &amp; <code>random</code> &amp; table
+construction &amp; <span class="citation"
 data-cites="roller2021hash"></span><br />
-<code>routing.hash_seed</code> &amp; 42 &amp; <code>moe_hash_seed</code>
-&amp; <span class="citation" data-cites="roller2021hash"></span><br />
-<code>balancing.aux_loss</code> &amp; <code>batch</code> &amp;
-<code>moe_aux_loss_type</code> &amp; <span class="citation"
+<code>routing.hash_seed</code> &amp; 42 &amp; table seed &amp; <span
+class="citation" data-cites="roller2021hash"></span><br />
+<code>balancing.aux_loss</code> &amp; <code>batch</code> &amp; loss
+scope &amp; <span class="citation"
 data-cites="dai2024deepseekmoe deepseek2024v3"></span><br />
-<code>balancing.aux_loss_coeff</code> &amp; 0.01 &amp;
-<code>moe_aux_loss_coeff</code> &amp; <span class="citation"
+<code>balancing.aux_loss_coeff</code> &amp; 0.01 &amp; loss weight <span
+class="math inline">\(\alpha\)</span> &amp; <span class="citation"
 data-cites="deepseek2024v3"></span><br />
 <code>balancing.bias_update</code> &amp; <code>none</code> &amp;
-<code>moe_bias_update</code> &amp; <span class="citation"
-data-cites="wang2024auxfree"></span><br />
-<code>balancing.bias_update_rate</code> &amp; 0.001 &amp;
-<code>moe_bias_update_rate</code> &amp; <span class="citation"
-data-cites="wang2024auxfree"></span><br />
-<code>shared.count</code> &amp; 0 &amp;
-<code>moe_shared_experts_count</code> &amp; <span class="citation"
-data-cites="dai2024deepseekmoe"></span><br />
+thermostat off / <code>sign</code> / centred &amp; <span
+class="citation" data-cites="wang2024auxfree"></span><br />
+<code>balancing.bias_update_rate</code> &amp; 0.001 &amp; thermostat
+step <span class="math inline">\(\gamma\)</span> &amp; <span
+class="citation" data-cites="wang2024auxfree"></span><br />
+<code>shared.count</code> &amp; 0 &amp; always-on experts &amp; <span
+class="citation" data-cites="dai2024deepseekmoe"></span><br />
 <code>shared.hidden_size</code> &amp; <code>null</code> &amp;
-<code>moe_shared_expert_hidden_size</code> &amp; <span class="citation"
+shared-expert width &amp; <span class="citation"
 data-cites="dai2024deepseekmoe"></span><br />
-<code>shared.gate</code> &amp; <code>none</code> &amp;
-<code>moe_shared_expert_gate</code> &amp; <span class="citation"
+<code>shared.gate</code> &amp; <code>none</code> &amp; fixed weight or
+learned gate &amp; <span class="citation"
 data-cites="qwen2025qwen3"></span><br />
-<code>latent.enabled</code> &amp; <code>false</code> &amp;
-<code>moe_latent_enabled</code> &amp; <span class="citation"
+<code>latent.enabled</code> &amp; <code>false</code> &amp; compress
+before dispatch &amp; <span class="citation"
 data-cites="elango2026latentmoe"></span><br />
-<code>latent.dim</code> &amp; <code>null</code> &amp;
-<code>moe_latent_dim</code> &amp; <span class="citation"
+<code>latent.dim</code> &amp; <code>null</code> &amp; latent width <span
+class="math inline">\(\ell\)</span> &amp; <span class="citation"
 data-cites="elango2026latentmoe"></span><br />
 <code>latent.norm_before_up_proj</code> &amp; <code>false</code> &amp;
-<code>moe_latent_norm_before_up_proj</code> &amp; <span class="citation"
-data-cites="kimiteam2026k3"></span><br />
-<code>layout.dense_layers</code> &amp; 0 &amp;
-<code>moe_dense_layers</code> &amp; <span class="citation"
+RMSNorm before <span class="math inline">\(W_\uparrow\)</span> &amp;
+<span class="citation" data-cites="kimiteam2026k3"></span><br />
+<code>layout.dense_layers</code> &amp; 0 &amp; dense prefix <span
+class="math inline">\(N\)</span> &amp; <span class="citation"
 data-cites="deepseek2024v3"></span><br />
-<code>layout.every_n_layers</code> &amp; 1 &amp;
-<code>moe_layer_frequency</code> &amp; <span class="citation"
+<code>layout.every_n_layers</code> &amp; 1 &amp; MoE every <span
+class="math inline">\(n\)</span>-th layer &amp; <span class="citation"
 data-cites="meta2025llama4"></span><br />
-<code>experts.activation_clamp</code> &amp; 0.0 &amp;
-<code>moe_activation_clamp</code> &amp; <span class="citation"
-data-cites="huang2026step35"></span><br />
+<code>experts.activation_clamp</code> &amp; 0.0 &amp; gate-input clamp
+<span class="math inline">\(c\)</span> (0: off) &amp; <span
+class="citation" data-cites="huang2026step35"></span><br />
 </p>
 </div>
 <h2 id="app:moe-presets">Named presets</h2>
@@ -15029,7 +15528,11 @@ configurations, with the documented single-device deviations. Table <a
 href="#tab:moe-presets" data-reference-type="ref"
 data-reference="tab:moe-presets">[tab:moe-presets]</a> summarises the
 MoE block of each MoE preset; the values were checked against the
-models’ Hugging Face <code>config.json</code> where available.</p>
+models’ Hugging Face <code>config.json</code> where available. Reading
+the table against Section <a href="#app:moe-failures"
+data-reference-type="ref" data-reference="app:moe-failures">29.2</a>:
+every recent frontier preset answers collapse with the bias, the
+auxiliary loss, or both.</p>
 <div class="longtable">
 <p><span>@L<span>0.18</span>L<span>0.12</span>L<span>0.10</span>L<span>0.14</span>L<span>0.12</span>L<span>0.22</span>@</span></p>
 <p><br />
@@ -15088,17 +15591,17 @@ of scope. DeepSeek-V4’s hash layers are supported through
 accumulated across the step’s forwards, so gradient accumulation and
 micro-batching do not change its semantics. The router receives no bias
 gradient, and the bias itself is a non-persistent buffer; exported
-checkpoints therefore remain inference-clean. Auxiliary losses are
-coefficient-weighted tensors in <code>last_auxiliary_losses</code> and
-are summed into the task loss by the trainer; they are excluded from
-evaluation. The router and the experts are categorised as
-<code>router</code> and <code>ffn</code> parameter blocks respectively,
-so per-block gradient norms and parameter counts match the estimator
-taxonomy. Finally, the MoE layer is token-wise and therefore cache-safe:
-the KV-cache parity suites keep the FFN dense because a discrete
-top-<span class="math inline">\(k\)</span> can flip under the tiny
-numerical differences between full and cached forwards, which is a
-property of discrete routing rather than of the cache.</p>
+checkpoints therefore contain no training state—they remain
+inference-clean. Auxiliary losses are coefficient-weighted tensors in
+<code>last_auxiliary_losses</code> and are summed into the task loss by
+the trainer; they are excluded from evaluation. The router and the
+experts are categorised as <code>router</code> and <code>ffn</code>
+parameter blocks respectively, so per-block gradient norms and parameter
+counts match the estimator taxonomy. Finally, the MoE layer is
+token-wise and therefore cache-safe: the KV-cache parity suites keep the
+FFN dense because a discrete top-<span class="math inline">\(k\)</span>
+can flip under the tiny numerical differences between full and cached
+forwards—a property of discrete routing, not of the cache.</p>
 <h2 id="app:moe-future">Related systems and future work</h2>
 <p>The appendix’s design follows the MoE handbook’s anatomy (router,
 routing, balancing, experts, layout, capacity) and the systems
@@ -15642,7 +16145,7 @@ head keeps <span class="math inline">\(3.94\)</span>M, leaving <span
 class="math inline">\(4.15\)</span>M total parameters—the paper’s own
 accounting, where the head is dropped only for deployment.</p>
 <p>Table <a href="#tab:eelbert-results" data-reference-type="ref"
-data-reference="tab:eelbert-results">10</a> summarises the reference
+data-reference="tab:eelbert-results">11</a> summarises the reference
 results reported by <span class="citation"
 data-cites="cohn_eelbert_2023"></span>.</p>
 <div id="tab:eelbert-results">
@@ -17371,7 +17874,7 @@ Nothing in this chain needs a GPU.</figcaption>
 </figure>
 <h2 id="the-stage-ledger-of-round-2">The Stage Ledger of Round 2</h2>
 <p>Table <a href="#tab:stage-ledger" data-reference-type="ref"
-data-reference="tab:stage-ledger">14</a> reproduces the ledger. Training
+data-reference="tab:stage-ledger">15</a> reproduces the ledger. Training
 dominates both the record count and the cost: 1<span>,</span>039
 attempts, of which 868 succeeded and 171 failed, with a median of 68
 minutes and a P90 of 84 minutes per attempt—906 CPU-hours in total, of
@@ -17574,7 +18077,7 @@ driven by the <code>engram</code> memory bank, which attaches a large
 key–value table to the attention block.</p>
 <p>The composition chart (Figure <a href="#fig:r2-params-composition"
 data-reference-type="ref"
-data-reference="fig:r2-params-composition">99</a>) is the most useful
+data-reference="fig:r2-params-composition">107</a>) is the most useful
 diagnostic of the section. The token embeddings and the output head are
 fixed costs of roughly 49k parameters each, so almost every difference
 between configurations is paid in the attention block and the FFN—the
@@ -17616,9 +18119,9 @@ with four evaluation sentences, a single lucky or unlucky token rewrites
 the ranking. Both signals are therefore reported throughout, and the
 inference tables should be read as a catastrophic-failure check rather
 than as a leaderboard. Table <a href="#tab:r2-top-loss"
-data-reference-type="ref" data-reference="tab:r2-top-loss">15</a> lists
+data-reference-type="ref" data-reference="tab:r2-top-loss">16</a> lists
 the ten best pairs by final loss and Table <a href="#tab:r2-top-acc"
-data-reference-type="ref" data-reference="tab:r2-top-acc">16</a> the ten
+data-reference-type="ref" data-reference="tab:r2-top-acc">17</a> the ten
 best by held-out accuracy; the two tables have no pair in common.</p>
 <div id="tab:r2-top-loss">
 <table>
@@ -17871,7 +18374,7 @@ the median clip ratio is 0.90.</figcaption>
 <h2 id="the-atimesb-atlas">The A<span
 class="math inline">\(\times\)</span>B Atlas</h2>
 <p>The atlas (Figure <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">107</a>)
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">115</a>)
 is the centrepiece of the experiment: a matrix in which each cell is one
 hybrid pair, rows index the first mixer, columns index the second, and
 colour encodes the final loss. It is read in two directions. Column by
@@ -17905,7 +18408,7 @@ train.</figcaption>
 </figure>
 <h4 id="which-second-mixer-to-pick.">Which second mixer to pick.</h4>
 <p>Table <a href="#tab:r2-best-b" data-reference-type="ref"
-data-reference="tab:r2-best-b">17</a> ranks second mixers by mean final
+data-reference="tab:r2-best-b">18</a> ranks second mixers by mean final
 loss across every pair that contains them. The <em>Pairs</em> column is
 the sample size behind each mean and should be read alongside it: a
 single-pair mean (for example <code>mamba</code>, with one pair) is
@@ -18190,7 +18693,7 @@ not a substitute for held-out evaluation.</figcaption>
 <p>The optimizer sweep is the most sobering chart of the round: 23
 optimizers, the same 210k backbone, and a final-loss range of only
 10.10–10.77 nats (Table <a href="#tab:r2-optimizers"
-data-reference-type="ref" data-reference="tab:r2-optimizers">19</a>).
+data-reference-type="ref" data-reference="tab:r2-optimizers">20</a>).
 <code>q_apollo</code> wins at 10.098 and <code>galore_adamw</code>
 closes the table at 10.772, but a dozen optimizers land on exactly
 10.404—the run is too short for the choice of optimizer to separate from
@@ -18369,12 +18872,12 @@ overhead.</figcaption>
 <h4 id="normalization-and-positional-encoding.">Normalization and
 positional encoding.</h4>
 <p>Among the normalizations (Table <a href="#tab:r2-norms"
-data-reference-type="ref" data-reference="tab:r2-norms">20</a>),
+data-reference-type="ref" data-reference="tab:r2-norms">21</a>),
 <code>flash_norm</code> wins clearly at 9.749 nats—half a nat ahead of
 the runner-up, a large margin by the standards of this round—while
 <code>prms_norm</code> and <code>rms_norm</code> lag. In the positional
 encodings (Table <a href="#tab:r2-pe" data-reference-type="ref"
-data-reference="tab:r2-pe">21</a>), the PAPE family
+data-reference="tab:r2-pe">22</a>), the PAPE family
 (<code>pape_ri</code>, <code>pape</code>, <code>pape_efficient</code>)
 sweeps the podium, and classical RoPE is mid-table. Both results are
 useful calibration: “modern” is not automatically better on a 100-epoch
@@ -18530,7 +19033,7 @@ classical RoPE is mid-table at this scale.</figcaption>
 </figure>
 <h4 id="structural-switches.">Structural switches.</h4>
 <p>The structural toggles (Table <a href="#tab:r2-trans"
-data-reference-type="ref" data-reference="tab:r2-trans">22</a>) separate
+data-reference-type="ref" data-reference="tab:r2-trans">23</a>) separate
 more than the optimizers do—evidence that, at this scale, architecture
 is a stronger lever than the update rule. The three wins are factorised
 embeddings (9.623), a SwiGLU FFN (9.901) and two Hyperloop loops
@@ -18893,7 +19396,7 @@ class="math inline">\(r = 1.00\)</span>), which is expected because the
 clip ratio is computed from the gradient norm, and neither correlates
 with quality.</p>
 <p>The correlation matrix of Figure <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">126</a> is
+data-reference-type="ref" data-reference="fig:r2-correlation">134</a> is
 computed over all 868 rows. Read that way, parameter count correlates
 with loss at <span class="math inline">\(-0.43\)</span> and with
 accuracy at <span class="math inline">\(+0.42\)</span>, apparently
@@ -18981,7 +19484,7 @@ hyperparameters. Required fields are <code>dims.vocab_size</code>,
 <code>dims.hidden_size</code>, <code>dims.num_layers</code>,
 <code>dims.num_heads</code>, and <code>dims.layer_pattern</code>.
 Table <a href="#tab:model-fields" data-reference-type="ref"
-data-reference="tab:model-fields">24</a> lists all model fields with
+data-reference="tab:model-fields">25</a> lists all model fields with
 their types and descriptions.</p>
 <div id="tab:model-fields">
 <table>
@@ -19808,7 +20311,7 @@ for the rows that follow it. There are no flat feature keys at
 <p>The <code>model.dims.layer_pattern</code> array accepts the following
 48 mixer codes. Each element defines one physical layer in the model
 stack. Table <a href="#tab:layer-pattern-enum" data-reference-type="ref"
-data-reference="tab:layer-pattern-enum">25</a> lists all available types
+data-reference="tab:layer-pattern-enum">26</a> lists all available types
 with their training and inference support.</p>
 <div id="tab:layer-pattern-enum">
 <table>
@@ -20135,7 +20638,7 @@ class="math inline">\(\mathcal{O}(R N \sqrt{N})\)</span></td>
 <p>The <code>training</code> object controls the entire training
 pipeline. The only required field is <code>task</code>. Table <a
 href="#tab:training-fields" data-reference-type="ref"
-data-reference="tab:training-fields">26</a> lists all training
+data-reference="tab:training-fields">27</a> lists all training
 fields.</p>
 <div id="tab:training-fields">
 <table>
@@ -20516,7 +21019,7 @@ the embedding matrix always matches the tokenizer. In this mode
 <code>name_or_path</code> must be omitted.</p></li>
 </ul>
 <p>Table <a href="#tab:tokenizer-training" data-reference-type="ref"
-data-reference="tab:tokenizer-training">27</a> lists the
+data-reference="tab:tokenizer-training">28</a> lists the
 <code>tokenizer.training</code> sub-object fields.</p>
 <div id="tab:tokenizer-training">
 <table>
@@ -20641,7 +21144,7 @@ prefixed by the optimizer class name (e.g.,
 Suffixes</h3>
 <p>Table <a href="#tab:optimizer-specific-suffixes"
 data-reference-type="ref"
-data-reference="tab:optimizer-specific-suffixes">28</a> lists the
+data-reference="tab:optimizer-specific-suffixes">29</a> lists the
 additional global suffixes supported by each optimizer (prefixed by the
 optimizer name).</p>
 <div id="tab:optimizer-specific-suffixes">
@@ -21866,9 +22369,12 @@ data-cites="Gulati2020"></span><br />
 role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a
-href="https://erickfmm.github.io/frankenstein-transformer/charts/index.html"
-class="uri">https://erickfmm.github.io/frankenstein-transformer/charts/index.html</a><a
+<li id="fn1"><p>Round 2 is published at <a
+href="https://erickfmm.github.io/frankenstein-transformer/experiments/2/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/experiments/2/index.html</a>,
+and all rounds are indexed at <a
+href="https://erickfmm.github.io/frankenstein-transformer/experiments/index.html"
+class="uri">https://erickfmm.github.io/frankenstein-transformer/experiments/index.html</a>.<a
 href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
