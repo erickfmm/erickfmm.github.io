@@ -210,7 +210,7 @@ Presentamos Frankenstein Transformer, un conjunto de herramientas CLI
 basado en configuración (<code>frankenstein-transformer</code>) que
 unifica la definición, el entrenamiento, el despliegue y la inferencia
 de modelos tras un único esquema YAML estricto. El conjunto de
-herramientas cubre cuarenta y nueve mezcladores de secuencia en diez
+herramientas cubre cuarenta y nueve mezcladores de secuencia en nueve
 familias y treinta y seis familias de optimizadores con control de
 hiperparámetros por grupo de parámetros, y soporta clases de modelo
 encoder, decoder, Vision Transformer y audio para masked language
@@ -290,9 +290,8 @@ Secuencia</a></li>
 <li><a href="#familias-densa-y-recurrente"
 id="toc-familias-densa-y-recurrente">Familias Densa y
 Recurrente</a></li>
-<li><a href="#familia-de-memoria-indexada-por-token"
-id="toc-familia-de-memoria-indexada-por-token">Familia de Memoria
-Indexada por Token</a></li>
+<li><a href="#sec:memory-family" id="toc-sec:memory-family">Familia de
+Memoria</a></li>
 <li><a href="#familia-de-atención-latente-y-de-bajo-rango"
 id="toc-familia-de-atención-latente-y-de-bajo-rango">Familia de Atención
 Latente y de Bajo Rango</a></li>
@@ -425,9 +424,8 @@ Agrupadas (GQA)</a></li>
 <li><a href="#atención-continua" id="toc-atención-continua">Atención
 Continua</a></li>
 </ul></li>
-<li><a href="#memoria-indexada-por-token-memory-attention"
-id="toc-memoria-indexada-por-token-memory-attention">Memoria Indexada
-por Token: Memory Attention</a></li>
+<li><a href="#memory-attention" id="toc-memory-attention">Memory
+Attention</a></li>
 <li><a href="#arquitecturas-recurrentes-y-retentivas"
 id="toc-arquitecturas-recurrentes-y-retentivas">Arquitecturas
 Recurrentes y Retentivas</a>
@@ -703,19 +701,6 @@ id="toc-pseudocódigo-algorítmico-18">Pseudocódigo Algorítmico</a></li>
 <li><a href="#características-clave-20"
 id="toc-características-clave-20">Características Clave</a></li>
 </ul></li>
-<li><a
-href="#fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclado-a-la-cabecera"
-id="toc-fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclado-a-la-cabecera">Fast
-Conformer: Atención de Contexto Limitado con un Token Global Anclado a
-la Cabecera</a>
-<ul>
-<li><a href="#formulación-matemática-20"
-id="toc-formulación-matemática-20">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-19"
-id="toc-pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</a></li>
-<li><a href="#características-clave-21"
-id="toc-características-clave-21">Características Clave</a></li>
-</ul></li>
 <li><a href="#espacio-de-diseño-y-criterios-de-selección"
 id="toc-espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
 Criterios de Selección</a></li>
@@ -846,12 +831,12 @@ Hardware</a></li>
 <li><a href="#sec:annex-ssog" id="toc-sec:annex-ssog">SSOG: Atención
 Separable Sum of Gaussians</a>
 <ul>
-<li><a href="#formulación-matemática-21"
-id="toc-formulación-matemática-21">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-20"
-id="toc-pseudocódigo-algorítmico-20">Pseudocódigo Algorítmico</a></li>
-<li><a href="#características-clave-22"
-id="toc-características-clave-22">Características Clave</a></li>
+<li><a href="#formulación-matemática-20"
+id="toc-formulación-matemática-20">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-19"
+id="toc-pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-21"
+id="toc-características-clave-21">Características Clave</a></li>
 </ul></li>
 <li><a href="#sec:annex-fast-weight"
 id="toc-sec:annex-fast-weight">Atención de Peso Rápido para Aprendizaje
@@ -895,9 +880,8 @@ id="toc-relación-con-trabajos-previos">Relación con Trabajos Previos</a>
 id="toc-cuándo-usar-cada-variante">Cuándo Usar Cada Variante</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#sec:annex-conformer"
-id="toc-sec:annex-conformer">Conformer: Atención Aumentada con
-Convolución</a>
+<li><a href="#sec:annex-conformer" id="toc-sec:annex-conformer">Atención
+Aumentada con Convolución: Conformer y Fast Conformer</a>
 <ul>
 <li><a href="#resumen-ejecutivo-1" id="toc-resumen-ejecutivo-1">Resumen
 Ejecutivo</a></li>
@@ -905,10 +889,10 @@ Ejecutivo</a></li>
 id="toc-conformer-atención-aumentada-con-convolución">Conformer:
 Atención Aumentada con Convolución</a>
 <ul>
-<li><a href="#formulación-matemática-22"
-id="toc-formulación-matemática-22">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-21"
-id="toc-pseudocódigo-algorítmico-21">Pseudocódigo Algorítmico</a></li>
+<li><a href="#formulación-matemática-21"
+id="toc-formulación-matemática-21">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-20"
+id="toc-pseudocódigo-algorítmico-20">Pseudocódigo Algorítmico</a></li>
 <li><a href="#mapeo-de-implementación-y-desviaciones"
 id="toc-mapeo-de-implementación-y-desviaciones">Mapeo de Implementación
 y Desviaciones</a></li>
@@ -920,6 +904,19 @@ id="toc-reutilización-de-la-infraestructura-existente">Reutilización de
 la Infraestructura Existente</a></li>
 <li><a href="#cuándo-usarlo" id="toc-cuándo-usarlo">Cuándo
 Usarlo</a></li>
+<li><a
+href="#fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclado-a-la-cabecera"
+id="toc-fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclado-a-la-cabecera">Fast
+Conformer: Atención de Contexto Limitado con un Token Global Anclado a
+la Cabecera</a>
+<ul>
+<li><a href="#formulación-matemática-22"
+id="toc-formulación-matemática-22">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-21"
+id="toc-pseudocódigo-algorítmico-21">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-22"
+id="toc-características-clave-22">Características Clave</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#sec:annex-optimizers"
 id="toc-sec:annex-optimizers">Familias de Optimizadores</a>
@@ -1517,14 +1514,14 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cuarenta y nueve mezcladores de secuencia en diez
+estricto que soporta cuarenta y nueve mezcladores de secuencia en nueve
 familias y treinta y seis familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
 único pipeline para líneas base densas, bloques recurrentes y
 retentivos, patrones dispersos, mecanismos con compuerta, compresión
-latente, memoria condicional, atención de peso rápido y atención de
-campo geométrico, con modos encoder y decoder <span class="citation"
+latente, capas de memoria, atención de peso rápido y atención de campo
+geométrico, con modos encoder y decoder <span class="citation"
 data-cites="zhu2026mixtureofdepthsattention cheng2026conditionalmemoryscalablelookup xie_mhc_2025 zhang_falcon_2026 pisoni_ssog_2026"></span>.</p></li>
 <li><p><strong>Enrutamiento de optimizadores</strong>: grupos de
 hiperparámetros con prefijo que controlan de forma independiente
@@ -1751,11 +1748,11 @@ proporcionando un sistema de configuración basado en esquemas diseñado
 específicamente para la experimentación arquitectónica. Sus
 diferenciadores clave incluyen:</p>
 <ul>
-<li><p><strong>43 mezcladores de secuencia</strong> que abarcan atención
+<li><p><strong>49 mezcladores de secuencia</strong> que abarcan atención
 densa, bloques recurrentes/retentivos, patrones de atención dispersa,
-mecanismos con compuerta, enrutamiento adaptativo por profundidad y
-capas de memoria condicional, todos seleccionables mediante un único
-campo YAML.</p></li>
+mecanismos con compuerta, compresión latente, capas de memoria, atención
+de peso rápido y atención de campo geométrico, todos seleccionables
+mediante un único campo YAML.</p></li>
 <li><p><strong>23 familias de optimizadores</strong> con un sistema de
 enrutamiento de hiperparámetros con prefijos que permite control por
 grupo de parámetros a través de embeddings, capas de normalización,
@@ -1969,21 +1966,21 @@ Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
 <p>El sistema implementa cuarenta y nueve mezcladores de secuencia
-organizados en diez categorías funcionales que reflejan cómo cada método
-equilibra expresividad, costo computacional y memoria.</p>
+organizados en nueve categorías funcionales que reflejan cómo cada
+método equilibra expresividad, costo computacional y memoria.</p>
 <ol>
 <li><p><strong>Líneas base densas</strong> (4): atención softmax
 estándar, atención sigmoide, Atención Continua y Grouped-Query Attention
 (GQA) ofrecen enrutamiento global completo a costo cuadrático.</p></li>
-<li><p><strong>Recurrentes y retentivas</strong> (4): RetNet, Mamba,
-bloques tipo ODE y Titans mantienen estado para inferencia en tiempo
-constante mediante recurrencia, espacios de estados selectivos,
-profundidad continua o memoria en tiempo de prueba.</p></li>
-<li><p><strong>Patrones dispersos</strong> (12): Sparse Transformer,
+<li><p><strong>Recurrentes y retentivas</strong> (3): RetNet, Mamba y
+bloques tipo ODE mantienen estado para inferencia en tiempo constante
+mediante recurrencia, espacios de estados selectivos o profundidad
+continua.</p></li>
+<li><p><strong>Patrones dispersos</strong> (11): Sparse Transformer,
 Longformer, SWA con sumideros de atención, BigBird, SparseK, NSA,
-SpargeAttn, FASA, MSA, SparDA, LSA y Fast Conformer reducen el costo
-cuadrático mediante dispersión estructurada, selección de tokens, poda
-sin entrenamiento o clustering semántico de claves.</p></li>
+SpargeAttn, FASA, MSA, SparDA y LSA reducen el costo cuadrático mediante
+dispersión estructurada, selección de tokens, poda sin entrenamiento o
+clustering semántico de claves.</p></li>
 <li><p><strong>Mecanismos con compuerta</strong> (9): GLA, DeltaNet,
 Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, KDA y First
 Passage Attention (FPA) introducen control dependiente de los datos
@@ -1992,15 +1989,12 @@ sobre retención, olvido y fuerza de actualización.</p></li>
 Tucker, IHA, GTA, MTLA, CCA, CCGQA y GMA comprimen el estado clave–valor
 en cuellos de botella de bajo rango o enrutan mediante una memoria
 latente de mezcla gaussiana.</p></li>
-<li><p><strong>Memoria condicional</strong> (1): Engram proporciona
-memoria de lectura/escritura en tiempo de prueba mediante búsquedas
-aprendidas.</p></li>
-<li><p><strong>Memoria indexada por token</strong> (1): Memory Attention
-reemplaza la proyección de valores dedicada por memoria de tokens
-específica de capa, construyendo valores como <span
-class="math inline">\(V = K + \mathrm{Norm}(E[s])\)</span> y manteniendo
-la ponderación softmax sin cambios <span class="citation"
-data-cites="kang_memory_attention_2026"></span>.</p></li>
+<li><p><strong>Memoria</strong> (3): Titans combina una ventana de
+atención local con una memoria asociativa impulsada por sorpresa que se
+actualiza en tiempo de prueba; Engram proporciona memoria de
+lectura/escritura en tiempo de prueba mediante búsquedas hash de
+N-gramas; Memory Attention reemplaza la proyección de valores dedicada
+por una tabla de memoria token-ID específica de capa.</p></li>
 <li><p><strong>Atención de peso rápido</strong> (6): Falcon-1/2/3 y
 Falcon-1A/2A/3A tratan la transición de estado recurrente como una regla
 de aprendizaje continuo en línea <span class="citation"
@@ -2008,28 +2002,32 @@ data-cites="zhang_falcon_2026"></span>.</p></li>
 <li><p><strong>Campo geométrico</strong> (1): SSOG aplica un prior
 geométrico estructurado sobre la matriz de atención <span
 class="citation" data-cites="pisoni_ssog_2026"></span>.</p></li>
-<li><p><strong>Aumentados con convolución</strong> (1): el bloque
+<li><p><strong>Aumentados con convolución</strong> (2): el bloque
 Conformer <span class="citation" data-cites="Gulati2020"></span> fusiona
 atención multi-cabeza con un módulo de convolución depthwise entre dos
 capas feed-forward Macaron, aportando a cada capa una rama local junto
-al campo receptivo global (Anexo <a href="#sec:annex-conformer"
-data-reference-type="ref"
+al campo receptivo global; Fast Conformer <span class="citation"
+data-cites="rekesh_fastconformer_2023"></span> conserva ese diseño para
+voz de forma larga y reemplaza la autoatención global por una ventana
+local limitada más un token global anclado a la cabecera (Anexo <a
+href="#sec:annex-conformer" data-reference-type="ref"
 data-reference="sec:annex-conformer">19</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
 <figcaption>Taxonomía de los cuarenta y nueve mezcladores de secuencia
-en diez categorías funcionales. Las líneas base densas ofrecen
+en nueve categorías funcionales. Las líneas base densas ofrecen
 enrutamiento global completo a costo cuadrático; los métodos recurrentes
 comprimen el estado para inferencia en tiempo constante; las variantes
 dispersas restringen el patrón de atención; los mecanismos con compuerta
 modulan retención y olvido; los métodos latentes comprimen las
-representaciones clave–valor; la memoria condicional añade búsquedas de
-lectura/escritura en tiempo de prueba; la memoria indexada por token
-traslada capacidad de valores a tablas de búsqueda; los métodos de peso
-rápido formulan la transición de estado como una regla de aprendizaje en
-línea; los métodos geométricos codifican priors
-estructurados.</figcaption>
+representaciones clave–valor; la familia de memoria combina una memoria
+asociativa en tiempo de prueba (Titans), búsquedas hash de N-gramas
+(Engram) y capacidad de valores indexada por token (Memory Attention);
+los métodos de peso rápido formulan la transición de estado como una
+regla de aprendizaje en línea; los métodos geométricos codifican priors
+estructurados; los métodos aumentados con convolución añaden una rama
+convolucional local junto a la atención.</figcaption>
 </figure>
 <h2 id="familias-densa-y-recurrente">Familias Densa y Recurrente</h2>
 <p>Las líneas base densas—softmax estándar <span class="citation"
@@ -2041,10 +2039,9 @@ por la integración exacta de una densidad de relevancia exponencial
 sobre trayectorias clave/valor lineales por tramos—y la familia
 recurrente—RetNet <span class="citation"
 data-cites="sun_retentive_2023"></span>, Mamba <span class="citation"
-data-cites="gu_mamba_2023"></span>, bloques tipo ODE <span
-class="citation" data-cites="zhang_continuous_2021"></span> y Titans
-<span class="citation" data-cites="behrouz_titans_2025"></span>—definen
-el compromiso entre expresividad y eficiencia. Las formulaciones, las
+data-cites="gu_mamba_2023"></span> y bloques tipo ODE <span
+class="citation" data-cites="zhang_continuous_2021"></span>—definen el
+compromiso entre expresividad y eficiencia. Las formulaciones, las
 formas paralela y recurrente, el pseudocódigo y una tabla comparativa se
 recopilan en el Apéndice <a href="#sec:annex-transformer"
 data-reference-type="ref"
@@ -2061,13 +2058,21 @@ atención completa.</figcaption>
 
 <figcaption>Familia recurrente y retentiva. RetNet ofrece formas
 paralela y recurrente, Mamba usa parámetros selectivos de espacio de
-estados, los bloques ODE modelan profundidad continua y Titans añaden
-memoria en tiempo de prueba; todos logran inferencia en tiempo constante
-por paso.</figcaption>
+estados y los bloques ODE modelan profundidad continua; todos logran
+inferencia en tiempo constante por paso.</figcaption>
 </figure>
-<h2 id="familia-de-memoria-indexada-por-token">Familia de Memoria
-Indexada por Token</h2>
-<p>Memory Attention <span class="citation"
+<h2 id="sec:memory-family">Familia de Memoria</h2>
+<p>La familia de memoria agrupa tres mecanismos que añaden
+almacenamiento junto al operador de atención. Titans <span
+class="citation" data-cites="behrouz_titans_2025"></span> ejecuta
+atención densa sobre una ventana local mientras una memoria asociativa
+impulsada por sorpresa se actualiza en tiempo de prueba; este
+repositorio implementa solo la ventana de atención, y el módulo de
+memoria neuronal no forma parte de la implementación. Engram <span
+class="citation"
+data-cites="cheng2026conditionalmemoryscalablelookup"></span> recupera
+embeddings de N-gramas mediante tablas hash por orden y los incorpora
+con compuerta al flujo residual. Memory Attention <span class="citation"
 data-cites="kang_memory_attention_2026"></span> conserva el operador de
 atención softmax estándar pero elimina la proyección de valores
 dedicada: los valores son las claves contextuales más una fila de
@@ -2078,11 +2083,13 @@ parámetros sin cómputo denso proporcional y mantiene un caché KV
 convencional en inferencia.</p>
 <figure id="fig:memory-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/memory-map.svg" alt="image" /></span></p>
 
-<figcaption>Familia de memoria indexada por token. Memory Attention
-forma los valores a partir de las claves contextuales más una fila
-normalizada de una tabla de memoria por ID de token y por capa,
-reemplazando la proyección de valores y manteniendo la ponderación de
-atención cuadrática completa.</figcaption>
+<figcaption>Familia de memoria. Titans mantiene una memoria asociativa
+impulsada por sorpresa entre pasos junto a una ventana de atención
+local; Engram recupera embeddings de N-gramas mediante búsquedas hash;
+Memory Attention forma los valores a partir de las claves contextuales
+más una fila normalizada de una tabla de memoria por ID de token y por
+capa, reemplazando la proyección de valores y manteniendo la ponderación
+de atención cuadrática completa.</figcaption>
 </figure>
 <h2 id="familia-de-atención-latente-y-de-bajo-rango">Familia de Atención
 Latente y de Bajo Rango</h2>
@@ -2106,8 +2113,8 @@ probabilístico.</figcaption>
 </figure>
 <h2 id="extensiones-de-atención-dispersa">Extensiones de Atención
 Dispersa</h2>
-<p>El registro incluye doce bloques dispersos <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 rekesh_fastconformer_2023 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026 kubicek_lsa_2026"></span>.
+<p>El registro incluye once bloques dispersos <span class="citation"
+data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026 kubicek_lsa_2026"></span>.
 Dos métodos en tiempo de inferencia, <code>fasa</code> y
 <code>sparge</code>, aplican su heurística dispersa solo cuando el
 modelo está en modo evaluación: durante el entrenamiento la capa híbrida
@@ -2123,15 +2130,10 @@ por bloque de 512 tokens, y cada consulta puntúa los centroides de
 buckets en caché en lugar de todas las claves, seleccionando los <span
 class="math inline">\(p\)</span> buckets mejores que se expanden a sus
 <span class="math inline">\(k\)</span> claves de largo alcance sobre
-sumideros y una ventana de un bloque. Fast Conformer es el patrón de
-difusión de forma larga de la familia: una ventana local fija más un
-token de atención global anclado a la cabecera de la secuencia,
-opcionalmente con sus propias proyecciones query/key/value, lo que da
-decodificación con memoria acotada en contexto de horas. Las
-formulaciones, el pseudocódigo, las características por bloque y una
-tabla comparativa se recopilan en el Apéndice <a
-href="#sec:annex-sparse" data-reference-type="ref"
-data-reference="sec:annex-sparse">15</a>.</p>
+sumideros y una ventana de un bloque. Las formulaciones, el
+pseudocódigo, las características por bloque y una tabla comparativa se
+recopilan en el Apéndice <a href="#sec:annex-sparse"
+data-reference-type="ref" data-reference="sec:annex-sparse">15</a>.</p>
 <figure id="fig:sparse-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/sparse-map.svg" alt="image" /></span></p>
 
 <figcaption>Decisiones de diseño en atención dispersa. Los métodos
@@ -2830,15 +2832,26 @@ aprendizaje contrastivo <span class="citation"
 data-cites="chen_supervised_2020"></span> aún no están incorporados.</p>
 <h2 id="desafíos-de-integración-y-extensibilidad">Desafíos de
 Integración y Extensibilidad</h2>
-<p>La estructura actual del código base, aunque funcional, presenta
-desafíos de mantenimiento a medida que se expanden las familias de
-arquitecturas y optimizadores. El patrón de despachador para la
-selección de mezcladores y el enrutamiento de optimizadores maneja la
-extensibilidad pero corre el riesgo de convertirse en un “cajón de
-sastre” de lógica condicional. Las versiones futuras se beneficiarían de
-arquitecturas basadas en plugins donde nuevos mezcladores y
-optimizadores puedan registrarse de forma declarativa en lugar de
-modificar la lógica central de despacho.</p>
+<p>La extensibilidad se gestiona mediante un registro declarativo de
+componentes en lugar de un despacho ad-hoc. Cada componente
+conectable—mezclador de secuencia, optimizador, normalización,
+activación, estrategia residual, codificación posicional y embedding de
+token—se describe con un <code>ComponentSpec</code> inmutable registrado
+a través de , y las enumeraciones del esquema, los fragmentos de
+parámetros por componente, la referencia de prefijos del optimizador y
+las reglas condicionales de prefijo se ensamblan desde ese registro
+antes de la validación (Sección <a href="#sec:system-design"
+data-reference-type="ref" data-reference="sec:system-design">3</a>). Un
+plugin de terceros registra el mismo tipo de spec mediante la API
+pública de autoría, ya sea desde la lista <code>plugins:</code> de la
+configuración o a través del grupo de entry-points
+<code>frankenstein.plugins</code>, de modo que valida estrictamente,
+aparece en el constructor generado desde el esquema y es despachado por
+el mismo código central que los integrados. La presión de mantenimiento
+es, por tanto, el tamaño del catálogo de componentes—cuarenta y nueve
+mezcladores y treinta y seis optimizadores—y no la lógica de despacho,
+que no contiene ramas por optimizador ni una escalera de selección por
+mezclador.</p>
 <p>La interfaz de configuración web proporciona mejoras significativas
 de usabilidad pero introduce complejidad de despliegue: ejecutar
 Streamlit junto con trabajos de entrenamiento requiere recursos
@@ -2850,10 +2863,10 @@ acceso web.</p>
 unificada, impulsada por configuración, que aborda tres desafíos de la
 investigación moderna en aprendizaje profundo: fragmentación
 arquitectónica entre atención densa, modelos recurrentes, patrones
-dispersos, mecanismos de compuerta, compresión latente, memoria
-condicional, memorias de peso rápido y priors geométricos; complejidad
-del panorama de optimizadores que abarca líneas base clásicas, métodos
-de reducción de varianza, variantes eficientes en memoria, enfoques sin
+dispersos, mecanismos de compuerta, compresión latente, capas de
+memoria, memorias de peso rápido y priors geométricos; complejidad del
+panorama de optimizadores que abarca líneas base clásicas, métodos de
+reducción de varianza, variantes eficientes en memoria, enfoques sin
 programación, algoritmos conscientes de curvatura y métodos orientados a
 geometría; y flujos de trabajo de despliegue de extremo a extremo que
 abarcan cuantización y embeddings de oraciones.</p>
@@ -2866,8 +2879,8 @@ cuarenta y nueve mezcladores de secuencia y treinta y seis familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
-atención dispersa, mecanismos con compuerta, compresión latente, memoria
-condicional, atención de peso rápido y atención de campo geométrico, con
+atención dispersa, mecanismos con compuerta, compresión latente, capas
+de memoria, atención de peso rápido y atención de campo geométrico, con
 clases de modelo encoder, decoder y Vision Transformer.</p></li>
 <li><p><strong>Marco Unificado de Optimizadores</strong>: Grupos de
 hiperparámetros prefijados que permiten control detallado sobre
@@ -2912,12 +2925,6 @@ safetensors actual es solo de pesos y empaqueta pesos lineales
 bidimensionales, des-cuantizando sin kernels enteros fusionados; las
 políticas por capas, por canales y conscientes de importancia quedan
 como trabajo futuro.</p></li>
-<li><p><strong>Extensibilidad Basada en Plugins</strong>: El patrón de
-despacho actual se vuelve cada vez más complejo con cada nueva adición.
-Una arquitectura de plugins que permita el registro declarativo de
-nuevos mezcladores, optimizadores y métodos de normalización mejoraría
-el mantenimiento y reduciría el riesgo de errores en la lógica central
-de despacho.</p></li>
 <li><p><strong>Optimización Automatizada de Hiperparámetros</strong>: El
 esquema soporta espacios extensos de hiperparámetros, pero los usuarios
 deben explorar estos espacios manualmente. La integración con
@@ -4173,8 +4180,12 @@ atención persiste; el desempeño en código fuente es el más débil de las
 cinco arquitecturas (Stack-smol 3.3451 BPB); robustez reducida a la
 eliminación de bytes y a perturbaciones “antspeak”.</p></li>
 </ul>
-<h2 id="memoria-indexada-por-token-memory-attention">Memoria Indexada
-por Token: Memory Attention</h2>
+<h2 id="memory-attention">Memory Attention</h2>
+<p>La familia de memoria agrupa a Titans (la ventana de atención
+implementada aquí), Engram (Anexo <a href="#sec:annex-runtime"
+data-reference-type="ref" data-reference="sec:annex-runtime">24</a>) y
+Memory Attention; este anexo cubre los miembros del lado de la
+atención.</p>
 <figure id="fig:mixer-memory"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/memory.svg" alt="image" /></span></p>
 
 <figcaption>Flujo de datos de Memory Attention: se elimina la proyección
@@ -5296,11 +5307,16 @@ entrenamiento</strong> (entrenado de extremo a extremo o solo
 inferencia), (iii) <strong>unidad de dispersidad</strong> (tokens
 individuales, ventanas locales o bloques), y (iv)
 <strong>mecanismo</strong> (enmascaramiento, selección, filtrado o
-compresión). Este anexo sintetiza doce métodos principales de atención
+compresión). Este anexo sintetiza once métodos principales de atención
 dispersa—Sparse Transformer, Longformer, SWA con sumideros de atención,
-Fast Conformer, BigBird, SparseK, NSA, FASA, SpargeAttn, MSA, SparDA y
+BigBird, SparseK, NSA, FASA, SpargeAttn, MSA, SparDA y
 LSA—proporcionando formulaciones matemáticas, pseudocódigo algorítmico y
-comparaciones arquitectónicas exhaustivas.</p>
+comparaciones arquitectónicas exhaustivas. Fast Conformer, la variante
+de contexto limitado del bloque Conformer aumentado con convolución,
+pertenece a la familia aumentada con convolución y se documenta junto al
+Conformer en el Anexo <a href="#sec:annex-conformer"
+data-reference-type="ref"
+data-reference="sec:annex-conformer">19</a>.</p>
 <h2
 id="sparse-transformer-patrones-estrideados-y-fijos-factorizados">Sparse
 Transformer: Patrones Estrideados y Fijos Factorizados</h2>
@@ -6501,170 +6517,9 @@ para trabajo futuro. La lista de índices única del paper asume una sola
 cabeza KV compartida (<span class="math inline">\(n_{kv}=1\)</span>), y
 N-LSA usa deliberadamente ausencia de codificación posicional.</p></li>
 </ul>
-<h2
-id="fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclado-a-la-cabecera">Fast
-Conformer: Atención de Contexto Limitado con un Token Global Anclado a
-la Cabecera</h2>
-<figure id="fig:mixer-fastconformer"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/fastconformer.svg" alt="image" /></span></p>
-
-<figcaption>Flujo de datos de la atención de contexto limitado Fast
-Conformer: cada consulta atiende a una ventana local simétrica, mientras
-que un pequeño conjunto de tokens de atención globales anclados a la
-cabecera de la secuencia atiende a todas las posiciones y es atendido
-por todas ellas; el token global puede usar sus propias proyecciones
-query/key/value (paper §2.2).</figcaption>
-</figure>
-<h3 id="formulación-matemática-20">Formulación Matemática</h3>
-<p>Fast Conformer <span class="citation"
-data-cites="rekesh_fastconformer_2023"></span> ataca el costo cuadrático
-de la autoatención de Conformer de dos formas: eleva el submuestreo del
-front-end a <span class="math inline">\(8\times\)</span> y, para
-entradas de forma larga, sustituye la atención global por atención de
-<em>contexto limitado</em>. El paper describe el mezclador en prosa y no
-con ecuaciones desplegadas: “usamos un único token de atención global,
-que atiende a todos los demás tokens y hace que todos los demás tokens
-lo atiendan, usando un conjunto separado de proyecciones lineales query,
-key y value, mientras que los demás atienden en una ventana de tamaño
-fijo alrededor de cada token” (§2.2), mientras que el modelo de forma
-larga evaluado “tiene capas de proyección query, key y value compartidas
-que se usan para la atención global y local” (§3.4) y fija “el tamaño
-del contexto limitado …en 128 pasos a cada lado de un token”. Esta
-implementación codifica exactamente esa descripción y hereda el flujo de
-datos de la atención global de Longformer <span class="citation"
-data-cites="beltagy_longformer_2020"></span>, que el paper cita
-explícitamente para el mecanismo y para su kernel de chunks
-solapados.</p>
-<p>Sea <span class="math inline">\(X \in \mathbb{R}^{n \times
-H}\)</span> la entrada de la capa, <span
-class="math inline">\(h\)</span> el número de cabezas y <span
-class="math inline">\(d = H/h\)</span>. Las proyecciones compartidas son
-<span class="math display">\[\mathbf{Q} = X\mathbf{W}_Q, \qquad
-\mathbf{K} = X\mathbf{W}_K, \qquad \mathbf{V} = X\mathbf{W}_V,\]</span>
-con <span class="math inline">\(\mathbf{W}_\ast \in \mathbb{R}^{H \times
-H}\)</span> y sin sesgo. Las proyecciones globales opcionales de la
-variante §2.2 del paper son un segundo conjunto, <span
-class="math display">\[\mathbf{Q}^{g} = X\mathbf{W}_Q^{g}, \qquad
-\mathbf{K}^{g} = X\mathbf{W}_K^{g}, \qquad \mathbf{V}^{g} =
-X\mathbf{W}_V^{g},\]</span> que añade <span
-class="math inline">\(3H^2\)</span> parámetros; el modelo evaluado de
-§3.4 fija <span class="math inline">\(\mathbf{W}_\ast^{g} =
-\mathbf{W}_\ast\)</span>.</p>
-<p>Las posiciones globales son la cabecera de la secuencia, espaciadas
-<span class="math inline">\(s\)</span>, <span
-class="math display">\[\mathcal{G} = \{\,0, s, 2s, \dots,
-(g-1)s\,\},\]</span> de modo que un token global es una posición de
-entrada designada y no un embedding aprendido adicional (la “adición de
-un token global” del paper). El patrón de atención es <span
-class="math display">\[M_{ij} = \big[\,|i-j| \le w/2\,\big] \;\vee\;
-\big[\,j \in \mathcal{G}\,\big] \;\vee\; \big[\,i \in
-\mathcal{G}\,\big],\]</span> donde el primer término es la ventana
-local, el segundo permite que toda consulta atienda a los tokens
-globales y el tercero permite que un token global atienda a todas las
-posiciones; <span class="math inline">\(M\)</span> se intersecta con la
-máscara causal en modo decoder. Con las claves y valores efectivos <span
-class="math display">\[\tilde{\mathbf{k}}_j = \begin{cases}
-\mathbf{k}^{g}_j &amp; j \in \mathcal{G}\ \text{y separadas}, \\
-\mathbf{k}_j &amp; \text{en otro caso}, \end{cases}
-\qquad
-\tilde{\mathbf{v}}_j = \begin{cases} \mathbf{v}^{g}_j &amp; j \in
-\mathcal{G}\ \text{y separadas}, \\ \mathbf{v}_j &amp; \text{en otro
-caso}, \end{cases}\]</span> la salida es la atención de producto punto
-escalado estándar sobre los pares permitidos, <span
-class="math display">\[z_{ij} = \frac{\mathbf{q}_i \cdot
-\tilde{\mathbf{k}}_j}{\sqrt{d}}, \qquad
-\mathbf{o}_i = \sum_{j:\,M_{ij}}
-\operatorname{softmax}_j(z_{ij})\,\tilde{\mathbf{v}}_j, \qquad
-\mathbf{Y} = \mathbf{O}\mathbf{W}_O .\]</span> En la variante separada,
-la fila de una consulta global se calcula con las proyecciones globales
-sobre todo el prefijo causal, <span class="math inline">\(\mathbf{o}_i =
-\sum_{j \le i} \operatorname{softmax}_j(\mathbf{q}^{g}_i \cdot
-\mathbf{k}^{g}_j/\sqrt{d})\,\mathbf{v}^{g}_j\)</span>, igual que el
-diseño de atención global de Longformer. Con proyecciones compartidas
-los tres casos colapsan a un único conjunto <span
-class="math inline">\(\mathbf{Q}/\mathbf{K}/\mathbf{V}\)</span>: los
-tokens globales son simplemente posiciones con filas y columnas sin
-enmascarar.</p>
-<h3 id="pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</h3>
-<div class="algorithm">
-<div class="algorithmic">
-<p>Entrada <span class="math inline">\(X\)</span>; ventana <span
-class="math inline">\(w\)</span>; número global <span
-class="math inline">\(g\)</span>; espaciado <span
-class="math inline">\(s\)</span>; bandera de separación Salida <span
-class="math inline">\(\mathbf{Y}\)</span> <span
-class="math inline">\(\mathbf{Q},\mathbf{K},\mathbf{V} \gets
-X\mathbf{W}_Q, X\mathbf{W}_K, X\mathbf{W}_V\)</span> <span
-class="math inline">\(\mathbf{Q}^{g},\mathbf{K}^{g},\mathbf{V}^{g} \gets
-X\mathbf{W}_Q^{g}, X\mathbf{W}_K^{g}, X\mathbf{W}_V^{g}\)</span> <span
-class="math inline">\(\tilde{\mathbf{K}}, \tilde{\mathbf{V}} \gets
-\mathbf{K}, \mathbf{V}\)</span>; reemplazar las filas <span
-class="math inline">\(\mathcal{G}\)</span> por <span
-class="math inline">\(\mathbf{K}^{g}, \mathbf{V}^{g}\)</span> <span
-class="math inline">\(\tilde{\mathbf{K}}, \tilde{\mathbf{V}} \gets
-\mathbf{K}, \mathbf{V}\)</span> <span class="math inline">\(\mathcal{G}
-\gets \{0, s, \dots, (g-1)s\}\)</span> recortado a <span
-class="math inline">\(n\)</span> <span class="math inline">\(M \gets
-[\,|i-j| \le w/2\,] \vee [\,j \in \mathcal{G}\,] \vee [\,i \in
-\mathcal{G}\,]\)</span> <span class="math inline">\(M \gets M \wedge
-[\,j \le i\,]\)</span> <span class="math inline">\(Z \gets
-\mathbf{Q}\tilde{\mathbf{K}}^{\top}/\sqrt{d}\)</span> enmascarado por
-<span class="math inline">\(M\)</span> <span
-class="math inline">\(Z[\mathcal{G},:] \gets
-\mathbf{Q}^{g}[\mathcal{G}]\mathbf{K}^{g\top}/\sqrt{d}\)</span>
-(recortado causalmente) <span class="math inline">\(\mathbf{O} \gets
-\operatorname{softmax}(Z)\tilde{\mathbf{V}}\)</span> <span
-class="math inline">\(\mathbf{O}[\mathcal{G},:] \gets
-\operatorname{softmax}(Z[\mathcal{G},:])\mathbf{V}^{g}\)</span> <span
-class="math inline">\(\mathbf{Y} \gets
-\mathbf{O}\mathbf{W}_O\)</span></p>
-</div>
-</div>
-<p>En decodificación incremental el estado retenido es un anillo
-acotado: la región fijada de la cabecera cubre <span
-class="math inline">\(\mathcal{G}\)</span> y el anillo conserva las
-últimas <span class="math inline">\(w/2+1\)</span> claves, de modo que
-cada paso cuesta <span class="math inline">\(\mathcal{O}(w+g)\)</span>.
-El patrón exacto se evalúa contra las posiciones absolutas en caché (a
-diferencia del atajo “retención igual a patrón”, porque un prefijo
-global espaciado puede contener posiciones no globales).</p>
-<h3 id="características-clave-21">Características Clave</h3>
-<ul>
-<li><p><strong>Complejidad</strong>: <span
-class="math inline">\(\mathcal{O}(n\,(w+g)\,d)\)</span> en entrenamiento
-y <span class="math inline">\(\mathcal{O}(w+g)\)</span> por token
-decodificado con el kernel de chunks solapados del paper; la
-implementación de referencia aquí enmascara una matriz de puntuaciones
-densa, matemáticamente idéntica pero <span
-class="math inline">\(\mathcal{O}(n^2)\)</span> en cómputo. La memoria
-está acotada por <span class="math inline">\(w+g\)</span>.</p></li>
-<li><p><strong>Entrenable</strong>: Sí, de forma nativa desde cero (el
-patrón se ejecuta tanto en entrenamiento como en evaluación). El paper
-ajusta por fine-tuning un checkpoint de contexto completo durante 10k
-pasos con LR pico <span class="math inline">\(10^{-6}\)</span>,
-calentamiento de 1k pasos y decaimiento coseno, pero los pesos del
-mezclador son proyecciones de atención ordinarias.</p></li>
-<li><p><strong>Fortaleza</strong>: En benchmarks de forma larga el token
-global es el ingrediente decisivo: el WER codicioso normalizado mejora
-de 9.18 (Conformer) a 8.25 (contexto limitado) a <strong>7.5</strong>
-(más token global) en TED-LIUM v3, y de 18.26 a 16.08 a
-<strong>11.85</strong> en Earnings-21, mientras que la duración máxima
-en una sola pasada crece de 15 a 675 minutos en una A100. El encoder es
-<span class="math inline">\(2.8\times\)</span> más rápido y usa <span
-class="math inline">\(2.9\times\)</span> menos
-multiplicaciones-acumulaciones que el Conformer original.</p></li>
-<li><p><strong>Limitación</strong>: El paper no ofrece ecuaciones en
-forma cerrada para la ruta del token global (la formulación anterior es
-una reconstrucción documentada a partir de su prosa, Longformer y la
-receta NeMo de los autores). El valor por defecto es un único token
-global con proyecciones compartidas; la variante de proyecciones
-separadas cuesta <span class="math inline">\(3H^2\)</span> parámetros
-extra y solo es exacta en la ruta con caché cuando las consultas
-globales se pre-rellenan desde la posición cero. El kernel eficiente de
-chunks no está implementado.</p></li>
-</ul>
 <h2 id="espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
 Criterios de Selección</h2>
-<p>Los doce métodos de atención dispersa ocupan posiciones
+<p>Los once métodos de atención dispersa ocupan posiciones
 complementarias en un espacio de diseño multidimensional:</p>
 <ul>
 <li><p><strong>Patrones geométricos/fijos</strong> (Sparse Transformer,
@@ -6674,11 +6529,6 @@ adaptan al contenido.</p></li>
 sumideros): La política más barata posible—conservar un prefijo sumidero
 y una ventana reciente, descartar el resto. Sin parámetros extra, sin
 entrenamiento, memoria acotada.</p></li>
-<li><p><strong>Ventana + difusión global anclada</strong> (Fast
-Conformer): el patrón de Longformer con los tokens globales fijados en
-la cabecera de la secuencia—decodificación de forma larga con memoria
-acotada y un único canal de resumen siempre visible, probado a escala de
-11 horas.</p></li>
 <li><p><strong>Selección aprendida</strong> (SparseK, NSA): Permiten
 adaptación mediante redes de selección entrenables, a costa de mayor
 complejidad de implementación.</p></li>
@@ -8110,7 +7960,7 @@ separables de filtrado gaussiano por filas y columnas para cada átomo,
 con direccionamiento opcional de los parámetros del átomo por
 contenido.</figcaption>
 </figure>
-<h2 id="formulación-matemática-21">Formulación Matemática</h2>
+<h2 id="formulación-matemática-20">Formulación Matemática</h2>
 <p>Sea el raster row-major de una rejilla <span
 class="math inline">\(G_h \times G_w\)</span> los tokens. El peso de
 atención del token <span class="math inline">\(p\)</span> al token <span
@@ -8150,7 +8000,7 @@ anchos se reparametrizan como <span class="math inline">\(\sigma =
 \operatorname{softplus}(\omega) + \epsilon +
 \sigma_{\text{piso}}\)</span> para mantenerse estrictamente
 positivos.</p>
-<h2 id="pseudocódigo-algorítmico-20">Pseudocódigo Algorítmico</h2>
+<h2 id="pseudocódigo-algorítmico-19">Pseudocódigo Algorítmico</h2>
 <div class="algorithmic">
 <p><strong>Entrada:</strong> estado oculto <span class="math inline">\(x
 \in \mathbb{R}^{B \times N \times d}\)</span> como raster <span
@@ -8171,7 +8021,7 @@ a_x^{(r)} \big( a_y^{(r)} V \big)\)</span> <strong>Salida:</strong>
 <span class="math inline">\(\mathbf{Y} W_O\)</span> reorganizado a <span
 class="math inline">\((B, N, d)\)</span></p>
 </div>
-<h2 id="características-clave-22">Características Clave</h2>
+<h2 id="características-clave-21">Características Clave</h2>
 <ul>
 <li><p><strong>Complejidad de entrenamiento</strong>: <span
 class="math inline">\(\mathcal{O}(R \cdot N \sqrt{N} \cdot d)\)</span>
@@ -8657,8 +8507,8 @@ evaluación.</p></li>
 del artículo (87.2% en sumas de 33–48 dígitos); carry de tareas
 aritméticas.</p></li>
 </ol>
-<h1 id="sec:annex-conformer">Conformer: Atención Aumentada con
-Convolución</h1>
+<h1 id="sec:annex-conformer">Atención Aumentada con Convolución:
+Conformer y Fast Conformer</h1>
 <h2 id="resumen-ejecutivo-1">Resumen Ejecutivo</h2>
 <p>El bloque Conformer <span class="citation"
 data-cites="Gulati2020"></span> es el mezclador de secuencia aumentado
@@ -8677,20 +8527,26 @@ class="math inline">\(3.9\%\)</span> WER en LibriSpeech
 <em>test-clean</em>/<em>test-other</em> sin modelo de lenguaje externo
 (Conformer-L, 118.8M parámetros), y es el mezclador recomendado para la
 clase de modelo de audio del Anexo <a href="#sec:annex-audio"
-data-reference-type="ref" data-reference="sec:annex-audio">33</a>. El
+data-reference-type="ref" data-reference="sec:annex-audio">33</a>. Su
+hermano de forma larga, Fast Conformer <span class="citation"
+data-cites="rekesh_fastconformer_2023"></span>, conserva el módulo de
+convolución y la disposición del bloque pero reemplaza la autoatención
+global por atención de contexto limitado—una ventana local fija más un
+token global anclado a la cabecera de la secuencia—de modo que audio de
+horas se decodifica con memoria acotada; se documenta a continuación. El
 conjunto de herramientas ejecuta ambas capas feed-forward a paso
 completo (la variante “full-step” de la Tabla 5 del paper) y deja que la
 capa exterior posea la segunda; la Tabla <a
 href="#tab:conformer-mapping" data-reference-type="ref"
 data-reference="tab:conformer-mapping">[tab:conformer-mapping]</a> lista
 las desviaciones.</p>
-<p>El mezclador está disponible en todas las clases de modelo: encoder
-de texto, decoder causal (donde el padding depthwise se desplaza para
-seguir siendo seguro en streaming), Vision Transformer y
-<code>frankenstein_audio</code>. Como el bloque vive dentro de
-<code>HybridLayer</code>, compone con los 45 mezcladores, las 6 normas,
-las 4 estrategias de residual, MoE, Mixture-of-Depths, mHC, AttnRes,
-BitNet y las 23 familias de optimizadores.</p>
+<p>Los mezcladores están disponibles en todas las clases de modelo:
+encoder de texto, decoder causal (donde el padding depthwise se desplaza
+para seguir siendo seguro en streaming), Vision Transformer y
+<code>frankenstein_audio</code>. Como los bloques viven dentro de
+<code>HybridLayer</code>, componen con los otros 48 mezcladores, las 6
+normas, las 4 estrategias de residual, MoE, Mixture-of-Depths, mHC,
+AttnRes, BitNet y las 36 familias de optimizadores.</p>
 <h2 id="conformer-atención-aumentada-con-convolución">Conformer:
 Atención Aumentada con Convolución</h2>
 <figure id="fig:mixer-conformer"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/conformer.svg" alt="image" /></span></p>
@@ -8708,7 +8564,7 @@ herramientas la FFN compartida de <code>HybridLayer</code> ocupa la
 ranura <span class="math inline">\(\mathrm{FFN}_2\)</span> con un paso
 residual completo (anotación punteada).</figcaption>
 </figure>
-<h3 id="formulación-matemática-22">Formulación Matemática</h3>
+<h3 id="formulación-matemática-21">Formulación Matemática</h3>
 <p>Para una entrada de bloque <span class="math inline">\(x \in
 \mathbb{R}^{B \times n \times d}\)</span>, el bloque de referencia de la
 Fig. 1 de <span class="citation" data-cites="Gulati2020"></span> es
@@ -8814,7 +8670,7 @@ desplaza a <span class="math inline">\(z_t = \sum_{k=0}^{K-1} w_k
 \tilde{h}_{t-K+1+k}\)</span>, de modo que ninguna trama futura entra en
 la convolución; los modos encoder y ViT conservan el padding simétrico
 “same” del paper.</p>
-<h3 id="pseudocódigo-algorítmico-21">Pseudocódigo Algorítmico</h3>
+<h3 id="pseudocódigo-algorítmico-20">Pseudocódigo Algorítmico</h3>
 <div class="algorithm">
 <div class="algorithmic">
 <p>entrada de bloque <span class="math inline">\(x \in \mathbb{R}^{B
@@ -9004,6 +8860,167 @@ atención plano.</p></li>
 caché incremental del Anexo <a href="#sec:annex-kv-cache"
 data-reference-type="ref" data-reference="sec:annex-kv-cache">34</a>; la
 recurrencia depthwise es la pieza que falta.</p></li>
+</ul>
+<h2
+id="fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclado-a-la-cabecera">Fast
+Conformer: Atención de Contexto Limitado con un Token Global Anclado a
+la Cabecera</h2>
+<figure id="fig:mixer-fastconformer"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/fastconformer.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de datos de la atención de contexto limitado Fast
+Conformer: cada consulta atiende a una ventana local simétrica, mientras
+que un pequeño conjunto de tokens de atención globales anclados a la
+cabecera de la secuencia atiende a todas las posiciones y es atendido
+por todas ellas; el token global puede usar sus propias proyecciones
+query/key/value (paper §2.2).</figcaption>
+</figure>
+<h3 id="formulación-matemática-22">Formulación Matemática</h3>
+<p>Fast Conformer <span class="citation"
+data-cites="rekesh_fastconformer_2023"></span> ataca el costo cuadrático
+de la autoatención de Conformer de dos formas: eleva el submuestreo del
+front-end a <span class="math inline">\(8\times\)</span> y, para
+entradas de forma larga, sustituye la atención global por atención de
+<em>contexto limitado</em>. El paper describe el mezclador en prosa y no
+con ecuaciones desplegadas: “usamos un único token de atención global,
+que atiende a todos los demás tokens y hace que todos los demás tokens
+lo atiendan, usando un conjunto separado de proyecciones lineales query,
+key y value, mientras que los demás atienden en una ventana de tamaño
+fijo alrededor de cada token” (§2.2), mientras que el modelo de forma
+larga evaluado “tiene capas de proyección query, key y value compartidas
+que se usan para la atención global y local” (§3.4) y fija “el tamaño
+del contexto limitado …en 128 pasos a cada lado de un token”. Esta
+implementación codifica exactamente esa descripción y hereda el flujo de
+datos de la atención global de Longformer <span class="citation"
+data-cites="beltagy_longformer_2020"></span>, que el paper cita
+explícitamente para el mecanismo y para su kernel de chunks
+solapados.</p>
+<p>Sea <span class="math inline">\(X \in \mathbb{R}^{n \times
+H}\)</span> la entrada de la capa, <span
+class="math inline">\(h\)</span> el número de cabezas y <span
+class="math inline">\(d = H/h\)</span>. Las proyecciones compartidas son
+<span class="math display">\[\mathbf{Q} = X\mathbf{W}_Q, \qquad
+\mathbf{K} = X\mathbf{W}_K, \qquad \mathbf{V} = X\mathbf{W}_V,\]</span>
+con <span class="math inline">\(\mathbf{W}_\ast \in \mathbb{R}^{H \times
+H}\)</span> y sin sesgo. Las proyecciones globales opcionales de la
+variante §2.2 del paper son un segundo conjunto, <span
+class="math display">\[\mathbf{Q}^{g} = X\mathbf{W}_Q^{g}, \qquad
+\mathbf{K}^{g} = X\mathbf{W}_K^{g}, \qquad \mathbf{V}^{g} =
+X\mathbf{W}_V^{g},\]</span> que añade <span
+class="math inline">\(3H^2\)</span> parámetros; el modelo evaluado de
+§3.4 fija <span class="math inline">\(\mathbf{W}_\ast^{g} =
+\mathbf{W}_\ast\)</span>.</p>
+<p>Las posiciones globales son la cabecera de la secuencia, espaciadas
+<span class="math inline">\(s\)</span>, <span
+class="math display">\[\mathcal{G} = \{\,0, s, 2s, \dots,
+(g-1)s\,\},\]</span> de modo que un token global es una posición de
+entrada designada y no un embedding aprendido adicional (la “adición de
+un token global” del paper). El patrón de atención es <span
+class="math display">\[M_{ij} = \big[\,|i-j| \le w/2\,\big] \;\vee\;
+\big[\,j \in \mathcal{G}\,\big] \;\vee\; \big[\,i \in
+\mathcal{G}\,\big],\]</span> donde el primer término es la ventana
+local, el segundo permite que toda consulta atienda a los tokens
+globales y el tercero permite que un token global atienda a todas las
+posiciones; <span class="math inline">\(M\)</span> se intersecta con la
+máscara causal en modo decoder. Con las claves y valores efectivos <span
+class="math display">\[\tilde{\mathbf{k}}_j = \begin{cases}
+\mathbf{k}^{g}_j &amp; j \in \mathcal{G}\ \text{y separadas}, \\
+\mathbf{k}_j &amp; \text{en otro caso}, \end{cases}
+\qquad
+\tilde{\mathbf{v}}_j = \begin{cases} \mathbf{v}^{g}_j &amp; j \in
+\mathcal{G}\ \text{y separadas}, \\ \mathbf{v}_j &amp; \text{en otro
+caso}, \end{cases}\]</span> la salida es la atención de producto punto
+escalado estándar sobre los pares permitidos, <span
+class="math display">\[z_{ij} = \frac{\mathbf{q}_i \cdot
+\tilde{\mathbf{k}}_j}{\sqrt{d}}, \qquad
+\mathbf{o}_i = \sum_{j:\,M_{ij}}
+\operatorname{softmax}_j(z_{ij})\,\tilde{\mathbf{v}}_j, \qquad
+\mathbf{Y} = \mathbf{O}\mathbf{W}_O .\]</span> En la variante separada,
+la fila de una consulta global se calcula con las proyecciones globales
+sobre todo el prefijo causal, <span class="math inline">\(\mathbf{o}_i =
+\sum_{j \le i} \operatorname{softmax}_j(\mathbf{q}^{g}_i \cdot
+\mathbf{k}^{g}_j/\sqrt{d})\,\mathbf{v}^{g}_j\)</span>, igual que el
+diseño de atención global de Longformer. Con proyecciones compartidas
+los tres casos colapsan a un único conjunto <span
+class="math inline">\(\mathbf{Q}/\mathbf{K}/\mathbf{V}\)</span>: los
+tokens globales son simplemente posiciones con filas y columnas sin
+enmascarar.</p>
+<h3 id="pseudocódigo-algorítmico-21">Pseudocódigo Algorítmico</h3>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Entrada <span class="math inline">\(X\)</span>; ventana <span
+class="math inline">\(w\)</span>; número global <span
+class="math inline">\(g\)</span>; espaciado <span
+class="math inline">\(s\)</span>; bandera de separación Salida <span
+class="math inline">\(\mathbf{Y}\)</span> <span
+class="math inline">\(\mathbf{Q},\mathbf{K},\mathbf{V} \gets
+X\mathbf{W}_Q, X\mathbf{W}_K, X\mathbf{W}_V\)</span> <span
+class="math inline">\(\mathbf{Q}^{g},\mathbf{K}^{g},\mathbf{V}^{g} \gets
+X\mathbf{W}_Q^{g}, X\mathbf{W}_K^{g}, X\mathbf{W}_V^{g}\)</span> <span
+class="math inline">\(\tilde{\mathbf{K}}, \tilde{\mathbf{V}} \gets
+\mathbf{K}, \mathbf{V}\)</span>; reemplazar las filas <span
+class="math inline">\(\mathcal{G}\)</span> por <span
+class="math inline">\(\mathbf{K}^{g}, \mathbf{V}^{g}\)</span> <span
+class="math inline">\(\tilde{\mathbf{K}}, \tilde{\mathbf{V}} \gets
+\mathbf{K}, \mathbf{V}\)</span> <span class="math inline">\(\mathcal{G}
+\gets \{0, s, \dots, (g-1)s\}\)</span> recortado a <span
+class="math inline">\(n\)</span> <span class="math inline">\(M \gets
+[\,|i-j| \le w/2\,] \vee [\,j \in \mathcal{G}\,] \vee [\,i \in
+\mathcal{G}\,]\)</span> <span class="math inline">\(M \gets M \wedge
+[\,j \le i\,]\)</span> <span class="math inline">\(Z \gets
+\mathbf{Q}\tilde{\mathbf{K}}^{\top}/\sqrt{d}\)</span> enmascarado por
+<span class="math inline">\(M\)</span> <span
+class="math inline">\(Z[\mathcal{G},:] \gets
+\mathbf{Q}^{g}[\mathcal{G}]\mathbf{K}^{g\top}/\sqrt{d}\)</span>
+(recortado causalmente) <span class="math inline">\(\mathbf{O} \gets
+\operatorname{softmax}(Z)\tilde{\mathbf{V}}\)</span> <span
+class="math inline">\(\mathbf{O}[\mathcal{G},:] \gets
+\operatorname{softmax}(Z[\mathcal{G},:])\mathbf{V}^{g}\)</span> <span
+class="math inline">\(\mathbf{Y} \gets
+\mathbf{O}\mathbf{W}_O\)</span></p>
+</div>
+</div>
+<p>En decodificación incremental el estado retenido es un anillo
+acotado: la región fijada de la cabecera cubre <span
+class="math inline">\(\mathcal{G}\)</span> y el anillo conserva las
+últimas <span class="math inline">\(w/2+1\)</span> claves, de modo que
+cada paso cuesta <span class="math inline">\(\mathcal{O}(w+g)\)</span>.
+El patrón exacto se evalúa contra las posiciones absolutas en caché (a
+diferencia del atajo “retención igual a patrón”, porque un prefijo
+global espaciado puede contener posiciones no globales).</p>
+<h3 id="características-clave-22">Características Clave</h3>
+<ul>
+<li><p><strong>Complejidad</strong>: <span
+class="math inline">\(\mathcal{O}(n\,(w+g)\,d)\)</span> en entrenamiento
+y <span class="math inline">\(\mathcal{O}(w+g)\)</span> por token
+decodificado con el kernel de chunks solapados del paper; la
+implementación de referencia aquí enmascara una matriz de puntuaciones
+densa, matemáticamente idéntica pero <span
+class="math inline">\(\mathcal{O}(n^2)\)</span> en cómputo. La memoria
+está acotada por <span class="math inline">\(w+g\)</span>.</p></li>
+<li><p><strong>Entrenable</strong>: Sí, de forma nativa desde cero (el
+patrón se ejecuta tanto en entrenamiento como en evaluación). El paper
+ajusta por fine-tuning un checkpoint de contexto completo durante 10k
+pasos con LR pico <span class="math inline">\(10^{-6}\)</span>,
+calentamiento de 1k pasos y decaimiento coseno, pero los pesos del
+mezclador son proyecciones de atención ordinarias.</p></li>
+<li><p><strong>Fortaleza</strong>: En benchmarks de forma larga el token
+global es el ingrediente decisivo: el WER codicioso normalizado mejora
+de 9.18 (Conformer) a 8.25 (contexto limitado) a <strong>7.5</strong>
+(más token global) en TED-LIUM v3, y de 18.26 a 16.08 a
+<strong>11.85</strong> en Earnings-21, mientras que la duración máxima
+en una sola pasada crece de 15 a 675 minutos en una A100. El encoder es
+<span class="math inline">\(2.8\times\)</span> más rápido y usa <span
+class="math inline">\(2.9\times\)</span> menos
+multiplicaciones-acumulaciones que el Conformer original.</p></li>
+<li><p><strong>Limitación</strong>: El paper no ofrece ecuaciones en
+forma cerrada para la ruta del token global (la formulación anterior es
+una reconstrucción documentada a partir de su prosa, Longformer y la
+receta NeMo de los autores). El valor por defecto es un único token
+global con proyecciones compartidas; la variante de proyecciones
+separadas cuesta <span class="math inline">\(3H^2\)</span> parámetros
+extra y solo es exacta en la ruta con caché cuando las consultas
+globales se pre-rellenan desde la posición cero. El kernel eficiente de
+chunks no está implementado.</p></li>
 </ul>
 <h1 id="sec:annex-optimizers">Familias de Optimizadores</h1>
 <h2 id="la-evolución-de-la-optimización-en-redes-neuronales">La
@@ -21660,7 +21677,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-49 mezcladores de secuencia en diez familias, 36 optimizadores, 6
+49 mezcladores de secuencia en nueve familias, 36 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -21714,6 +21731,13 @@ FFN Macaron alrededor de MHSA sinusoidal relativa y un módulo conv
 depthwise (<span class="math inline">\(K=32\)</span>); contexto local y
 global en un solo bloque &amp; <span class="citation"
 data-cites="Gulati2020"></span><br />
+fastconformer &amp; Aumentado conv. &amp; <span
+class="math inline">\(\mathcal{O}(n \cdot (w + g) \cdot d)\)</span>
+&amp; <span class="math inline">\(\mathcal{O}(w + g)\)</span> &amp;
+Ventana de contexto limitado + token global anclado a la cabecera;
+proyecciones globales separadas opcionales; forma larga de memoria
+lineal &amp; <span class="citation"
+data-cites="rekesh_fastconformer_2023"></span><br />
 </p>
 <p><br />
 retnet &amp; Recurrente &amp; <span
@@ -21732,17 +21756,6 @@ ode &amp; Recurrente &amp; <span class="math inline">\(\mathcal{O}(k
 n)\)</span> &amp; Integración RK4 de profundidad continua; solucionador
 de paso adaptativo &amp; <span class="citation"
 data-cites="zhang_continuous_2021"></span><br />
-titan &amp; Recurrente &amp; <span class="math inline">\(\mathcal{O}(c^2
-+ n f)\)</span> &amp; <span class="math inline">\(\mathcal{O}(c^2 +
-1)\)</span> &amp; Adaptación de memoria en tiempo de prueba; dinámica de
-escritura impulsada por sorpresa &amp; <span class="citation"
-data-cites="behrouz_titans_2025"></span><br />
-engram &amp; Memoria &amp; <span class="math inline">\(\mathcal{O}(n
-\cdot N \cdot H)\)</span> &amp; <span
-class="math inline">\(\mathcal{O}(1)\)</span> lookup &amp; Memoria
-condicional de N-gramas; recuperación escalable basada en hash &amp;
-<span class="citation"
-data-cites="cheng2026conditionalmemoryscalablelookup"></span><br />
 </p>
 <p><br />
 sparse_transformer &amp; Disperso &amp; <span
@@ -21809,13 +21822,6 @@ k+n_w+n_{\text{sink}})\)</span> &amp; Clustering Ward semántico de
 claves; selección top-<span class="math inline">\(k\)</span> de largo
 alcance; entrenable de forma nativa, sin parámetros extra &amp; <span
 class="citation" data-cites="kubicek_lsa_2026"></span><br />
-fastconformer &amp; Disperso &amp; <span
-class="math inline">\(\mathcal{O}(n \cdot (w + g) \cdot d)\)</span>
-&amp; <span class="math inline">\(\mathcal{O}(w + g)\)</span> &amp;
-Ventana de contexto limitado + token global anclado a la cabecera;
-proyecciones globales separadas opcionales; forma larga de memoria
-lineal &amp; <span class="citation"
-data-cites="rekesh_fastconformer_2023"></span><br />
 </p>
 <p><br />
 gla &amp; Con compuerta &amp; <span class="math inline">\(\mathcal{O}(L
@@ -21968,6 +21974,18 @@ de arranque en frío), nunca puntúa; solo encoder &amp; <span
 class="citation" data-cites="pisoni_ssog_2026"></span><br />
 </p>
 <p><br />
+titan &amp; Memoria &amp; <span class="math inline">\(\mathcal{O}(c^2 +
+n f)\)</span> &amp; <span class="math inline">\(\mathcal{O}(c^2 +
+1)\)</span> &amp; Adaptación de memoria en tiempo de prueba; dinámica de
+escritura impulsada por sorpresa (solo la ventana de atención en esta
+implementación) &amp; <span class="citation"
+data-cites="behrouz_titans_2025"></span><br />
+engram &amp; Memoria &amp; <span class="math inline">\(\mathcal{O}(n
+\cdot N \cdot H)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(1)\)</span> lookup &amp; Memoria
+condicional de N-gramas; recuperación escalable basada en hash &amp;
+<span class="citation"
+data-cites="cheng2026conditionalmemoryscalablelookup"></span><br />
 memory &amp; Memoria &amp; <span class="math inline">\(\mathcal{O}(n^2
 d)\)</span> &amp; <span class="math inline">\(\mathcal{O}(n)\)</span>
 caché &amp; Valores de memoria por ID de token <span
