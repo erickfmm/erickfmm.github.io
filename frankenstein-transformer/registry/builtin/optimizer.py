@@ -265,6 +265,9 @@ OPTIMIZER_SPECS = (
             "nesterov": ParamBinding(as_bool, True),
             "ns_steps": ParamBinding(as_int, 5),
             "ns_eps": ParamBinding(as_float, 1e-07),
+            "per_head": ParamBinding(as_bool, False),
+            "per_head_heads": ParamBinding(as_int, 0),
+            "clip_value": ParamBinding(as_float, 0.0),
         },
     ),
     OptimizerSpec(
@@ -348,6 +351,15 @@ OPTIMIZER_SPECS = (
         description_es="Warmup adaptativo — Rectified Adam",
     ),
     OptimizerSpec(
+        name="rmsprop",
+        builder="src.model.optimizer.rmsprop:RMSProp",
+        description="Classical adaptive baseline — Divides the gradient by a running average of its recent squared magnitude (slides: MeanSquare = 0.9·MS + 0.1·g²); one state buffer, no bias correction (source: https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf)",
+        description_es="Línea base adaptativa clásica — Divide el gradiente por un promedio móvil de su magnitud cuadrada reciente (diapositivas: MeanSquare = 0.9·MS + 0.1·g²); un búfer de estado, sin corrección de sesgo (fuente: https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf)",
+        param_bindings={
+            "alpha": ParamBinding(as_float, 0.9),
+        },
+    ),
+    OptimizerSpec(
         name="root",
         builder="src.model.optimizer.root:ROOT",
         description="Robust orthogonal updates — Dimension-calibrated Newton-Schulz coefficients + soft-threshold outlier suppression on the momentum; AdamW fallback for embeddings, pos, heads and non-matrix params (paper: arxiv:2511.20626)",
@@ -368,6 +380,13 @@ OPTIMIZER_SPECS = (
         builder="src.model.optimizer.schedulefree_adamw:ScheduleFreeAdamW",
         description="No LR schedule needed — Eliminates scheduler tuning",
         description_es="Sin scheduler de LR — Elimina ajuste de scheduler",
+    ),
+    OptimizerSpec(
+        name="sgd",
+        builder="src.model.optimizer.sgd:SGDOptimizer",
+        description="Pure mini-batch SGD baseline — w ← w − η·∇E; no momentum, zero optimizer state (source: https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf)",
+        description_es="Línea base SGD de mini-lotes puro — w ← w − η·∇E; sin momentum, sin estado del optimizador (fuente: https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf)",
+        group_policy="sgd",
     ),
     OptimizerSpec(
         name="sgd_momentum",

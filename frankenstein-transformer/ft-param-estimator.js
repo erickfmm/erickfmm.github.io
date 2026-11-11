@@ -142,6 +142,29 @@ var FTParamEstimator = (function () {
         cfP += H * H + H;            // pointwise_out
         return cfP;
       }
+      // ---- Gated MLA (DeepSeek-style latent KV + full-rank output gate) ----
+      // q path: optional low-rank bottleneck H→rq→nH·qk_dim, else direct
+      // H→nH·qk_dim; joint KV latent H→r_kv with nope/rope/v up-projections;
+      // optional full-rank input-dependent gate H→nH·v_dim; O nH·v_dim→H.
+      // All projections are bias-free (BitLinear or nn.Linear).
+      case 'gmla': {
+        var gmNope = toNum(pick(m, 'attention.gmla.qk_nope_head_dim', 'gmla_qk_nope_head_dim', 128), 128);
+        var gmRope = toNum(pick(m, 'attention.gmla.qk_rope_head_dim', 'gmla_qk_rope_head_dim', 64), 64);
+        var gmV = toNum(pick(m, 'attention.gmla.v_head_dim', 'gmla_v_head_dim', 128), 128);
+        var gmRkv = toNum(pick(m, 'attention.gmla.latent_rank', 'gmla_latent_rank', 512), 512);
+        var gmRq = toNum(pick(m, 'attention.gmla.q_lora_rank', 'gmla_q_lora_rank', 0), 0);
+        var gmNoPe = toBool(pick(m, 'attention.gmla.use_nope', 'gmla_use_nope', true), true);
+        var gmGate = toBool(pick(m, 'attention.gmla.use_output_gate', 'gmla_use_output_gate', true), true);
+        var gmQk = gmNope + (gmNoPe ? 0 : gmRope);
+        var gm = gmRq > 0 ? H * gmRq + gmRq * nH * gmQk : H * nH * gmQk;
+        gm += H * gmRkv;                       // dkv_proj
+        gm += gmRkv * nH * gmNope;             // uk_nope_proj
+        if (!gmNoPe) gm += gmRkv * nH * gmRope; // uk_rope_proj
+        gm += gmRkv * nH * gmV;                // uv_proj
+        if (gmGate) gm += H * nH * gmV;        // g_proj (output gate)
+        gm += nH * gmV * H;                    // out_proj
+        return gm;
+      }
       case 'gqa':
         return H * H + 2 * (H * kv) + H * H;
       // ---- Memory Attention (arXiv:2609.28399) ----
@@ -339,7 +362,7 @@ var FTParamEstimator = (function () {
   }
 
   function ffnBodyParams(H, fH, fA) {
-    var isGlu = /swiglu|geglu|reglu/i.test(String(fA || ''));
+    var isGlu = /swiglu|geglu|reglu|situ/i.test(String(fA || ''));
     return isGlu ? 3 * H * fH
                  : 2 * H * fH + fH + H; // up(+bias) + down(+bias)
   }

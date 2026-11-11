@@ -211,7 +211,7 @@ basado en configuración (<code>frankenstein-transformer</code>) que
 unifica la definición, el entrenamiento, el despliegue y la inferencia
 de modelos tras un único esquema YAML estricto. El conjunto de
 herramientas cubre cuarenta y nueve mezcladores de secuencia en nueve
-familias y treinta y seis familias de optimizadores con control de
+familias y treinta y ocho familias de optimizadores con control de
 hiperparámetros por grupo de parámetros, y soporta clases de modelo
 encoder, decoder, Vision Transformer y audio para masked language
 modeling, modelado causal de lenguaje, embeddings de oraciones, tareas
@@ -1517,7 +1517,7 @@ documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
 estricto que soporta cuarenta y nueve mezcladores de secuencia en nueve
-familias y treinta y seis familias de optimizadores, validado antes de
+familias y treinta y ocho familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
 único pipeline para líneas base densas, bloques recurrentes y
@@ -1865,7 +1865,7 @@ href="#sec:annex-summary-tables" data-reference-type="ref"
 data-reference="sec:annex-summary-tables">38</a>.</p>
 <h4 id="selección-de-optimizador.">Selección de optimizador.</h4>
 <p><code>training.optimizer.optimizer_class</code> selecciona una de
-treinta y seis familias de optimizadores, resumidas en la Sección <a
+treinta y ocho familias de optimizadores, resumidas en la Sección <a
 href="#sec:optimizer-families" data-reference-type="ref"
 data-reference="sec:optimizer-families">5</a> y detalladas en el
 Apéndice <a href="#sec:annex-optimizers" data-reference-type="ref"
@@ -2180,15 +2180,15 @@ salidas de atención densa, según la familia de bloques.</figcaption>
 Entrenamiento</h1>
 <p>Optimizar arquitecturas transformer grandes se complica por paisajes
 no convexos, puntos de silla y grupos de parámetros heterogéneos. El
-sistema soporta treinta y seis familias de optimizadores en ocho
-categorías: líneas base clásicas (SGD con momentum, AdamW, RAdam);
-momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS, Cautious
-AdamW); métodos eficientes en memoria y de bajo rango (Adafactor,
-GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM); métodos sin
-programación y sin parámetros (Schedule-Free AdamW, Prodigy) con
-escalado para lotes grandes (LAMB); métodos conscientes de la curvatura
-y de segundo orden (Sophia, Shampoo, SOAP); métodos orientados a
-geometría (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3, ROOT, Muon²,
+sistema soporta treinta y ocho familias de optimizadores en ocho
+categorías: líneas base clásicas (SGD, SGD con momentum, RMSProp, AdamW,
+RAdam); momentum y reducción de varianza (Adan, ADOPT, AdEMAMix, MARS,
+Cautious AdamW); métodos eficientes en memoria y de bajo rango
+(Adafactor, GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM);
+métodos sin programación y sin parámetros (Schedule-Free AdamW, Prodigy)
+con escalado para lotes grandes (LAMB); métodos conscientes de la
+curvatura y de segundo orden (Sophia, Shampoo, SOAP); métodos orientados
+a geometría (Muon, Turbo-Muon, AF-Muon, AdaMuon, Dion3, ROOT, Muon²,
 NorMuon, Conda, TUON, NAMO, NAMO-D); optimizadores de adaptividad
 ajustable (Anon); y métodos evolutivos poblacionales (EvE, EA4LLM). Los
 algoritmos, el pseudocódigo y las comparaciones de memoria y complejidad
@@ -2797,7 +2797,7 @@ href="#sec:annex-mhc" data-reference-type="ref"
 data-reference="sec:annex-mhc">27</a>).</p>
 <h2 id="fragmentación-del-panorama-de-optimizadores">Fragmentación del
 Panorama de Optimizadores</h2>
-<p>El soporte para treinta y seis familias de optimizadores en ocho
+<p>El soporte para treinta y ocho familias de optimizadores en ocho
 categorías demuestra exhaustividad pero también resalta el estado
 fragmentado de la investigación en optimización. Los usuarios enfrentan
 una complejidad significativa de decisión al elegir entre métodos de
@@ -2853,7 +2853,7 @@ configuración o a través del grupo de entry-points
 aparece en el constructor generado desde el esquema y es despachado por
 el mismo código central que los integrados. La presión de mantenimiento
 es, por tanto, el tamaño del catálogo de componentes—cuarenta y nueve
-mezcladores y treinta y seis optimizadores—y no la lógica de despacho,
+mezcladores y treinta y ocho optimizadores—y no la lógica de despacho,
 que no contiene ramas por optimizador ni una escalera de selección por
 mezclador.</p>
 <p>La interfaz de configuración web proporciona mejoras significativas
@@ -2879,7 +2879,7 @@ abarcan cuantización y embeddings de oraciones.</p>
 <li><p><strong>Diseño Basado en Esquemas</strong>: Un contrato de
 configuración estricto basado en YAML con validación y enrutamiento de
 hiperparámetros prefijados que permite experimentos reproducibles en
-cuarenta y nueve mezcladores de secuencia y treinta y seis familias de
+cuarenta y nueve mezcladores de secuencia y treinta y ocho familias de
 optimizadores.</p></li>
 <li><p><strong>Soporte Arquitectónico Integral</strong>: Implementación
 que abarca líneas base densas, bloques recurrentes y retentivos,
@@ -9612,7 +9612,7 @@ guardan, cómo se combinan y cuántos bytes por parámetro cuesta. Una
 panorámica compacta del zoo resultante la ofrece <span class="citation"
 data-cites="ruder_2016"></span>.</p>
 <h3 id="sec:opt-tutorial-families">En qué difieren las familias</h3>
-<p>El apéndice que sigue contiene treinta y seis métodos, demasiados
+<p>El apéndice que sigue contiene treinta y ocho métodos, demasiados
 para retenerlos a la vez. Se recuerdan mejor como ocho familias, cada
 una respondiendo a una de las preguntas de la Figura <a
 href="#fig:opt-tut-flow" data-reference-type="ref"
@@ -9799,6 +9799,62 @@ actualización, su pseudocódigo, su perfil de memoria y el compromiso que
 asume.</p>
 <h2 id="línea-base-estándar-y-optimizadores-adaptativos">Línea Base
 Estándar y Optimizadores Adaptativos</h2>
+<h4 id="sgd-vainilla-descenso-de-gradiente-por-mini-lotes.">SGD Vainilla
+(Descenso de Gradiente por Mini-lotes).</h4>
+<figure id="fig:opt-sgd"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/sgd.svg" alt="image" /></span></p>
+
+<figcaption>Flujo por paso de SGD por mini-lotes: decaimiento L2
+opcional y la actualización por gradiente escalado, sin estado del
+optimizador entre pasos.</figcaption>
+</figure>
+<p>El método de primer orden más simple: actualizar los pesos con el
+gradiente del mini-lote actual en lugar del lote completo <span
+class="citation" data-cites="hinton_csc321_2012"></span>. En conjuntos
+de datos redundantes el gradiente del mini-lote es casi tan informativo
+como el completo, y calcularlo con productos matriz–matriz lo hace mucho
+más barato que las actualizaciones en línea, especialmente en GPU. En la
+iteración <span class="math inline">\(t\)</span> con mini-lote <span
+class="math inline">\(B\)</span>: <span
+class="math display">\[\begin{aligned}
+g_t &amp;= \frac{1}{|B|} \sum_{i \in B} \nabla_\theta E_i(\theta_t) \\
+\theta_{t+1} &amp;= \theta_t - \eta\, g_t
+\end{aligned}\]</span> donde <span class="math inline">\(\eta\)</span>
+es el único hiperparámetro del método. La receta de ajuste de las
+diapositivas es heurística: reducir la tasa cuando el error oscila o
+diverge, aumentarla cuando el error baja de forma consistente pero
+lenta, y bajarla hacia el final del entrenamiento <span class="citation"
+data-cites="hinton_csc321_2012"></span>. El momentum es una extensión
+separada (párrafo siguiente); esta entrada es deliberadamente la línea
+base sin estado del catálogo.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span>,
+decadencia de peso <span class="math inline">\(\lambda\)</span>
+Parámetros actualizados <span class="math inline">\(\theta_T\)</span>
+Muestrear un mini-lote <span class="math inline">\(B_t\)</span>;
+calcular <span class="math inline">\(g_t \gets \frac{1}{|B_t|}\sum_{i
+\in B_t}\nabla f_i(\theta_t)\)</span> <span class="math inline">\(g_t
+\gets g_t + \lambda \theta_t\)</span> Actualizar parámetros: <span
+class="math inline">\(\theta_{t+1} \gets \theta_t - \eta\, g_t\)</span>
+<span class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="contras.">Contras.</h4>
+<ul>
+<li><p>Una única tasa global no puede adaptarse a curvaturas
+heterogéneas: el método zigzaguea en valles estrechos y se estanca en
+direcciones planas.</p></li>
+<li><p>Fuerte dependencia de programaciones de tasa ajustadas a mano;
+sin adaptividad por parámetro.</p></li>
+</ul>
+<h4 id="ventajas.">Ventajas.</h4>
+<ul>
+<li><p>Cero estado del optimizador: el piso de memoria del catálogo y el
+paso más barato.</p></li>
+<li><p>Completamente determinista dado el orden de los lotes; el punto
+de referencia contra el que se mide cada otra entrada.</p></li>
+</ul>
 <h4 id="sgd-con-momentum.">SGD con Momentum.</h4>
 <figure id="fig:opt-sgd-momentum"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/sgd-momentum.svg" alt="image" /></span></p>
 
@@ -9836,7 +9892,7 @@ parámetros: <span class="math inline">\(\theta_{t+1} \gets \theta_t -
 \eta \cdot m\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.">Contras.</h4>
+<h4 id="contras.-1">Contras.</h4>
 <ul>
 <li><p>Escasa robustez frente a la heterogeneidad de curvatura: una
 única tasa global no puede adaptarse a todos los grupos de
@@ -9844,12 +9900,76 @@ parámetros.</p></li>
 <li><p>Fuerte dependencia de programaciones de tasa de aprendizaje
 cuidadosamente diseñadas.</p></li>
 </ul>
-<h4 id="ventajas.">Ventajas.</h4>
+<h4 id="ventajas.-1">Ventajas.</h4>
 <ul>
 <li><p>Baja sobrecarga de memoria: un único búfer de momentum por
 parámetro.</p></li>
 <li><p>Fuerte generalización cuando se ajusta cuidadosamente, y una
 actualización simple de implementar.</p></li>
+</ul>
+<h4 id="rmsprop.">RMSProp.</h4>
+<figure id="fig:opt-rmsprop"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/rmsprop.svg" alt="image" /></span></p>
+
+<figcaption>Flujo por paso de RMSProp: decaimiento L2 opcional, el
+promedio móvil <span class="math inline">\(v_t\)</span> de gradientes al
+cuadrado y la división por coordenada por <span
+class="math inline">\(\sqrt{v_t}\)</span>.</figcaption>
+</figure>
+<p>RMSProp es la versión segura para mini-lotes de rprop: en lugar de
+dividir por el tamaño del gradiente actual, se fuerza a que el divisor
+sea casi idéntico para mini-lotes adyacentes manteniendo un promedio
+móvil del gradiente al cuadrado por cada peso <span class="citation"
+data-cites="tieleman_hinton2012"></span>: <span
+class="math display">\[\begin{aligned}
+v_t &amp;= 0.9\, v_{t-1} + 0.1\, g_t^2 \\
+\theta_{t+1} &amp;= \theta_t - \eta\, \frac{g_t}{\sqrt{v_t} + \epsilon}
+\end{aligned}\]</span> donde <span class="math inline">\(g_t = \partial
+E/\partial w(t)\)</span>, la división <span
+class="math inline">\(0.9/0.1\)</span> es el decaimiento exponencial de
+las diapositivas (expuesto como el hiperparámetro <code>alpha</code>) y
+<span class="math inline">\(\epsilon\)</span> es una guarda numérica
+añadida por la implementación (las diapositivas no definen ninguna). El
+método original no incluye corrección de sesgo ni primer momento <span
+class="citation" data-cites="tieleman_hinton2012"></span>; combinarlo
+con momentum queda explícitamente abierto en las diapositivas (“el
+momentum no ayuda tanto como normalmente”). El promedio móvil es el
+único búfer de estado y el predecesor directo de la familia adaptativa:
+la idea diagonal de AdaGrad <span class="citation"
+data-cites="duchi_adagrad_2011"></span> hecha segura para mini-lotes y
+luego extendida en Adam.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Parámetros iniciales <span class="math inline">\(\theta_0\)</span>,
+tasa de aprendizaje <span class="math inline">\(\eta\)</span>,
+decaimiento <span class="math inline">\(\alpha = 0.9\)</span>, épsilon
+<span class="math inline">\(\epsilon\)</span>, decadencia de peso <span
+class="math inline">\(\lambda\)</span> Parámetros actualizados <span
+class="math inline">\(\theta_T\)</span> Inicializar: promedio móvil
+<span class="math inline">\(v \gets 0\)</span> Calcular gradiente: <span
+class="math inline">\(g_t \gets \nabla f(\theta_t)\)</span> <span
+class="math inline">\(g_t \gets g_t + \lambda \theta_t\)</span>
+Actualizar promedio móvil: <span class="math inline">\(v \gets \alpha v
++ (1-\alpha) g_t^2\)</span> Actualizar parámetros: <span
+class="math inline">\(\theta_{t+1} \gets \theta_t - \eta\, g_t /
+(\sqrt{v} + \epsilon)\)</span> <span
+class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="contras.-2">Contras.</h4>
+<ul>
+<li><p>Sin corrección de sesgo: el divisor está inflado al inicio del
+entrenamiento, cuando <span class="math inline">\(v_t\)</span> todavía
+es una estimación pobre.</p></li>
+<li><p>Sigue siendo sensible al ajuste (tasa, decaimiento, épsilon) y
+fue en gran medida superado por Adam para transformers.</p></li>
+</ul>
+<h4 id="ventajas.-2">Ventajas.</h4>
+<ul>
+<li><p>Un búfer por parámetro y un paso <span
+class="math inline">\(\mathcal{O}(n)\)</span>: el método adaptativo más
+barato del catálogo.</p></li>
+<li><p>El escalado por coordenada mantiene el paso robusto frente a
+magnitudes de gradiente heterogéneas entre capas.</p></li>
 </ul>
 <h4 id="adam-y-adamw.">Adam y AdamW.</h4>
 <figure id="fig:opt-adamw"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/adamw.svg" alt="image" /></span></p>
@@ -9900,7 +10020,7 @@ Actualizar parámetros: <span class="math inline">\(\theta_t \gets
 <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-1">Contras.</h4>
+<h4 id="contras.-3">Contras.</h4>
 <ul>
 <li><p>Almacena tensores de primer y segundo momento para cada
 parámetro, duplicando la memoria del estado del optimizador respecto a
@@ -9908,7 +10028,7 @@ SGD.</p></li>
 <li><p>El escalado adaptativo elemento a elemento puede interferir con
 la regularización si el decaimiento de pesos no se desacopla.</p></li>
 </ul>
-<h4 id="ventajas.-1">Ventajas.</h4>
+<h4 id="ventajas.-3">Ventajas.</h4>
 <ul>
 <li><p>Línea base práctica para el ajuste fino de transformadores:
 convergencia rápida y tolerancia a la variación de
@@ -9967,14 +10087,14 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta
 \hat{m}\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-2">Contras.</h4>
+<h4 id="contras.-4">Contras.</h4>
 <ul>
 <li><p>Añade contabilidad de rectificación sobre el estado de momentos
 de Adam.</p></li>
 <li><p>El beneficio se reduce cuando ya se usa una programación de
 calentamiento bien ajustada.</p></li>
 </ul>
-<h4 id="ventajas.-2">Ventajas.</h4>
+<h4 id="ventajas.-4">Ventajas.</h4>
 <ul>
 <li><p>Elimina la necesidad de calentamiento manual al rectificar la
 tasa adaptativa.</p></li>
@@ -10030,14 +10150,14 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (\bar{m} /
 \gets g_t\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-3">Contras.</h4>
+<h4 id="contras.-5">Contras.</h4>
 <ul>
 <li><p>Tres búferes tipo momentum aumentan la sobrecarga de memoria
 respecto a Adam.</p></li>
 <li><p>Contabilidad adicional de la diferencia de gradientes en cada
 paso.</p></li>
 </ul>
-<h4 id="ventajas.-3">Ventajas.</h4>
+<h4 id="ventajas.-5">Ventajas.</h4>
 <ul>
 <li><p>Aceleración estilo Nesterov sin una evaluación adicional del
 gradiente.</p></li>
@@ -10084,14 +10204,14 @@ class="math inline">\(v \gets \beta_2 v + (1-\beta_2) g_t^2\)</span>
 m\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-4">Contras.</h4>
+<h4 id="contras.-6">Contras.</h4>
 <ul>
 <li><p>Requiere conservar el segundo momento anterior como denominador
 explícito.</p></li>
 <li><p>Las ganancias empíricas dependen de la arquitectura y del
 ajuste.</p></li>
 </ul>
-<h4 id="ventajas.-4">Ventajas.</h4>
+<h4 id="ventajas.-6">Ventajas.</h4>
 <ul>
 <li><p>Elimina la circularidad del gradiente de Adam y alcanza la tasa
 óptima <span class="math inline">\(O(1/\sqrt{T})\)</span> con
@@ -10151,7 +10271,7 @@ m_2 + (1-\beta_3) g_t\)</span> <span class="math inline">\(v \gets
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-5">Contras.</h4>
+<h4 id="contras.-7">Contras.</h4>
 <ul>
 <li><p>Dos EMA de gradiente más el segundo momento casi triplican el
 estado del optimizador de Adam.</p></li>
@@ -10159,7 +10279,7 @@ estado del optimizador de Adam.</p></li>
 class="math inline">\(\alpha_t\)</span> añade un hiperparámetro que
 ajustar.</p></li>
 </ul>
-<h4 id="ventajas.-5">Ventajas.</h4>
+<h4 id="ventajas.-7">Ventajas.</h4>
 <ul>
 <li><p>Explota información de gradiente que sigue siendo informativa
 durante decenas de miles de pasos.</p></li>
@@ -10215,7 +10335,7 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (m / (\sqrt{v}
 g_t\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-6">Contras.</h4>
+<h4 id="contras.-8">Contras.</h4>
 <ul>
 <li><p>Almacena el gradiente con varianza reducida y el gradiente
 anterior además de los momentos de Adam.</p></li>
@@ -10223,7 +10343,7 @@ anterior además de los momentos de Adam.</p></li>
 class="math inline">\(\gamma \in [0.01, 0.1]\)</span> debe
 ajustarse.</p></li>
 </ul>
-<h4 id="ventajas.-6">Ventajas.</h4>
+<h4 id="ventajas.-8">Ventajas.</h4>
 <ul>
 <li><p>Actúa como un filtro de ruido implícito, amplificando direcciones
 consistentes y amortiguando el ruido contradictorio.</p></li>
@@ -10284,14 +10404,14 @@ u_{\text{masked}}\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-7">Contras.</h4>
+<h4 id="contras.-9">Contras.</h4>
 <ul>
 <li><p>El enmascaramiento puede descartar actualizaciones útiles cuando
 momentum y gradiente discrepan temporalmente.</p></li>
 <li><p>Requiere un optimizador base con momentum además de la máscara
 elemento a elemento.</p></li>
 </ul>
-<h4 id="ventajas.-7">Ventajas.</h4>
+<h4 id="ventajas.-9">Ventajas.</h4>
 <ul>
 <li><p>Modificación de una línea aplicable a cualquier optimizador
 basado en momentum.</p></li>
@@ -10358,14 +10478,14 @@ class="math inline">\(1\)</span> <span class="math inline">\(\theta_t^L
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-8">Contras.</h4>
+<h4 id="contras.-10">Contras.</h4>
 <ul>
 <li><p>La contabilidad de normas por capas y el cálculo de la razón de
 confianza añaden sobrecarga por paso.</p></li>
 <li><p>La razón de confianza es inestable cuando las normas de capa o de
 actualización son cercanas a cero.</p></li>
 </ul>
-<h4 id="ventajas.-8">Ventajas.</h4>
+<h4 id="ventajas.-10">Ventajas.</h4>
 <ul>
 <li><p>Permite entrenamiento estable con tamaños de lote extremos (e.g.,
 64K en BERT).</p></li>
@@ -10429,7 +10549,7 @@ x\)</span> <span class="math inline">\(x_T\)</span> o <span
 class="math inline">\(y_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-9">Contras.</h4>
+<h4 id="contras.-11">Contras.</h4>
 <ul>
 <li><p>Mantiene dos flujos de parámetros (<span
 class="math inline">\(z\)</span> y <span
@@ -10438,7 +10558,7 @@ punto de evaluación.</p></li>
 <li><p>Su comportamiento difiere de las líneas base con programación, lo
 que complica las comparaciones.</p></li>
 </ul>
-<h4 id="ventajas.-9">Ventajas.</h4>
+<h4 id="ventajas.-11">Ventajas.</h4>
 <ul>
 <li><p>Elimina la programación explícita de la tasa de aprendizaje y su
 hiperparámetro de pasos totales.</p></li>
@@ -10493,14 +10613,14 @@ class="math inline">\(\hat{U}_t \gets U_t / \max(1,
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-10">Contras.</h4>
+<h4 id="contras.-12">Contras.</h4>
 <ul>
 <li><p>La varianza factorizada es una aproximación y puede ser inestable
 en algunas tareas.</p></li>
 <li><p>Menor expresividad de optimización en comparación con Adam
 completo.</p></li>
 </ul>
-<h4 id="ventajas.-10">Ventajas.</h4>
+<h4 id="ventajas.-12">Ventajas.</h4>
 <ul>
 <li><p>La memoria baja de <span
 class="math inline">\(O(n_{\text{params}})\)</span> a <span
@@ -10565,14 +10685,14 @@ class="math inline">\(\Delta_{\text{low}} \gets
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-11">Contras.</h4>
+<h4 id="contras.-13">Contras.</h4>
 <ul>
 <li><p>El SVD periódico añade cómputo e introduce un intervalo de
 actualización de la proyección que ajustar.</p></li>
 <li><p>La proyección de bajo rango puede descartar información del
 gradiente.</p></li>
 </ul>
-<h4 id="ventajas.-11">Ventajas.</h4>
+<h4 id="ventajas.-13">Ventajas.</h4>
 <ul>
 <li><p>El estado del optimizador se reduce de <span
 class="math inline">\(O(mn)\)</span> a <span
@@ -10648,14 +10768,14 @@ class="math inline">\(W_t \gets (1-\eta\lambda)W_{t-1} -
 \gets t+1\)</span></p>
 </div>
 </div>
-<h4 id="contras.-12">Contras.</h4>
+<h4 id="contras.-14">Contras.</h4>
 <ul>
 <li><p>El escalado estructurado es una aproximación más gruesa del
 denominador elemento a elemento de AdamW.</p></li>
 <li><p>Las proyecciones deben refrescarse periódicamente y rangos muy
 pequeños hacen que el escalado sea ruidoso.</p></li>
 </ul>
-<h4 id="ventajas.-12">Ventajas.</h4>
+<h4 id="ventajas.-14">Ventajas.</h4>
 <ul>
 <li><p>Reemplaza el SVD repetido con proyección aleatoria gaussiana
 refrescada periódicamente, de modo que el costo de sistemas es
@@ -10678,7 +10798,7 @@ como <span class="math inline">\(128\)</span> en este régimen),
 proporcionando un punto útil en la frontera de Pareto de optimización:
 estado muy pequeño, sin sobrecarga de SVD, y aún un comportamiento
 sólido en preentrenamiento.</p>
-<h4 id="contras.-13">Contras.</h4>
+<h4 id="contras.-15">Contras.</h4>
 <ul>
 <li><p>Un único escalar por tensor pierde granularidad por canales, y el
 estado de rango 1 puede ser ruidoso.</p></li>
@@ -10686,7 +10806,7 @@ estado de rango 1 puede ser ruidoso.</p></li>
 class="math inline">\(\alpha\)</span> (e.g., <span
 class="math inline">\(128\)</span>) para mantenerse estable.</p></li>
 </ul>
-<h4 id="ventajas.-13">Ventajas.</h4>
+<h4 id="ventajas.-15">Ventajas.</h4>
 <ul>
 <li><p>El estado más pequeño de la familia APOLLO, sin sobrecarga de
 SVD.</p></li>
@@ -10704,13 +10824,13 @@ junto con escalas y desplazamientos por tensor, y se descuantizan solo
 cuando es necesario para el siguiente paso. Q-APOLLO preserva, por
 tanto, la lógica de gradiente proyectado de APOLLO mientras reduce la
 precisión del estado restante del optimizador.</p>
-<h4 id="contras.-14">Contras.</h4>
+<h4 id="contras.-16">Contras.</h4>
 <ul>
 <li><p>Los momentos cuantizados introducen error de aproximación y
 sobrecarga de descuantización.</p></li>
 <li><p>Requiere gestionar escalas y desplazamientos por tensor.</p></li>
 </ul>
-<h4 id="ventajas.-14">Ventajas.</h4>
+<h4 id="ventajas.-16">Ventajas.</h4>
 <ul>
 <li><p>Reduce el estado restante del optimizador a precisión ultra
 baja.</p></li>
@@ -10809,7 +10929,7 @@ aplica el decaimiento desacoplado <code>wd_</code> del repositorio antes
 de la actualización adaptativa, y los sufijos compartidos
 <code>betas</code>/<code>eps</code> por grupo parametrizan las
 correcciones de sesgo y el denominador.</p>
-<h4 id="contras.-15">Contras.</h4>
+<h4 id="contras.-17">Contras.</h4>
 <ul>
 <li><p>El precondicionador diagonal se vuelve más grueso a medida que
 crece <span class="math inline">\(s\)</span>; el límite AdamPM-inf del
@@ -10823,7 +10943,7 @@ class="math inline">\(1/s\)</span>.</p></li>
 bidimensionales y el pooling selectivo por capa quedan sin explorar
 (limitaciones del artículo).</p></li>
 </ul>
-<h4 id="ventajas.-15">Ventajas.</h4>
+<h4 id="ventajas.-17">Ventajas.</h4>
 <ul>
 <li><p>Aproximadamente la mitad de la memoria de estado del optimizador
 con el valor por defecto <span class="math inline">\(s{=}8\)</span>
@@ -10917,7 +11037,7 @@ class="math inline">\(\theta_t \gets \theta_{t-1} -
 lr}\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-16">Contras.</h4>
+<h4 id="contras.-18">Contras.</h4>
 <ul>
 <li><p>Mantiene tres búferes de estado (<span
 class="math inline">\(m\)</span>, <span
@@ -10927,7 +11047,7 @@ precondicionador con una programación logarítmica.</p></li>
 class="math inline">\(\gamma\)</span> debe seleccionarse por
 arquitectura.</p></li>
 </ul>
-<h4 id="ventajas.-16">Ventajas.</h4>
+<h4 id="ventajas.-18">Ventajas.</h4>
 <ul>
 <li><p>Misma clase de complejidad <span
 class="math inline">\(\mathcal{O}(n)\)</span> por paso que AdamW, con
@@ -10983,7 +11103,7 @@ s)\)</span> <span class="math inline">\(\theta_t \gets \theta_{t-1} -
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-17">Contras.</h4>
+<h4 id="contras.-19">Contras.</h4>
 <ul>
 <li><p>Introduce los hiperparámetros <span
 class="math inline">\(d_0\)</span> y <span
@@ -10992,7 +11112,7 @@ distancia.</p></li>
 <li><p>Añade un paso de contabilidad de producto interno por
 iteración.</p></li>
 </ul>
-<h4 id="ventajas.-17">Ventajas.</h4>
+<h4 id="ventajas.-19">Ventajas.</h4>
 <ul>
 <li><p>Elimina el ajuste y la programación explícitos de la tasa de
 aprendizaje.</p></li>
@@ -11058,7 +11178,7 @@ class="math inline">\(\Delta \theta \gets L^{-1/4} G R^{-1/4}\)</span>
 \Delta \theta\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-18">Contras.</h4>
+<h4 id="contras.-20">Contras.</h4>
 <ul>
 <li><p>Eigendescomposiciones periódicas <span
 class="math inline">\(O(m^3+n^3)\)</span> y mayor cómputo por
@@ -11066,7 +11186,7 @@ paso.</p></li>
 <li><p>Asume estructura de parámetros 2D; los embeddings y sesgos
 requieren manejo aparte.</p></li>
 </ul>
-<h4 id="ventajas.-18">Ventajas.</h4>
+<h4 id="ventajas.-20">Ventajas.</h4>
 <ul>
 <li><p>Precondicionamiento de segundo orden factorizado por Kronecker
 sin una matriz densa <span
@@ -11131,14 +11251,14 @@ class="math inline">\(v \gets \beta_2 v + (1-\beta_2)
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-19">Contras.</h4>
+<h4 id="contras.-21">Contras.</h4>
 <ul>
 <li><p>Hereda el costo de eigendescomposición periódica de
 Shampoo.</p></li>
 <li><p>La rotación y la rotación inversa añaden multiplicaciones de
 matrices por paso.</p></li>
 </ul>
-<h4 id="ventajas.-19">Ventajas.</h4>
+<h4 id="ventajas.-21">Ventajas.</h4>
 <ul>
 <li><p>Combina la estructura de curvatura explícita de Shampoo con la
 mecánica de momentum probada de Adam.</p></li>
@@ -11183,14 +11303,14 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (\text{sign}(c)
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-20">Contras.</h4>
+<h4 id="contras.-22">Contras.</h4>
 <ul>
 <li><p>Las actualizaciones por signo sacrifican la adaptación elemento a
 elemento de la tasa de aprendizaje que hace efectivo a Adam.</p></li>
 <li><p>Puede ser menos robusto que los métodos de la familia Adam en
 tareas que requieren escalado adaptativo.</p></li>
 </ul>
-<h4 id="ventajas.-20">Ventajas.</h4>
+<h4 id="ventajas.-22">Ventajas.</h4>
 <ul>
 <li><p>Almacena solo el búfer de momentum, sin varianza de segundo
 momento.</p></li>
@@ -11248,14 +11368,14 @@ C)\)</span> <span class="math inline">\(\theta_t \gets \theta_{t-1} -
 \eta \cdot u\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-21">Contras.</h4>
+<h4 id="contras.-23">Contras.</h4>
 <ul>
 <li><p>Las estimaciones de Hutchinson añaden cómputo periódico y ruido a
 la señal de curvatura.</p></li>
 <li><p>La estimación del Hessiano puede quedar desactualizada entre
 refrescos.</p></li>
 </ul>
-<h4 id="ventajas.-21">Ventajas.</h4>
+<h4 id="ventajas.-23">Ventajas.</h4>
 <ul>
 <li><p>Escalado consciente de la curvatura sin el costo <span
 class="math inline">\(O(n^2)\)</span> u <span
@@ -11322,7 +11442,7 @@ class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-22">Contras.</h4>
+<h4 id="contras.-24">Contras.</h4>
 <ul>
 <li><p>Varias multiplicaciones de matrices por iteración de
 Newton-Schulz; se requieren kernels personalizados eficientes.</p></li>
@@ -11330,7 +11450,7 @@ Newton-Schulz; se requieren kernels personalizados eficientes.</p></li>
 2D; las clases de parámetros restantes dependen del respaldo AdamW y de
 su calibración de tasa de aprendizaje por grupo.</p></li>
 </ul>
-<h4 id="ventajas.-22">Ventajas.</h4>
+<h4 id="ventajas.-24">Ventajas.</h4>
 <ul>
 <li><p>Las actualizaciones ortogonalizadas preservan las normas y evitan
 la deriva de norma de los métodos basados en momento.</p></li>
@@ -11375,7 +11495,7 @@ class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-23">Contras.</h4>
+<h4 id="contras.-25">Contras.</h4>
 <ul>
 <li><p>Sigue siendo intensivo en cómputo; AOL añade una multiplicación
 de matrices de precondicionamiento.</p></li>
@@ -11383,7 +11503,7 @@ de matrices de precondicionamiento.</p></li>
 comparte su dependencia del respaldo AdamW para las clases de parámetros
 no ocultas.</p></li>
 </ul>
-<h4 id="ventajas.-23">Ventajas.</h4>
+<h4 id="ventajas.-25">Ventajas.</h4>
 <ul>
 <li><p>AOL reduce el número de iteraciones de Newton-Schulz (típicamente
 de cinco a cuatro).</p></li>
@@ -11468,7 +11588,7 @@ class="math inline">\(O_t \gets B_t / \max(\mathrm{RMS}(B_t),
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-24">Contras.</h4>
+<h4 id="contras.-26">Contras.</h4>
 <ul>
 <li><p>Cada parámetro debe recibir un rol explícito (matriz, tabla atada
 o vector); un head de salida no atado o una tabla de embeddings
@@ -11480,7 +11600,7 @@ fragmentación de filas completas; el artículo reporta aproximadamente un
 vocabulario atado; no se reclama preentrenamiento a escala frontera ni
 superioridad universal de los extremos.</p></li>
 </ul>
-<h4 id="ventajas.-24">Ventajas.</h4>
+<h4 id="ventajas.-26">Ventajas.</h4>
 <ul>
 <li><p>Sin AdamW: un búfer de primer momento por parámetro y sin estado
 de segundo momento, reportado como aproximadamente un 20% menos de
@@ -11568,7 +11688,7 @@ class="math inline">\(W_{t+1} \gets W_t - \eta(\gamma_t \widehat{O}_t +
 \lambda W_t)\)</span> <span class="math inline">\(W_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-25">Contras.</h4>
+<h4 id="contras.-27">Contras.</h4>
 <ul>
 <li><p>Un búfer de segundo momento adicional por parámetro matricial
 (dos búferes frente al único búfer de primer momento de Muon), más
@@ -11582,7 +11702,7 @@ constante fija y no una cantidad aprendida, por lo que el método asume
 escalas de actualización tipo Adam al reutilizar schedules
 existentes.</p></li>
 </ul>
-<h4 id="ventajas.-25">Ventajas.</h4>
+<h4 id="ventajas.-27">Ventajas.</h4>
 <ul>
 <li><p>Sin hiperparámetros nuevos: la EMA de segundo momento reutiliza
 el coeficiente de momentum <span class="math inline">\(\beta\)</span> de
@@ -11697,7 +11817,7 @@ class="math inline">\(M[S,:] \gets \mu\, M[S,:]\)</span> <span
 class="math inline">\(W_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-26">Contras.</h4>
+<h4 id="contras.-28">Contras.</h4>
 <ul>
 <li><p>Cada paso actualiza solo una fracción de las filas, por lo que la
 trayectoria de optimización difiere de Muon; el artículo reporta que el
@@ -11710,7 +11830,7 @@ de kernels GEMM simétricos y comunicación megaagrupada, específicos de
 hardware y clúster; aquí solo aplican la reducción algorítmica y el
 único búfer de primer momento.</p></li>
 </ul>
-<h4 id="ventajas.-26">Ventajas.</h4>
+<h4 id="ventajas.-28">Ventajas.</h4>
 <ul>
 <li><p>Gram Newton–Schulz es matemáticamente equivalente a Newton–Schulz
 y reduce los FLOPs de ortogonalización en torno al 55% en relaciones de
@@ -11906,7 +12026,7 @@ href="#tab:root-coefficients" data-reference-type="ref"
 data-reference="tab:root-coefficients">9</a> usan los coeficientes fijos
 de Muon, y el cuantil dinámico cuesta un ordenamiento adicional de <span
 class="math inline">\(|M_t|\)</span> por matriz y por paso.</p>
-<h4 id="contras.-27">Contras.</h4>
+<h4 id="contras.-29">Contras.</h4>
 <ul>
 <li><p>El umbral por percentil requiere un ordenamiento <span
 class="math inline">\(O(N\log N)\)</span> de la matriz de momentum en
@@ -11918,7 +12038,7 @@ gradiente extremadamente ruidoso también puede perder señal informativa;
 la ablación del artículo muestra que el compromiso lo gobierna el
 percentil (0.85 recorta demasiado, 0.99 demasiado poco).</p></li>
 </ul>
-<h4 id="ventajas.-27">Ventajas.</h4>
+<h4 id="ventajas.-29">Ventajas.</h4>
 <ul>
 <li><p>Precisión de ortogonalización invariante a la dimensión: los
 coeficientes calibrados por forma eliminan el precipicio de precisión
@@ -12024,7 +12144,7 @@ class="math inline">\(\epsilon\)</span> del grupo — los mismos <span
 class="math inline">\(\beta_1, \beta_2, \epsilon\)</span> que
 parametrizan las Ecs. 2–4, de modo que un único conjunto de
 hiperparámetros por grupo configura ambas rutas.</p>
-<h4 id="contras.-28">Contras.</h4>
+<h4 id="contras.-30">Contras.</h4>
 <ul>
 <li><p>Un búfer de estado completo adicional respecto de Muon (dos EMAs
 de momentos por matriz), que duplica la memoria del optimizador en la
@@ -12040,7 +12160,7 @@ class="math inline">\(\beta_1, \beta_2\)</span>; esta implementación
 hereda los valores compartidos por grupo <span
 class="math inline">\((0.9, 0.95)\)</span>.</p></li>
 </ul>
-<h4 id="ventajas.-28">Ventajas.</h4>
+<h4 id="ventajas.-30">Ventajas.</h4>
 <ul>
 <li><p>Mejor ortogonalización con igual número de iteraciones NS y la
 misma calidad con un 40% menos de iteraciones (3 en lugar de 5),
@@ -12147,7 +12267,7 @@ Algoritmo 2, distribuye la ortogonalización entre rangos FSDP2
 normalización por fila local al shard) para evitar trabajo replicado;
 esa estrategia de despliegue es ortogonal a la regla de actualización y
 no se implementa aquí.</p>
-<h4 id="contras.-29">Contras.</h4>
+<h4 id="contras.-31">Contras.</h4>
 <ul>
 <li><p>Un vector de estado adicional por fila y por parámetro matricial
 (almacenado en float32); pequeño frente al momentum <span
@@ -12163,7 +12283,7 @@ Algoritmo 1 es tipográficamente ambigua.</p></li>
 embeddings, pos, heads y tensores no 2-D siguen llevando primeros y
 segundos momentos completos.</p></li>
 </ul>
-<h4 id="ventajas.-29">Ventajas.</h4>
+<h4 id="ventajas.-31">Ventajas.</h4>
 <ul>
 <li><p>Combina el bajo número de condición de Muon con normas de
 actualización por neurona uniformes al estilo AdamW, superando
@@ -12285,7 +12405,7 @@ class="math inline">\((\beta_1,\beta_2)\)</span> (el artículo usa
 Conda sin distinción de grupo — no hay exclusión de embeddings/pos/heads
 como en Muon — mientras que todo parámetro no 2-D se entrena con AdamW
 desacoplado.</p>
-<h4 id="contras.-30">Contras.</h4>
+<h4 id="contras.-32">Contras.</h4>
 <ul>
 <li><p>La SVD es un pico de costo por matriz cada <span
 class="math inline">\(T\)</span> pasos; con <span
@@ -12301,7 +12421,7 @@ class="math inline">\(O(nr)\)</span> de GaLore.</p></li>
 <li><p>Evaluado solo hasta 1B parámetros y sin Mezcla de Expertos; el
 artículo señala ambos como trabajo futuro.</p></li>
 </ul>
-<h4 id="ventajas.-30">Ventajas.</h4>
+<h4 id="ventajas.-32">Ventajas.</h4>
 <ul>
 <li><p>Combina la adaptividad por coordenada de Adam con un mejor
 acondicionamiento espectral en una sola regla de actualización,
@@ -12450,7 +12570,7 @@ se transfiere de QKV a QKVO+MLP, y cuesta 0,2–1,1% de tiempo de paso
 sobre TEON y a lo sumo 12,5% sobre AdamW; la complejidad por iteración
 es <span class="math inline">\(\mathcal{O}(Kmn\min(m,n) + K^2
 mn)\)</span>, el mismo término dominante que Muon.</p>
-<h4 id="contras.-31">Contras.</h4>
+<h4 id="contras.-33">Contras.</h4>
 <ul>
 <li><p>La mezcla entre capas asume matrices genuinamente compatibles;
 esta implementación apila por forma exacta dentro de un grupo de
@@ -12470,7 +12590,7 @@ slices complejos (Gram hermítica); se toma la parte real tras la
 transformación inversa, justificado por la simetría conjugada de la DFT
 de una pila real.</p></li>
 </ul>
-<h4 id="ventajas.-31">Ventajas.</h4>
+<h4 id="ventajas.-33">Ventajas.</h4>
 <ul>
 <li><p>Explota la estructura entre capas que el Muon por capa descarta,
 con garantía de convergencia e interpretación exacta de descenso máximo
@@ -12585,7 +12705,7 @@ de Nesterov, un tope del paso efectivo y un escalado de forma <span
 class="math inline">\(0.2\sqrt{\max(m,n)}\)</span>; el Algoritmo 1 del
 artículo no define ninguno de ellos, así que este módulo sigue el
 artículo.</p>
-<h4 id="contras.-32">Contras.</h4>
+<h4 id="contras.-34">Contras.</h4>
 <ul>
 <li><p>Un único paso escalar no porta información por neurona; el propio
 artículo lo aborda con la extensión diagonal NAMO-D.</p></li>
@@ -12598,7 +12718,7 @@ AdamW.</p></li>
 y la evidencia empírica se limita al preentrenamiento a escala
 GPT-2.</p></li>
 </ul>
-<h4 id="ventajas.-32">Ventajas.</h4>
+<h4 id="ventajas.-34">Ventajas.</h4>
 <ul>
 <li><p>Primera integración principiada del momentum ortogonalizado con
 la adaptación al ruido tipo Adam, con tasas de convergencia
@@ -12700,7 +12820,7 @@ configuran el respaldo AdamW. Como en NAMO, el momentum de Nesterov, el
 tope del paso efectivo y el escalado de forma <span
 class="math inline">\(0.2\sqrt{\max(m,n)}\)</span> de la implementación
 oficial no forman parte del Algoritmo 2 y no se implementan.</p>
-<h4 id="contras.-33">Contras.</h4>
+<h4 id="contras.-35">Contras.</h4>
 <ul>
 <li><p>La actualización ya no preserva la ortogonalidad estricta: el
 escalado diagonal cambia la garantía estructural por una adaptación al
@@ -12714,7 +12834,7 @@ barrido.</p></li>
 adicional por matriz respecto de NAMO, y la teoría sigue asumiendo
 ortogonalización exacta.</p></li>
 </ul>
-<h4 id="ventajas.-33">Ventajas.</h4>
+<h4 id="ventajas.-35">Ventajas.</h4>
 <ul>
 <li><p>La adaptación por neurona coincide con la estructura casi
 diagonal por bloques del Hessiano y mejora a NAMO en ambos tamaños de
@@ -12892,7 +13012,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="contras.-34">Contras.</h4>
+<h4 id="contras.-36">Contras.</h4>
 <ul>
 <li><p>Quedan aproximadamente un punto de exactitud (MNIST) y 9–11% de
 pérdida relativa (ajuste fino LoRA) por detrás de Adam a presupuesto de
@@ -12915,7 +13035,7 @@ no está soportada y el bucle SBERT (<code>fit</code> de
 sentence-transformers) no puede alojarlo; la mutación polinomial es un
 costo puro a escala de red y está desactivada por defecto.</p></li>
 </ul>
-<h4 id="ventajas.-34">Ventajas.</h4>
+<h4 id="ventajas.-36">Ventajas.</h4>
 <ul>
 <li><p>Mejor-observado monótono por construcción en objetivos
 deterministas (selección voraz de aceptar solo si es estrictamente
@@ -13057,7 +13177,7 @@ class="math inline">\(\theta \gets \theta + \alpha g /
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="contras.-35">Contras.</h4>
+<h4 id="contras.-37">Contras.</h4>
 <ul>
 <li><p>Requiere <span class="math inline">\(N\)</span> evaluaciones
 forward por paso (30 en el artículo), por lo que la eficiencia de
@@ -13085,7 +13205,7 @@ independiente de <span class="math inline">\(\sigma\)</span> y de la
 escala del gradiente, <span class="math inline">\(\alpha\)</span> debe
 ajustarse por tarea en lugar de transferirse desde Adam.</p></li>
 </ul>
-<h4 id="ventajas.-35">Ventajas.</h4>
+<h4 id="ventajas.-37">Ventajas.</h4>
 <ul>
 <li><p>Estado del optimizador nulo: sin momentos y sin copias de
 población, por lo que el artículo mide 60,01 frente a 137,61 GB en 8B y
@@ -13106,9 +13226,9 @@ O(1).</p></li>
 <strong>Grupo</strong> &amp; <strong>Métodos</strong> &amp;
 <strong>Objetivo Principal</strong> &amp; <strong>Interpretación desde
 el Estudio</strong><br />
-Línea base clásica &amp; SGD, AdamW, RAdam &amp; estabilidad y
-referencias base &amp; Definen el piso de comparación para las
-afirmaciones de optimizadores más nuevos.<br />
+Línea base clásica &amp; SGD, SGD con momentum, RMSProp, AdamW, RAdam
+&amp; estabilidad y referencias base &amp; Definen el piso de
+comparación para las afirmaciones de optimizadores más nuevos.<br />
 Rediseño de momento &amp; Adan, AdEMAMix, MARS, Cautious AdamW &amp;
 adaptación de primer orden más rápida o segura &amp; Mejor cuando la
 velocidad de convergencia o la estabilidad ante gradiente ruidoso es la
@@ -18841,7 +18961,7 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">107</a>) es el diagnóstico
+data-reference="fig:r2-params-composition">109</a>) es el diagnóstico
 más útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -19145,7 +19265,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">115</a>)
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">117</a>)
 es el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -20187,7 +20307,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">134</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">136</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
@@ -22214,7 +22334,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-49 mezcladores de secuencia en nueve familias, 36 optimizadores, 6
+49 mezcladores de secuencia en nueve familias, 38 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -22535,7 +22655,7 @@ data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="resumen-de-optimizadores">Resumen de Optimizadores</h2>
 <p>La Tabla <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> cataloga
-los 36 optimizadores soportados con su huella de memoria, costo
+los 38 optimizadores soportados con su huella de memoria, costo
 computacional por paso e hiperparámetros clave. Los búferes de estado se
 expresan como el número de tensores propiedad del optimizador por
 parámetro; el costo por paso se enfoca en el término dominante más allá
@@ -22553,10 +22673,18 @@ del cálculo del gradiente.</p>
 <br />
 </p>
 <p><br />
+SGD &amp; Clásico &amp; 0 &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> &amp; lr, wd &amp; <span
+class="citation" data-cites="hinton_csc321_2012"></span><br />
 SGD+Momentum &amp; Clásico &amp; 1 (<span
 class="math inline">\(m\)</span>) &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> &amp; lr, momentum, wd
 &amp; <span class="citation" data-cites="polyak_1964"></span><br />
+RMSProp &amp; Adaptativo &amp; 1 (<span
+class="math inline">\(v\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> &amp; lr, decaimiento
+<span class="math inline">\(\alpha\)</span> (0.9), eps, wd &amp; <span
+class="citation" data-cites="tieleman_hinton2012"></span><br />
 AdamW &amp; Adaptativo &amp; 2 (<span class="math inline">\(m\)</span>,
 <span class="math inline">\(v\)</span>) &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> &amp; lr, <span
