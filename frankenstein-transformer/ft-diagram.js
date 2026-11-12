@@ -1,4 +1,73 @@
 var FTDiagram = (function () {
+    // ------------------------------------------------------------------ i18n
+    // The app diagram is generated per configuration, so the labels are
+    // translated after the graph is built: only the text inside node labels
+    // and edge labels is rewritten, never the identifiers, tensor shapes or
+    // formulas. `generate(config, orientation, palette, lang)` selects the
+    // language ('en' default, 'es' for the Spanish UI).
+    var _lang = 'en';
+
+    //: Whole-label translations (the label is exactly this string).
+    var ES_LABELS = {
+        'Output': 'Salida',
+        'Embedding': 'Embeddings',
+        'merge': 'combina',
+        'mix': 'mezcla',
+        'route': 'enruta',
+        '... (repeated layers)': '... (capas repetidas)'
+    };
+
+    //: Substring translations, applied in order inside the label text.
+    var ES_PHRASES = [
+        ['Pretrained Model', 'Modelo preentrenado'],
+        ['Continual Pretraining', 'Preentrenamiento continuo'],
+        ['Task: ', 'Tarea: '],
+        ['Encoder<br/>frozen or fine-tuned', 'Codificador<br/>congelado o ajustado'],
+        ['Sentence Embeddings', 'Embeddings de oración'],
+        ['Pooling: ', 'Agregación: '],
+        ['Token Embedding', 'Embedding de token'],
+        ['Factorized Emb', 'Emb. factorizado'],
+        ['Input IDs', 'IDs de entrada'],
+        [' heads', ' cabezas'],
+        [' head', ' cabeza'],
+        ['Learned Pos Enc', 'Codificación posicional aprendida'],
+        ['Rotary Pos Enc', 'Codificación posicional rotatoria'],
+        ['Masked Token Logits', 'Logits de token enmascarado'],
+        ['Next Token Logits', 'Logits del siguiente token'],
+        ['MLM Head', 'Cabeza MLM'],
+        ['LM Head', 'Cabeza LM'],
+        ['Projection', 'Proyección'],
+        ['FFN in', 'FFN entrada'],
+        ['FFN out', 'FFN salida'],
+        ['experts, top-', 'expertos, top-'],
+        ['Expert ', 'Experto '],
+        ['Router<br/>gate(x)', 'Router<br/>compuerta(x)'],
+        ['swish(gate)', 'swish(compuerta)'],
+        ['coef projection', 'proyección de coef'],
+        ['up: ', 'sube: '],
+        ['down: ', 'baja: '],
+        ['gate,up: ', 'compuerta,sube: '],
+        ['(n×n doubly-stoch.)', '(n×n doblemente estocástica)'],
+        [' iters,', ' iteraciones,'],
+        [' layer', ' capa'],
+        [' loops', ' bucles'],
+        [' more', ' más']
+    ];
+
+    function esText(text) {
+        if (Object.prototype.hasOwnProperty.call(ES_LABELS, text)) return ES_LABELS[text];
+        var out = text;
+        for (var i = 0; i < ES_PHRASES.length; i++) {
+            out = out.split(ES_PHRASES[i][0]).join(ES_PHRASES[i][1]);
+        }
+        return out;
+    }
+
+    function esLine(line) {
+        return line
+            .replace(/\["([^"]*)"\]/g, function (m, text) { return '["' + esText(text) + '"]'; })
+            .replace(/--"([^"]*)"-->/g, function (m, text) { return '--"' + esText(text) + '"-->'; });
+    }
     'use strict';
 
     var CATS = {
@@ -693,8 +762,9 @@ var FTDiagram = (function () {
 
     // palette: undefined/'screen' uses the dark-UI classDef styles; 'print'
     // swaps in STYLES_PRINT (pastel fills, dark strokes/text) for PNG export.
-    function generate(config, orientation, palette) {
+    function generate(config, orientation, palette, lang) {
         _id = 0;
+        _lang = (lang === 'es') ? 'es' : 'en';
         if (orientation === 'LR' || orientation === 'horizontal') _dir = 'LR';
         else _dir = 'TD';
         var styles = palette === 'print' ? STYLES_PRINT : STYLES;
@@ -703,6 +773,9 @@ var FTDiagram = (function () {
         L.push('');
         if (config.base_model) _baseModel(L, config);
         else _custom(L, config);
+        if (_lang === 'es') {
+            for (var i = 0; i < L.length; i++) L[i] = esLine(L[i]);
+        }
         return L.join('\n');
     }
 

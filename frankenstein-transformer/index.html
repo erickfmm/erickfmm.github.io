@@ -4139,7 +4139,7 @@ async function renderDiagram() {
     document.getElementById('diagram-container').innerHTML = '<p class="info">Build a config first in the Configuration Builder tab.</p>';
     return;
   }
-  var def = FTDiagram.generate(config, diagramOrientation);
+  var def = FTDiagram.generate(config, diagramOrientation, undefined, (typeof lang === "string" ? lang : "en"));
   document.getElementById('mermaid-source').textContent = def;
   var container = document.getElementById('diagram-container');
   container.innerHTML = '<p class="info">Rendering...</p>';
@@ -4175,7 +4175,7 @@ async function downloadDiagramPNG() {
   if (!svg) { setFeedback(t('diagramGenerateFirst'), 'error', 'assertive'); return; }
   try {
     var config = buildConfig();
-    var def = FTDiagram.generate(config, diagramOrientation, 'print');
+    var def = FTDiagram.generate(config, diagramOrientation, 'print', lang);
     mermaid.initialize({
       startOnLoad: false,
       theme: 'default',

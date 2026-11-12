@@ -14,7 +14,8 @@ paper/
 │   ├── paper-es.tex
 │   └── paper-es.pdf    # compiled output
 ├── bibliography/       # *.bib referenced by \bibliography{../bibliography/...}
-├── figures/            # SVG figures generated from docs/paper/figures/*.mmd
+├── figures/            # SVG renders of docs/paper/figures (EN `<name>.svg` +
+│                       # ES `<name>-es.svg`; indexed by stem)
 ├── flatten_tex.py      # inlines \input + .bbl; --web writes the figure manifest
 ├── postprocess_html.py # injects the SVGs into <figure> and lazy-loads images
 ├── paper-en.html       # pandoc output (English)  ← used by the web app
@@ -76,6 +77,11 @@ pandoc /tmp/paper-es-flat.tex -f latex -t html5 \
 python3 postprocess_html.py --manifest /tmp/paper-en-figures.json paper-en.html
 python3 postprocess_html.py --manifest /tmp/paper-es-figures.json paper-es.html
 ```
+
+Every figure exists in English and Spanish (`<name>.svg` / `<name>-es.svg`); the
+Spanish paper's `\includegraphics` point at the `-es` sources, so
+`flatten_tex.py` maps its `fig:` labels to the `-es.svg` files automatically and
+the Paper tab's language switch swaps the whole figure set.
 
 The SVG figures themselves are generated in the main repo and copied here:
 
