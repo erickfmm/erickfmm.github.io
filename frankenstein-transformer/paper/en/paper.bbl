@@ -1,4 +1,4 @@
-\begin{thebibliography}{191}
+\begin{thebibliography}{192}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -523,6 +523,14 @@ Andrew~G. Howard, Menglong Zhu, Bo~Chen, Dmitry Kalenichenko, Weijun Wang,
   vision applications.
 \newblock In \emph{arXiv preprint arXiv:1704.04861}, 2017.
 \newblock URL \url{https://arxiv.org/abs/1704.04861}.
+
+\bibitem[Hu et~al.(2025)Hu, Li, Zhang, Wang, Zhou, Zhang, Shum, and
+  Jiang]{hu_mfa_2025}
+Jingcheng Hu, Houyi Li, Yinmin Zhang, Zili Wang, Shuigeng Zhou, Xiangyu Zhang,
+  Heung-Yeung Shum, and Daxin Jiang.
+\newblock Multi-matrix factorization attention.
+\newblock In \emph{arXiv preprint}. arXiv, 2025.
+\newblock URL \url{https://arxiv.org/abs/2412.19255}.
 
 \bibitem[Huang et~al.(2026)Huang, Li, Kong, et~al.]{huang2026step35}
 Ailin Huang, Ang Li, Aobo Kong, et~al.

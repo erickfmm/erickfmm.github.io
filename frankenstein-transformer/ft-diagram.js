@@ -35,6 +35,7 @@ var FTDiagram = (function () {
         tucker: { c: 'attn', l: 'Tucker Attn' },
         kpa: { c: 'attn', l: 'Kronecker Attn' },
         tpa: { c: 'attn', l: 'Tensor Product Attn' },
+        mfa: { c: 'attn', l: 'Multi-matrix Factorization Attn' },
         iha: { c: 'attn', l: 'Interleaved Head Attn' },
         gta: { c: 'attn', l: 'Grouped-head laTenT Attn' },
         mtla: { c: 'attn', l: 'Temporal Latent Attn' },
@@ -471,6 +472,17 @@ var FTDiagram = (function () {
             { n: 'scores = QKᵀ/√d_h', c: 'attn', e: 'QKᵀ', from: ['RoPE on B factors (B̃ = B·T_t)'] },
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d_h'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'CP sum (1/R)Σ a_r⊗b_r [B,n,h,d_h]'] }
+        ],
+        mfa: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'q_s = S_q·x [B,n,C]', c: 'attn', e: 'S_q', from: ['x'] },
+            { n: 'q_c = q_s·Q_c [B,n,m,C]', c: 'attn', e: 'Q_c', from: ['q_s = S_q·x [B,n,C]'] },
+            { n: 'k = S_k·x, v = S_v·x [B,n,C]', c: 'attn', e: 'S_k,S_v', from: ['x'] },
+            { n: 'MFA-KR: v = k(I+diag(α)N)', c: 'attn', e: 'α=0', from: ['k = S_k·x, v = S_v·x [B,n,C]'] },
+            { n: 'RoPE(q_c, k) [C-dim]', c: 'attn', e: 'R_θ', from: ['q_c = q_s·Q_c [B,n,m,C]', 'k = S_k·x, v = S_v·x [B,n,C]'] },
+            { n: 'scores = q_c kᵀ/√C', c: 'attn', e: 'q_c kᵀ', from: ['RoPE(q_c, k) [C-dim]'] },
+            { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = q_c kᵀ/√C'] },
+            { n: 'O = Σ_c softmax·v·O_cᵀ [B,n,H]', c: 'attn', e: 'O_c', from: ['softmax', 'k = S_k·x, v = S_v·x [B,n,C]'] }
         ],
         iha: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },

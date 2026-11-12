@@ -300,6 +300,13 @@ var FTParamEstimator = (function () {
         var rvT = toNum(pick(m, 'attention.tpa.value_rank', 'tpa_value_rank', 2), 2);
         return H * (rqT + rkT + rvT) * (nH + hdT) + H * nH * hdT; // six vector-factor projections + O
       }
+      case 'mfa': {
+        // arXiv:2412.19255 — shared S_q/S_k/S_v (H×C) + per-head Q_c (C×C) and
+        // O_c (C×H); MFA-KR replaces S_v with N (C×C) + alpha (C).
+        var cM = toNum(pick(m, 'attention.mfa.factor_rank', 'mfa_factor_rank', 128), 128);
+        var krM = toBool(pick(m, 'attention.mfa.key_reuse', 'mfa_key_reuse', false), false);
+        return (krM ? 2 * H * cM : 3 * H * cM) + nH * cM * cM + nH * cM * H + (krM ? cM * cM + cM : 0);
+      }
       case 'gta':
         r = toNum(pick(m, 'attention.gta.value_latent_rank', 'gta_value_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return 3 * H * H + 2 * (H * r); // Q,K,O + dv,uv
