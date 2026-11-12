@@ -1,4 +1,4 @@
-\begin{thebibliography}{190}
+\begin{thebibliography}{191}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -1307,11 +1307,22 @@ Minxin Zhang, Yuxuan Liu, and Hayden Schaeffer.
   momentum, 2026{\natexlab{a}}.
 \newblock URL \url{https://arxiv.org/abs/2602.17080}.
 
-\bibitem[Zhang et~al.(2025)Zhang, Wang, et~al.]{zhang_spargeattn_2025}
+\bibitem[Zhang et~al.(2025{\natexlab{a}})Zhang, Wang,
+  et~al.]{zhang_spargeattn_2025}
 Yichi Zhang, Yizhong Wang, et~al.
 \newblock Accurate and training-free sparse attention accelerating any model
-  inference, 2025.
+  inference, 2025{\natexlab{a}}.
 \newblock URL \url{https://arxiv.org/abs/2502.18137}.
+
+\bibitem[Zhang et~al.(2025{\natexlab{b}})Zhang, Liu, Yuan, Qin, Yuan, Gu, and
+  Yao]{zhang_tpa_2025}
+Yifan Zhang, Yifeng Liu, Huizhuo Yuan, Zhen Qin, Yang Yuan, Quanquan Gu, and
+  Andrew Chi-Chih Yao.
+\newblock Tensor product attention is all you need.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}. arXiv, 2025{\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2501.06425}.
+\newblock Spotlight.
 
 \bibitem[Zhang et~al.(2026{\natexlab{b}})Zhang, Ta, Zhang, Feng, Li, Zhang,
   Liu, Yuan, Wang, Gu, and Yao]{zhang_falcon_2026}

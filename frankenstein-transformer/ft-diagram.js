@@ -34,6 +34,7 @@ var FTDiagram = (function () {
         mlra: { c: 'attn', l: 'Multi-Head Low-Rank Attn' },
         tucker: { c: 'attn', l: 'Tucker Attn' },
         kpa: { c: 'attn', l: 'Kronecker Attn' },
+        tpa: { c: 'attn', l: 'Tensor Product Attn' },
         iha: { c: 'attn', l: 'Interleaved Head Attn' },
         gta: { c: 'attn', l: 'Grouped-head laTenT Attn' },
         mtla: { c: 'attn', l: 'Temporal Latent Attn' },
@@ -460,6 +461,16 @@ var FTDiagram = (function () {
             { n: 'scores = QKᵀ/√d_h', c: 'attn', e: 'QKᵀ', from: ['Kronecker-Separable RoPE (rotate B only)'] },
             { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d_h'] },
             { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'Kronecker sum (1/R)Σ A_r⊗B_r [B,n,h1h2,d1d2]'] }
+        ],
+        tpa: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'A^Q,B^Q = W_Aq/W_Bq·x [R_Q]', c: 'attn', e: 'R_Q', from: ['x'] },
+            { n: 'A^K,B^K,A^V,B^V = W_A/W_B·x [R_K,R_V]', c: 'attn', e: 'R_K,R_V', from: ['x'] },
+            { n: 'CP sum (1/R)Σ a_r⊗b_r [B,n,h,d_h]', c: 'attn', e: '⊗,Σ', from: ['A^Q,B^Q = W_Aq/W_Bq·x [R_Q]', 'A^K,B^K,A^V,B^V = W_A/W_B·x [R_K,R_V]'] },
+            { n: 'RoPE on B factors (B̃ = B·T_t)', c: 'attn', e: 'R_θ', from: ['CP sum (1/R)Σ a_r⊗b_r [B,n,h,d_h]'] },
+            { n: 'scores = QKᵀ/√d_h', c: 'attn', e: 'QKᵀ', from: ['RoPE on B factors (B̃ = B·T_t)'] },
+            { n: 'softmax', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d_h'] },
+            { n: 'O = Wo·softmax·V [B,n,H]', c: 'attn', e: 'Wo', from: ['softmax', 'CP sum (1/R)Σ a_r⊗b_r [B,n,h,d_h]'] }
         ],
         iha: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },

@@ -293,6 +293,13 @@ var FTParamEstimator = (function () {
         var rvK = toNum(pick(m, 'attention.kpa.value_rank', 'kpa_value_rank', 2), 2);
         return H * (rqK + rkK + rvK) * (h1K * d1K + h2K * d2K) + H * H; // six factor projections + O
       }
+      case 'tpa': {
+        var hdT = Math.max(1, Math.floor(H / Math.max(1, nH)));
+        var rqT = toNum(pick(m, 'attention.tpa.query_rank', 'tpa_query_rank', 8), 8);
+        var rkT = toNum(pick(m, 'attention.tpa.key_rank', 'tpa_key_rank', 2), 2);
+        var rvT = toNum(pick(m, 'attention.tpa.value_rank', 'tpa_value_rank', 2), 2);
+        return H * (rqT + rkT + rvT) * (nH + hdT) + H * nH * hdT; // six vector-factor projections + O
+      }
       case 'gta':
         r = toNum(pick(m, 'attention.gta.value_latent_rank', 'gta_value_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return 3 * H * H + 2 * (H * r); // Q,K,O + dv,uv
