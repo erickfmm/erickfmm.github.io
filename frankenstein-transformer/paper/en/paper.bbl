@@ -1,4 +1,4 @@
-\begin{thebibliography}{189}
+\begin{thebibliography}{190}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -359,6 +359,13 @@ Luke~B. Godfrey and Michael~S. Gashler.
 \newblock In \emph{Proceedings of the International Conference on Knowledge
   Discovery and Information Retrieval (KDIR)}, 2015.
 \newblock URL \url{https://arxiv.org/abs/1602.01321}.
+
+\bibitem[Golovneva et~al.(2025)Golovneva, Wang, Weston, and
+  Sukhbaatar]{golovneva_multi_token_2025}
+Olga Golovneva, Tianlu Wang, Jason Weston, and Sainbayar Sukhbaatar.
+\newblock Multi-token attention, 2025.
+\newblock URL \url{https://arxiv.org/abs/2504.00927}.
+\newblock COLM 2025.
 
 \bibitem[Goodfellow et~al.(2013)Goodfellow, Warde-Farley, Mirza, Courville, and
   Bengio]{goodfellow2013maxout}

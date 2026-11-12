@@ -6,6 +6,7 @@ var FTDiagram = (function () {
         sigmoid: { c: 'attn', l: 'Sigmoid Attention' },
         ca: { c: 'attn', l: 'Continuum Attn' },
         xsa: { c: 'attn', l: 'Exclusive Self Attn' },
+        mta: { c: 'attn', l: 'Multi-Token Attn' },
         memory: { c: 'mem', l: 'Memory Attention' },
         gated_softmax: { c: 'attn', l: 'Gated Softmax Attn' },
         titan: { c: 'mem', l: 'Titan Attention' },
@@ -149,6 +150,19 @@ var FTDiagram = (function () {
             { n: 'M = eᵃJ₀(Δ), μ = J₁/J₀ [B,nh,n,n]', c: 'attn', e: 'moments', from: ['a,b = γQKᵀ/√d endpoints [B,nh,n,n]'] },
             { n: 'w = caps + segments, Σw=1', c: 'attn', e: 'normalize', from: ['M = eᵃJ₀(Δ), μ = J₁/J₀ [B,nh,n,n]'] },
             { n: 'O = Wo·(w·V) [B,n,H]', c: 'attn', e: 'Wo', from: ['w = caps + segments, Σw=1', 'V = Wv·x [B,n,H]'] }
+        ],
+        mta: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'Q = Wq·x [B,nh,n,hd]', c: 'attn', e: 'Wq', from: ['x'] },
+            { n: 'K = Wk·x [B,nh,n,hd]', c: 'attn', e: 'Wk', from: ['x'] },
+            { n: 'V = Wv·x [B,nh,n,hd]', c: 'attn', e: 'Wv', from: ['x'] },
+            { n: 'Â = QKᵀ/√hd [B,nh,n,n]', c: 'attn', e: 'QKᵀ', from: ['Q = Wq·x [B,nh,n,hd]', 'K = Wk·x [B,nh,n,hd]'] },
+            { n: 'Conv2d θpre, cq×ck per head [B,nh,n,n]', c: 'conv', e: 'mask₀ → conv θpre', from: ['Â = QKᵀ/√hd [B,nh,n,n]'] },
+            { n: 'A = Softmax(mask₋∞) [B,nh,n,n]', c: 'attn', e: 'softmax', from: ['Conv2d θpre, cq×ck per head [B,nh,n,n]'] },
+            { n: 'head conv w, groups of ch [B,nh,n,n]', c: 'conv', e: 'Eq. 7', from: ['A = Softmax(mask₋∞) [B,nh,n,n]'] },
+            { n: 'post conv θpost + mask₀ [B,nh,n,n]', c: 'conv', e: 'Eq. 6', from: ['head conv w, groups of ch [B,nh,n,n]'] },
+            { n: 'gated group norm + σ(g)', c: 'norm', e: 'norm + gate', from: ['post conv θpost + mask₀ [B,nh,n,n]'] },
+            { n: 'O = Wo·(A·V) [B,n,H]', c: 'attn', e: 'Wo', from: ['gated group norm + σ(g)', 'V = Wv·x [B,nh,n,hd]'] }
         ],
         memory: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },

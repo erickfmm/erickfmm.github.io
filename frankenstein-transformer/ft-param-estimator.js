@@ -91,6 +91,25 @@ var FTParamEstimator = (function () {
         var caLearn = toBool(pick(m, 'attention.ca.learned_gain', 'ca_learned_gain', true), true);
         return 4 * H * H + (caLearn ? nH : 0);
       }
+      // ---- Multi-Token Attention (arXiv:2504.00927) ----
+      // Q,K,V,O (bias-free) = 4H². Key-query kernels: one (cq×ck) per head
+      // pre-softmax and one post-softmax ⇒ 2·nH·cq·ck. Head mixing: one
+      // non-overlapping (nH/ch)×ch×ch kernel ⇒ nH·ch (ch clamped to a
+      // divisor of nH; ch = 1 disables the head conv). Gated group norm:
+      // affine weight+bias over H channels (2H) plus one sigmoid gate per
+      // head (nH). ck is forced odd.
+      case 'mta': {
+        var mtaCq = Math.max(1, Math.round(toNum(pick(m, 'attention.mta.cq', 'mta_cq', 6), 6)));
+        var mtaCk = Math.max(1, Math.round(toNum(pick(m, 'attention.mta.ck', 'mta_ck', 11), 11)));
+        if (mtaCk % 2 === 0) mtaCk += 1;
+        var mtaCh = Math.max(1, Math.round(toNum(pick(m, 'attention.mta.ch', 'mta_ch', 16), 16)));
+        mtaCh = Math.min(mtaCh, nH);
+        while (nH % mtaCh !== 0) mtaCh -= 1;   // largest divisor of nH ≤ ch
+        var mtaNorm = toBool(pick(m, 'attention.mta.gated_group_norm', 'mta_gated_group_norm', true), true);
+        return 4 * H * H + 2 * nH * mtaCq * mtaCk
+          + (mtaCh > 1 ? nH * mtaCh : 0)
+          + (mtaNorm ? 2 * H + nH : 0);
+      }
       // ---- First Passage Attention (arXiv:2610.22714) ----
       // Q,K,V,O (bias-free) = 4H²; field projection H→3·nH WITH bias
       // (paper Table 15) = 3·nH·(H+1); learned per-head strength β = nH.

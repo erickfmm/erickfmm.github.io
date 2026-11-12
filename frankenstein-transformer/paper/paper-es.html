@@ -411,9 +411,10 @@ id="toc-sec:annex-transformer">Transformadores Densos, Recurrentes y
 Aumentados con Memoria</a>
 <ul>
 <li><a
-href="#atención-densa-de-referencia-estándar-sigmoide-continua-y-exclusiva"
-id="toc-atención-densa-de-referencia-estándar-sigmoide-continua-y-exclusiva">Atención
-Densa de Referencia: Estándar, Sigmoide, Continua y Exclusiva</a>
+href="#atención-densa-de-referencia-estándar-sigmoide-continua-exclusiva-y-multi-token"
+id="toc-atención-densa-de-referencia-estándar-sigmoide-continua-exclusiva-y-multi-token">Atención
+Densa de Referencia: Estándar, Sigmoide, Continua, Exclusiva y
+Multi-Token</a>
 <ul>
 <li><a href="#atención-softmax-estándar"
 id="toc-atención-softmax-estándar">Atención Softmax Estándar</a></li>
@@ -426,6 +427,8 @@ Agrupadas (GQA)</a></li>
 Continua</a></li>
 <li><a href="#atención-exclusiva-xsa"
 id="toc-atención-exclusiva-xsa">Atención Exclusiva (XSA)</a></li>
+<li><a href="#atención-multi-token-mta"
+id="toc-atención-multi-token-mta">Atención Multi-Token (MTA)</a></li>
 </ul></li>
 <li><a href="#memory-attention" id="toc-memory-attention">Memory
 Attention</a></li>
@@ -1529,7 +1532,7 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cincuenta y un mezcladores de secuencia en nueve
+estricto que soporta cincuenta y tres mezcladores de secuencia en nueve
 familias y treinta y ocho familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
@@ -1982,16 +1985,16 @@ data-reference-type="ref" data-reference="sec:annex-mhc">27</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
-<p>El sistema implementa cincuenta mezcladores de secuencia organizados
-en nueve categorías funcionales que reflejan cómo cada método equilibra
-expresividad, costo computacional y memoria.</p>
+<p>El sistema implementa cincuenta y tres mezcladores de secuencia
+organizados en nueve categorías funcionales que reflejan cómo cada
+método equilibra expresividad, costo computacional y memoria.</p>
 <ol>
-<li><p><strong>Líneas base densas</strong> (5): atención softmax
+<li><p><strong>Líneas base densas</strong> (6): atención softmax
 estándar, atención sigmoide, Atención Continua, Grouped-Query Attention
-(GQA) y Atención Exclusiva (XSA) ofrecen enrutamiento global completo a
-costo cuadrático. XSA conserva el bloque softmax estándar y elimina la
-componente de la salida de cada cabeza a lo largo del vector de valor
-propio del token <span class="citation"
+(GQA), Atención Exclusiva (XSA) y Atención Multi-Token (MTA) ofrecen
+enrutamiento global completo a costo cuadrático. XSA conserva el bloque
+softmax estándar y elimina la componente de la salida de cada cabeza a
+lo largo del vector de valor propio del token <span class="citation"
 data-cites="zhai_exclusive_2026"></span>, una exclusión sin parámetros
 que afina la división de trabajo entre la atención y la ruta
 feed-forward.</p></li>
@@ -2038,8 +2041,8 @@ data-reference="sec:annex-conformer">19</a>).</p></li>
 </ol>
 <figure id="fig:comprehensive-taxonomy"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixer-taxonomy.svg" alt="image" /></span></p>
 
-<figcaption>Taxonomía de los cincuenta y un mezcladores de secuencia en
-nueve categorías funcionales. Las líneas base densas ofrecen
+<figcaption>Taxonomía de los cincuenta y tres mezcladores de secuencia
+en nueve categorías funcionales. Las líneas base densas ofrecen
 enrutamiento global completo a costo cuadrático; los métodos recurrentes
 comprimen el estado para inferencia en tiempo constante; las variantes
 dispersas restringen el patrón de atención; los mecanismos con compuerta
@@ -2782,10 +2785,10 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las cincuenta arquitecturas de mezclador implementadas abarcan las
-principales direcciones de investigación en modelado de secuencias, pero
-ciertos vacíos permanecen. El sistema carece de arquitecturas híbridas
-recientes como Griffin <span class="citation"
+<p>Las cincuenta y tres arquitecturas de mezclador implementadas abarcan
+las principales direcciones de investigación en modelado de secuencias,
+pero ciertos vacíos permanecen. El sistema carece de arquitecturas
+híbridas recientes como Griffin <span class="citation"
 data-cites="soares_griffin_2024"></span> y Jamba <span class="citation"
 data-cites="gu_jamba_2024"></span>, que combinan compuertas con modelos
 de espacio de estados. El enrutamiento MoE (Mezcla de Expertos) está
@@ -2987,7 +2990,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>189</span> urlstyle</p>
+<p><span>190</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3176,6 +3179,9 @@ improve generalization in neural networks. In <em>Proceedings of the
 International Conference on Knowledge Discovery and Information
 Retrieval (KDIR)</em>, 2015. URL
 <code>https://arxiv.org/abs/1602.01321</code>.</p>
+<p>Olga Golovneva, Tianlu Wang, Jason Weston, and Sainbayar Sukhbaatar.
+Multi-token attention, 2025. URL
+<code>https://arxiv.org/abs/2504.00927</code>. COLM 2025.</p>
 <p>Ian J. Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville,
 and Yoshua Bengio. Maxout networks. In <em>Proceedings of the 30th
 International Conference on Machine Learning (ICML)</em>, pages
@@ -4105,8 +4111,9 @@ Comprender esta taxonomía ilumina las compensaciones fundamentales entre
 expresividad, costo computacional, huella de memoria y simplicidad de
 despliegue.</p>
 <h2
-id="atención-densa-de-referencia-estándar-sigmoide-continua-y-exclusiva">Atención
-Densa de Referencia: Estándar, Sigmoide, Continua y Exclusiva</h2>
+id="atención-densa-de-referencia-estándar-sigmoide-continua-exclusiva-y-multi-token">Atención
+Densa de Referencia: Estándar, Sigmoide, Continua, Exclusiva y
+Multi-Token</h2>
 <h3 id="atención-softmax-estándar">Atención Softmax Estándar</h3>
 <figure id="fig:mixer-standard"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/standard.svg" alt="image" /></span></p>
 
@@ -4472,6 +4479,130 @@ motivación empírica; la normalización L2 por token es un kernel extra
 (pequeño) frente a SDPA vanilla; la variante de codificador
 (bidireccional) que usa este toolkit es una extensión agnóstica a la
 máscara de la formulación causal del artículo.</p></li>
+</ul>
+<h3 id="atención-multi-token-mta">Atención Multi-Token (MTA)</h3>
+<figure id="fig:mixer-mta-es"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/mta.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de datos de la Atención Multi-Token: convolución
+causal consulta-clave sobre el mapa de puntajes (pre-softmax, Eq. <a
+href="#eq:mta-pre-es" data-reference-type="ref"
+data-reference="eq:mta-pre-es">[eq:mta-pre-es]</a>), softmax,
+convolución de mezcla de cabezas por grupos (Eq. <a
+href="#eq:mta-head-es" data-reference-type="ref"
+data-reference="eq:mta-head-es">[eq:mta-head-es]</a>), una segunda
+convolución consulta-clave post-softmax y la normalización de grupo con
+compuerta antes de la proyección de salida; la ruta punteada es la cola
+de consultas en decodificación.</figcaption>
+</figure>
+<p>La Atención Multi-Token <span class="citation"
+data-cites="golovneva_multi_token_2025"></span> ataca el <em>cuello de
+botella de un solo token</em> de la atención softmax: cada peso <span
+class="math inline">\(a_{ij}\)</span> se decide con una sola consulta y
+una sola clave, de modo que una región del contexto identificada por
+varios tokens (una oración que menciona a “Alice” y a “rabbit”) debe
+comprimirse en un único vector. MTA conserva el esqueleto cuadrático de
+la atención y hace interactuar a consultas, claves y cabezas vecinas
+mediante pequeñas convoluciones aprendidas sobre el mapa de puntajes. La
+convolución consulta-clave mezcla los logits de una ventana de <span
+class="math inline">\(c_q\)</span> consultas y <span
+class="math inline">\(c_k\)</span> claves, por cabeza: <span
+class="math display">\[a_{ij} =
+\operatorname{Softmax}\Big(\sum_{i&#39;=0}^{c_q-1}\
+\sum_{j&#39;=-\lfloor c_k/2\rfloor}^{\lceil c_k/2\rceil-1}
+\mathbf{1}_{i\ge j-j&#39;}\ \theta_{i&#39;,j&#39;}\
+\mathbf{q}_{i-i&#39;}\mathbf{k}_{j-j&#39;}^{\top}/\sqrt{d_h}\Big),
+\label{eq:mta-exact-es}\]</span> y, como ese indicador exigiría núcleos
+CUDA a medida, la implementación por defecto aplica dos veces la máscara
+causal existente: <span class="math display">\[\mathbf{A} =
+\operatorname{Softmax}\Big(\operatorname{Mask}_{-\infty}\big(\operatorname{Conv2d}_{\theta}(\operatorname{Mask}_{0}(\hat{\mathbf{A}}))\big)\Big),
+\qquad
+\mathbf{A} =
+\operatorname{Mask}_{0}\Big(\operatorname{Conv2d}_{\theta}\big(\operatorname{Softmax}(\operatorname{Mask}_{-\infty}(\hat{\mathbf{A}}))\big)\Big),
+\label{eq:mta-pre-es}\]</span> donde la primera expresión es la variante
+pre-softmax (la predeterminada del paper) y la segunda la post-softmax
+(interacción aditiva en lugar de multiplicativa); por defecto se aplican
+ambas. La mezcla de cabezas divide las <span
+class="math inline">\(n_h\)</span> cabezas en <span
+class="math inline">\(n_h/c_h\)</span> grupos sin solapamiento y mezcla
+cada grupo con su propio núcleo <span class="math inline">\(c_h\times
+c_h\)</span>, <span class="math display">\[\mathbf{A}^{1}_{\text{new}} =
+w_{11}\mathbf{A}^{1}+w_{12}\mathbf{A}^{2}, \qquad
+\mathbf{A}^{2}_{\text{new}} = w_{21}\mathbf{A}^{1}+w_{22}\mathbf{A}^{2},
+\label{eq:mta-head-es}\]</span> de modo que los mapas de atención se
+combinan entre cabezas (una mezcla post-softmax <span
+class="math inline">\(2\times2\)</span> equivale a duplicar el rango de
+las proyecciones de valor/salida, Apéndice B del paper). Finalmente, una
+normalización por grupos sobre cada conjunto de <span
+class="math inline">\(c_h\)</span> cabezas seguida de una compuerta
+sigmoide por cabeza, <span
+class="math inline">\(\operatorname{diag}(\sigma(\mathbf{g}))\operatorname{GroupNorm}(\mathbf{A}\mathbf{V})\)</span>,
+contrarresta la corriente residual y permite encender o apagar cabezas
+según la capa; el paper reporta 10.90 de perplejidad de validación con
+compuerta escalar frente a 11.03 sin escalado y 11.41 con escalado
+layer-norm. Los núcleos se inicializan en la identidad (la opción que
+mejor converge) y el mixer añade solo cerca del <span
+class="math inline">\(0.001\%\)</span> de los parámetros a escala 880M:
+<span class="math inline">\(n_h(2c_qc_k + c_h) + 2H + n_h\)</span>, es
+decir, un escalar por cabeza para la compuerta, una normalización de
+grupo afín y los núcleos.</p>
+<div class="algorithmic">
+<p><strong>Entrada:</strong> <span
+class="math inline">\(\mathbf{x}\)</span>; <span
+class="math inline">\(\mathbf{W}_q,\mathbf{W}_k,\mathbf{W}_v,\mathbf{W}_o\)</span>;
+hiperparámetros <span class="math inline">\(c_q,c_k,c_h\)</span> <span
+class="math inline">\(\mathbf{Q}\gets\mathbf{x}\mathbf{W}_q\)</span>,
+<span
+class="math inline">\(\mathbf{K}\gets\mathbf{x}\mathbf{W}_k\)</span>,
+<span
+class="math inline">\(\mathbf{V}\gets\mathbf{x}\mathbf{W}_v\)</span>;
+<span
+class="math inline">\(\hat{\mathbf{A}}\gets\mathbf{Q}\mathbf{K}^\top/\sqrt{d_h}\)</span>
+<span
+class="math inline">\(\hat{\mathbf{A}}\gets\operatorname{Mask}_{0}(\hat{\mathbf{A}})\)</span>;
+<span
+class="math inline">\(\hat{\mathbf{A}}\gets\operatorname{Conv2d}_{\theta_{\text{pre}}}(\hat{\mathbf{A}})\)</span>
+<span
+class="math inline">\(\mathbf{A}\gets\operatorname{Softmax}(\operatorname{Mask}_{-\infty}(\hat{\mathbf{A}}))\)</span>
+<span class="math inline">\(\mathbf{A}\gets\)</span> convolución de
+cabezas <span class="math inline">\(w\)</span> por grupos de <span
+class="math inline">\(c_h\)</span>; <span
+class="math inline">\(\mathbf{A}\gets\operatorname{Mask}_{0}(\operatorname{Conv2d}_{\theta_{\text{post}}}(\mathbf{A}))\)</span>
+<span
+class="math inline">\(\mathbf{O}\gets\operatorname{diag}(\sigma(\mathbf{g}))\operatorname{GroupNorm}(\mathbf{A}\mathbf{V})\)</span>
+<strong>Salida:</strong> <span
+class="math inline">\(\mathbf{O}\mathbf{W}_o\)</span></p>
+</div>
+<ul>
+<li><p><strong>Complejidad de entrenamiento</strong>: <span
+class="math inline">\(\mathcal{O}(n^2 d_h n_h + n^2 c_q c_k
+n_h)\)</span> — sigue siendo cuadrática en la longitud de secuencia, con
+una constante pequeña aportada por los núcleos; el mapa de puntajes debe
+materializarse, así que los núcleos SDPA fusionados no son compatibles
+(limitación declarada por el paper).</p></li>
+<li><p><strong>Complejidad de inferencia</strong>: <span
+class="math inline">\(\mathcal{O}(n d_h n_h)\)</span> por paso con caché
+KV más una corrección convolucional <span
+class="math inline">\(\mathcal{O}(c_q c_k n_h)\)</span>; la
+decodificación conserva la caché KV clásica y una cola FIFO de las
+últimas <span class="math inline">\(c_q-1\)</span> consultas, de modo
+que la convolución con doble máscara se reproduce de forma exacta
+(clases (i)+(v)).</p></li>
+<li><p><strong>Fortalezas</strong>: mejoras consistentes a 880M/105B
+tokens de SlimPajama frente a las referencias Transformer, Diff
+Transformer y Talking-Heads (perplejidad media de validación 10.91
+frente a 11.25, 11.15 y 11.04; 44.9 frente a 43.7 puntos zero-shot de
+media), grandes mejoras en recuperación de contexto largo (multi-aguja,
+BabiLong, LAMBADA) con <span class="math inline">\(+0.001\%\)</span> de
+parámetros, y núcleos casi identidad que aprenden a ser filtros
+diagonales de “coincidencia de oraciones”, de cebado o de detección de
+bordes.</p></li>
+<li><p><strong>Debilidades</strong>: incompatible con núcleos de
+atención optimizados (el mapa de puntajes se materializa); la
+convolución consulta-clave se aplica en una de cada cuatro capas en la
+corrida de referencia por eficiencia, así que la variante en todas las
+capas cuesta más aritmética que lo reportado; la forma encoder
+(bidireccional) de este toolkit elimina ambas máscaras causales, una
+extensión de la formulación causal del paper.</p></li>
 </ul>
 <h2 id="memory-attention">Memory Attention</h2>
 <p>La familia de memoria agrupa a Titans (la ventana de atención
@@ -9499,7 +9630,7 @@ la pendiente bajo sus pies pero no ve el valle, así que la estrategia se
 reduce a tres preguntas: cuán fiable es la lectura de la pendiente (¿un
 ejemplo o mil?), cuán larga es la zancada y cuánta memoria del terreno
 merece la pena cargar. La Figura <a href="#fig:opt-tut-flow"
-data-reference-type="ref" data-reference="fig:opt-tut-flow">71</a>
+data-reference-type="ref" data-reference="fig:opt-tut-flow">72</a>
 convierte esas preguntas en el mapa de las familias que siguen.</p>
 <figure id="fig:opt-tut-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-tutorial-flow.svg" alt="image" /></span></p>
 
@@ -9548,9 +9679,9 @@ son círculos <span class="citation"
 data-cites="hinton_csc321_2012"></span>. El recorrido, por tanto,
 zigzaguea a través de la dirección abrupta mientras avanza a rastras por
 la plana. La Figura <a href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">72</a> muestra los tres regímenes sobre
+data-reference="fig:opt-tut-gd">73</a> muestra los tres regímenes sobre
 el mismo cuenco, y la Figura <a href="#fig:opt-tut-lr"
-data-reference-type="ref" data-reference="fig:opt-tut-lr">73</a> muestra
+data-reference-type="ref" data-reference="fig:opt-tut-lr">74</a> muestra
 cómo se ven como curva de pérdida.</p>
 <figure id="fig:opt-tut-gd"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-gd-landscape.svg" alt="image" /></span></p>
 
@@ -9627,7 +9758,7 @@ class="math inline">\(\odot\)</span> es el producto elemento a elemento.
 El gradiente de un peso es, por tanto, el producto de un número hacia
 atrás y un número hacia adelante—las dos cantidades dibujadas en la
 Figura <a href="#fig:opt-tut-backprop" data-reference-type="ref"
-data-reference="fig:opt-tut-backprop">74</a>. La recursión es lineal en
+data-reference="fig:opt-tut-backprop">75</a>. La recursión es lineal en
 el índice de capa, así que el barrido completo cuesta aproximadamente lo
 mismo que una pasada adicional hacia adelante, en torno al doble del
 coste de una pasada hacia adelante por paso, y debe mantener las
@@ -9712,7 +9843,7 @@ class="math inline">\(\lfloor n/b\rfloor\)</span> actualizaciones en
 lugar de una <span class="citation"
 data-cites="ibm_sgd_2025 ghojogh_ghodsi_2024"></span>. La Figura <a
 href="#fig:opt-tut-noise" data-reference-type="ref"
-data-reference="fig:opt-tut-noise">75</a> muestra las dos caras del
+data-reference="fig:opt-tut-noise">76</a> muestra las dos caras del
 compromiso: con el mismo número de pasos y el mismo tamaño de paso, los
 lotes pequeños vagan, y el ruido que inyectan es precisamente la
 cantidad que se reduce como <span
@@ -9743,7 +9874,7 @@ class="citation" data-cites="ghojogh_ghodsi_2024"></span>. El descenso
 de gradiente con lote completo es, por tanto, más preciso por iteración
 y mucho más lento por iteración; SGD es lo contrario. La Figura <a
 href="#fig:opt-tut-rates" data-reference-type="ref"
-data-reference="fig:opt-tut-rates">76</a> pone ambas afirmaciones sobre
+data-reference="fig:opt-tut-rates">77</a> pone ambas afirmaciones sobre
 los mismos ejes, una vez por iteración y otra por unidad de tiempo de
 reloj, que es la comparación que de verdad importa cuando un paso cuesta
 <span class="math inline">\(n/b\)</span> veces menos.</p>
@@ -9788,13 +9919,13 @@ gradiente en la posición hacia la que se dirige la velocidad, de modo
 que la corrección llega antes que el sobrepaso <span class="citation"
 data-cites="hinton_csc321_2012 sutskever2013importance"></span>. La
 Figura <a href="#fig:opt-tut-momentum" data-reference-type="ref"
-data-reference="fig:opt-tut-momentum">77</a> muestra la composición de
+data-reference="fig:opt-tut-momentum">78</a> muestra la composición de
 los dos términos y su efecto sobre el valle.</p>
 <figure id="fig:opt-tut-momentum"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-momentum.svg" alt="image" /></span></p>
 
 <figcaption>Momentum como memoria. (a) Sobre el valle de la Figura <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">72</a>(b), con el mismo tamaño de paso,
+data-reference="fig:opt-tut-gd">73</a>(b), con el mismo tamaño de paso,
 el descenso de gradiente simple sigue avanzando a rastras por el fondo
 tras 120 pasos mientras que momentum y su variante de Nesterov alcanzan
 el mínimo. (b) La misma ejecución como curva de pérdida: la dirección
@@ -9807,7 +9938,7 @@ que cualquiera de los dos términos por separado.</figcaption>
 coordenada.</h4>
 <p>La segunda observación es que el valle de la Figura <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">72</a>(b) no tiene un <span
+data-reference="fig:opt-tut-gd">73</a>(b) no tiene un <span
 class="math inline">\(\eta\)</span> bueno único: lo que es estable a lo
 largo del eje abrupto es despreciable a lo largo del plano. Los métodos
 adaptativos mantienen un promedio móvil de gradientes al cuadrado y
@@ -9824,7 +9955,7 @@ data-cites="hinton_csc321_2012 tieleman_hinton2012"></span>; AdaGrad es
 la versión acumulativa en lugar de decreciente <span class="citation"
 data-cites="duchi_adagrad_2011"></span>. La Figura <a
 href="#fig:opt-tut-adaptive" data-reference-type="ref"
-data-reference="fig:opt-tut-adaptive">78</a> muestra el efecto: los dos
+data-reference="fig:opt-tut-adaptive">79</a> muestra el efecto: los dos
 ejes del valle reciben desplazamientos comparables, a cambio de un
 estado por coordenada y de un paso que ya no se reduce por sí solo—el
 temblor residual de tamaño <span
@@ -9859,7 +9990,7 @@ data-cites="ruder_2016"></span>.</p>
 para retenerlos a la vez. Se recuerdan mejor como ocho familias, cada
 una respondiendo a una de las preguntas de la Figura <a
 href="#fig:opt-tut-flow" data-reference-type="ref"
-data-reference="fig:opt-tut-flow">71</a> y cada una distinguida por lo
+data-reference="fig:opt-tut-flow">72</a> y cada una distinguida por lo
 que recuerda y lo que paga.</p>
 <ul>
 <li><p><strong>Líneas base de primer orden</strong> (SGD con momentum,
@@ -9907,7 +10038,7 @@ data-reference="tab:opt-tut-families">[tab:opt-tut-families]</a> expresa
 la misma comparación en las dos monedas que deciden una ejecución real:
 qué se almacena por parámetro y cuánto cuesta cada paso. La Figura <a
 href="#fig:opt-tut-families" data-reference-type="ref"
-data-reference="fig:opt-tut-families">79</a> lo convierte en una huella:
+data-reference="fig:opt-tut-families">80</a> lo convierte en una huella:
 leer hacia abajo una fila dice qué ingredientes usa una familia, y leer
 a través de una columna dice qué familias comparten uno.</p>
 <div class="tabular">
@@ -10001,7 +10132,7 @@ decaimiento &amp; cómo se regularizan los pesos &amp; generalización
 <p>El valor práctico de las cinco ideas es diagnóstico. Una sola curva
 de pérdida ya dice cuál de ellas está mal, y la respuesta suele ser
 visible en unos cientos de pasos (Figura <a href="#fig:opt-tut-diag"
-data-reference-type="ref" data-reference="fig:opt-tut-diag">80</a>).</p>
+data-reference-type="ref" data-reference="fig:opt-tut-diag">81</a>).</p>
 <figure id="fig:opt-tut-diag"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-loss-diagnostics.svg" alt="image" /></span></p>
 
 <figcaption>Cuatro curvas de pérdida y la frase que pronuncia cada una.
@@ -18302,6 +18433,22 @@ class="math inline">\(\sigma(\mathbf{x}\mathbf{W}_g)\)</span> multiplica
 la salida de atención y depende sólo del token actual, así que no se
 cachea nada extra <span class="citation"
 data-cites="qiu_gated_attention_2025"></span>.</p></li>
+<li><p><strong>Atención multi-token.</strong> La convolución
+consulta-clave de la Eq. <a href="#eq:mta-pre-es"
+data-reference-type="eqref"
+data-reference="eq:mta-pre-es">[eq:mta-pre-es]</a> lee las filas de
+puntajes de las <span class="math inline">\(c_q-1\)</span> consultas
+previas, y la máscara de ceros pre-softmax anula las entradas de claves
+futuras de esas filas, de modo que la decodificación añade un token de
+K/V más un vector de consulta, reconstruye la ventana de <span
+class="math inline">\(c_q\)</span> filas de puntajes contra todo el
+prefijo cacheado y vuelve a aplicar la convolución, el softmax, la
+mezcla de cabezas y la normalización de grupo con compuerta. El mixer
+pertenece por tanto a las clases (i)+(v): un slot <code>kv</code> simple
+cuyos extras por token llevan la cola de consultas, y el paso
+incremental es exacto (el forward completo y el prefill+decodificación
+coinciden) <span class="citation"
+data-cites="golovneva_multi_token_2025"></span>.</p></li>
 <li><p><strong>Atención exclusiva.</strong> Tras el append/read
 estándar, la salida de la cabeza se proyecta fuera del valor normalizado
 del token actual, <span
@@ -19221,7 +19368,7 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">111</a>) es el diagnóstico
+data-reference="fig:r2-params-composition">112</a>) es el diagnóstico
 más útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -19525,7 +19672,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">119</a>)
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">120</a>)
 es el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -20567,7 +20714,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">138</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">139</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
@@ -21622,261 +21769,269 @@ post-SDPA frente al vector de valor propio</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">mta</td>
+<td style="text-align: left;">Atención Multi-Token — convoluciones
+causales consulta-clave y por grupos de cabezas sobre el mapa de
+atención con normalización de grupo con compuerta</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">memory</td>
 <td style="text-align: left;">Atención con memoria — valores por ID de
 token (V = K + Norm(E[s]))</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gated_softmax</td>
 <td style="text-align: left;">Atención softmax con compuerta sigmoide
 post-SDPA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">titan</td>
 <td style="text-align: left;">Atención Titan con codificación posicional
 (HoPE/RoPE)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">retnet</td>
 <td style="text-align: left;">Red de Retención (híbrido
 RNN+transformer)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mamba</td>
 <td style="text-align: left;">Modelo de espacio de estado selectivo
 (SSM)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ode</td>
 <td style="text-align: left;">Capa ODE de profundidad continua</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gla</td>
 <td style="text-align: left;">Atención Lineal con Compuerta con
 decaimiento multiplicativo</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">deltanet / gated_deltanet</td>
 <td style="text-align: left;">DeltaNet con regla delta correctiva</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gated_deltanet2</td>
 <td style="text-align: left;">Gated DeltaNet-2 con compuertas de
 borrado/escritura canalizadas desacopladas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">hgrn2</td>
 <td style="text-align: left;">HGRN2 con compuertas de olvido
 jerárquicas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">fox</td>
 <td style="text-align: left;">Forgetting Transformer (FoX) con sesgo de
 olvido en logits</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">nsa</td>
 <td style="text-align: left;">Native Sparse Attention (tres ramas)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">engram</td>
 <td style="text-align: left;">Búsqueda condicional de memoria de
 N-gramas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gqa</td>
 <td style="text-align: left;">Atención por Consultas Agrupadas con
 cabezas KV configurables</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">longformer</td>
 <td style="text-align: left;">Longformer: ventanas deslizantes + tokens
 globales</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">bigbird</td>
 <td style="text-align: left;">BigBird: atención local + aleatoria +
 global</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparse_transformer</td>
 <td style="text-align: left;">Sparse Transformer: patrones
 factorizados</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">sparsek</td>
 <td style="text-align: left;">SparseK: selección KV top-k
 diferenciable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparge</td>
 <td style="text-align: left;">SpargeAttn — poda de bloques en dos
 etapas; entrenamiento denso, inferencia dispersa</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">fasa</td>
 <td style="text-align: left;">FASA — selección de tokens consciente de
 frecuencia; entrenamiento denso, inferencia dispersa</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">msa</td>
 <td style="text-align: left;">MiniMax Sparse Attention — bloques
 dispersos sobre GQA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">sparda</td>
 <td style="text-align: left;">SparDA — atención dispersa desacoplada con
 proyección Forecast</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">lsa</td>
 <td style="text-align: left;">Latent Sparse Attention — clustering
 semántico de claves con selección top-k</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">fastconformer</td>
 <td style="text-align: left;">Fast Conformer — ventana de contexto
 limitado + token global anclado a la cabecera</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">kda</td>
 <td style="text-align: left;">Kimi Delta Attention — decaimiento por
 canal + compuerta de escritura escalar</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">falcon1 / falcon2 / falcon3</td>
 <td style="text-align: left;">Familia de regresión Falcon — regla delta
 NLMS prefix-alineada (RAW)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">falcon1a / falcon2a / falcon3a</td>
 <td style="text-align: left;">Familia de producto interno Falcon —
 escrituras aditivas desplazadas con decaimiento por ridge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mla</td>
 <td style="text-align: left;">Atención Latente Multi-Cabeza + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gqla</td>
 <td style="text-align: left;">Atención Latente por Consultas Agrupadas —
 dos rutas de decodificación</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mlra</td>
 <td style="text-align: left;">Atención Multi-Cabeza de Rango Bajo —
 latente particionable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">tucker</td>
 <td style="text-align: left;">Atención Tucker — factorización de rango
 bajo generalizada</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">kpa</td>
 <td style="text-align: left;">Atención de Producto de Kronecker —
 factores K/V como suma de Kronecker, RoPE Kronecker-separable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">iha</td>
 <td style="text-align: left;">Atención de Cabezas Entrelazadas —
 pseudo-cabezas entre cabezas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gta</td>
 <td style="text-align: left;">Atención laTenT por Cabezas Agrupadas —
 mapa compartido + valores latentes</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mtla</td>
 <td style="text-align: left;">Atención Latente Temporal Multi-Cabeza —
 fusión temporal KV</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">cca</td>
 <td style="text-align: left;">Atención Convolucional Comprimida —
 atención en espacio latente + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ccgqa</td>
 <td style="text-align: left;">Atención Convolucional Comprimida por
 Consultas Agrupadas — CCA + GQA en latente</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gma</td>
 <td style="text-align: left;">Atención de Mezcla Gaussiana —
 enrutamiento latente probabilístico, <span
@@ -22666,7 +22821,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-51 mezcladores de secuencia en nueve familias, 38 optimizadores, 6
+53 mezcladores de secuencia en nueve familias, 38 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -22718,6 +22873,15 @@ d)\)</span> &amp; <span class="math inline">\(\mathcal{O}(n)\)</span>
 caché &amp; Ortogonalización post-SDPA frente al vector de valor propio;
 cero parámetros extra; sumidero de atención implícito &amp; <span
 class="citation" data-cites="zhai_exclusive_2026"></span><br />
+mta &amp; Denso &amp; <span class="math inline">\(\mathcal{O}(n^2 (d +
+c_q c_k) n_h)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> caché + cola de consultas
+&amp; Convoluciones consulta-clave (<span
+class="math inline">\(c_q\times c_k\)</span>) y por grupos de cabezas
+(<span class="math inline">\(c_h\)</span>) sobre el mapa de puntajes,
+pre y post softmax; normalización de grupo con compuerta; <span
+class="math inline">\(+0.001\%\)</span> de parámetros a 880M &amp; <span
+class="citation" data-cites="golovneva_multi_token_2025"></span><br />
 conformer &amp; Aumentado conv. &amp; <span
 class="math inline">\(\mathcal{O}(n^2 d + n K d)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> (recómputo completo) &amp;
