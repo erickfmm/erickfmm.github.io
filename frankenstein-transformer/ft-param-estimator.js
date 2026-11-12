@@ -261,6 +261,19 @@ var FTParamEstimator = (function () {
         var vR = toNum(pick(m, 'attention.tucker.value_rank', 'tucker_value_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return (H * qR + qR * H) + (H * kR + kR * H) + (H * vR + vR * H) + H * H; // factor+core per Q,K,V + O
       }
+      case 'kpa': {
+        var hdK = Math.max(1, Math.floor(H / Math.max(1, nH)));
+        var h1K = toNum(pick(m, 'attention.kpa.h1', 'kpa_h1', 0), 0);
+        if (!h1K) { h1K = 1; for (var hi = 1; hi <= Math.floor(nH / 2); hi++) { if (nH % hi === 0) h1K = hi; } }
+        var h2K = toNum(pick(m, 'attention.kpa.h2', 'kpa_h2', 0), 0) || Math.floor(nH / h1K);
+        var d1K = toNum(pick(m, 'attention.kpa.d1', 'kpa_d1', 8), 8);
+        if (!d1K || hdK % d1K !== 0) { d1K = 1; for (var di = 1; di <= Math.min(hdK, 8); di++) { if (hdK % di === 0) d1K = di; } }
+        var d2K = toNum(pick(m, 'attention.kpa.d2', 'kpa_d2', 0), 0) || Math.floor(hdK / d1K);
+        var rqK = toNum(pick(m, 'attention.kpa.query_rank', 'kpa_query_rank', 6), 6);
+        var rkK = toNum(pick(m, 'attention.kpa.key_rank', 'kpa_key_rank', 2), 2);
+        var rvK = toNum(pick(m, 'attention.kpa.value_rank', 'kpa_value_rank', 2), 2);
+        return H * (rqK + rkK + rvK) * (h1K * d1K + h2K * d2K) + H * H; // six factor projections + O
+      }
       case 'gta':
         r = toNum(pick(m, 'attention.gta.value_latent_rank', 'gta_value_latent_rank', Math.max(1, Math.floor(H / 2))), Math.max(1, Math.floor(H / 2)));
         return 3 * H * H + 2 * (H * r); // Q,K,O + dv,uv

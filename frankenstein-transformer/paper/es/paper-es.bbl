@@ -1,4 +1,4 @@
-\begin{thebibliography}{188}
+\begin{thebibliography}{189}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -837,6 +837,16 @@ Vinod Nair and Geoffrey~E. Hinton.
 \newblock In \emph{Proceedings of the 27th International Conference on Machine
   Learning (ICML)}, pages 807--814, 2010.
 \newblock URL \url{https://www.cs.toronto.edu/~fritz/absps/reluICML.pdf}.
+
+\bibitem[Nikpour et~al.(2026)Nikpour, Rajabzadeh, Dialameh, Nia, and
+  Omidi]{nikpour_kpa_2026}
+Bahareh Nikpour, Hossein Rajabzadeh, Maryam Dialameh, Vahid~Partovi Nia, and
+  Parsa Omidi.
+\newblock Kronecker product attention: Memory-efficient kv compression via
+  structured factorization.
+\newblock In \emph{NeurIPS 2026 Workshop on Small Language Models for Agentic
+  Systems (SLM-Agents)}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2610.12657}.
 
 \bibitem[{\O}hrstr{\o}m et~al.(2026){\O}hrstr{\o}m, Cabral~Muchacho, Dong,
   Moumtzidellis, G{\"u}ldenring, Pokorny, and Nalpantidis]{ohrstrom_pape_2026}
