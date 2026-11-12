@@ -1,4 +1,4 @@
-\begin{thebibliography}{194}
+\begin{thebibliography}{195}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -1392,6 +1392,11 @@ Lianghui Zhu, Yuxin Fang, Bencheng Liao, Shijie Wang, Tianheng Cheng, Zilong
   Wang.
 \newblock Mixture-of-depths attention, 2026.
 \newblock URL \url{https://arxiv.org/abs/2603.15619}.
+
+\bibitem[Ziyin et~al.(2021)Ziyin, Wang, and Ueda]{ziyin_laprop_2021}
+Liu Ziyin, Zhikang~T. Wang, and Masahito Ueda.
+\newblock {LaProp}: Separating momentum and adaptivity in {Adam}, 2021.
+\newblock URL \url{https://arxiv.org/abs/2002.04839}.
 
 \bibitem[Zoph et~al.(2022)Zoph, Bello, Kumar, Du, Huang, Dean, Shazeer, and
   Fedus]{zoph2022stmoe}

@@ -2156,10 +2156,10 @@ on the block family.</figcaption>
 Dynamics</h1>
 <p>Optimizing large transformer architectures is complicated by
 non-convex landscapes, saddle points, and heterogeneous parameter
-groups. The system supports thirty-eight optimizer families in eight
+groups. The system supports thirty-nine optimizer families in eight
 categories: classical baselines (SGD, SGD with momentum, RMSProp, AdamW,
-RAdam); momentum and variance reduction (Adan, ADOPT, AdEMAMix, MARS,
-Cautious AdamW); memory-efficient and low-rank methods (Adafactor,
+RAdam, LaProp); momentum and variance reduction (Adan, ADOPT, AdEMAMix,
+MARS, Cautious AdamW); memory-efficient and low-rank methods (Adafactor,
 GaLore, Lion, APOLLO, APOLLO-Mini, Q-APOLLO, AdamPM); schedule-free and
 parameter-free methods (Schedule-Free AdamW, Prodigy) with large-batch
 scaling (LAMB); curvature-aware and second-order methods (Sophia,
@@ -2893,7 +2893,7 @@ this convergence accelerates, enabling researchers to explore this
 expanding design space with reproducible, well-engineered
 infrastructure.</p>
 <div class="thebibliography">
-<p><span>194</span> urlstyle</p>
+<p><span>195</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3625,6 +3625,9 @@ Zhuang Liu. Transformers without normalization, 2025<span>b</span>. URL
 Zilong Huang, Chen Chen, Lai Wei, Yutao Zeng, Ya Wang, Yi Lin, Yu Li,
 and Xinggang Wang. Mixture-of-depths attention, 2026. URL
 <code>https://arxiv.org/abs/2603.15619</code>.</p>
+<p>Liu Ziyin, Zhikang T. Wang, and Masahito Ueda. : Separating momentum
+and adaptivity in <span>Adam</span>, 2021. URL
+<code>https://arxiv.org/abs/2002.04839</code>.</p>
 <p>Barret Zoph, Irwan Bello, Sameer Kumar, Nan Du, Yanping Huang, Jeff
 Dean, Noam Shazeer, and William Fedus. : Designing stable and
 transferable sparse expert models, 2022.</p>
@@ -10522,6 +10525,78 @@ the adaptive rate.</p></li>
 <li><p>Falls back gracefully to momentum SGD while variance estimates
 are unreliable, improving robustness.</p></li>
 </ul>
+<h4 id="laprop.">LaProp.</h4>
+<p>LaProp targets an unnecessary coupling in Adam rather than a new
+preconditioner <span class="citation"
+data-cites="ziyin_laprop_2021"></span>. Writing the adaptive family as
+<span class="math inline">\(\theta_{t+1} = \theta_t - \lambda_t G_t
+\nabla\ell(\theta_t) + \mu_t K_t(\theta_t - \theta_{t-1})\)</span>,
+Adam’s parameter-space momentum is multiplied by <span
+class="math inline">\(K_t = H_t^{-1}H_{t-1}\)</span>, i.e. the previous
+motion is rescaled by the current preconditioner. A single
+pathologically large gradient—noise, an out-of-distribution batch, or an
+explosion—can therefore erase the accumulated momentum. LaProp simply
+sets <span class="math inline">\(K_t = I\)</span> and instead
+accumulates the momentum of the <em>preconditioned</em> gradient: <span
+class="math display">\[\begin{aligned}
+n_t &amp;= \nu n_{t-1} + (1-\nu) g_t^2 \\
+m_t &amp;= \mu m_{t-1} + (1-\mu)\,\frac{g_t}{\sqrt{n_t/(1-\nu^t)} +
+\epsilon} \\
+\theta_{t+1} &amp;= \theta_t - \lambda\,\frac{m_t}{1-\mu^t}
+\end{aligned}\]</span> with <span class="math inline">\(g_t =
+\nabla\ell(\theta_t)\)</span> and <span class="math inline">\(0 \le \mu,
+\nu &lt; 1\)</span>. The second moment <span
+class="math inline">\(n_t\)</span> is Adam’s uncentered variance; the
+first moment <span class="math inline">\(m_t\)</span> averages the
+already-normalized direction, so the parameter-space momentum stays
+additive like SGD. The influence of any single gradient on the
+accumulated momentum is bounded by <span
+class="math inline">\((1-\mu)/\sqrt{1-\nu}\)</span>. LaProp has exactly
+the state (two buffers), per-step cost and hyperparameter count of Adam,
+and Adam’s settings carry over unchanged; <span
+class="math inline">\(\nu \to 0\)</span> recovers signed-gradient
+methods and <span class="math inline">\(\mu = 0\)</span> recovers
+RMSProp with bias correction (the paper describes it as RMSProp with
+momentum plus both correction factors).</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Initial parameters <span class="math inline">\(\theta_1\)</span>,
+learning rate <span
+class="math inline">\(\{\lambda_t\}_{t=1}^T\)</span>, decay parameters
+<span class="math inline">\(0 \le \mu, \nu &lt; 1\)</span> Epsilon <span
+class="math inline">\(\epsilon \ll 1\)</span>, weight decay <span
+class="math inline">\(\lambda_{\mathrm{wd}}\)</span> Updated parameters
+<span class="math inline">\(\theta_T\)</span> Initialize: first moment
+<span class="math inline">\(m_0 \gets 0\)</span>, second moment <span
+class="math inline">\(n_0 \gets 0\)</span> <span
+class="math inline">\(g_t \gets \nabla_\theta \ell(\theta_t)\)</span>
+<span class="math inline">\(g_t \gets g_t + \lambda_{\mathrm{wd}}
+\theta_t\)</span> <span class="math inline">\(n_t \gets \nu n_{t-1} +
+(1-\nu) g_t^2\)</span> <span class="math inline">\(m_t \gets \mu m_{t-1}
++ (1-\mu) g_t / (\sqrt{n_t/(1-\nu^t)} + \epsilon)\)</span> <span
+class="math inline">\(\theta_{t+1} \gets \theta_t - \lambda_t\, m_t /
+(1-\mu^t)\)</span> <span class="math inline">\(\theta_T\)</span></p>
+</div>
+</div>
+<h4 id="cons.-5">Cons.</h4>
+<ul>
+<li><p>Does not dominate Adam on every task; its gains are concentrated
+in noisy or unstable optimization regimes.</p></li>
+<li><p>Couples the momentum decay to the preconditioned scale, so the
+effective step size at initialization differs from Adam until the bias
+correction settles.</p></li>
+</ul>
+<h4 id="pros.-5">Pros.</h4>
+<ul>
+<li><p>Adam-identical memory (<span class="math inline">\(m\)</span>,
+<span class="math inline">\(v\)</span>), per-step cost and
+hyperparameter count; existing Adam settings transfer directly.</p></li>
+<li><p>Keeps parameter-space momentum additive, avoiding the <span
+class="math inline">\(H_t^{-1}H_{t-1}\)</span> reweighting that lets one
+bad gradient wipe the accumulated direction.</p></li>
+<li><p>Interpolates continuously between adaptive and signed-gradient
+updates through <span class="math inline">\(\nu\)</span>.</p></li>
+</ul>
 <h2 id="advanced-momentum-and-variance-reduction-20242025">Advanced
 Momentum and Variance Reduction (2024–2025)</h2>
 <h4 id="adan-adaptive-nesterov-momentum.">Adan (Adaptive Nesterov
@@ -10571,13 +10646,13 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (\bar{m} /
 \gets g_t\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-5">Cons.</h4>
+<h4 id="cons.-6">Cons.</h4>
 <ul>
 <li><p>Three momentum-like buffers increase memory overhead relative to
 Adam.</p></li>
 <li><p>Additional gradient-difference bookkeeping per step.</p></li>
 </ul>
-<h4 id="pros.-5">Pros.</h4>
+<h4 id="pros.-6">Pros.</h4>
 <ul>
 <li><p>Nesterov-style acceleration without an extra gradient
 evaluation.</p></li>
@@ -10624,13 +10699,13 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta m\)</span>
 <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-6">Cons.</h4>
+<h4 id="cons.-7">Cons.</h4>
 <ul>
 <li><p>Requires keeping the previous second moment as an explicit
 denominator.</p></li>
 <li><p>Empirical gains are architecture- and tuning-dependent.</p></li>
 </ul>
-<h4 id="pros.-6">Pros.</h4>
+<h4 id="pros.-7">Pros.</h4>
 <ul>
 <li><p>Removes Adam’s gradient circularity and attains the optimal
 convergence rate <span class="math inline">\(O(1/\sqrt{T})\)</span> with
@@ -10689,7 +10764,7 @@ m_2 + (1-\beta_3) g_t\)</span> <span class="math inline">\(v \gets
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-7">Cons.</h4>
+<h4 id="cons.-8">Cons.</h4>
 <ul>
 <li><p>Two gradient EMAs plus the second moment roughly triple Adam’s
 optimizer state.</p></li>
@@ -10697,7 +10772,7 @@ optimizer state.</p></li>
 class="math inline">\(\alpha_t\)</span> adds a hyperparameter to
 tune.</p></li>
 </ul>
-<h4 id="pros.-7">Pros.</h4>
+<h4 id="pros.-8">Pros.</h4>
 <ul>
 <li><p>Exploits gradient information that remains informative over tens
 of thousands of steps.</p></li>
@@ -10749,7 +10824,7 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (m / (\sqrt{v}
 g_t\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-8">Cons.</h4>
+<h4 id="cons.-9">Cons.</h4>
 <ul>
 <li><p>Stores the variance-reduced gradient and the previous gradient in
 addition to Adam’s moments.</p></li>
@@ -10757,7 +10832,7 @@ addition to Adam’s moments.</p></li>
 class="math inline">\(\gamma \in [0.01, 0.1]\)</span> must be
 tuned.</p></li>
 </ul>
-<h4 id="pros.-8">Pros.</h4>
+<h4 id="pros.-9">Pros.</h4>
 <ul>
 <li><p>Acts as an implicit noise filter, amplifying consistent
 directions and dampening contradictory noise.</p></li>
@@ -10814,14 +10889,14 @@ u_{\text{masked}}\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-9">Cons.</h4>
+<h4 id="cons.-10">Cons.</h4>
 <ul>
 <li><p>Masking can discard useful updates when momentum and gradient
 temporarily disagree.</p></li>
 <li><p>Requires a base momentum optimizer plus the element-wise
 mask.</p></li>
 </ul>
-<h4 id="pros.-9">Pros.</h4>
+<h4 id="pros.-10">Pros.</h4>
 <ul>
 <li><p>A one-line modification applicable to any momentum-based
 optimizer.</p></li>
@@ -10884,14 +10959,14 @@ class="math inline">\(1\)</span> <span class="math inline">\(\theta_t^L
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-10">Cons.</h4>
+<h4 id="cons.-11">Cons.</h4>
 <ul>
 <li><p>Layer-wise norm bookkeeping and trust-ratio computation add
 per-step overhead.</p></li>
 <li><p>The trust ratio is unstable when layer or update norms are close
 to zero.</p></li>
 </ul>
-<h4 id="pros.-10">Pros.</h4>
+<h4 id="pros.-11">Pros.</h4>
 <ul>
 <li><p>Enables stable training with extreme batch sizes (e.g., 64K on
 BERT).</p></li>
@@ -10953,7 +11028,7 @@ x\)</span> <span class="math inline">\(x_T\)</span> or <span
 class="math inline">\(y_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-11">Cons.</h4>
+<h4 id="cons.-12">Cons.</h4>
 <ul>
 <li><p>Maintains two parameter streams (<span
 class="math inline">\(z\)</span> and <span
@@ -10962,7 +11037,7 @@ evaluation point.</p></li>
 <li><p>Behavior departs from scheduled baselines, which complicates
 comparisons.</p></li>
 </ul>
-<h4 id="pros.-11">Pros.</h4>
+<h4 id="pros.-12">Pros.</h4>
 <ul>
 <li><p>Removes the explicit learning-rate schedule and its total-step
 hyperparameter.</p></li>
@@ -11015,14 +11090,14 @@ R)\)</span> Normalized adaptive step: <span class="math inline">\(U_t
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-12">Cons.</h4>
+<h4 id="cons.-13">Cons.</h4>
 <ul>
 <li><p>Factorized variance is an approximation and can be unstable on
 some tasks.</p></li>
 <li><p>Reduced optimization expressiveness relative to full
 Adam.</p></li>
 </ul>
-<h4 id="pros.-12">Pros.</h4>
+<h4 id="pros.-13">Pros.</h4>
 <ul>
 <li><p>Memory drops from <span
 class="math inline">\(O(n_{\text{params}})\)</span> to <span
@@ -11084,13 +11159,13 @@ class="math inline">\(W_t \gets W_t - \eta \Delta\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-13">Cons.</h4>
+<h4 id="cons.-14">Cons.</h4>
 <ul>
 <li><p>Periodic SVD adds compute and introduces a projection-refresh
 interval to tune.</p></li>
 <li><p>Low-rank projection can discard gradient information.</p></li>
 </ul>
-<h4 id="pros.-13">Pros.</h4>
+<h4 id="pros.-14">Pros.</h4>
 <ul>
 <li><p>Optimizer state reduced from <span
 class="math inline">\(O(mn)\)</span> to <span
@@ -11164,14 +11239,14 @@ class="math inline">\(W_t \gets (1-\eta\lambda)W_{t-1} -
 \gets t+1\)</span></p>
 </div>
 </div>
-<h4 id="cons.-14">Cons.</h4>
+<h4 id="cons.-15">Cons.</h4>
 <ul>
 <li><p>Structured scaling is a coarser approximation of AdamW’s
 element-wise denominator.</p></li>
 <li><p>Projectors must be refreshed periodically, and very small ranks
 make the scaling noisy.</p></li>
 </ul>
-<h4 id="pros.-14">Pros.</h4>
+<h4 id="pros.-15">Pros.</h4>
 <ul>
 <li><p>Replaces repeated SVD with periodically refreshed Gaussian random
 projection, so the systems cost is ordinary matrix multiplication rather
@@ -11190,7 +11265,7 @@ class="math inline">\(\alpha\)</span> (the paper discusses values such
 as <span class="math inline">\(128\)</span> in this regime), giving a
 useful point on the optimization Pareto frontier: very small state, no
 SVD overhead, and still strong pre-training behavior.</p>
-<h4 id="cons.-15">Cons.</h4>
+<h4 id="cons.-16">Cons.</h4>
 <ul>
 <li><p>A single tensor-wise scale loses channel granularity, and rank-1
 state can be noisy.</p></li>
@@ -11198,7 +11273,7 @@ state can be noisy.</p></li>
 class="math inline">\(\alpha\)</span> (e.g., <span
 class="math inline">\(128\)</span>) to remain stable.</p></li>
 </ul>
-<h4 id="pros.-15">Pros.</h4>
+<h4 id="pros.-16">Pros.</h4>
 <ul>
 <li><p>Smallest state in the APOLLO family, with no SVD
 overhead.</p></li>
@@ -11213,13 +11288,13 @@ first and second moments are stored in quantized form together with
 per-tensor scales and offsets, and are dequantized only when needed for
 the next step. Q-APOLLO therefore preserves APOLLO’s projected-gradient
 logic while reducing the precision of the remaining optimizer state.</p>
-<h4 id="cons.-16">Cons.</h4>
+<h4 id="cons.-17">Cons.</h4>
 <ul>
 <li><p>Quantized moments introduce approximation error and
 dequantization overhead.</p></li>
 <li><p>Requires managing per-tensor scales and offsets.</p></li>
 </ul>
-<h4 id="pros.-16">Pros.</h4>
+<h4 id="pros.-17">Pros.</h4>
 <ul>
 <li><p>Reduces the remaining optimizer state to ultra-low
 precision.</p></li>
@@ -11312,7 +11387,7 @@ weight decay; this implementation applies the repository’s decoupled
 <code>wd_</code> decay before the adaptive update, and the shared
 per-group <code>betas</code>/<code>eps</code> suffixes parameterize the
 bias corrections and the denominator.</p>
-<h4 id="cons.-17">Cons.</h4>
+<h4 id="cons.-18">Cons.</h4>
 <ul>
 <li><p>The diagonal preconditioner becomes coarser as <span
 class="math inline">\(s\)</span> grows; the paper’s AdamPM-inf limit
@@ -11325,7 +11400,7 @@ class="math inline">\(1/s\)</span>.</p></li>
 groups and selective per-layer pooling remain unexplored (paper
 limitations).</p></li>
 </ul>
-<h4 id="pros.-17">Pros.</h4>
+<h4 id="pros.-18">Pros.</h4>
 <ul>
 <li><p>Roughly halves optimizer-state memory at the default <span
 class="math inline">\(s{=}8\)</span> (second moment at <span
@@ -11415,7 +11490,7 @@ class="math inline">\(\theta_t \gets \theta_{t-1} -
 lr}\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-18">Cons.</h4>
+<h4 id="cons.-19">Cons.</h4>
 <ul>
 <li><p>Maintains three state buffers (<span
 class="math inline">\(m\)</span>, <span
@@ -11425,7 +11500,7 @@ preconditioner on a logarithmic schedule.</p></li>
 class="math inline">\(\gamma\)</span> must be selected per
 architecture.</p></li>
 </ul>
-<h4 id="pros.-18">Pros.</h4>
+<h4 id="pros.-19">Pros.</h4>
 <ul>
 <li><p>Same <span class="math inline">\(\mathcal{O}(n)\)</span> per-step
 complexity class as AdamW, with continuously tunable
@@ -11481,14 +11556,14 @@ s)\)</span> <span class="math inline">\(\theta_t \gets \theta_{t-1} -
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-19">Cons.</h4>
+<h4 id="cons.-20">Cons.</h4>
 <ul>
 <li><p>Introduces <span class="math inline">\(d_0\)</span> and <span
 class="math inline">\(d_{\text{coef}}\)</span> hyperparameters for the
 distance estimate.</p></li>
 <li><p>Adds an inner-product bookkeeping step per iteration.</p></li>
 </ul>
-<h4 id="pros.-19">Pros.</h4>
+<h4 id="pros.-20">Pros.</h4>
 <ul>
 <li><p>Removes explicit learning-rate tuning and scheduling.</p></li>
 <li><p>Robust convergence across problem scales and batch
@@ -11551,14 +11626,14 @@ class="math inline">\(\Delta \theta \gets L^{-1/4} G R^{-1/4}\)</span>
 \Delta \theta\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-20">Cons.</h4>
+<h4 id="cons.-21">Cons.</h4>
 <ul>
 <li><p>Periodic <span class="math inline">\(O(m^3 + n^3)\)</span>
 eigendecompositions and higher per-step compute.</p></li>
 <li><p>Assumes 2D parameter structure; embeddings and biases need
 separate handling.</p></li>
 </ul>
-<h4 id="pros.-20">Pros.</h4>
+<h4 id="pros.-21">Pros.</h4>
 <ul>
 <li><p>Kronecker-factored second-order preconditioning without a dense
 <span class="math inline">\((mn) \times (mn)\)</span> matrix.</p></li>
@@ -11620,13 +11695,13 @@ class="math inline">\(v \gets \beta_2 v + (1-\beta_2)
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-21">Cons.</h4>
+<h4 id="cons.-22">Cons.</h4>
 <ul>
 <li><p>Inherits Shampoo’s periodic eigendecomposition cost.</p></li>
 <li><p>Rotation and inverse rotation add matrix multiplications per
 step.</p></li>
 </ul>
-<h4 id="pros.-21">Pros.</h4>
+<h4 id="pros.-22">Pros.</h4>
 <ul>
 <li><p>Combines Shampoo’s explicit curvature structure with Adam’s
 proven momentum mechanics.</p></li>
@@ -11669,14 +11744,14 @@ class="math inline">\(\theta_t \gets \theta_{t-1} - \eta (\text{sign}(c)
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-22">Cons.</h4>
+<h4 id="cons.-23">Cons.</h4>
 <ul>
 <li><p>Sign-based updates sacrifice the element-wise learning-rate
 adaptation that makes Adam effective.</p></li>
 <li><p>Can be less robust than Adam-family methods on tasks that need
 adaptive scaling.</p></li>
 </ul>
-<h4 id="pros.-22">Pros.</h4>
+<h4 id="pros.-23">Pros.</h4>
 <ul>
 <li><p>Stores only the momentum buffer, with no second moment
 variance.</p></li>
@@ -11732,13 +11807,13 @@ C)\)</span> <span class="math inline">\(\theta_t \gets \theta_{t-1} -
 \eta \cdot u\)</span> <span class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-23">Cons.</h4>
+<h4 id="cons.-24">Cons.</h4>
 <ul>
 <li><p>Hutchinson estimates add periodic compute and noise to the
 curvature signal.</p></li>
 <li><p>The Hessian estimate can become stale between refreshes.</p></li>
 </ul>
-<h4 id="pros.-23">Pros.</h4>
+<h4 id="pros.-24">Pros.</h4>
 <ul>
 <li><p>Curvature-aware scaling without the <span
 class="math inline">\(O(n^2)\)</span> or <span
@@ -11803,7 +11878,7 @@ X_k\)</span> <span class="math inline">\(W \gets W - \eta X_K\)</span>
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-24">Cons.</h4>
+<h4 id="cons.-25">Cons.</h4>
 <ul>
 <li><p>Several matrix multiplications per Newton-Schulz iteration;
 efficient custom kernels are required.</p></li>
@@ -11811,7 +11886,7 @@ efficient custom kernels are required.</p></li>
 the remaining parameter classes depend on the AdamW fallback and its
 per-group learning-rate calibration.</p></li>
 </ul>
-<h4 id="pros.-24">Pros.</h4>
+<h4 id="pros.-25">Pros.</h4>
 <ul>
 <li><p>Orthogonalized updates preserve norms and avoid the norm creep of
 momentum-based methods.</p></li>
@@ -11855,7 +11930,7 @@ class="math inline">\(P \gets \operatorname{AdamW}(P, \nabla f(P); \eta,
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-25">Cons.</h4>
+<h4 id="cons.-26">Cons.</h4>
 <ul>
 <li><p>Still compute-heavy; AOL adds a preconditioning matrix
 multiplication.</p></li>
@@ -11863,7 +11938,7 @@ multiplication.</p></li>
 dependence on the AdamW fallback for non-hidden parameter
 classes.</p></li>
 </ul>
-<h4 id="pros.-25">Pros.</h4>
+<h4 id="pros.-26">Pros.</h4>
 <ul>
 <li><p>AOL reduces the Newton-Schulz iteration count (typically five to
 four).</p></li>
@@ -11943,7 +12018,7 @@ class="math inline">\(O_t \gets B_t / \max(\mathrm{RMS}(B_t),
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-26">Cons.</h4>
+<h4 id="cons.-27">Cons.</h4>
 <ul>
 <li><p>Every parameter must be assigned an explicit role (matrix, tied
 table, or vector); an untied output head or an extra embedding table is
@@ -11955,7 +12030,7 @@ overhead at matched training.</p></li>
 frontier-scale pretraining and universal endpoint superiority are not
 claimed.</p></li>
 </ul>
-<h4 id="pros.-26">Pros.</h4>
+<h4 id="pros.-27">Pros.</h4>
 <ul>
 <li><p>AdamW-free: one first-moment buffer per parameter and no
 second-moment state, reported as roughly 20% less optimizer-state memory
@@ -12040,7 +12115,7 @@ class="math inline">\(W_{t+1} \gets W_t - \eta(\gamma_t \widehat{O}_t +
 \lambda W_t)\)</span> <span class="math inline">\(W_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-27">Cons.</h4>
+<h4 id="cons.-28">Cons.</h4>
 <ul>
 <li><p>One additional second-moment buffer per matrix parameter (two
 buffers versus Muon’s single first-moment buffer), plus per-step
@@ -12053,7 +12128,7 @@ optimizer in the paper’s recipe.</p></li>
 fixed constant rather than a learned quantity, so the method assumes
 Adam-like update scales when reusing existing schedules.</p></li>
 </ul>
-<h4 id="pros.-27">Pros.</h4>
+<h4 id="pros.-28">Pros.</h4>
 <ul>
 <li><p>No new hyperparameters: the second-moment EMA reuses Muon’s
 momentum coefficient <span class="math inline">\(\beta\)</span>, and the
@@ -12165,7 +12240,7 @@ class="math inline">\(M[S,:] \gets \mu\, M[S,:]\)</span> <span
 class="math inline">\(W_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-28">Cons.</h4>
+<h4 id="cons.-29">Cons.</h4>
 <ul>
 <li><p>Each step updates only a fraction of the rows, so the
 optimization trajectory differs from Muon; the paper reports the change
@@ -12178,7 +12253,7 @@ GEMM kernels and megabatched communication, which are hardware- and
 cluster-specific; only the algorithmic reduction and the single
 first-moment buffer apply here.</p></li>
 </ul>
-<h4 id="pros.-28">Pros.</h4>
+<h4 id="pros.-29">Pros.</h4>
 <ul>
 <li><p>Gram Newton–Schulz is mathematically equivalent to Newton–Schulz
 and cuts orthogonalization FLOPs by about 55% at typical transformer
@@ -12371,7 +12446,7 @@ data-reference-type="ref" data-reference="tab:root-coefficients">9</a>
 fall back to Muon’s fixed coefficients, and the dynamic quantile costs
 an additional sort of <span class="math inline">\(|M_t|\)</span> per
 matrix per step.</p>
-<h4 id="cons.-29">Cons.</h4>
+<h4 id="cons.-30">Cons.</h4>
 <ul>
 <li><p>The percentile threshold requires an <span
 class="math inline">\(O(N\log N)\)</span> sort of the momentum matrix at
@@ -12383,7 +12458,7 @@ gradient can also lose informative signal; the paper’s ablation shows
 the trade-off is governed by the percentile (0.85 truncates too much,
 0.99 too little).</p></li>
 </ul>
-<h4 id="pros.-29">Pros.</h4>
+<h4 id="pros.-30">Pros.</h4>
 <ul>
 <li><p>Dimension-invariant orthogonalization precision: shape-calibrated
 coefficients remove the precision cliff that fixed coefficients show on
@@ -12482,7 +12557,7 @@ learning rate, weight decay, <span class="math inline">\(\beta_1,
 settings — the same <span class="math inline">\(\beta_1, \beta_2,
 \epsilon\)</span> also parameterize Eqs. 2–4, so one per-group knob set
 configures both paths.</p>
-<h4 id="cons.-30">Cons.</h4>
+<h4 id="cons.-31">Cons.</h4>
 <ul>
 <li><p>One extra full-size state buffer over Muon (two moment EMAs per
 matrix), doubling optimizer memory on the orthogonalized path unless the
@@ -12496,7 +12571,7 @@ are not fixed by the paper; this implementation inherits the shared
 per-group defaults <span class="math inline">\((0.9,
 0.95)\)</span>.</p></li>
 </ul>
-<h4 id="pros.-30">Pros.</h4>
+<h4 id="pros.-31">Pros.</h4>
 <ul>
 <li><p>Better orthogonalization at equal NS iterations and equal quality
 with 40% fewer iterations (3 instead of 5), cutting NS compute and
@@ -12599,7 +12674,7 @@ distributes the orthogonalization across FSDP2 ranks (round-robin
 parameter assignment, gather/NS5/scatter, shard-local row normalization)
 to avoid replicated work; that deployment strategy is orthogonal to the
 update rule and is not implemented here.</p>
-<h4 id="cons.-31">Cons.</h4>
+<h4 id="cons.-32">Cons.</h4>
 <ul>
 <li><p>One extra per-row state vector per matrix parameter (stored in
 float32); small next to the <span class="math inline">\(m \times
@@ -12615,7 +12690,7 @@ typographically ambiguous.</p></li>
 embeddings, pos, heads and non-2-D tensors still carry full first/second
 moments.</p></li>
 </ul>
-<h4 id="pros.-31">Pros.</h4>
+<h4 id="pros.-32">Pros.</h4>
 <ul>
 <li><p>Combines Muon’s low condition number with AdamW-like uniform
 per-neuron update norms, consistently outperforming both on 124M–5.4B
@@ -12730,7 +12805,7 @@ class="math inline">\((\beta_1,\beta_2)\)</span> (the paper uses
 regardless of group — there is no embedding/pos/head exclusion as in
 Muon — while every non-2-D parameter is trained with decoupled
 AdamW.</p>
-<h4 id="cons.-32">Cons.</h4>
+<h4 id="cons.-33">Cons.</h4>
 <ul>
 <li><p>The SVD is a per-matrix cost spike every <span
 class="math inline">\(T\)</span> steps; at <span
@@ -12746,7 +12821,7 @@ projection basis; the memory advantage over AdamW is small, not the
 <li><p>Evaluated only up to 1B parameters and without
 Mixture-of-Experts; the paper flags both as future work.</p></li>
 </ul>
-<h4 id="pros.-32">Pros.</h4>
+<h4 id="pros.-33">Pros.</h4>
 <ul>
 <li><p>Combines Adam’s coordinate-wise adaptivity with improved spectral
 conditioning in a single update rule, consistently beating AdamW, Muon,
@@ -12889,7 +12964,7 @@ four models, transfers from QKV to QKVO+MLP, and costs 0.2–1.1%
 step-time over TEON and at most 12.5% over AdamW; per-iteration
 complexity is <span class="math inline">\(\mathcal{O}(Kmn\min(m,n) + K^2
 mn)\)</span>, the same dominant term as Muon.</p>
-<h4 id="cons.-33">Cons.</h4>
+<h4 id="cons.-34">Cons.</h4>
 <ul>
 <li><p>Cross-layer mixing assumes the stacked matrices are genuinely
 compatible; this implementation stacks by exact shape within a parameter
@@ -12909,7 +12984,7 @@ over complex slices (Hermitian Gram); the real part is taken after the
 inverse transform, justified by the conjugate symmetry of the DFT of a
 real stack.</p></li>
 </ul>
-<h4 id="pros.-33">Pros.</h4>
+<h4 id="pros.-34">Pros.</h4>
 <ul>
 <li><p>Exploits cross-layer structure that layer-wise Muon discards,
 with a convergence guarantee and exact steepest-descent interpretation
@@ -13019,7 +13094,7 @@ release additionally exposes Nesterov momentum, an effective-stepsize
 clamp and a <span class="math inline">\(0.2\sqrt{\max(m,n)}\)</span>
 shape scaling; Algorithm 1 of the paper defines none of these, so this
 module follows the paper.</p>
-<h4 id="cons.-34">Cons.</h4>
+<h4 id="cons.-35">Cons.</h4>
 <ul>
 <li><p>A single scalar stepsize carries no per-neuron information; the
 paper itself addresses this with the diagonal extension NAMO-D.</p></li>
@@ -13030,7 +13105,7 @@ class="math inline">\(9\times\)</span> AdamW’s.</p></li>
 <span class="math inline">\(K{=}5\)</span> Newton–Schulz iterations, and
 the empirical evidence is limited to GPT-2-scale pretraining.</p></li>
 </ul>
-<h4 id="pros.-34">Pros.</h4>
+<h4 id="pros.-35">Pros.</h4>
 <ul>
 <li><p>First principled integration of orthogonalized momentum with
 Adam-type noise adaptation, with optimal deterministic and
@@ -13128,7 +13203,7 @@ decoupled and right-multiplied by the diagonal, and the shared
 with NAMO, the official release’s Nesterov momentum, effective-stepsize
 clamp and <span class="math inline">\(0.2\sqrt{\max(m,n)}\)</span> shape
 scaling are not part of Algorithm 2 and are not implemented.</p>
-<h4 id="cons.-35">Cons.</h4>
+<h4 id="cons.-36">Cons.</h4>
 <ul>
 <li><p>The update no longer preserves strict orthogonality: the diagonal
 scaling trades the structural guarantee for finer-grained noise
@@ -13141,7 +13216,7 @@ class="math inline">\(0.9\)</span> at 355M), requiring a sweep.</p></li>
 per matrix over NAMO, and the theory still assumes exact
 orthogonalization.</p></li>
 </ul>
-<h4 id="pros.-35">Pros.</h4>
+<h4 id="pros.-36">Pros.</h4>
 <ul>
 <li><p>Neuron-wise adaptation matches the near block-diagonal Hessian of
 neural networks and improves on NAMO on both GPT-2 sizes.</p></li>
@@ -13315,7 +13390,7 @@ class="math inline">\(\arg\min_k z_k\)</span>, <span
 class="math inline">\(\min_k f_k\)</span></p>
 </div>
 </div>
-<h4 id="cons.-36">Cons.</h4>
+<h4 id="cons.-37">Cons.</h4>
 <ul>
 <li><p>A step behind Adam at matched evaluation budgets: roughly one
 accuracy point on MNIST and 9–11% higher relative test loss on the LoRA
@@ -13337,7 +13412,7 @@ and the SBERT loop (sentence-transformers <code>fit</code>) cannot host
 it; polynomial mutation is pure cost at network scale and is off by
 default.</p></li>
 </ul>
-<h4 id="pros.-36">Pros.</h4>
+<h4 id="pros.-37">Pros.</h4>
 <ul>
 <li><p>Monotone best-so-far by construction on deterministic objectives
 (greedy accept-only-if-better selection), with per-iteration cost within
@@ -13470,7 +13545,7 @@ class="math inline">\(\theta \gets \theta + \alpha g / N\)</span> <span
 class="math inline">\(\theta_T\)</span></p>
 </div>
 </div>
-<h4 id="cons.-37">Cons.</h4>
+<h4 id="cons.-38">Cons.</h4>
 <ul>
 <li><p>Requires <span class="math inline">\(N\)</span> forward
 evaluations per step (30 in the paper), so sample efficiency trails
@@ -13496,7 +13571,7 @@ disabled in its own large-scale runs.</p></li>
 <span class="math inline">\(\alpha\)</span> must be tuned per task
 rather than transferred from Adam.</p></li>
 </ul>
-<h4 id="pros.-37">Pros.</h4>
+<h4 id="pros.-38">Pros.</h4>
 <ul>
 <li><p>Zero optimizer state: no moments and no population copies, so the
 paper measures 60.01 vs 137.61 GB at 8B and 137.61 vs 431.76 GB at 32B
@@ -22566,7 +22641,7 @@ combination.</p></li>
 <h1 id="sec:annex-summary-tables">Comprehensive Summary Tables</h1>
 <p>This appendix provides a complete reference of all components
 implemented in the Frankenstein Transformer codebase: 56 sequence mixers
-across nine families, 38 optimizers, 6 normalization variants, 43
+across nine families, 39 optimizers, 6 normalization variants, 43
 activation functions, and 4 embedding methods. Each table is
 self-contained and cross-references the bibliography.</p>
 <h2 id="sequence-mixer-summary">Sequence Mixer Summary</h2>
@@ -22913,7 +22988,7 @@ class="citation" data-cites="kang_memory_attention_2026"></span><br />
 <h2 id="optimizer-summary">Optimizer Summary</h2>
 <p>Table <a href="#tab:all-optimizers" data-reference-type="ref"
 data-reference="tab:all-optimizers">[tab:all-optimizers]</a> catalogs
-all 38 supported optimizers with their memory footprint, per-step
+all 39 supported optimizers with their memory footprint, per-step
 computational cost, and key hyperparameters. State buffers are expressed
 as the number of optimizer-owned tensors per parameter; per-step cost
 focuses on the dominant term beyond gradient computation.</p>
@@ -22953,6 +23028,12 @@ class="math inline">\(\mathcal{O}(n)\)</span> &amp; lr, <span
 class="math inline">\(\beta_1\)</span>, <span
 class="math inline">\(\beta_2\)</span>, eps, wd &amp; <span
 class="citation" data-cites="liu_variance_2019"></span><br />
+LaProp &amp; Adaptive &amp; 2 (<span class="math inline">\(m\)</span>,
+<span class="math inline">\(v\)</span>) &amp; <span
+class="math inline">\(\mathcal{O}(n)\)</span> &amp; lr, <span
+class="math inline">\(\beta_1\)</span>, <span
+class="math inline">\(\beta_2\)</span>, eps, wd &amp; <span
+class="citation" data-cites="ziyin_laprop_2021"></span><br />
 </p>
 <p><br />
 Adan &amp; Variance reduction &amp; 3 (<span
