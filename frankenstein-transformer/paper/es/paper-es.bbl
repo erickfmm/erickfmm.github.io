@@ -1,4 +1,4 @@
-\begin{thebibliography}{187}
+\begin{thebibliography}{188}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -1262,6 +1262,11 @@ Manzil Zaheer, Guru Guruganesh, Kumar~Avinava Dubey, Joshua Ainslie, Chris
 Abbas Zeitoun, Lucas Torroba-Hennigen, and Yoon Kim.
 \newblock Hyperloop transformers, 2026.
 \newblock URL \url{https://arxiv.org/abs/2604.21254}.
+
+\bibitem[Zhai(2026)]{zhai_exclusive_2026}
+Shuangfei Zhai.
+\newblock Exclusive self attention, 2026.
+\newblock URL \url{https://arxiv.org/abs/2603.09078}.
 
 \bibitem[Zhang and Sennrich(2019)]{zhang_root_2019}
 Biao Zhang and Rico Sennrich.

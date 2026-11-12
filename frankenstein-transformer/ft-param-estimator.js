@@ -96,6 +96,9 @@ var FTParamEstimator = (function () {
       // (paper Table 15) = 3·nH·(H+1); learned per-head strength β = nH.
       case 'fpa':
         return 4 * H * H + 3 * nH * (H + 1) + nH;
+      // ---- Exclusive Self Attention (arXiv:2603.09078) ----
+      // Q,K,V,O (bias-free) = 4H²; the post-SDPA exclusion adds no parameters.
+      case 'xsa':
       case 'standard':
       case 'titan':
       case 'sparse_transformer':

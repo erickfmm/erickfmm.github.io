@@ -5,6 +5,7 @@ var FTDiagram = (function () {
         standard: { c: 'attn', l: 'Standard Attention' },
         sigmoid: { c: 'attn', l: 'Sigmoid Attention' },
         ca: { c: 'attn', l: 'Continuum Attn' },
+        xsa: { c: 'attn', l: 'Exclusive Self Attn' },
         memory: { c: 'mem', l: 'Memory Attention' },
         gated_softmax: { c: 'attn', l: 'Gated Softmax Attn' },
         titan: { c: 'mem', l: 'Titan Attention' },
@@ -115,6 +116,19 @@ var FTDiagram = (function () {
             { n: 'softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d [B,nh,n]'] },
             { n: 'A = softmax · V', c: 'attn', e: 'A·V', from: ['softmax(scores)', 'V = Wv·x [B,n,H]'] },
             { n: 'O = Wo·A [B,n,H]', c: 'attn', e: 'Wo', from: ['A = softmax · V'] }
+        ],
+        xsa: [
+            { n: 'x [B,n,H]', c: 'attn', id: 'x' },
+            { n: 'Q = Wq·x [B,n,H]', c: 'attn', e: 'Wq', from: ['x'] },
+            { n: 'K = Wk·x [B,n,H]', c: 'attn', e: 'Wk', from: ['x'] },
+            { n: 'V = Wv·x [B,n,H]', c: 'attn', e: 'Wv', from: ['x'] },
+            { n: 'scores = QKᵀ/√d [B,nh,n]', c: 'attn', e: 'QKᵀ', from: ['Q = Wq·x [B,n,H]', 'K = Wk·x [B,n,H]'] },
+            { n: 'A = softmax(scores)', c: 'attn', e: 'softmax', from: ['scores = QKᵀ/√d [B,nh,n]'] },
+            { n: 'Y = A·V [B,nh,n,dh]', c: 'attn', e: 'A·V', from: ['A = softmax(scores)', 'V = Wv·x [B,n,H]'] },
+            { n: 'v̂ = V/‖V‖₂ [B,nh,n,dh]', c: 'attn', e: 'normalize', from: ['V = Wv·x [B,n,H]'] },
+            { n: 'p = (Y·v̂) [B,nh,n,1]', c: 'attn', e: 'dot', from: ['Y = A·V [B,nh,n,dh]', 'v̂ = V/‖V‖₂ [B,nh,n,dh]'] },
+            { n: 'Z = Y − p·v̂ [B,nh,n,dh]', c: 'attn', e: 'subtract', from: ['Y = A·V [B,nh,n,dh]', 'p = (Y·v̂) [B,nh,n,1]', 'v̂ = V/‖V‖₂ [B,nh,n,dh]'] },
+            { n: 'O = Wo·Z [B,n,H]', c: 'attn', e: 'Wo', from: ['Z = Y − p·v̂ [B,nh,n,dh]'] }
         ],
         sigmoid: [
             { n: 'x [B,n,H]', c: 'attn', id: 'x' },
