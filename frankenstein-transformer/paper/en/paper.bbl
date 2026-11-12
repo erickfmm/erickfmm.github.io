@@ -1,4 +1,4 @@
-\begin{thebibliography}{192}
+\begin{thebibliography}{194}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -1207,6 +1207,13 @@ Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue,
   2020.
 \newblock URL \url{https://arxiv.org/abs/1910.03771}.
 
+\bibitem[Wu(2022)]{wu_deep_sparse_conformer_2022}
+Xianchao Wu.
+\newblock Deep sparse conformer for speech recognition.
+\newblock In \emph{Proc. Interspeech 2022}. {arXiv}, 2022.
+\newblock \doi{10.48550/ARXIV.2209.00260}.
+\newblock URL \url{https://arxiv.org/abs/2209.00260}.
+
 \bibitem[Xiao et~al.(2024)Xiao, Tian, Chen, Han, and
   Lewis]{xiao_streaming_sinks_2024}
 Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
@@ -1347,6 +1354,17 @@ Jiawei Zhao, Zhenyu Zhang, Beidi Chen, Zhangyang Wang, Anima Anandkumar, and
   projection, 2024.
 \newblock URL \url{https://arxiv.org/abs/2403.03507}.
 \newblock Version Number: 2.
+
+\bibitem[Zhou et~al.(2021)Zhou, Zhang, Peng, Zhang, Li, Xiong, and
+  Zhang]{zhou_informer_2021}
+Haoyi Zhou, Shanghang Zhang, Jieqi Peng, Shuai Zhang, Jianxin Li, Hui Xiong,
+  and Wancai Zhang.
+\newblock Informer: Beyond efficient transformer for long sequence time-series
+  forecasting.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence}. {arXiv}, 2021.
+\newblock \doi{10.48550/ARXIV.2012.07436}.
+\newblock URL \url{https://arxiv.org/abs/2012.07436}.
 
 \bibitem[Zhou et~al.(2022)Zhou, Lei, Liu, Du, Huang, Zhao, Dai, Le, Laudon,
   Zhao, et~al.]{zhou2022expertchoice}

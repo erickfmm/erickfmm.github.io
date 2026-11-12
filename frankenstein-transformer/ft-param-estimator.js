@@ -115,6 +115,12 @@ var FTParamEstimator = (function () {
       // (paper Table 15) = 3·nH·(H+1); learned per-head strength β = nH.
       case 'fpa':
         return 4 * H * H + 3 * nH * (H + 1) + nH;
+      // ---- ProbSparse / Deep Sparse Conformer (arXiv:2209.00260) ----
+      // Q,K,V,O (bias-free) = 4H²; the relative-position projection W_P of
+      // Algorithm 1 adds H²; the two per-head query bias vectors U₁,U₂
+      // (shape nH×hd each) add 2H.
+      case 'probsparse':
+        return 5 * H * H + 2 * H;
       // ---- Exclusive Self Attention (arXiv:2603.09078) ----
       // Q,K,V,O (bias-free) = 4H²; the post-SDPA exclusion adds no parameters.
       case 'xsa':

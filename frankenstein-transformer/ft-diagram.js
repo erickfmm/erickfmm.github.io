@@ -26,6 +26,7 @@ var FTDiagram = (function () {
         bigbird: { c: 'sparse', l: 'BigBird Attn' },
         sparse_transformer: { c: 'sparse', l: 'Sparse Transformer' },
         sparsek: { c: 'sparse', l: 'SparseK Attn' },
+        probsparse: { c: 'sparse', l: 'ProbSparse Attn' },
         sparge: { c: 'eval', l: 'SpargeAttn' },
         fasa: { c: 'eval', l: 'FASA' },
         gqa: { c: 'attn', l: 'Grouped-Query Attn' },
@@ -361,6 +362,16 @@ var FTDiagram = (function () {
             { n: 'top-k scores = QKᵀ', c: 'sparse', e: 'select', from: ['Q,K,V [B,n,H]', 'top-k selector'] },
             { n: 'softmax', c: 'sparse', e: 'softmax', from: ['top-k scores = QKᵀ'] },
             { n: 'O = Wo·softmax·V', c: 'sparse', e: 'Wo', from: ['softmax', 'Q,K,V [B,n,H]'] }
+        ],
+        probsparse: [
+            { n: 'x [B,n,H]', c: 'sparse', id: 'x' },
+            { n: 'Q,K,V [B,n,H]', c: 'sparse', e: 'Wqkv', from: ['x'] },
+            { n: 'K_part sample c1·⌈ln L⌉', c: 'sparse', e: 'sample', from: ['Q,K,V [B,n,H]'] },
+            { n: 'M̄ = max − mean (Eq. 8)', c: 'sparse', e: 'measure', from: ['Q,K,V [B,n,H]', 'K_part sample c1·⌈ln L⌉'] },
+            { n: 'top-u queries', c: 'sparse', e: 'top-u', from: ['M̄ = max − mean (Eq. 8)'] },
+            { n: 'S = (QU1Kᵀ + QU2Pᵀ)/√d', c: 'sparse', e: 'QKᵀ', from: ['Q,K,V [B,n,H]', 'top-u queries'] },
+            { n: 'softmax + mask', c: 'sparse', e: 'softmax', from: ['S = (QU1Kᵀ + QU2Pᵀ)/√d'] },
+            { n: 'O = Wo·(S·V), mean-V rows', c: 'sparse', e: 'Wo', from: ['softmax + mask', 'Q,K,V [B,n,H]'] }
         ],
         nsa: [
             { n: 'x [B,n,H]', c: 'sparse', id: 'x' },

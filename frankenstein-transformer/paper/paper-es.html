@@ -737,6 +737,19 @@ id="toc-pseudocódigo-algorítmico-21">Pseudocódigo Algorítmico</a></li>
 <li><a href="#características-clave-23"
 id="toc-características-clave-23">Características Clave</a></li>
 </ul></li>
+<li><a
+href="#atención-probsparse-selección-top-u-por-dispersidad-de-consultas"
+id="toc-atención-probsparse-selección-top-u-por-dispersidad-de-consultas">Atención
+ProbSparse: selección top-<span class="math inline">\(u\)</span> por
+dispersidad de consultas</a>
+<ul>
+<li><a href="#formulación-matemática-20"
+id="toc-formulación-matemática-20">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-22"
+id="toc-pseudocódigo-algorítmico-22">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-24"
+id="toc-características-clave-24">Características Clave</a></li>
+</ul></li>
 <li><a href="#espacio-de-diseño-y-criterios-de-selección"
 id="toc-espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
 Criterios de Selección</a></li>
@@ -867,12 +880,12 @@ Hardware</a></li>
 <li><a href="#sec:annex-ssog" id="toc-sec:annex-ssog">SSOG: Atención
 Separable Sum of Gaussians</a>
 <ul>
-<li><a href="#formulación-matemática-20"
-id="toc-formulación-matemática-20">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-22"
-id="toc-pseudocódigo-algorítmico-22">Pseudocódigo Algorítmico</a></li>
-<li><a href="#características-clave-24"
-id="toc-características-clave-24">Características Clave</a></li>
+<li><a href="#formulación-matemática-21"
+id="toc-formulación-matemática-21">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-23"
+id="toc-pseudocódigo-algorítmico-23">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-25"
+id="toc-características-clave-25">Características Clave</a></li>
 </ul></li>
 <li><a href="#sec:annex-fast-weight"
 id="toc-sec:annex-fast-weight">Atención de Peso Rápido para Aprendizaje
@@ -925,10 +938,10 @@ Ejecutivo</a></li>
 id="toc-conformer-atención-aumentada-con-convolución">Conformer:
 Atención Aumentada con Convolución</a>
 <ul>
-<li><a href="#formulación-matemática-21"
-id="toc-formulación-matemática-21">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-23"
-id="toc-pseudocódigo-algorítmico-23">Pseudocódigo Algorítmico</a></li>
+<li><a href="#formulación-matemática-22"
+id="toc-formulación-matemática-22">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-24"
+id="toc-pseudocódigo-algorítmico-24">Pseudocódigo Algorítmico</a></li>
 <li><a href="#mapeo-de-implementación-y-desviaciones"
 id="toc-mapeo-de-implementación-y-desviaciones">Mapeo de Implementación
 y Desviaciones</a></li>
@@ -946,12 +959,12 @@ id="toc-fast-conformer-atención-de-contexto-limitado-con-un-token-global-anclad
 Conformer: Atención de Contexto Limitado con un Token Global Anclado a
 la Cabecera</a>
 <ul>
-<li><a href="#formulación-matemática-22"
-id="toc-formulación-matemática-22">Formulación Matemática</a></li>
-<li><a href="#pseudocódigo-algorítmico-24"
-id="toc-pseudocódigo-algorítmico-24">Pseudocódigo Algorítmico</a></li>
-<li><a href="#características-clave-25"
-id="toc-características-clave-25">Características Clave</a></li>
+<li><a href="#formulación-matemática-23"
+id="toc-formulación-matemática-23">Formulación Matemática</a></li>
+<li><a href="#pseudocódigo-algorítmico-25"
+id="toc-pseudocódigo-algorítmico-25">Pseudocódigo Algorítmico</a></li>
+<li><a href="#características-clave-26"
+id="toc-características-clave-26">Características Clave</a></li>
 </ul></li>
 </ul></li>
 <li><a href="#sec:annex-optimizers"
@@ -1552,7 +1565,7 @@ decisiones de arquitectura, optimizador y entrenamiento como un único
 documento validado. El proyecto ofrece:</p>
 <ol>
 <li><p><strong>Diseño basado en esquema</strong>: un contrato YAML
-estricto que soporta cincuenta y cinco mezcladores de secuencia en nueve
+estricto que soporta cincuenta y seis mezcladores de secuencia en nueve
 familias y treinta y ocho familias de optimizadores, validado antes de
 iniciar el entrenamiento.</p></li>
 <li><p><strong>Entrenamiento agnóstico a la arquitectura</strong>: un
@@ -2005,7 +2018,7 @@ data-reference-type="ref" data-reference="sec:annex-mhc">27</a>.</p>
 Implementación</h1>
 <h2 id="sec:attention-families">Familias de Atención y Mezcladores de
 Secuencia</h2>
-<p>El sistema implementa cincuenta y cinco mezcladores de secuencia
+<p>El sistema implementa cincuenta y seis mezcladores de secuencia
 organizados en nueve categorías funcionales que reflejan cómo cada
 método equilibra expresividad, costo computacional y memoria.</p>
 <ol>
@@ -2022,11 +2035,11 @@ feed-forward.</p></li>
 bloques tipo ODE mantienen estado para inferencia en tiempo constante
 mediante recurrencia, espacios de estados selectivos o profundidad
 continua.</p></li>
-<li><p><strong>Patrones dispersos</strong> (11): Sparse Transformer,
+<li><p><strong>Patrones dispersos</strong> (12): Sparse Transformer,
 Longformer, SWA con sumideros de atención, BigBird, SparseK, NSA,
-SpargeAttn, FASA, MSA, SparDA y LSA reducen el costo cuadrático mediante
-dispersión estructurada, selección de tokens, poda sin entrenamiento o
-clustering semántico de claves.</p></li>
+SpargeAttn, FASA, MSA, SparDA, LSA y ProbSparse reducen el costo
+cuadrático mediante dispersión estructurada, selección de tokens, poda
+sin entrenamiento o clustering semántico de claves.</p></li>
 <li><p><strong>Mecanismos con compuerta</strong> (9): GLA, DeltaNet,
 Gated DeltaNet, Gated DeltaNet-2, HGRN2, FoX, Gated Softmax, KDA y First
 Passage Attention (FPA) introducen control dependiente de los datos
@@ -2159,8 +2172,8 @@ probabilístico.</figcaption>
 </figure>
 <h2 id="extensiones-de-atención-dispersa">Extensiones de Atención
 Dispersa</h2>
-<p>El registro incluye once bloques dispersos <span class="citation"
-data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026 kubicek_lsa_2026"></span>.
+<p>El registro incluye doce bloques dispersos <span class="citation"
+data-cites="child_sparse_transformer_2019 beltagy_longformer_2020 jolicoeur_sliding_window_2026 zaheer_bigbird_2020 lou_sparsek_2024 yuan_nsa_2025 zhang_spargeattn_2025 wang_fasa_2026 lai_minimax_2026 fu_sparda_2026 kubicek_lsa_2026 wu_deep_sparse_conformer_2022"></span>.
 Dos métodos en tiempo de inferencia, <code>fasa</code> y
 <code>sparge</code>, aplican su heurística dispersa solo cuando el
 modelo está en modo evaluación: durante el entrenamiento la capa híbrida
@@ -2176,10 +2189,18 @@ por bloque de 512 tokens, y cada consulta puntúa los centroides de
 buckets en caché en lugar de todas las claves, seleccionando los <span
 class="math inline">\(p\)</span> buckets mejores que se expanden a sus
 <span class="math inline">\(k\)</span> claves de largo alcance sobre
-sumideros y una ventana de un bloque. Las formulaciones, el
-pseudocódigo, las características por bloque y una tabla comparativa se
-recopilan en el Apéndice <a href="#sec:annex-sparse"
-data-reference-type="ref" data-reference="sec:annex-sparse">15</a>.</p>
+sumideros y una ventana de un bloque. ProbSparse <span class="citation"
+data-cites="wu_deep_sparse_conformer_2022 zhou_informer_2021"></span>
+invierte el eje: ordena las consultas con una aproximación max–mean de
+la divergencia KL frente a la uniforme sobre un subconjunto muestreado
+de claves y solo puntúa las <span class="math inline">\(u = c_2\lceil\ln
+L\rceil\)</span> dominantes, lo que lleva la capa a <span
+class="math inline">\(\mathcal{O}(L\log L)\)</span> para encoders
+bidireccionales largos y deja la decodificación densa. Las
+formulaciones, el pseudocódigo, las características por bloque y una
+tabla comparativa se recopilan en el Apéndice <a
+href="#sec:annex-sparse" data-reference-type="ref"
+data-reference="sec:annex-sparse">15</a>.</p>
 <figure id="fig:sparse-map"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/sparse-map.svg" alt="image" /></span></p>
 
 <figcaption>Decisiones de diseño en atención dispersa. Los métodos
@@ -2805,10 +2826,10 @@ con las mejores prácticas de investigación y cadenas de documentación
 para la representación en la interfaz web.</p>
 <h2 id="cobertura-arquitectónica-y-vacíos">Cobertura Arquitectónica y
 Vacíos</h2>
-<p>Las cincuenta y cinco arquitecturas de mezclador implementadas
-abarcan las principales direcciones de investigación en modelado de
-secuencias, pero ciertos vacíos permanecen. El sistema carece de
-arquitecturas híbridas recientes como Griffin <span class="citation"
+<p>Las cincuenta y seis arquitecturas de mezclador implementadas abarcan
+las principales direcciones de investigación en modelado de secuencias,
+pero ciertos vacíos permanecen. El sistema carece de arquitecturas
+híbridas recientes como Griffin <span class="citation"
 data-cites="soares_griffin_2024"></span> y Jamba <span class="citation"
 data-cites="gu_jamba_2024"></span>, que combinan compuertas con modelos
 de espacio de estados. El enrutamiento MoE (Mezcla de Expertos) está
@@ -3010,7 +3031,7 @@ cada vez más valiosa a medida que esta convergencia se acelera,
 permitiendo a los investigadores explorar este creciente espacio de
 diseño con infraestructura reproducible y bien diseñada.</p>
 <div class="thebibliography">
-<p><span>192</span> urlstyle</p>
+<p><span>194</span> urlstyle</p>
 <p>Mart<span>ı́</span>n Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
 Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey
 Irving, Michael Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga,
@@ -3643,6 +3664,10 @@ Transformers: State-of-the-art natural language processing. In
 <em>Proceedings of the 2020 Conference on Empirical Methods in Natural
 Language Processing: System Demonstrations (EMNLP)</em>, pages 38–45,
 2020. URL <code>https://arxiv.org/abs/1910.03771</code>.</p>
+<p>Xianchao Wu. Deep sparse conformer for speech recognition. In
+<em>Proc. Interspeech 2022</em>. <span>arXiv</span>, 2022. doi:
+10.48550/ARXIV.2209.00260. URL
+<code>https://arxiv.org/abs/2209.00260</code>.</p>
 <p>Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
 Efficient streaming language models with attention sinks. In
 <em>International Conference on Learning Representations (ICLR)</em>,
@@ -3718,6 +3743,12 @@ Chi-Chih Yao. Fast weight attention for continual learning,
 Anandkumar, and Yuandong Tian. : Memory-efficient <span>LLM</span>
 training by gradient low-rank projection, 2024. URL
 <code>https://arxiv.org/abs/2403.03507</code>. Version Number: 2.</p>
+<p>Haoyi Zhou, Shanghang Zhang, Jieqi Peng, Shuai Zhang, Jianxin Li, Hui
+Xiong, and Wancai Zhang. Informer: Beyond efficient transformer for long
+sequence time-series forecasting. In <em>Proceedings of the AAAI
+Conference on Artificial Intelligence</em>. <span>arXiv</span>, 2021.
+doi: 10.48550/ARXIV.2012.07436. URL
+<code>https://arxiv.org/abs/2012.07436</code>.</p>
 <p>Yanqi Zhou, Tao Lei, Hanxiao Liu, Nan Du, Yanping Huang, Vincent
 Zhao, Andrew Dai, Quoc Le, James Laudon, Qirong Zhao, et al.
 Mixture-of-experts with expert choice routing, 2022.</p>
@@ -6146,14 +6177,14 @@ entrenamiento</strong> (entrenado de extremo a extremo o solo
 inferencia), (iii) <strong>unidad de dispersidad</strong> (tokens
 individuales, ventanas locales o bloques), y (iv)
 <strong>mecanismo</strong> (enmascaramiento, selección, filtrado o
-compresión). Este anexo sintetiza once métodos principales de atención
+compresión). Este anexo sintetiza doce métodos principales de atención
 dispersa—Sparse Transformer, Longformer, SWA con sumideros de atención,
-BigBird, SparseK, NSA, FASA, SpargeAttn, MSA, SparDA y
-LSA—proporcionando formulaciones matemáticas, pseudocódigo algorítmico y
-comparaciones arquitectónicas exhaustivas. Fast Conformer, la variante
-de contexto limitado del bloque Conformer aumentado con convolución,
-pertenece a la familia aumentada con convolución y se documenta junto al
-Conformer en el Anexo <a href="#sec:annex-conformer"
+BigBird, SparseK, NSA, FASA, SpargeAttn, MSA, SparDA, LSA y
+ProbSparse—proporcionando formulaciones matemáticas, pseudocódigo
+algorítmico y comparaciones arquitectónicas exhaustivas. Fast Conformer,
+la variante de contexto limitado del bloque Conformer aumentado con
+convolución, pertenece a la familia aumentada con convolución y se
+documenta junto al Conformer en el Anexo <a href="#sec:annex-conformer"
 data-reference-type="ref"
 data-reference="sec:annex-conformer">19</a>.</p>
 <h2
@@ -7356,9 +7387,174 @@ para trabajo futuro. La lista de índices única del paper asume una sola
 cabeza KV compartida (<span class="math inline">\(n_{kv}=1\)</span>), y
 N-LSA usa deliberadamente ausencia de codificación posicional.</p></li>
 </ul>
+<h2
+id="atención-probsparse-selección-top-u-por-dispersidad-de-consultas">Atención
+ProbSparse: selección top-<span class="math inline">\(u\)</span> por
+dispersidad de consultas</h2>
+<figure id="fig:mixer-probsparse-es"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/mixers/probsparse.svg" alt="image" /></span></p>
+
+<figcaption>Flujo de datos de ProbSparse: un subconjunto aleatorio de
+<span class="math inline">\(c_1\lceil\ln L_K\rceil\)</span> claves
+ordena las consultas con la medida de dispersidad max–mean; solo las
+<span class="math inline">\(c_2\lceil\ln L_Q\rceil\)</span> consultas
+dominantes se puntúan frente a todas las claves, con el término de
+posición relativa <span class="math inline">\(P=X_PW_P\)</span> añadido
+mediante <span class="math inline">\(U_2\)</span>.</figcaption>
+</figure>
+<h3 id="formulación-matemática-20">Formulación Matemática</h3>
+<p>La atención ProbSparse <span class="citation"
+data-cites="wu_deep_sparse_conformer_2022"></span>, adaptada de Informer
+<span class="citation" data-cites="zhou_informer_2021"></span>, ataca el
+costo cuadrático desde el lado de las <em>consultas</em> en lugar del de
+las claves. Para una secuencia de longitud <span
+class="math inline">\(L\)</span> conserva un tensor <span
+class="math inline">\(\bar{\mathbf{Q}}\)</span> de la misma forma que
+contiene solo las <span class="math inline">\(u\)</span> consultas
+<em>dominantes</em> bajo una medida de dispersidad <span
+class="math inline">\(\mathcal{M}(\mathbf{q}, \mathbf{K})\)</span>, de
+modo que cada clave es atendida solo por esas consultas: <span
+class="math display">\[A(\mathbf{Q},\mathbf{K},\mathbf{V}) = \sum_j
+\left[\frac{k(\mathbf{Q},\mathbf{k}_j)}{\sum_l
+k(\mathbf{Q},\mathbf{k}_l)}\right]\mathbf{v}_j
+= \mathbb{E}_{p(\mathbf{k}_j\mid\mathbf{Q})}[\mathbf{v}_j]
+\approx
+\mathrm{Softmax}\!\left(\frac{\bar{\mathbf{Q}}\mathbf{K}^{\top}}{\sqrt{d}}\right)\mathbf{V},\]</span>
+con kernel exponencial <span
+class="math inline">\(k(\mathbf{q}_i,\mathbf{k}_j)=\exp(\mathbf{q}_i\mathbf{k}_j^{\top}/\sqrt{d})\)</span>.
+La medida se deduce de la divergencia de Kullback–Leibler entre la
+distribución de atención de la consulta y la distribución uniforme: una
+consulta es “dominante” cuando su distribución se aleja de la uniforme,
+y la aproximación max–mean <span
+class="math display">\[\bar{\mathcal{M}}(\mathbf{q}_i,\mathbf{K}) =
+\max_j\left\{\frac{\mathbf{q}_i\mathbf{k}_j^{\top}}{\sqrt{d}}\right\} -
+\frac{1}{L}\sum_{j=1}^{L}\frac{\mathbf{q}_i\mathbf{k}_j^{\top}}{\sqrt{d}}\]</span>
+ordena las consultas. Calcularla sobre todas las claves sería a su vez
+cuadrático, así que el paper muestrea solo <span
+class="math inline">\(L&#39;_K = c_1\lceil\ln L_K\rceil\)</span> claves
+para la medida y conserva <span class="math inline">\(L&#39;_Q =
+c_2\lceil\ln L_Q\rceil\)</span> consultas, con <span
+class="math inline">\(c_1=c_2=5.0\)</span>; esto es lo que produce <span
+class="math inline">\(\mathcal{O}(L\log L)\)</span> en tiempo y memoria.
+La atención multi-cabeza es la habitual <span
+class="math display">\[\mathrm{MHSA\text{-}Sparse}(\mathbf{X}) =
+\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)\mathbf{W}_O,
+\qquad
+\mathrm{head}_i =
+A(\mathbf{X}\mathbf{W}_Q^i,\mathbf{X}\mathbf{W}_K^i,\mathbf{X}\mathbf{W}_V^i).\]</span></p>
+<h4 id="términos-de-posición-relativa">Términos de posición
+relativa</h4>
+<p>: El paper sigue a Transformer-XL y puntúa las consultas
+seleccionadas con dos vectores de sesgo por cabeza <span
+class="math inline">\(\mathbf{U}_1,\mathbf{U}_2\)</span> y un tensor de
+posición relativa proyectado <span
+class="math inline">\(\mathbf{P}=\mathbf{X}_P\mathbf{W}_P\)</span>,
+<span class="math display">\[\mathbf{S} =
+\left(\bar{\mathbf{Q}}_{U_1}\mathbf{K}^{\top} +
+\bar{\mathbf{Q}}_{U_2}\mathbf{P}^{\top}\right)/\sqrt{d_q},
+\qquad
+\mathbf{Q}_{U_1} = \mathbf{Q}+\mathbf{U}_1,\;
+\mathbf{Q}_{U_2} = \mathbf{Q}+\mathbf{U}_2,\]</span> donde <span
+class="math inline">\(\mathbf{X}_P\in\mathbb{R}^{b\times L_K\times
+d}\)</span> codifica las posiciones de las claves y <span
+class="math inline">\(W_P\in\mathbb{R}^{d\times d}\)</span> es
+entrenable. En este código la codificación es sinusoidal (como en
+Transformer-XL) y solo la proyección se aprende, de modo que la capa
+cuesta <span class="math inline">\(5d^2+2d\)</span> parámetros de
+atención por capa: cuatro proyecciones, <span
+class="math inline">\(W_P\)</span> y los dos vectores <span
+class="math inline">\(\mathbf{U}_1,\mathbf{U}_2\)</span> (forma <span
+class="math inline">\(h\times d_q\)</span> cada uno). Las filas
+restantes, es decir las consultas no dominantes, conservan la media por
+cabeza de <span class="math inline">\(\mathbf{V}\)</span>, que es lo que
+hace el Algoritmo 1 del paper al sobrescribir solo las filas
+seleccionadas.</p>
+<h4 id="modo-decoder">Modo decoder</h4>
+<p>: La selección es una decisión global del bloque, y rellenar las
+filas descartadas con una estadística bidireccional filtraría tokens
+futuros. Por ello el modo decoder puntúa todas las consultas de forma
+causal con los mismos términos <span
+class="math inline">\(\mathbf{U}_1\)</span>, <span
+class="math inline">\(\mathbf{U}_2\)</span> y <span
+class="math inline">\(W_P\)</span>, y cachea K/V como la atención
+estándar; como la dispersidad es del lado de las consultas, la
+decodificación de una sola consulta hace degenerada la regla top-<span
+class="math inline">\(u\)</span>, por lo que atender todo el prefijo
+cacheado es exacto.</p>
+<h3 id="pseudocódigo-algorítmico-22">Pseudocódigo Algorítmico</h3>
+<div class="algorithm">
+<div class="algorithmic">
+<p><span class="math inline">\(\mathbf{X}\)</span>, codificaciones de
+posición relativa <span class="math inline">\(\mathbf{X}_P\)</span>,
+factores <span class="math inline">\(c_1,c_2\)</span>, máscara, dropout
+<span class="math inline">\(p\)</span> Salida <span
+class="math inline">\(\mathbf{Y}\)</span> <span
+class="math inline">\(\mathbf{Q}\gets\mathbf{X}\mathbf{W}_Q\)</span>,
+<span
+class="math inline">\(\mathbf{K}\gets\mathbf{X}\mathbf{W}_K\)</span>,
+<span
+class="math inline">\(\mathbf{V}\gets\mathbf{X}\mathbf{W}_V\)</span>,
+<span
+class="math inline">\(\mathbf{P}\gets\mathbf{X}_P\mathbf{W}_P\)</span>
+reformar a <span class="math inline">\((b,h,L,d_q)\)</span>; <span
+class="math inline">\(\mathbf{Q}_{U_1}\gets\mathbf{Q}+\mathbf{U}_1\)</span>,
+<span
+class="math inline">\(\mathbf{Q}_{U_2}\gets\mathbf{Q}+\mathbf{U}_2\)</span>
+<span class="math inline">\(L&#39;_K \gets \min(c_1\lceil\ln L_K\rceil,
+L_K)\)</span>; muestrear <span
+class="math inline">\(\mathbf{K}_{\text{part}}\)</span> con <span
+class="math inline">\(L&#39;_K\)</span> claves <span
+class="math inline">\(\bar{\mathcal{M}} \gets
+\max_j(\mathbf{Q}_{U_1}\mathbf{K}_{\text{part}}^{\top}) -
+\frac{1}{L_K}\sum_j(\mathbf{Q}_{U_1}\mathbf{K}_{\text{part}}^{\top})\)</span>
+<span class="math inline">\(L&#39;_Q \gets \min(c_2\lceil\ln L_Q\rceil,
+L_Q)\)</span>; <span class="math inline">\(\mathcal{T}\gets\)</span>
+índices de las <span class="math inline">\(L&#39;_Q\)</span> consultas
+mejores de <span class="math inline">\(\bar{\mathcal{M}}\)</span> <span
+class="math inline">\(\mathbf{S} \gets
+(\bar{\mathbf{Q}}_{U_1}\mathbf{K}^{\top} +
+\bar{\mathbf{Q}}_{U_2}\mathbf{P}^{\top})/\sqrt{d_q}\)</span> <span
+class="math inline">\(\mathbf{S} \gets
+\mathrm{Dropout}(\mathrm{Softmax}(\mathrm{Mask}(\mathbf{S})),
+p)\)</span> <span class="math inline">\(\mathbf{Y}[\mathcal{T}] \gets
+\mathbf{S}\mathbf{V}\)</span>; <span
+class="math inline">\(\mathbf{Y}[\overline{\mathcal{T}}] \gets
+\mathrm{mean}_j(\mathbf{V})\)</span> <span
+class="math inline">\(\mathbf{Y}\mathbf{W}_O\)</span></p>
+</div>
+</div>
+<h3 id="características-clave-24">Características Clave</h3>
+<ul>
+<li><p><strong>Complejidad</strong>: <span
+class="math inline">\(\mathcal{O}(L_Q L_K d)\)</span> para la sonda
+max–mean sobre claves muestreadas más <span
+class="math inline">\(\mathcal{O}(L&#39;_Q L_K d)\)</span> para las
+filas seleccionadas, es decir <span
+class="math inline">\(\mathcal{O}(L\log L)\)</span> en tiempo y memoria;
+<span class="math inline">\(\mathcal{O}(n_{\text{ctx}})\)</span> por
+token decodificado sobre la caché KV.</p></li>
+<li><p><strong>Entrenable</strong>: Sí, de forma nativa desde cero; los
+modelos CSJ se entrenan de extremo a extremo con la ruta dispersa
+activa. La selección no es diferenciable, así que los gradientes llegan
+a las proyecciones por las filas seleccionadas y por la media de valores
+de las descartadas.</p></li>
+<li><p><strong>Fortaleza</strong>: En CSJ-500h, el Conformer disperso
+profundo de 12 capas alcanza CER de 5.52/4.03/4.50 frente a
+6.97/4.65/5.29 de Conformer-Large con los mismos 135M de parámetros,
+entrena en el 80% del tiempo y decodifica <span
+class="math inline">\(1.23\times\)</span> más rápido; los mismos bloques
+escalan a 100 capas con DeepNorm.</p></li>
+<li><p><strong>Limitación</strong>: La dispersidad es del lado de las
+consultas, así que no reduce el costo del lado de las claves de una
+<em>única</em> consulta—decodificar un token sigue atendiendo toda la
+caché. El paper define el mecanismo solo para encoders bidireccionales;
+su segundo ingrediente, DeepNorm (<span
+class="math inline">\(\alpha_{1..4}=0.81(N^4M)^{1/16}\)</span>), es una
+estrategia de escalado de residuales que vive en la familia de
+residuales de este código, no en este mezclador.</p></li>
+</ul>
 <h2 id="espacio-de-diseño-y-criterios-de-selección">Espacio de Diseño y
 Criterios de Selección</h2>
-<p>Los once métodos de atención dispersa ocupan posiciones
+<p>Los doce métodos de atención dispersa ocupan posiciones
 complementarias en un espacio de diseño multidimensional:</p>
 <ul>
 <li><p><strong>Patrones geométricos/fijos</strong> (Sparse Transformer,
@@ -7384,6 +7580,13 @@ en caché.</p></li>
 <li><p><strong>Garantías teóricas</strong> (BigBird): Proporcionan
 demostraciones formales de completitud expresiva, importantes para
 comprender los márgenes de seguridad.</p></li>
+<li><p><strong>Dispersidad del lado de las consultas</strong>
+(ProbSparse): Selecciona qué consultas merecen una fila completa de
+puntajes en lugar de qué claves ve cada consulta, de modo que el costo
+cae a <span class="math inline">\(\mathcal{O}(L\log L)\)</span> sin
+cambiar el conjunto atendido por ninguna consulta conservada; el encaje
+natural para encoders bidireccionales largos, no para
+decodificación.</p></li>
 </ul>
 <p><strong>Orientación de selección:</strong></p>
 <ol>
@@ -8799,7 +9002,7 @@ separables de filtrado gaussiano por filas y columnas para cada átomo,
 con direccionamiento opcional de los parámetros del átomo por
 contenido.</figcaption>
 </figure>
-<h2 id="formulación-matemática-20">Formulación Matemática</h2>
+<h2 id="formulación-matemática-21">Formulación Matemática</h2>
 <p>Sea el raster row-major de una rejilla <span
 class="math inline">\(G_h \times G_w\)</span> los tokens. El peso de
 atención del token <span class="math inline">\(p\)</span> al token <span
@@ -8839,7 +9042,7 @@ anchos se reparametrizan como <span class="math inline">\(\sigma =
 \operatorname{softplus}(\omega) + \epsilon +
 \sigma_{\text{piso}}\)</span> para mantenerse estrictamente
 positivos.</p>
-<h2 id="pseudocódigo-algorítmico-22">Pseudocódigo Algorítmico</h2>
+<h2 id="pseudocódigo-algorítmico-23">Pseudocódigo Algorítmico</h2>
 <div class="algorithmic">
 <p><strong>Entrada:</strong> estado oculto <span class="math inline">\(x
 \in \mathbb{R}^{B \times N \times d}\)</span> como raster <span
@@ -8860,7 +9063,7 @@ a_x^{(r)} \big( a_y^{(r)} V \big)\)</span> <strong>Salida:</strong>
 <span class="math inline">\(\mathbf{Y} W_O\)</span> reorganizado a <span
 class="math inline">\((B, N, d)\)</span></p>
 </div>
-<h2 id="características-clave-24">Características Clave</h2>
+<h2 id="características-clave-25">Características Clave</h2>
 <ul>
 <li><p><strong>Complejidad de entrenamiento</strong>: <span
 class="math inline">\(\mathcal{O}(R \cdot N \sqrt{N} \cdot d)\)</span>
@@ -9403,7 +9606,7 @@ herramientas la FFN compartida de <code>HybridLayer</code> ocupa la
 ranura <span class="math inline">\(\mathrm{FFN}_2\)</span> con un paso
 residual completo (anotación punteada).</figcaption>
 </figure>
-<h3 id="formulación-matemática-21">Formulación Matemática</h3>
+<h3 id="formulación-matemática-22">Formulación Matemática</h3>
 <p>Para una entrada de bloque <span class="math inline">\(x \in
 \mathbb{R}^{B \times n \times d}\)</span>, el bloque de referencia de la
 Fig. 1 de <span class="citation" data-cites="Gulati2020"></span> es
@@ -9509,7 +9712,7 @@ desplaza a <span class="math inline">\(z_t = \sum_{k=0}^{K-1} w_k
 \tilde{h}_{t-K+1+k}\)</span>, de modo que ninguna trama futura entra en
 la convolución; los modos encoder y ViT conservan el padding simétrico
 “same” del paper.</p>
-<h3 id="pseudocódigo-algorítmico-23">Pseudocódigo Algorítmico</h3>
+<h3 id="pseudocódigo-algorítmico-24">Pseudocódigo Algorítmico</h3>
 <div class="algorithm">
 <div class="algorithmic">
 <p>entrada de bloque <span class="math inline">\(x \in \mathbb{R}^{B
@@ -9713,7 +9916,7 @@ cabecera de la secuencia atiende a todas las posiciones y es atendido
 por todas ellas; el token global puede usar sus propias proyecciones
 query/key/value (paper §2.2).</figcaption>
 </figure>
-<h3 id="formulación-matemática-22">Formulación Matemática</h3>
+<h3 id="formulación-matemática-23">Formulación Matemática</h3>
 <p>Fast Conformer <span class="citation"
 data-cites="rekesh_fastconformer_2023"></span> ataca el costo cuadrático
 de la autoatención de Conformer de dos formas: eleva el submuestreo del
@@ -9783,7 +9986,7 @@ los tres casos colapsan a un único conjunto <span
 class="math inline">\(\mathbf{Q}/\mathbf{K}/\mathbf{V}\)</span>: los
 tokens globales son simplemente posiciones con filas y columnas sin
 enmascarar.</p>
-<h3 id="pseudocódigo-algorítmico-24">Pseudocódigo Algorítmico</h3>
+<h3 id="pseudocódigo-algorítmico-25">Pseudocódigo Algorítmico</h3>
 <div class="algorithm">
 <div class="algorithmic">
 <p>Entrada <span class="math inline">\(X\)</span>; ventana <span
@@ -9826,7 +10029,7 @@ cada paso cuesta <span class="math inline">\(\mathcal{O}(w+g)\)</span>.
 El patrón exacto se evalúa contra las posiciones absolutas en caché (a
 diferencia del atajo “retención igual a patrón”, porque un prefijo
 global espaciado puede contener posiciones no globales).</p>
-<h3 id="características-clave-25">Características Clave</h3>
+<h3 id="características-clave-26">Características Clave</h3>
 <ul>
 <li><p><strong>Complejidad</strong>: <span
 class="math inline">\(\mathcal{O}(n\,(w+g)\,d)\)</span> en entrenamiento
@@ -9919,7 +10122,7 @@ la pendiente bajo sus pies pero no ve el valle, así que la estrategia se
 reduce a tres preguntas: cuán fiable es la lectura de la pendiente (¿un
 ejemplo o mil?), cuán larga es la zancada y cuánta memoria del terreno
 merece la pena cargar. La Figura <a href="#fig:opt-tut-flow"
-data-reference-type="ref" data-reference="fig:opt-tut-flow">74</a>
+data-reference-type="ref" data-reference="fig:opt-tut-flow">75</a>
 convierte esas preguntas en el mapa de las familias que siguen.</p>
 <figure id="fig:opt-tut-flow"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizer-tutorial-flow.svg" alt="image" /></span></p>
 
@@ -9968,9 +10171,9 @@ son círculos <span class="citation"
 data-cites="hinton_csc321_2012"></span>. El recorrido, por tanto,
 zigzaguea a través de la dirección abrupta mientras avanza a rastras por
 la plana. La Figura <a href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">75</a> muestra los tres regímenes sobre
+data-reference="fig:opt-tut-gd">76</a> muestra los tres regímenes sobre
 el mismo cuenco, y la Figura <a href="#fig:opt-tut-lr"
-data-reference-type="ref" data-reference="fig:opt-tut-lr">76</a> muestra
+data-reference-type="ref" data-reference="fig:opt-tut-lr">77</a> muestra
 cómo se ven como curva de pérdida.</p>
 <figure id="fig:opt-tut-gd"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-gd-landscape.svg" alt="image" /></span></p>
 
@@ -10047,7 +10250,7 @@ class="math inline">\(\odot\)</span> es el producto elemento a elemento.
 El gradiente de un peso es, por tanto, el producto de un número hacia
 atrás y un número hacia adelante—las dos cantidades dibujadas en la
 Figura <a href="#fig:opt-tut-backprop" data-reference-type="ref"
-data-reference="fig:opt-tut-backprop">77</a>. La recursión es lineal en
+data-reference="fig:opt-tut-backprop">78</a>. La recursión es lineal en
 el índice de capa, así que el barrido completo cuesta aproximadamente lo
 mismo que una pasada adicional hacia adelante, en torno al doble del
 coste de una pasada hacia adelante por paso, y debe mantener las
@@ -10132,7 +10335,7 @@ class="math inline">\(\lfloor n/b\rfloor\)</span> actualizaciones en
 lugar de una <span class="citation"
 data-cites="ibm_sgd_2025 ghojogh_ghodsi_2024"></span>. La Figura <a
 href="#fig:opt-tut-noise" data-reference-type="ref"
-data-reference="fig:opt-tut-noise">78</a> muestra las dos caras del
+data-reference="fig:opt-tut-noise">79</a> muestra las dos caras del
 compromiso: con el mismo número de pasos y el mismo tamaño de paso, los
 lotes pequeños vagan, y el ruido que inyectan es precisamente la
 cantidad que se reduce como <span
@@ -10163,7 +10366,7 @@ class="citation" data-cites="ghojogh_ghodsi_2024"></span>. El descenso
 de gradiente con lote completo es, por tanto, más preciso por iteración
 y mucho más lento por iteración; SGD es lo contrario. La Figura <a
 href="#fig:opt-tut-rates" data-reference-type="ref"
-data-reference="fig:opt-tut-rates">79</a> pone ambas afirmaciones sobre
+data-reference="fig:opt-tut-rates">80</a> pone ambas afirmaciones sobre
 los mismos ejes, una vez por iteración y otra por unidad de tiempo de
 reloj, que es la comparación que de verdad importa cuando un paso cuesta
 <span class="math inline">\(n/b\)</span> veces menos.</p>
@@ -10208,13 +10411,13 @@ gradiente en la posición hacia la que se dirige la velocidad, de modo
 que la corrección llega antes que el sobrepaso <span class="citation"
 data-cites="hinton_csc321_2012 sutskever2013importance"></span>. La
 Figura <a href="#fig:opt-tut-momentum" data-reference-type="ref"
-data-reference="fig:opt-tut-momentum">80</a> muestra la composición de
+data-reference="fig:opt-tut-momentum">81</a> muestra la composición de
 los dos términos y su efecto sobre el valle.</p>
 <figure id="fig:opt-tut-momentum"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-momentum.svg" alt="image" /></span></p>
 
 <figcaption>Momentum como memoria. (a) Sobre el valle de la Figura <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">75</a>(b), con el mismo tamaño de paso,
+data-reference="fig:opt-tut-gd">76</a>(b), con el mismo tamaño de paso,
 el descenso de gradiente simple sigue avanzando a rastras por el fondo
 tras 120 pasos mientras que momentum y su variante de Nesterov alcanzan
 el mínimo. (b) La misma ejecución como curva de pérdida: la dirección
@@ -10227,7 +10430,7 @@ que cualquiera de los dos términos por separado.</figcaption>
 coordenada.</h4>
 <p>La segunda observación es que el valle de la Figura <a
 href="#fig:opt-tut-gd" data-reference-type="ref"
-data-reference="fig:opt-tut-gd">75</a>(b) no tiene un <span
+data-reference="fig:opt-tut-gd">76</a>(b) no tiene un <span
 class="math inline">\(\eta\)</span> bueno único: lo que es estable a lo
 largo del eje abrupto es despreciable a lo largo del plano. Los métodos
 adaptativos mantienen un promedio móvil de gradientes al cuadrado y
@@ -10244,7 +10447,7 @@ data-cites="hinton_csc321_2012 tieleman_hinton2012"></span>; AdaGrad es
 la versión acumulativa en lugar de decreciente <span class="citation"
 data-cites="duchi_adagrad_2011"></span>. La Figura <a
 href="#fig:opt-tut-adaptive" data-reference-type="ref"
-data-reference="fig:opt-tut-adaptive">81</a> muestra el efecto: los dos
+data-reference="fig:opt-tut-adaptive">82</a> muestra el efecto: los dos
 ejes del valle reciben desplazamientos comparables, a cambio de un
 estado por coordenada y de un paso que ya no se reduce por sí solo—el
 temblor residual de tamaño <span
@@ -10279,7 +10482,7 @@ data-cites="ruder_2016"></span>.</p>
 para retenerlos a la vez. Se recuerdan mejor como ocho familias, cada
 una respondiendo a una de las preguntas de la Figura <a
 href="#fig:opt-tut-flow" data-reference-type="ref"
-data-reference="fig:opt-tut-flow">74</a> y cada una distinguida por lo
+data-reference="fig:opt-tut-flow">75</a> y cada una distinguida por lo
 que recuerda y lo que paga.</p>
 <ul>
 <li><p><strong>Líneas base de primer orden</strong> (SGD con momentum,
@@ -10327,7 +10530,7 @@ data-reference="tab:opt-tut-families">[tab:opt-tut-families]</a> expresa
 la misma comparación en las dos monedas que deciden una ejecución real:
 qué se almacena por parámetro y cuánto cuesta cada paso. La Figura <a
 href="#fig:opt-tut-families" data-reference-type="ref"
-data-reference="fig:opt-tut-families">82</a> lo convierte en una huella:
+data-reference="fig:opt-tut-families">83</a> lo convierte en una huella:
 leer hacia abajo una fila dice qué ingredientes usa una familia, y leer
 a través de una columna dice qué familias comparten uno.</p>
 <div class="tabular">
@@ -10421,7 +10624,7 @@ decaimiento &amp; cómo se regularizan los pesos &amp; generalización
 <p>El valor práctico de las cinco ideas es diagnóstico. Una sola curva
 de pérdida ya dice cuál de ellas está mal, y la respuesta suele ser
 visible en unos cientos de pasos (Figura <a href="#fig:opt-tut-diag"
-data-reference-type="ref" data-reference="fig:opt-tut-diag">83</a>).</p>
+data-reference-type="ref" data-reference="fig:opt-tut-diag">84</a>).</p>
 <figure id="fig:opt-tut-diag"><p><span><img loading="lazy" decoding="async" src="/frankenstein-transformer/paper/figures/optimizers/tutorial/tut-loss-diagnostics.svg" alt="image" /></span></p>
 
 <figcaption>Cuatro curvas de pérdida y la frase que pronuncia cada una.
@@ -18893,6 +19096,17 @@ data-cites="wang_fasa_2026"></span>. SpargeAttn, NSA, MiniMax y SparDA
 seleccionan bloques a partir de estadísticos a nivel de fragmento y por
 ello retroceden en v1 <span class="citation"
 data-cites="zhang_spargeattn_2025 yuan_nsa_2025 lai_minimax_2026 fu_sparda_2026"></span>.</p></li>
+<li><p><strong>ProbSparse.</strong> La medida max–mean selecciona qué
+<em>consultas</em> obtienen una fila de puntajes, nunca qué claves ve
+una consulta, así que un paso de decodificación con una sola consulta
+tiene una selección top-<span class="math inline">\(u\)</span>
+degenerada: toda consulta es dominante y la atención sobre el prefijo
+cacheado es exacta, no aproximada <span class="citation"
+data-cites="wu_deep_sparse_conformer_2022 zhou_informer_2021"></span>.
+Los términos de posición relativa (<span
+class="math inline">\(\mathbf{U}_1,\mathbf{U}_2\)</span>) son locales a
+la fila y se reconstruyen desde las posiciones cacheadas de las claves,
+así que el slot KV no necesita flujos extra.</p></li>
 </ul>
 <h3 id="familia-recurrente-y-de-estado-lineal">Familia Recurrente y de
 Estado Lineal</h3>
@@ -19674,7 +19888,7 @@ líneas base de un solo mezclador como <code>attn_single_mamba</code>
 añade una gran tabla clave-valor al bloque de atención.</p>
 <p>El gráfico de composición (Figura <a
 href="#fig:r2-params-composition" data-reference-type="ref"
-data-reference="fig:r2-params-composition">114</a>) es el diagnóstico
+data-reference="fig:r2-params-composition">115</a>) es el diagnóstico
 más útil de la sección. Los embeddings y la cabeza de salida son costes
 fijos de unos 49k parámetros cada uno, así que casi toda diferencia
 entre configuraciones se paga en el bloque de atención y la FFN—los dos
@@ -19978,7 +20192,7 @@ porque la razón mediana es 0,90.</figcaption>
 <h2 id="el-atlas-atimesb">El atlas A<span
 class="math inline">\(\times\)</span>B</h2>
 <p>El atlas (Figura <a href="#fig:r2-matrix-loss"
-data-reference-type="ref" data-reference="fig:r2-matrix-loss">122</a>)
+data-reference-type="ref" data-reference="fig:r2-matrix-loss">123</a>)
 es el centro del experimento: una matriz en la que cada celda es un par
 híbrido, las filas indexan el primer mezclador, las columnas el segundo
 y el color codifica la pérdida final. Se lee en dos direcciones. Columna
@@ -21020,7 +21234,7 @@ class="math inline">\(r = 1{,}00\)</span>), lo que es esperable porque
 la razón de recorte se calcula a partir de la norma de gradiente, y
 ninguna correlaciona con la calidad.</p>
 <p>La matriz de correlación de la Figura <a href="#fig:r2-correlation"
-data-reference-type="ref" data-reference="fig:r2-correlation">141</a> se
+data-reference-type="ref" data-reference="fig:r2-correlation">142</a> se
 calcula sobre las 868 filas. Leída así, el número de parámetros
 correlaciona con la pérdida a <span
 class="math inline">\(-0{,}43\)</span> y con la precisión a <span
@@ -22259,110 +22473,117 @@ diferenciable</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">probsparse</td>
+<td style="text-align: left;">ProbSparse: selección top-u por
+dispersidad de consultas con términos de posición relativa</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">sparge</td>
 <td style="text-align: left;">SpargeAttn — poda de bloques en dos
 etapas; entrenamiento denso, inferencia dispersa</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">fasa</td>
 <td style="text-align: left;">FASA — selección de tokens consciente de
 frecuencia; entrenamiento denso, inferencia dispersa</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">msa</td>
 <td style="text-align: left;">MiniMax Sparse Attention — bloques
 dispersos sobre GQA</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">sparda</td>
 <td style="text-align: left;">SparDA — atención dispersa desacoplada con
 proyección Forecast</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">lsa</td>
 <td style="text-align: left;">Latent Sparse Attention — clustering
 semántico de claves con selección top-k</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">fastconformer</td>
 <td style="text-align: left;">Fast Conformer — ventana de contexto
 limitado + token global anclado a la cabecera</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">kda</td>
 <td style="text-align: left;">Kimi Delta Attention — decaimiento por
 canal + compuerta de escritura escalar</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">falcon1 / falcon2 / falcon3</td>
 <td style="text-align: left;">Familia de regresión Falcon — regla delta
 NLMS prefix-alineada (RAW)</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">falcon1a / falcon2a / falcon3a</td>
 <td style="text-align: left;">Familia de producto interno Falcon —
 escrituras aditivas desplazadas con decaimiento por ridge</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mla</td>
 <td style="text-align: left;">Atención Latente Multi-Cabeza + RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">gqla</td>
 <td style="text-align: left;">Atención Latente por Consultas Agrupadas —
 dos rutas de decodificación</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mlra</td>
 <td style="text-align: left;">Atención Multi-Cabeza de Rango Bajo —
 latente particionable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">tucker</td>
 <td style="text-align: left;">Atención Tucker — factorización de rango
 bajo generalizada</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">kpa</td>
 <td style="text-align: left;">Atención de Producto de Kronecker —
 factores K/V como suma de Kronecker, RoPE Kronecker-separable</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">tpa</td>
 <td style="text-align: left;">Atención de Producto Tensorial — Q/K/V con
 factores vectoriales CP, caché KV factorizada, compatible con RoPE</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">mfa</td>
 <td style="text-align: left;">Atención de Factorización Multimatriz — QK
 compartido de bajo rango, una sola cabeza K/V compartida, reúso de clave
@@ -22370,42 +22591,42 @@ MFA-KR</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">iha</td>
 <td style="text-align: left;">Atención de Cabezas Entrelazadas —
 pseudo-cabezas entre cabezas</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gta</td>
 <td style="text-align: left;">Atención laTenT por Cabezas Agrupadas —
 mapa compartido + valores latentes</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">mtla</td>
 <td style="text-align: left;">Atención Latente Temporal Multi-Cabeza —
 fusión temporal KV</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">cca</td>
 <td style="text-align: left;">Atención Convolucional Comprimida —
 atención en espacio latente + convs</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ccgqa</td>
 <td style="text-align: left;">Atención Convolucional Comprimida por
 Consultas Agrupadas — CCA + GQA en latente</td>
 <td style="text-align: center;"></td>
 <td style="text-align: center;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">gma</td>
 <td style="text-align: left;">Atención de Mezcla Gaussiana —
 enrutamiento latente probabilístico, <span
@@ -23195,7 +23416,7 @@ combinación incompleta.</p></li>
 <h1 id="sec:annex-summary-tables">Tablas de Resumen Completas</h1>
 <p>Este anexo proporciona una referencia completa de todos los
 componentes implementados en el código base de Frankenstein Transformer:
-55 mezcladores de secuencia en nueve familias, 38 optimizadores, 6
+56 mezcladores de secuencia en nueve familias, 38 optimizadores, 6
 variantes de normalización, 43 funciones de activación y 4 métodos de
 embedding. Cada tabla es autocontenida y referencia la bibliografía.</p>
 <h2 id="resumen-de-mezcladores-de-secuencia">Resumen de Mezcladores de
@@ -23319,6 +23540,13 @@ class="math inline">\(\mathcal{O}(k)\)</span> &amp; Selección top-<span
 class="math inline">\(k\)</span> diferenciable; máscara de dispersidad
 aprendida &amp; <span class="citation"
 data-cites="lou_sparsek_2024"></span><br />
+probsparse &amp; Disperso &amp; <span
+class="math inline">\(\mathcal{O}(L \log L \cdot d)\)</span> &amp; <span
+class="math inline">\(\mathcal{O}(n_{\text{ctx}})\)</span> &amp;
+Top-<span class="math inline">\(u\)</span> por dispersidad de consultas
+con medida KL max–mean; decodificación exacta con caché KV &amp; <span
+class="citation"
+data-cites="wu_deep_sparse_conformer_2022"></span><br />
 nsa &amp; Disperso &amp; <span class="math inline">\(\mathcal{O}((t/d +
 n_l + w)d)\)</span> &amp; <span
 class="math inline">\(\mathcal{O}(n)\)</span> &amp; Diseño de 3 ramas
