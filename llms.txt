@@ -4,7 +4,7 @@
 > and data governance for education and production systems. Based in Santiago, Chile.
 > Languages: Spanish (native), English (technical).
 
-Last updated: 2026-11-09
+Last updated: 2026-11-18
 
 ## Canonical links
 - Portfolio (Spanish): https://erickfmm.github.io/
@@ -14,15 +14,17 @@ Last updated: 2026-11-09
 - GitHub: https://github.com/erickfmm
 - LinkedIn: https://www.linkedin.com/in/erickfmm/
 - Hugging Face: https://huggingface.co/erickfmm
+- alphaXiv: https://www.alphaxiv.org/@erick-francisco-merino-menares
 - Email: erickfmm@gmail.com
 - Location: PAC, Santiago, Chile
 
 ## Metrics
+- 13 indexed publications (398 citations, h-index 7)
+- 12 datasets published on Hugging Face
+- 3 models published on Hugging Face
+- 10 years across academia and professional practice
+- 4 journal publications, 3 conference publications and 1 alphaXiv preprint
 - 28 public repositories on GitHub
-- 11 datasets published on Hugging Face
-- 2 models published on Hugging Face
-- 9 years across academia and professional practice
-- 5 journal publications and 3 conference publications
 
 ---
 
@@ -73,7 +75,7 @@ Librería Python y CLI config-driven para entrenar arquitecturas experimentales 
 - Experimento 2 · atlas de mixers: https://erickfmm.github.io/frankenstein-transformer/experiments/2/
 - Experimento 1 · ronda smoke: https://erickfmm.github.io/frankenstein-transformer/experiments/1/
 - Dataset temporal (Hugging Face bucket): https://huggingface.co/buckets/erickfmm/frankenstein-transformer-exp2
-- Paper: https://erickfmm.github.io/frankenstein-transformer/paper/paper-es.html
+- Preprint: https://www.alphaxiv.org/abs/2611.frankenstein-transformer-experimentation-toolkit
 - GitHub: https://github.com/erickfmm/frankenstein-transformer
 - PyPI: https://pypi.org/project/frankenstein-transformer/
 
@@ -88,7 +90,6 @@ Biblioteca de metaheurísticas y optimización numérica con visualizaciones: PS
 - Demo: https://erickfmm.github.io/anmetal/index.html
 - GitHub: https://github.com/erickfmm/ANMetaL
 - PyPI: https://pypi.org/project/anmetal/
-- Port JavaScript/TypeScript en desarrollo (anmetal-js).
 
 ### Awesome NLP / LLM en Español
 Listado curado de recursos, datasets, modelos y cursos de NLP y LLM en español.
@@ -107,12 +108,14 @@ Generador automático de presentaciones educativas desde YAML en PPTX y PDF.
 - GitHub: https://github.com/erickfmm/autogenerator-of-ppt
 
 ## Publicaciones
+### Preprints
+1. Frankenstein Transformer: Unified Encoder-Decoder Library, CLI, and Research-Grounded Design Notes — alphaXiv (2026). https://www.alphaxiv.org/abs/2611.frankenstein-transformer-experimentation-toolkit
+
 ### Revistas
-1. A new EEG software that supports emotion recognition by using an autonomous approach — Neural Computing and Applications (2020).
-2. Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics — IEEE Access (2018).
-3. Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations — Journal of Universal Computer Science (2018).
-4. Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review — Journal of Universal Computer Science (2018).
-5. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition — Computational Intelligence and Neuroscience (2018).
+1. Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics — IEEE Access (2018).
+2. Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations — Journal of Universal Computer Science (2018).
+3. Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review — Journal of Universal Computer Science (2018).
+4. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition — Computational Intelligence and Neuroscience (2018).
 
 ### Conferencias
 1. Evolução das posturas corporais de estudantes em apresentações de seminários — Brazilian Symposium on Computers in Education (2018).
@@ -125,6 +128,7 @@ Perfil: https://huggingface.co/erickfmm
 ### Modelos
 - Mix TinyLlama 3x1B GGUF — https://huggingface.co/erickfmm/Mix_TinyLlama-3x1B_oasst2_chatML_Cluster_3_2_1_V1-GGUF
 - mrbert-es-sbert-ft — https://huggingface.co/erickfmm/mrbert-es-sbert-ft
+- Tokenizer red_pajama_es_hq_35 — https://huggingface.co/erickfmm/tokenizer-baseon-erickfmm__red_pajama_es_hq_35
 
 ### Datasets destacados
 - QQP Triplets (ES), 216 filas.
@@ -133,7 +137,7 @@ Perfil: https://huggingface.co/erickfmm
 - Wiktionary Spanish Dictionary, 195K definiciones.
 - Multilingual Sentence Pairs STS, 2M filas.
 - RedPajama ES HQ v3.5, 17.6M filas.
-- Total: 11 datasets publicados.
+- Total: 12 datasets publicados.
 
 ## Stack
 - Lenguajes: Python (avanzado), C# (básico), JavaScript (básico)
@@ -185,12 +189,14 @@ Research Assistant, Valparaíso.
 - Autogenerator of PPT — YAML to educational PPTX/PDF generator.
 
 ## Publications
+### Preprints
+1. Frankenstein Transformer: Unified Encoder-Decoder Library, CLI, and Research-Grounded Design Notes — alphaXiv (2026). https://www.alphaxiv.org/abs/2611.frankenstein-transformer-experimentation-toolkit
+
 ### Journals
-1. A new EEG software that supports emotion recognition by using an autonomous approach — Neural Computing and Applications (2020).
-2. Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics — IEEE Access (2018).
-3. Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations — Journal of Universal Computer Science (2018).
-4. Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review — Journal of Universal Computer Science (2018).
-5. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition — Computational Intelligence and Neuroscience (2018).
+1. Exploring Collaborative Writing of User Stories with Multimodal Learning Analytics — IEEE Access (2018).
+2. Development of a Software that Supports Multimodal Learning Analytics: A Case Study on Oral Presentations — Journal of Universal Computer Science (2018).
+3. Mathematics Learning through Computational Thinking Activities: A Systematic Literature Review — Journal of Universal Computer Science (2018).
+4. Using Black Hole Algorithm to Improve EEG-Based Emotion Recognition — Computational Intelligence and Neuroscience (2018).
 
 ### Conferences
 1. Evolução das posturas corporais de estudantes em apresentações de seminários — Brazilian Symposium on Computers in Education (2018).
