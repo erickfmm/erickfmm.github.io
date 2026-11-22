@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiment 3 · The complete mixer atlas · Frankenstein Transformer</title>
+<meta name="description" content="Experiment 3: 1,653 runs, 1,431 hybrid pairs and 20.5 M training steps — the complete mixer atlas, with per-block gradients, throughput, quantization and an interactive A×B matrix.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Experiment 3 · The complete mixer atlas">
+<meta property="og:description" content="1,653 runs, 1,431 hybrid pairs, 20.5 M steps: the complete mixer atlas with gradients, cost and quantization.">
+<meta property="og:image" content="https://erickfmm.github.io/frankenstein-transformer/experiments/3/img/quant_agreement-dark.png">
+<meta property="og:url" content="https://erickfmm.github.io/frankenstein-transformer/experiments/3/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://erickfmm.github.io/frankenstein-transformer/experiments/3/">
+<link rel="icon" href="../../../favicon.ico">
+<style>
+:root{
+  --bg:#0d1117;--bg-elev:#11161d;--surface:#161b22;--surface-2:#1c232c;
+  --border:#30363d;--border-soft:#21262d;--text:#d6deea;--muted:#8b949e;
+  --accent:#58a6ff;--accent-2:#79c0ff;--success:#3fb950;--warning:#d2991d;--danger:#f85149;
+  --pink:#f778ba;--violet:#d2a8ff;--cyan:#39c5cf;--orange:#ffa657;
+  --radius:12px;--radius-sm:8px;--mono:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --shadow:0 10px 30px rgba(1,4,9,.45);
+}
+html[data-theme="light"]{
+  --bg:#f6f8fa;--bg-elev:#fff;--surface:#fff;--surface-2:#eef1f4;--border:#d0d7de;
+  --border-soft:#e3e8ee;--text:#1f2328;--muted:#59636e;--accent:#0969da;--accent-2:#0550ae;
+  --success:#1a7f37;--warning:#9a6700;--danger:#cf222e;--pink:#bf3989;--violet:#8250df;
+  --cyan:#1b7c83;--orange:#bc4c00;--shadow:0 8px 24px rgba(140,149,159,.2);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.section p a,.callout a,table a,footer a{text-decoration:underline;text-underline-offset:2px}
+.topbar a,.btn,.chip,.brand{text-decoration:none!important}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);
+  border:1px solid var(--border-soft);border-radius:5px;padding:.08em .35em;white-space:nowrap}
+.section p code,.callout code,table code{white-space:normal;overflow-wrap:anywhere}
+.t-en,.t-es{display:inline}
+html[data-lang="en"] .t-es{display:none!important}
+html[data-lang="es"] .t-en{display:none!important}
+div.t-en,div.t-es{display:block}
+html[data-lang="en"] div.t-es{display:none!important}
+html[data-lang="es"] div.t-en{display:none!important}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;
+  padding:8px 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.topbar .brand{font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px;font-size:14px}
+.topbar .brand span.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 12px var(--accent)}
+.topbar nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+.topbar nav a{font-size:12px;color:var(--muted);padding:5px 8px;border-radius:6px;white-space:nowrap}
+.topbar nav a:hover{color:var(--text);background:var(--surface-2);text-decoration:none}
+.tools{display:flex;gap:6px}
+.tbtn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;
+  padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn.on{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:700}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:88px 24px 64px;
+  background:radial-gradient(1200px 500px at 15% -10%,rgba(88,166,255,.22),transparent 60%),
+             radial-gradient(900px 500px at 90% 0%,rgba(247,120,186,.14),transparent 55%),
+             var(--bg-elev);
+  border-bottom:1px solid var(--border)}
+.hero:after{content:"";position:absolute;inset:0;background-image:
+  linear-gradient(rgba(88,166,255,.05) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(88,166,255,.05) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(600px 300px at 30% 20%,#000,transparent)}
+.hero-inner{position:relative;z-index:1;max-width:1080px;margin:0 auto}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.hero h1{font-size:clamp(38px,6vw,72px);line-height:1.02;margin:14px 0 16px;letter-spacing:-.03em}
+.lede{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:760px;margin:0 0 26px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px}
+.hero-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;font-size:12.5px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:9px;
+  border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13.5px;
+  font-weight:600;transition:.16s;text-decoration:none}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px);text-decoration:none}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#0d1117}
+.btn-primary:hover{background:var(--accent-2);border-color:var(--accent-2);color:#0d1117}
+
+/* layout */
+.wrap,.section,.kpis,.cta{max-width:1180px;margin:0 auto}
+.section{padding:54px 24px 10px;border-bottom:1px solid var(--border-soft)}
+.section:last-of-type{border-bottom:0}
+.section h2{font-size:clamp(24px,3.2vw,34px);letter-spacing:-.02em;margin:0 0 18px}
+.section h2 .t-en,.section h2 .t-es{display:block}
+.section h3{font-size:17px;margin:34px 0 10px;color:var(--accent-2)}
+.section p{font-size:15.2px;max-width:900px}
+.section p .t-en,.section p .t-es{display:block}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;
+  padding:26px 24px;margin-top:-34px;position:relative;z-index:2}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 16px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--accent))}
+.kpi-v{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.kpi-l{font-size:12px;color:var(--muted);margin-top:4px}
+.kpi.blue{--c:#58a6ff}.kpi.violet{--c:#d2a8ff}.kpi.green{--c:#3fb950}
+.kpi.orange{--c:#ffa657}.kpi.cyan{--c:#39c5cf}.kpi.pink{--c:#f778ba}
+
+/* findings */
+.findings{list-style:none;padding:0;margin:18px 0 8px;display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.findings li{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;font-size:13.6px;color:var(--muted)}
+.findings li b{display:block;color:var(--text);font-size:14.4px;margin-bottom:6px}
+.findings li code{background:var(--surface-2)}
+
+/* callouts */
+.callout{display:flex;gap:12px;margin:22px 0;padding:16px 18px;border-radius:var(--radius);
+  background:color-mix(in srgb,var(--accent) 8%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));font-size:14.4px}
+.callout.warn{background:color-mix(in srgb,var(--warning) 9%,var(--surface));
+  border-color:color-mix(in srgb,var(--warning) 40%,var(--border))}
+.callout-icon{color:var(--accent);font-weight:800}
+.callout.warn .callout-icon{color:var(--warning)}
+.callout .t-en,.callout .t-es{display:block}
+
+/* figures */
+.fig{margin:26px 0;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px;box-shadow:var(--shadow);overflow:hidden}
+.fig img{width:100%;height:auto;display:block;border-radius:6px;background:#0d1117}
+html[data-theme="light"] .fig img{background:#fff}
+.fig figcaption{font-size:12.5px;color:var(--muted);padding:10px 8px 2px;text-align:center}
+.fig figcaption .t-en,.fig figcaption .t-es{display:block}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:14px 0 24px;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--surface)}
+table.dt{width:100%;border-collapse:collapse;font-size:12.8px;min-width:560px}
+table.dt th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:700;
+  padding:9px 11px;border-bottom:1px solid var(--border);white-space:nowrap;font-size:12px;
+  letter-spacing:.02em;color:var(--muted);text-transform:uppercase}
+table.dt td{padding:7px 11px;border-bottom:1px solid var(--border-soft);white-space:nowrap}
+table.dt tbody tr:hover{background:var(--surface-2)}
+table.dt tr.hl td{background:color-mix(in srgb,var(--success) 12%,transparent);font-weight:700}
+table.files td:first-child{font-family:var(--mono);font-size:12px}
+.split-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.split-tables .table-wrap{margin:0 0 8px}
+.split-tables table.dt{min-width:0}
+.split-tables td,.split-tables th{padding:6px 8px;font-size:12px}
+table.files td{white-space:normal}
+
+/* family chips */
+.family-strip{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}
+.chip{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted)}
+.chip:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--c);margin-right:6px}
+
+/* conclusions */
+.conclusions{display:grid;gap:12px;margin:20px 0}
+.conclusion{display:flex;gap:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px}
+.conclusion .num{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent);opacity:.7}
+.conclusion b{font-size:14.6px}
+.conclusion p{margin:4px 0 0;font-size:13.6px;color:var(--muted)}
+
+/* CTA */
+.cta{margin:40px auto 80px;padding:38px 26px;text-align:center;border:1px solid var(--border);
+  border-radius:18px;background:radial-gradient(600px 220px at 50% 0%,rgba(88,166,255,.16),transparent),var(--surface)}
+.cta h2{margin:0 0 8px;font-size:26px}
+.cta p{color:var(--muted);max-width:680px;margin:0 auto 18px;font-size:14.5px}
+
+footer{padding:26px 24px 60px;color:var(--muted);font-size:12.5px;text-align:center}
+@media(max-width:700px){
+  .topbar nav{display:none}
+  .brand-path{display:none!important}
+  .hero{padding:60px 18px 48px}
+  .section{padding:36px 18px 6px}
+  table.dt{font-size:12px}
+}
+</style>
+
+<style>
+.fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:8px 18px}
+.fig-grid .fig{margin:14px 0}
+.chart-xl{height:860px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:18px 0}
+.chart-lg{height:560px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:18px 0}
+#ranking-chart{height:780px}
+.atlas-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.atlas-controls label{font-size:14px;color:var(--muted)}
+.atlas-controls select{background:var(--surface-2);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:6px 10px;font:inherit}
+.atlas-hint{color:var(--muted);font-size:13px}
+@media (max-width:720px){.chart-xl{height:620px}.chart-lg{height:420px}#ranking-chart{height:620px}
+  .fig-grid{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="../../index.html"><span class="dot"></span>Frankenstein<span class="brand-path" style="color:var(--muted);font-weight:500">/ experiments / 3</span></a>
+  <nav>
+    <a href="../index.html"><span class="t-en">All experiments</span><span class="t-es">Todos los experimentos</span></a>
+    <a href="../2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a>
+    <a href="#summary"><span class="t-en">Summary</span><span class="t-es">Resumen</span></a>
+    <a href="#atlas"><span class="t-en">Atlas</span><span class="t-es">Atlas</span></a>
+    <a href="#gradients"><span class="t-en">Gradients</span><span class="t-es">Gradientes</span></a>
+    <a href="#inference"><span class="t-en">Quantization</span><span class="t-es">Cuantización</span></a>
+    <a href="#data"><span class="t-en">Data</span><span class="t-es">Datos</span></a>
+    <a href="#conclusions"><span class="t-en">Conclusions</span><span class="t-es">Conclusiones</span></a>
+  </nav>
+  <div class="tools">
+    <button class="tbtn" data-lang-btn="en" onclick="ftSetLang('en')">EN</button>
+    <button class="tbtn" data-lang-btn="es" onclick="ftSetLang('es')">ES</button>
+    <button class="tbtn" data-theme-btn="dark" onclick="ftSetTheme('dark')">◐</button>
+    <button class="tbtn" data-theme-btn="light" onclick="ftSetTheme('light')">☀</button>
+  </div>
+</div>
+
+<main id="main">
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow"><span class="t-en">Experiment 3 · 1,653 runs · 1,431 hybrid pairs · 20.5 M training steps</span><span class="t-es">Experimento 3 · 1,653 corridas · 1,431 pares híbridos · 20.5 M de pasos</span></div>
+    <h1><span class="t-en">The complete mixer atlas</span><span class="t-es">El atlas completo de mixers</span></h1>
+    <p class="lede"><span class="t-en">Every unordered pair of the 54 registered mixers, plus 168 ablations and 54 single-mixer baselines — trained on one CPU host, measured end to end and charted. The matrix is complete: 1,431 of 1,431 cells.</span><span class="t-es">Todos los pares no ordenados de los 54 mixers registrados, más 168 ablaciones y 54 líneas base de un solo mixer — entrenados en un solo host de CPU, medidos de extremo a extremo y graficados. La matriz está completa: 1.431 de 1.431 celdas.</span></p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#atlas"><span class="t-en">Open the interactive atlas</span><span class="t-es">Abrir el atlas interactivo</span> →</a>
+      <a class="btn" href="#summary"><span class="t-en">Read the findings</span><span class="t-es">Leer los hallazgos</span></a>
+      <a class="btn" href="../2/index.html"><span class="t-en">Experiment 2 · the first atlas</span><span class="t-es">Experimento 2 · el primer atlas</span></a>
+      <a class="btn" href="data/atlas.csv" download><span class="t-en">Download the atlas (CSV)</span><span class="t-es">Descargar el atlas (CSV)</span></a>
+    </div>
+    <div class="hero-meta">
+      <span><span class="t-en">Generated</span><span class="t-es">Generado</span> 2026-11-21</span><span>·</span>
+      <span><span class="t-en">Compute</span><span class="t-es">Cómputo</span>: 3,668 h</span><span>·</span>
+      <span><span class="t-en">Calendar days</span><span class="t-es">Días calendario</span>: 7.2</span><span>·</span>
+      <span><span class="t-en">Training failure rate</span><span class="t-es">Tasa de fallo</span>: 0.6%</span>
+    </div>
+  </div>
+</header>
+
+<section class="kpis">
+  <div class="kpi blue"><div class="kpi-v">1,653</div><div class="kpi-l"><span class="t-en">training runs</span><span class="t-es">corridas de entrenamiento</span></div></div>
+  <div class="kpi violet"><div class="kpi-v">1,431</div><div class="kpi-l"><span class="t-en">hybrid pairs (54 × 53 / 2)</span><span class="t-es">pares híbridos (54 × 53 / 2)</span></div></div>
+  <div class="kpi green"><div class="kpi-v">168</div><div class="kpi-l"><span class="t-en">ablations and task switches</span><span class="t-es">ablaciones e interruptores de tarea</span></div></div>
+  <div class="kpi cyan"><div class="kpi-v">20.5 M</div><div class="kpi-l"><span class="t-en">logged optimisation steps</span><span class="t-es">pasos de optimización registrados</span></div></div>
+  <div class="kpi orange"><div class="kpi-v">3,668 h</div><div class="kpi-l"><span class="t-en">of training wall time</span><span class="t-es">de tiempo de pared de entrenamiento</span></div></div>
+  <div class="kpi pink"><div class="kpi-v">24.0%</div><div class="kpi-l"><span class="t-en">mean held-out top-5 (MLM)</span><span class="t-es">top-5 retenido medio (MLM)</span></div></div>
+</section>
+
+<section id="summary" class="section">
+<h2><span class="t-en">Executive summary</span><span class="t-es">Resumen ejecutivo</span></h2>
+<p><span class="t-en">Round 3 closes the matrix that Round 2 left open. It trains every unordered pair of the 54 registered mixers — C(54,2) = 1,431 cells, none missing — plus 54 single-mixer baselines and 168 ablation runs that move one switch at a time: optimizer, normalization, positional encoding, Mixture-of-Experts routing, residual path, task and model class. All of it on one CPU host, in 7 calendar days, for 3,668 hours of training wall time.</span><span class="t-es">La ronda 3 cierra la matriz que la ronda 2 dejó abierta. Entrena todos los pares no ordenados de los 54 mixers registrados — C(54,2) = 1,431 celdas, sin ninguna ausente — más 54 líneas base de un solo mixer y 168 corridas de ablación que mueven un interruptor a la vez: optimizador, normalización, codificación posicional, enrutamiento MoE, camino residual, tarea y clase de modelo. Todo en un solo host de CPU, en 7 días calendario, por 3,668 horas de tiempo de pared de entrenamiento.</span></p>
+<div class="callout insight"><span class="callout-icon">◆</span><div><div class="t-en"><b>The headline:</b> the best pair is <code>falcon2a + conformer</code> at <b>7.736 nats</b>, and the worst is <code>nsa + lsa</code> at <b>9.92</b> — a spread wider than any ablation moves the loss. The second mixer is the lever: the median loss spans <b>0.882 nats</b> across B roles against <b>0.804</b> across A roles. At 8 and 4 bits quantization is free (sample agreement <b>99.5%</b> and <b>91.8%</b>), while 2-bit weights change the model (<b>20.8%</b>).</div><div class="t-es"><b>Lo principal:</b> el mejor par es <code>falcon2a + conformer</code> con <b>7.736 nats</b> y el peor es <code>nsa + lsa</code> con <b>9.92</b> — una dispersión mayor que la de cualquier ablación. El segundo mixer es la palanca: la pérdida mediana abarca <b>0.882 nats</b> entre roles B frente a <b>0.804</b> entre roles A. Con 8 y 4 bits la cuantización es gratis (acuerdo por muestra <b>99.5 %</b> y <b>91.8 %</b>), mientras que los pesos de 2 bits cambian el modelo (<b>20.8 %</b>).</div></div></div>
+<ul class="findings">
+<li><b><span class="t-en">The grid is complete</span><span class="t-es">La rejilla está completa</span></b><br><span class="t-en">1,431 of 1,431 cells trained. The ten <code>engram</code> pairs that crash are still cells of the atlas; they simply have no loss, which is why the matrix shows ten holes.</span><span class="t-es">1,431 de 1,431 celdas entrenadas. Los diez pares con <code>engram</code> que fallan siguen siendo celdas del atlas; simplemente no tienen pérdida, y por eso la matriz muestra diez huecos.</span></li>
+<li><b><span class="t-en">The second mixer is the lever</span><span class="t-es">El segundo mixer es la palanca</span></b><br><span class="t-en">Across roles, the median loss spans 0.882 nats for B (best <code>conformer</code> at 8.168, worst <code>mamba</code> at 9.051) and 0.804 for A. The same asymmetry that Experiment 2 measured at 100 epochs survives at 500.</span><span class="t-es">Entre roles, la pérdida mediana abarca 0.882 nats para B (mejor <code>conformer</code> con 8.168, peor <code>mamba</code> con 9.051) y 0.804 para A. La misma asimetría que el Experimento 2 midió a 100 épocas sobrevive a 500.</span></li>
+<li><b><span class="t-en">Size helps but does not decide</span><span class="t-es">El tamaño ayuda pero no decide</span></b><br><span class="t-en">Parameter count correlates with final loss at ρ = -0.42 and with held-out quality at ρ = +0.14. The largest run (1.96 M parameters) is not the best, and the cheapest mixers sit on both sides of the median.</span><span class="t-es">El número de parámetros correlaciona con la pérdida final en ρ = -0.42 y con la calidad retenida en ρ = +0.14. La corrida más grande (1.96 M de parámetros) no es la mejor, y los mixers más baratos se reparten a ambos lados de la mediana.</span></li>
+<li><b><span class="t-en">Learning is fast; the ranking is decided early</span><span class="t-es">El aprendizaje es rápido; el ranking se decide temprano</span></b><br><span class="t-en">The median pair reaches 90% of its loss drop at 41% of the schedule, and the per-pair loss at a quarter of the schedule already ranks the pairs with ρ = 0.62 against the final order. Every curve is still descending when the schedule ends.</span><span class="t-es">El par mediano alcanza el 90 % de su caída de pérdida al 41 % del calendario, y la pérdida por par a un cuarto del calendario ya ordena los pares con ρ = 0.62 frente al orden final. Todas las curvas siguen bajando cuando termina el calendario.</span></li>
+<li><b><span class="t-en">Gradient pressure is block-specific</span><span class="t-es">La presión del gradiente es específica por bloque</span></b><br><span class="t-en">The head carries the largest gradient (3.66), then attention (2.12) and the FFN (0.71); embeddings and normalization are an order of magnitude smaller. The active blocks keep a coefficient of variation below 0.35, and clipping is routine: the median clip ratio is 1.04.</span><span class="t-es">La cabeza soporta el gradiente mayor (3.66), luego la atención (2.12) y la FFN (0.71); los embeddings y la normalización son un orden de magnitud menores. Los bloques activos mantienen un coeficiente de variación por debajo de 0,35, y el recorte es rutina: la mediana del cociente es 1.04.</span></li>
+<li><b><span class="t-en">Quantization: 8 and 4 bits are free, 2 bits is not</span><span class="t-es">Cuantización: 8 y 4 bits son gratis, 2 bits no</span></b><br><span class="t-en">Against the unquantized export, <code>q8_0_v2</code> changes the top-1 by +0.07 pp and leaves 99.2% of the pairs unchanged; <code>q4_0_v2</code> changes it by +0.33 pp with 94.5% unchanged; <code>i2_s_v2</code> loses 2.03 pp and degrades 18.7% of the pairs.</span><span class="t-es">Frente a la exportación sin cuantizar, <code>q8_0_v2</code> cambia el top-1 en +0.07 pp y deja sin cambios el 99.2 % de los pares; <code>q4_0_v2</code> lo cambia en +0.33 pp con el 94.5 % sin cambios; <code>i2_s_v2</code> pierde 2.03 pp y degrada el 18.7 % de los pares.</span></li>
+</ul>
+</section>
+
+<section id="method" class="section">
+<h2><span class="t-en">What was run, and how to read it</span><span class="t-es">Qué se corrió y cómo leerlo</span></h2>
+<p><span class="t-en">Experiment 3 is the same harness as Experiment 2 with the grid completed and the schedule extended to 500 epochs. Every configuration asks for 500 epochs, but the harness stops runs earlier — by schedule, plateau criterion or an ablation-specific cap: 734 runs reached the end and 919 stopped sooner. The 44 runs that stopped before epoch 100 (fifteen five-epoch MoE routing tests, the BitNet/GGUF conversion, twenty-two truncated pairs and a few switches) are excluded from every loss, dynamics, gradient and correlation comparison; they stay in the population and the compute ledger.</span><span class="t-es">El Experimento 3 es el mismo arnés que el Experimento 2 con la rejilla completa y el calendario extendido a 500 épocas. Todas las configuraciones piden 500 épocas, pero el arnés detiene corridas antes — por calendario, criterio de meseta o un tope específico de la ablación: 734 corridas llegaron al final y 919 se detuvieron antes. Las 44 corridas que se detuvieron antes de la época 100 (quince pruebas de enrutamiento MoE de cinco épocas, la conversión BitNet/GGUF, veintidós pares truncados y algunos interruptores) quedan excluidas de toda comparación de pérdida, dinámica, gradiente y correlación; permanecen en la población y en el registro de cómputo.</span></p>
+<p><span class="t-en"><b>Deployment is excluded on purpose.</b> The deployer received the dataclass stored in the checkpoint where it expected a mapping and called <code>.get()</code> on it, so 822 of the 1,334 deploy records failed. Measuring a broken stage would confound a serialization bug with quantization quality; the quantized analysis therefore uses the Transformers-export path, which exported 4,686 models with no failures.</span><span class="t-es"><b>El despliegue se excluye a propósito.</b> El desplegador recibió la dataclass guardada en el checkpoint donde esperaba un diccionario y le llamó <code>.get()</code>, así que 822 de los 1.334 registros de despliegue fallaron. Medir una etapa rota confundiría un error de serialización con la calidad de la cuantización; por eso el análisis cuantizado usa la ruta de exportación a Transformers, que exportó 4.686 modelos sin fallos.</span></p>
+<p><span class="t-en">The population by family is below. <b>Smoke</b> counts the runs shorter than 100 epochs; the loss and cost columns are computed over the remaining 1,609 runs. The tokenizer, task and real-data families run different tasks, so their losses are not comparable with MLM.</span><span class="t-es">La población por familia está abajo. <b>Humo</b> cuenta las corridas de menos de 100 épocas; las columnas de pérdida y coste se calculan sobre las 1,609 corridas restantes. Las familias de tokenizadores, tareas y datos reales corren tareas distintas, así que sus pérdidas no son comparables con MLM.</span></p>
+<div class="table-wrap"><table class="dt"><thead><tr><th><span class="t-en">Family</span><span class="t-es">Familia</span></th><th><span class="t-en">Runs</span><span class="t-es">Corridas</span></th><th><span class="t-en">Smoke</span><span class="t-es">Humo</span></th><th><span class="t-en">Params</span><span class="t-es">Parámetros</span></th><th><span class="t-en">Final loss</span><span class="t-es">Pérdida final</span></th><th><span class="t-en">min/Mparam</span><span class="t-es">min/Mparám</span></th></tr></thead><tbody><tr><td><span class="t-en">hybrid pairs</span><span class="t-es">pares híbridos</span></td><td>1,431</td><td>22</td><td>318,784</td><td>8.78</td><td>422</td></tr><tr><td><span class="t-en">single mixers</span><span class="t-es">mixers únicos</span></td><td>54</td><td>0</td><td>255,092</td><td>9.00</td><td>547</td></tr><tr><td><span class="t-en">optimizers</span><span class="t-es">optimizadores</span></td><td>39</td><td>0</td><td>309,568</td><td>9.32</td><td>311</td></tr><tr><td><span class="t-en">ViT PE ablations</span><span class="t-es">ablaciones de PE del ViT</span></td><td>39</td><td>0</td><td>348,458</td><td>1.00</td><td>208</td></tr><tr><td><span class="t-en">architecture switches</span><span class="t-es">interruptores de arquitectura</span></td><td>23</td><td>4</td><td>309,568</td><td>8.94</td><td>318</td></tr><tr><td><span class="t-en">text PE ablations</span><span class="t-es">ablaciones de PE de texto</span></td><td>12</td><td>1</td><td>309,568</td><td>8.83</td><td>297</td></tr><tr><td><span class="t-en">vision tasks</span><span class="t-es">tareas de visión</span></td><td>9</td><td>0</td><td>337,298</td><td>1.00</td><td>244</td></tr><tr><td><span class="t-en">normalization</span><span class="t-es">normalización</span></td><td>6</td><td>0</td><td>309,328</td><td>8.94</td><td>237</td></tr><tr><td><span class="t-en">MoE variants</span><span class="t-es">variantes MoE</span></td><td>17</td><td>15</td><td>366,160</td><td>8.87</td><td>556</td></tr><tr><td><span class="t-en">task switches</span><span class="t-es">interruptores de tarea</span></td><td>4</td><td>0</td><td>309,568</td><td>6.43</td><td>265</td></tr><tr><td><span class="t-en">real-data runs</span><span class="t-es">ejecuciones con datos reales</span></td><td>8</td><td>0</td><td>329,013</td><td>1.10</td><td>85</td></tr><tr><td><span class="t-en">batch size</span><span class="t-es">tamaño de lote</span></td><td>2</td><td>0</td><td>309,568</td><td>8.67</td><td>238</td></tr><tr><td><span class="t-en">audio tasks</span><span class="t-es">tareas de audio</span></td><td>4</td><td>1</td><td>447,671</td><td>1.10</td><td>24</td></tr><tr><td><span class="t-en">tokenizers</span><span class="t-es">tokenizadores</span></td><td>4</td><td>0</td><td>309,568</td><td>6.13</td><td>31</td></tr></tbody></table></div>
+<div class="callout warn"><span class="callout-icon">!</span><div><div class="t-en"><b>Data-quality notes.</b> The trainer writes a zero-loss sentinel row when the final batch cannot be formed; those rows are dropped before aggregation, so the final loss is the last <em>valid</em> epoch. Fifteen of the seventeen MoE ablations are five-epoch routing smoke tests and are not evidence about expert capacity. Nine mixers appear in only one role after the smoke filter and are excluded from the A/B comparison.</div><div class="t-es"><b>Notas de calidad de datos.</b> El entrenador escribe una fila centinela con pérdida cero cuando no puede formar el último lote; esas filas se descartan antes de agregar, así que la pérdida final es la última época <em>válida</em>. Quince de las diecisiete ablaciones MoE son pruebas de humo de enrutamiento de cinco épocas y no son evidencia sobre la capacidad de los expertos. Nueve mixers aparecen en un solo rol tras el filtro de humo y quedan fuera de la comparación A/B.</div></div></div>
+</section>
+
+<section id="params" class="section">
+<h2><span class="t-en">1 · The parameter landscape</span><span class="t-es">1 · El paisaje de parámetros</span></h2>
+<p><span class="t-en">The 1,653 runs span 147,171 to 1,957,440 parameters, with a median of 315,744. Embeddings and the output head are fixed costs of roughly 31% each; attention takes 25% and the FFN 12%, so the architectural choice moves a quarter of the budget. The cheapest second mixers are <code>mamba</code>, <code>ccgqa</code> and <code>cca</code> (around 0.29 M); the most expensive are <code>gmla</code> (1.67 M), <code>engram</code> (0.60 M) and <code>mfa</code> (0.54 M).</span><span class="t-es">Las 1,653 corridas abarcan de 147,171 a 1,957,440 parámetros, con una mediana de 315,744. Los embeddings y la cabeza de salida son costes fijos de aproximadamente 31 % cada uno; la atención toma 25 % y la FFN 12 %, así que la decisión arquitectónica mueve un cuarto del presupuesto. Los segundos mixers más baratos son <code>mamba</code>, <code>ccgqa</code> y <code>cca</code> (unos 0,29 M); los más caros son <code>gmla</code> (1,67 M), <code>engram</code> (0,60 M) y <code>mfa</code> (0,54 M).</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/params_family_box-dark.png" data-light="img/params_family_box-light.png" src="img/params_family_box-dark.png" loading="lazy" alt="params_family_box"><figcaption><span class="t-en">Parameter budget by family</span><span class="t-es">Presupuesto de parámetros por familia</span></figcaption></figure><figure class="fig"><img data-dark="img/params_composition-dark.png" data-light="img/params_composition-light.png" src="img/params_composition-dark.png" loading="lazy" alt="params_composition"><figcaption><span class="t-en">Where the parameters live</span><span class="t-es">Dónde viven los parámetros</span></figcaption></figure></div>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/params_vs_loss-dark.png" data-light="img/params_vs_loss-light.png" src="img/params_vs_loss-dark.png" loading="lazy" alt="params_vs_loss"><figcaption><span class="t-en">Loss against size</span><span class="t-es">Pérdida frente a tamaño</span></figcaption></figure></div>
+<p><span class="t-en">Size helps, but it explains only a sixth of the ranking (ρ = -0.42 over 1,431 pairs). Within the same budget, architecture decides more than scale — the same conclusion as Round 2, now measured on the complete grid.</span><span class="t-es">El tamaño ayuda, pero explica solo una sexta parte del orden (ρ = -0.42 sobre 1,431 pares). Con el mismo presupuesto, la arquitectura decide más que la escala — la misma conclusión de la ronda 2, ahora medida sobre la rejilla completa.</span></p>
+</section>
+
+<section id="outcomes" class="section">
+<h2><span class="t-en">2 · Training outcomes</span><span class="t-es">2 · Resultados de entrenamiento</span></h2>
+<p><span class="t-en">The hybrid pairs end at a median final loss of 8.78 nats, from 7.74 to 9.70. The ten best pairs are listed below; the difference between the best and the worst pair is larger than the difference between the best and the median optimizer, normalization or positional-encoding ablation. The mixer stack is the dominant design decision of the round.</span><span class="t-es">Los pares híbridos terminan con una pérdida final mediana de 8.78 nats, de 7.74 a 9.70. Los diez mejores pares están abajo; la diferencia entre el mejor y el peor par es mayor que la diferencia entre la mejor ablación de optimizador, normalización o codificación posicional y la mediana de su familia. La pila de mixers es la decisión de diseño dominante de la ronda.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/loss_family_box-dark.png" data-light="img/loss_family_box-light.png" src="img/loss_family_box-dark.png" loading="lazy" alt="loss_family_box"><figcaption><span class="t-en">Final loss by family</span><span class="t-es">Pérdida final por familia</span></figcaption></figure></div>
+<p><span class="t-en">Held-out quality comes from the export path: 662 configurations produced Hugging Face rows, 653 of them MLM pairs. The mean top-1 is 4.46% and the mean top-5 is 24.0%, with a median top-5 of 28.6%: a few pairs learned something, most did not. The rank correlation between final training loss and held-out top-5 is only +0.14, so training loss is not a leaderboard.</span><span class="t-es">La calidad retenida viene de la ruta de exportación: 662 configuraciones produjeron filas de Hugging Face, 653 de ellas pares MLM. El top-1 medio es 4.46 % y el top-5 medio es 24.0 %, con una mediana de top-5 de 28,6 %: unos pocos pares aprendieron algo, la mayoría no. La correlación de rango entre pérdida final de entrenamiento y top-5 retenido es solo +0.14, así que la pérdida de entrenamiento no es una tabla de líderes.</span></p>
+</section>
+
+<section id="dynamics" class="section">
+<h2><span class="t-en">3 · Learning dynamics</span><span class="t-es">3 · Dinámica de aprendizaje</span></h2>
+<p><span class="t-en">The median pair starts at 10.50 nats and ends at 8.78; the P10–P90 band at the end is 8.41–8.97. Most of the reduction happens in the first quarter: 9.47 at 25% of the schedule, 8.92 at half, 8.75 at three quarters. The curves are still descending when the schedule ends, so the round measures learning speed, not converged quality.</span><span class="t-es">El par mediano empieza en 10.50 nats y termina en 8.78; la banda P10–P90 al final es 8.41–8.97. La mayor parte de la reducción ocurre en el primer cuarto: 9.47 al 25 % del calendario, 8.92 a la mitad, 8.75 a las tres cuartas partes. Las curvas siguen bajando al terminar el calendario, así que la ronda mide velocidad de aprendizaje, no calidad convergida.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/curves_quantiles-dark.png" data-light="img/curves_quantiles-light.png" src="img/curves_quantiles-dark.png" loading="lazy" alt="curves_quantiles"><figcaption><span class="t-en">Population learning curves</span><span class="t-es">Curvas de aprendizaje de la población</span></figcaption></figure><figure class="fig"><img data-dark="img/curves_top10-dark.png" data-light="img/curves_top10-light.png" src="img/curves_top10-dark.png" loading="lazy" alt="curves_top10"><figcaption><span class="t-en">The ten best pairs over time</span><span class="t-es">Los diez mejores pares en el tiempo</span></figcaption></figure></div>
+<p><span class="t-en">By a quarter of the schedule the per-pair loss already ranks the pairs with ρ = 0.62 against the final order, and the ten best separate from the population before the halfway mark. The number of epochs needed to reach 90% of a run's loss drop confirms it: the median is 41% of the schedule, from 40% for hybrid pairs to 21% for vision tasks.</span><span class="t-es">Al cuarto del calendario la pérdida por par ya ordena los pares con ρ = 0.62 frente al orden final, y los diez mejores se separan de la población antes de la mitad. El número de épocas necesarias para alcanzar el 90 % de la caída de pérdida lo confirma: la mediana es el 41 % del calendario, desde el 40 % de los pares híbridos hasta el 21 % de las tareas de visión.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/convergence_speed-dark.png" data-light="img/convergence_speed-light.png" src="img/convergence_speed-dark.png" loading="lazy" alt="convergence_speed"><figcaption><span class="t-en">How early the ranking is decided</span><span class="t-es">Cuán temprano se decide el ranking</span></figcaption></figure></div>
+</section>
+
+<section id="gradients" class="section">
+<h2><span class="t-en">4 · Gradient pressure per block</span><span class="t-es">4 · Presión del gradiente por bloque</span></h2>
+<p><span class="t-en">The trainer logs the post-clip L2 norm of every parameter block: embeddings, positional encoding, attention, FFN, normalization, head, mHC, router, residual and other. The head carries the largest gradient, then attention and the FFN; embeddings and normalization are an order of magnitude smaller. The ordering is stable across the whole campaign, which is why the per-block optimizer groups are not cosmetic.</span><span class="t-es">El entrenador registra la norma L2 post-recorte de cada bloque de parámetros: embeddings, codificación posicional, atención, FFN, normalización, cabeza, mHC, router, residual y otros. La cabeza soporta el gradiente mayor, luego la atención y la FFN; los embeddings y la normalización son un orden de magnitud menores. El orden es estable en toda la campaña, y por eso los grupos por bloque del optimizador no son cosméticos.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/grad_groups_curves-dark.png" data-light="img/grad_groups_curves-light.png" src="img/grad_groups_curves-dark.png" loading="lazy" alt="grad_groups_curves"><figcaption><span class="t-en">Gradient norm per block</span><span class="t-es">Norma del gradiente por bloque</span></figcaption></figure><figure class="fig"><img data-dark="img/grad_heatmap-dark.png" data-light="img/grad_heatmap-light.png" src="img/grad_heatmap-dark.png" loading="lazy" alt="grad_heatmap"><figcaption><span class="t-en">Gradient norm relative to the first epoch</span><span class="t-es">Gradiente relativo a la primera época</span></figcaption></figure></div>
+<div class="table-wrap"><table class="dt"><thead><tr><th><span class="t-en">Block</span><span class="t-es">Bloque</span></th><th><span class="t-en">Mean</span><span class="t-es">Media</span></th><th><span class="t-en">Final</span><span class="t-es">Final</span></th><th><span class="t-en">CV</span><span class="t-es">CV</span></th><th><span class="t-en">Active</span><span class="t-es">Activo</span></th></tr></thead><tbody><tr><td><span class="t-en">embeddings</span><span class="t-es">embeddings</span></td><td>0.152</td><td>0.163</td><td>0.27</td><td>99.9%</td></tr><tr><td><span class="t-en">positional</span><span class="t-es">posicional</span></td><td>0.000</td><td>0.000</td><td>1.79</td><td>3.5%</td></tr><tr><td><span class="t-en">attention</span><span class="t-es">atención</span></td><td>2.121</td><td>2.503</td><td>0.22</td><td>100.0%</td></tr><tr><td><span class="t-en">FFN</span><span class="t-es">FFN</span></td><td>0.709</td><td>0.674</td><td>0.31</td><td>100.0%</td></tr><tr><td><span class="t-en">norms</span><span class="t-es">normalización</span></td><td>0.326</td><td>0.336</td><td>0.13</td><td>99.9%</td></tr><tr><td><span class="t-en">head</span><span class="t-es">cabeza</span></td><td>3.657</td><td>3.733</td><td>0.13</td><td>100.0%</td></tr><tr><td><span class="t-en">mHC</span><span class="t-es">mHC</span></td><td>0.000</td><td>0.000</td><td>0.03</td><td>0.1%</td></tr><tr><td><span class="t-en">router</span><span class="t-es">router</span></td><td>0.000</td><td>0.000</td><td>0.50</td><td>1.2%</td></tr><tr><td><span class="t-en">residual</span><span class="t-es">residual</span></td><td>0.000</td><td>0.000</td><td>0.82</td><td>0.1%</td></tr><tr><td><span class="t-en">other</span><span class="t-es">otros</span></td><td>0.000</td><td>0.000</td><td>n/a</td><td>0.0%</td></tr></tbody></table></div>
+<p><span class="t-en">The heatmap tells the same story over time: the head is flat, attention grows slightly, and the FFN decays by a factor of about two over the first half before stabilizing; embeddings decay as the vocabulary statistics are learned. Nothing explodes: no NaN steps in the whole campaign, 109 Inf steps (all repaired in place, in 15 runs), and a gradient coefficient of variation that is inversely related to the final loss (-0.61).</span><span class="t-es">El mapa de calor cuenta la misma historia en el tiempo: la cabeza es plana, la atención crece ligeramente y la FFN decae por un factor de aproximadamente dos durante la primera mitad antes de estabilizarse; los embeddings decaen a medida que se aprenden las estadísticas del vocabulario. Nada explota: ningún paso con NaN en toda la campaña, 109 pasos con Inf (todos reparados en el sitio, en 15 corridas) y un coeficiente de variación del gradiente inversamente relacionado con la pérdida final (-0.61).</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/grad_health-dark.png" data-light="img/grad_health-light.png" src="img/grad_health-dark.png" loading="lazy" alt="grad_health"><figcaption><span class="t-en">Clip ratio and gradient variability</span><span class="t-es">Recorte y variabilidad del gradiente</span></figcaption></figure></div>
+<p><span class="t-en">Clipping is routine, not exceptional: the median mean clip ratio is 1.04 — just above the threshold of 1 — and 51.6% of the runs clip on average, with a P90 of 1.65. Round 2 reported a median of 0.90 and clipping as a rare event; the difference is the longer schedule and the higher learning rates of Round 3.</span><span class="t-es">El recorte es rutina, no excepción: la mediana del cociente de recorte medio es 1.04 — justo por encima del umbral 1 — y el 51.6 % de las corridas recortan de media, con un P90 de 1.65. La ronda 2 reportó una mediana de 0,90 y un recorte excepcional; la diferencia es el calendario más largo y las tasas de aprendizaje más altas de la ronda 3.</span></p>
+</section>
+
+<section id="cost" class="section">
+<h2><span class="t-en">5 · Throughput and cost</span><span class="t-es">5 · Rendimiento y coste</span></h2>
+<p><span class="t-en">Training time grows only weakly with parameters: a log-log fit over the MLM pairs gives an exponent of 0.25 with R² = 0.06. The clock is dominated by the number of steps, not by the parameter count. The normalised cost is the fair comparison: the median run spends 402 minutes per million parameters, with family medians spanning a factor of about three.</span><span class="t-es">El tiempo de entrenamiento crece solo débilmente con los parámetros: un ajuste log-log sobre los pares MLM da un exponente de 0.25 con R² = 0.06. El reloj lo domina el número de pasos, no el de parámetros. El coste normalizado es la comparación justa: la corrida mediana gasta 402 minutos por millón de parámetros, con medianas por familia que abarcan un factor de aproximadamente tres.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/time_vs_params-dark.png" data-light="img/time_vs_params-light.png" src="img/time_vs_params-dark.png" loading="lazy" alt="time_vs_params"><figcaption><span class="t-en">Time against parameter count</span><span class="t-es">Tiempo frente a parámetros</span></figcaption></figure><figure class="fig"><img data-dark="img/cost_per_mparam-dark.png" data-light="img/cost_per_mparam-light.png" src="img/cost_per_mparam-dark.png" loading="lazy" alt="cost_per_mparam"><figcaption><span class="t-en">Minutes per million parameters</span><span class="t-es">Minutos por millón de parámetros</span></figcaption></figure></div>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/throughput_family-dark.png" data-light="img/throughput_family-light.png" src="img/throughput_family-dark.png" loading="lazy" alt="throughput_family"><figcaption><span class="t-en">Throughput by family</span><span class="t-es">Rendimiento por familia</span></figcaption></figure><figure class="fig"><img data-dark="img/compute_by_family-dark.png" data-light="img/compute_by_family-light.png" src="img/compute_by_family-dark.png" loading="lazy" alt="compute_by_family"><figcaption><span class="t-en">Where the compute went</span><span class="t-es">A dónde fue el cómputo</span></figcaption></figure></div>
+<p><span class="t-en">The hybrid pairs absorb 90.0% of the 3,668 hours (3,301 h); the single-mixer baselines take 3.6% and every other family less than 3%. Vision and audio are cheap in wall time despite their long schedules because their steps are short, and the throughput panel says the same in tokens per second: the MLM pairs run at a median of 171 tokens/s.</span><span class="t-es">Los pares híbridos absorben el 90.0 % de las 3,668 horas (3,301 h); las líneas base de un solo mixer toman el 3.6 % y todas las demás familias menos del 3 %. Visión y audio son baratas en tiempo de pared pese a sus calendarios largos porque sus pasos son cortos, y el panel de rendimiento dice lo mismo en tokens por segundo: los pares MLM corren a una mediana de 171 tokens/s.</span></p>
+</section>
+
+<section id="inference" class="section">
+<h2><span class="t-en">6 · Inference and quantization</span><span class="t-es">6 · Inferencia y cuantización</span></h2>
+<p><span class="t-en">662 configurations produced Hugging Face rows: 653 MLM pairs, four causal-LM runs and one text-classification run. Each was exported unquantized (<code>hf_none</code>) and re-exported with three codecs at two loader runtimes (<code>q8_0</code>, <code>q4_0</code>, <code>i2_s</code>, each in <code>v1</code> and <code>v2</code>). The two runtimes sampled different mask positions — only 3.5% of the <code>v1</code> keys coincide with the baseline — so <code>v1</code> cannot be paired; the clean comparison is the <code>v2</code> family, which reuses the baseline masks for 99.4% of the keys. This is a harness property, not a model property.</span><span class="t-es">662 configuraciones produjeron filas de Hugging Face: 653 pares MLM, cuatro corridas de LM causal y una de clasificación de texto. Cada una se exportó sin cuantizar (<code>hf_none</code>) y se reexportó con tres códecs en dos runtimes de carga (<code>q8_0</code>, <code>q4_0</code>, <code>i2_s</code>, cada uno en <code>v1</code> y <code>v2</code>). Los dos runtimes muestrearon posiciones de máscara distintas — solo el 3,5 % de las claves de <code>v1</code> coinciden con la base — así que <code>v1</code> no puede emparejarse; la comparación limpia es la familia <code>v2</code>, que reutiliza las máscaras de la base en el 99,4 % de las claves. Esto es una propiedad del arnés, no de los modelos.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/inference_format_accuracy-dark.png" data-light="img/inference_format_accuracy-light.png" src="img/inference_format_accuracy-dark.png" loading="lazy" alt="inference_format_accuracy"><figcaption><span class="t-en">Held-out accuracy by export format</span><span class="t-es">Exactitud por formato de exportación</span></figcaption></figure></div>
+<div class="table-wrap"><table class="dt"><thead><tr><th>Format</th><th>n</th><th>Top-1</th><th>Top-5</th><th><span class="t-en">Δ (pp)</span><span class="t-es">Δ (pp)</span></th><th><span class="t-en">Worse</span><span class="t-es">Peor</span></th></tr></thead><tbody><tr><td><code>none</code></td><td>653</td><td>4.46</td><td>24.0</td><td>0.000</td><td>0.0%</td></tr><tr><td><code>q8_0 v1</code></td><td>653</td><td>2.87</td><td>14.4</td><td>-1.663</td><td>22.2%</td></tr><tr><td><code>q8_0 v2</code></td><td>653</td><td>4.50</td><td>23.9</td><td>+0.066</td><td>0.2%</td></tr><tr><td><code>q4_0 v1</code></td><td>653</td><td>2.72</td><td>14.1</td><td>-1.816</td><td>22.2%</td></tr><tr><td><code>q4_0 v2</code></td><td>653</td><td>4.76</td><td>23.6</td><td>+0.328</td><td>1.7%</td></tr><tr><td><code>i2_s v1</code></td><td>653</td><td>0.83</td><td>3.2</td><td>-3.719</td><td>24.2%</td></tr><tr><td><code>i2_s v2</code></td><td>653</td><td>2.41</td><td>7.2</td><td>-2.035</td><td>18.7%</td></tr></tbody></table></div>
+<p><span class="t-en">8 and 4 bits are essentially free: <code>q8_0_v2</code> changes the top-1 by +0.07 pp with 99.2% of the pairs unchanged and only 0.2% worse; <code>q4_0_v2</code> changes it by +0.33 pp with 94.5% unchanged and 1.7% worse. The 2-bit codec is the exception: -2.03 pp on average, 73.2% of the pairs intact and 18.7% degraded.</span><span class="t-es">8 y 4 bits son esencialmente gratis: <code>q8_0_v2</code> cambia el top-1 en +0.07 pp con el 99.2 % de los pares sin cambios y solo el 0.2 % peor; <code>q4_0_v2</code> lo cambia en +0.33 pp con el 94.5 % sin cambios y el 1.7 % peor. El códec de 2 bits es la excepción: -2.03 pp de media, 73.2 % de los pares intactos y 18.7 % degradados.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/quant_delta_dist-dark.png" data-light="img/quant_delta_dist-light.png" src="img/quant_delta_dist-dark.png" loading="lazy" alt="quant_delta_dist"><figcaption><span class="t-en">Quantization delta and outcome</span><span class="t-es">Delta de cuantización y resultado</span></figcaption></figure><figure class="fig"><img data-dark="img/quant_agreement-dark.png" data-light="img/quant_agreement-light.png" src="img/quant_agreement-dark.png" loading="lazy" alt="quant_agreement"><figcaption><span class="t-en">Sample-level agreement</span><span class="t-es">Acuerdo por muestra</span></figcaption></figure></div>
+<p><span class="t-en">The sample-level view is sharper. Matching each quantized prediction to the baseline prediction of the same mask, <code>q8_0_v2</code> agrees on 99.5% of the samples (95% CI 99.4–99.7), <code>q4_0_v2</code> on 91.8% and <code>i2_s_v2</code> on only 20.8%. The 2-bit model is not a slightly worse copy: it is a different model that happens to preserve the aggregate top-1 on pairs whose baseline accuracy was already near zero. Parameter count does not predict robustness (ρ = -0.11).</span><span class="t-es">La vista por muestra es más nítida. Emparejando cada predicción cuantizada con la predicción base de la misma máscara, <code>q8_0_v2</code> coincide en el 99.5 % de las muestras (IC 95 % 99.4–99.7), <code>q4_0_v2</code> en el 91.8 % y <code>i2_s_v2</code> en solo el 20.8 %. El modelo de 2 bits no es una copia algo peor: es un modelo distinto que casualmente conserva el top-1 agregado en pares cuya exactitud base ya era casi cero. El número de parámetros no predice la robustez (ρ = -0.11).</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/quant_delta_vs_params-dark.png" data-light="img/quant_delta_vs_params-light.png" src="img/quant_delta_vs_params-dark.png" loading="lazy" alt="quant_delta_vs_params"><figcaption><span class="t-en">2-bit delta against size</span><span class="t-es">Delta de 2 bits frente a tamaño</span></figcaption></figure><figure class="fig"><img data-dark="img/train_vs_inference-dark.png" data-light="img/train_vs_inference-light.png" src="img/train_vs_inference-dark.png" loading="lazy" alt="train_vs_inference"><figcaption><span class="t-en">Training loss against held-out quality</span><span class="t-es">Pérdida de entrenamiento frente a calidad</span></figcaption></figure></div>
+<p><span class="t-en">The warning of Round 2 survives the complete grid: training loss and held-out quality are almost uncorrelated (ρ = +0.14). Read the atlas as a map of learning speed and stability, not as a leaderboard.</span><span class="t-es">La advertencia de la ronda 2 sobrevive a la rejilla completa: pérdida de entrenamiento y calidad retenida están casi incorrelacionadas (ρ = +0.14). Lee el atlas como un mapa de velocidad y estabilidad de aprendizaje, no como una tabla de líderes.</span></p>
+</section>
+
+<section id="reliability" class="section">
+<h2><span class="t-en">7 · Reliability and failure taxonomy</span><span class="t-es">7 · Fiabilidad y taxonomía de fallos</span></h2>
+<p><span class="t-en">Training is reliable: 1,643 of 1,653 runs succeed (0.6% failure rate). All ten failures are hybrid pairs that contain <code>engram</code>; eight exit with code 1 and two with code 134 (SIGABRT), and no other family fails. The Transformers export never fails (4,686 records), inference evaluation fails once, and the only systemic problem is the deploy stage excluded above.</span><span class="t-es">El entrenamiento es fiable: 1,643 de 1,653 corridas terminan bien (tasa de fallo 0.6 %). Los diez fallos son pares híbridos que contienen <code>engram</code>; ocho salen con código 1 y dos con código 134 (SIGABRT), y ninguna otra familia falla. La exportación a Transformers no falla nunca (4.686 registros), la evaluación de inferencia falla una vez y el único problema sistémico es la etapa de despliegue excluida arriba.</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/stage_status-dark.png" data-light="img/stage_status-light.png" src="img/stage_status-dark.png" loading="lazy" alt="stage_status"><figcaption><span class="t-en">Pipeline reliability by stage</span><span class="t-es">Fiabilidad del pipeline por etapa</span></figcaption></figure></div>
+<div class="table-wrap"><table class="dt"><thead><tr><th><span class="t-en">Family</span><span class="t-es">Familia</span></th><th>n</th><th><span class="t-en">Failed</span><span class="t-es">Fallos</span></th><th><span class="t-en">Rate</span><span class="t-es">Tasa</span></th></tr></thead><tbody><tr><td><span class="t-en">hybrid pairs</span><span class="t-es">pares híbridos</span></td><td>1,431</td><td>10</td><td>0.7%</td></tr><tr><td><span class="t-en">audio tasks</span><span class="t-es">tareas de audio</span></td><td>4</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">MoE variants</span><span class="t-es">variantes MoE</span></td><td>17</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">normalization</span><span class="t-es">normalización</span></td><td>6</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">optimizers</span><span class="t-es">optimizadores</span></td><td>39</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">text PE ablations</span><span class="t-es">ablaciones de PE de texto</span></td><td>12</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">real-data runs</span><span class="t-es">ejecuciones con datos reales</span></td><td>8</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">single mixers</span><span class="t-es">mixers únicos</span></td><td>54</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">architecture switches</span><span class="t-es">interruptores de arquitectura</span></td><td>23</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">task switches</span><span class="t-es">interruptores de tarea</span></td><td>4</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">tokenizers</span><span class="t-es">tokenizadores</span></td><td>4</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">vision tasks</span><span class="t-es">tareas de visión</span></td><td>9</td><td>0</td><td>0.0%</td></tr><tr><td><span class="t-en">ViT PE ablations</span><span class="t-es">ablaciones de PE del ViT</span></td><td>39</td><td>0</td><td>0.0%</td></tr></tbody></table></div>
+</section>
+
+<section id="correlations" class="section">
+<h2><span class="t-en">8 · Correlations</span><span class="t-es">8 · Correlaciones</span></h2>
+<p><span class="t-en">The Spearman matrix over the hybrid pairs shows that the strongest non-trivial correlations describe the schedule rather than the architecture: training time grows with the number of epochs (+0.74), throughput is almost the inverse of step time (-0.95) and mean loss falls as the schedule lengthens (-0.76). The parameter count correlates moderately with loss (-0.42) and gradient magnitude (+0.47) and weakly with wall time (+0.23).</span><span class="t-es">La matriz de Spearman sobre los pares híbridos muestra que las correlaciones fuertes no triviales describen el calendario y no la arquitectura: el tiempo de entrenamiento crece con el número de épocas (+0,74), el rendimiento es casi el inverso del tiempo por paso (-0,95) y la pérdida media baja a medida que el calendario se alarga (-0,76). El número de parámetros correlaciona moderadamente con la pérdida (-0,42) y con la magnitud del gradiente (+0,47) y débilmente con el tiempo de pared (+0,23).</span></p>
+<div class="fig-grid"><figure class="fig"><img data-dark="img/correlation-dark.png" data-light="img/correlation-light.png" src="img/correlation-dark.png" loading="lazy" alt="correlation"><figcaption><span class="t-en">Spearman correlations</span><span class="t-es">Correlaciones de Spearman</span></figcaption></figure></div>
+</section>
+
+<section id="atlas" class="section">
+<h2><span class="t-en">9 · The interactive atlas</span><span class="t-es">9 · El atlas interactivo</span></h2>
+<p><span class="t-en">One cell per hybrid pair: rows are the first mixer (A), columns the second (B), and the upper triangle holds the 1,431 measured pairs. Pick a metric and hover a cell; the ten <code>engram</code> pairs that crash are shown as empty cells. The colour always runs from best (green) to worst (red) for the selected metric.</span><span class="t-es">Una celda por par híbrido: las filas son el primer mixer (A), las columnas el segundo (B), y el triángulo superior contiene los 1,431 pares medidos. Elige una métrica y pasa el cursor por una celda; los diez pares con <code>engram</code> que fallan aparecen como celdas vacías. El color siempre va del mejor (verde) al peor (rojo) para la métrica elegida.</span></p>
+<div class="atlas-controls">
+  <label for="atlas-metric" id="atlas-label"><span class="t-en">Metric</span><span class="t-es">Métrica</span></label>
+  <select id="atlas-metric">
+    <option value="loss" data-en="Final loss (nats)" data-es="Pérdida final (nats)">Final loss (nats)</option>
+    <option value="params" data-en="Parameters (M)" data-es="Parámetros (M)">Parameters (M)</option>
+    <option value="duration" data-en="Training time (h)" data-es="Tiempo de entrenamiento (h)">Training time (h)</option>
+    <option value="top5" data-en="Held-out top-5 (%)" data-es="Top-5 retenido (%)">Held-out top-5 (%)</option>
+  </select>
+  <span class="atlas-hint" id="atlas-hint"></span>
+</div>
+<div id="atlas-chart" class="chart-xl" role="img" aria-label="A by B matrix of mixers"></div>
+<div class="split-tables">
+  <div><h3><span class="t-en">Ten best pairs</span><span class="t-es">Diez mejores pares</span></h3><div id="top-pairs"></div></div>
+  <div><h3><span class="t-en">Ten worst pairs</span><span class="t-es">Diez peores pares</span></h3><div id="bottom-pairs"></div></div>
+</div>
+<h3><span class="t-en">The role effect: A vs B</span><span class="t-es">El efecto del rol: A vs B</span></h3>
+<p><span class="t-en">Each point is one mixer: its median loss when it sits in layer 0 (A) against its median loss when it sits in layer 1 (B). Points off the diagonal are role-sensitive; the B axis is the wider one (0.882 nats against 0.804), which is the quantitative form of “the second mixer is the lever”.</span><span class="t-es">Cada punto es un mixer: su pérdida mediana cuando ocupa la capa 0 (A) frente a su pérdida mediana cuando ocupa la capa 1 (B). Los puntos fuera de la diagonal son sensibles al rol; el eje B es el más ancho (0.882 nats frente a 0.804), que es la forma cuantitativa de “el segundo mixer es la palanca”.</span></p>
+<div id="roles-chart" class="chart-lg" role="img" aria-label="A-role versus B-role median loss"></div>
+<h3><span class="t-en">Mixer ranking by median loss</span><span class="t-es">Ranking de mixers por pérdida mediana</span></h3>
+<div id="ranking-chart" class="chart-xl" role="img" aria-label="Mixer ranking by median final loss"></div>
+</section>
+
+<section id="data" class="section">
+<h2><span class="t-en">10 · Data and reproducibility</span><span class="t-es">10 · Datos y reproducibilidad</span></h2>
+<p><span class="t-en">Two files are published next to this page: <a href="data/atlas.csv" download>atlas.csv</a> (one row per hybrid pair: loss, parameters, duration, top-1 and top-5) and <a href="data/mixers.csv" download>mixers.csv</a> (one row per mixer: median loss and parameters). The full per-run tables stay in the experiment tree and are summarised in the appendix of the paper.</span><span class="t-es">Junto a esta página se publican dos archivos: <a href="data/atlas.csv" download>atlas.csv</a> (una fila por par híbrido: pérdida, parámetros, duración, top-1 y top-5) y <a href="data/mixers.csv" download>mixers.csv</a> (una fila por mixer: pérdida y parámetros medianos). Las tablas completas por corrida quedan en el árbol del experimento y se resumen en el apéndice del paper.</span></p>
+<p><span class="t-en">Rebuild: <code>python experimentos/to_csv.py 3 &amp;&amp; python experimentos/3/report/build_data.py &amp;&amp; python experimentos/3/report/make_site.py</code>. The only slow step is the single streaming pass over the 6.6 GB per-step log (about ten minutes); everything else runs in seconds on CPU.</span><span class="t-es">Reconstruir: <code>python experimentos/to_csv.py 3 &amp;&amp; python experimentos/3/report/build_data.py &amp;&amp; python experimentos/3/report/make_site.py</code>. El único paso lento es la pasada única sobre el log por paso de 6,6 GB (unos diez minutos); el resto corre en segundos en CPU.</span></p>
+</section>
+
+<section id="conclusions" class="section">
+<h2><span class="t-en">11 · What the complete grid changes</span><span class="t-es">11 · Qué cambia la rejilla completa</span></h2>
+<div class="conclusions">
+  <div class="conclusion"><span class="num">01</span><div><b><span class="t-en">Completeness is a result</span><span class="t-es">La completitud es un resultado</span></b><p><span class="t-en">Round 2 measured two thirds of the grid; Round 3 measures all 1,431 cells. The rankings that survive — the second mixer as the lever, the weakness of scale, the loss/quality gap — survive because the missing third of the grid could not have hidden a different answer.</span><span class="t-es">La ronda 2 midió dos tercios de la rejilla; la ronda 3 mide las 1,431 celdas. Los rankings que sobreviven —el segundo mixer como palanca, la debilidad de la escala, la brecha pérdida/calidad— sobreviven porque el tercio faltante no podía esconder otra respuesta.</span></p></div></div>
+  <div class="conclusion"><span class="num">02</span><div><b><span class="t-en">The schedule, not the model, sets the loss</span><span class="t-es">El calendario, no el modelo, fija la pérdida</span></b><p><span class="t-en">Training time grows with epochs and barely with parameters; mean loss falls as the schedule lengthens. Any cross-family reading of the loss must control for the number of epochs, which is why this page reports the budget next to every family.</span><span class="t-es">El tiempo de entrenamiento crece con las épocas y apenas con los parámetros; la pérdida media baja a medida que el calendario se alarga. Cualquier lectura transversal de la pérdida debe controlar el número de épocas, y por eso esta página reporta el presupuesto junto a cada familia.</span></p></div></div>
+  <div class="conclusion"><span class="num">03</span><div><b><span class="t-en">Quantize at 8 or 4 bits, not at 2</span><span class="t-es">Cuantiza a 8 o 4 bits, no a 2</span></b><p><span class="t-en">The v2 runtime keeps 99.5% and 91.8% of the predictions at 8 and 4 bits; 2 bits keeps 20.8% and costs 2.03 pp of top-1. Two bits is a different model, not a smaller file.</span><span class="t-es">El runtime v2 conserva el 99.5 % y el 91.8 % de las predicciones a 8 y 4 bits; 2 bits conserva el 20.8 % y cuesta 2.03 pp de top-1. Dos bits es otro modelo, no un archivo más pequeño.</span></p></div></div>
+  <div class="conclusion"><span class="num">04</span><div><b><span class="t-en">Fix the deploy stage before rerunning it</span><span class="t-es">Arregla el despliegue antes de repetirlo</span></b><p><span class="t-en">The deploy bug is fixed and covered by a regression test, but this round's 822 failures were excluded. The next round should re-measure deployment on the same grid before drawing conclusions about the deployment path.</span><span class="t-es">El error de despliegue está corregido y cubierto por una prueba de regresión, pero los 822 fallos de esta ronda quedaron excluidos. La próxima ronda debería volver a medir el despliegue sobre la misma rejilla antes de concluir sobre esa ruta.</span></p></div></div>
+  <div class="conclusion"><span class="num">05</span><div><b><span class="t-en">Measure quality, not only loss</span><span class="t-es">Mide la calidad, no solo la pérdida</span></b><p><span class="t-en">The loss/quality rank correlation is +0.14: the atlas ranks learning speed, not model quality. A larger held-out set with per-token log-likelihood is the next measurement that would turn the atlas into a ranking.</span><span class="t-es">La correlación de rango pérdida/calidad es +0.14: el atlas ordena velocidad de aprendizaje, no calidad de modelo. Un conjunto retenido más grande con log-verosimilitud por token es la próxima medición que convertiría el atlas en un ranking.</span></p></div></div>
+</div>
+</section>
+
+</main>
+<footer>
+  <span class="t-en">Generated from experimentos/3 on</span><span class="t-es">Generado desde experimentos/3 el</span> 2026-11-21 ·
+  <a href="../../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a> ·
+  <a href="../2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a> ·
+  <a href="data/atlas.csv" download>atlas.csv</a>
+</footer>
+<script>
+(function(){
+  function init(){
+    var root=document.documentElement;
+    var theme=localStorage.getItem('ft-theme')||
+      ((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
+    var lang=localStorage.getItem('ft-lang')||'en';
+    root.setAttribute('data-theme',theme);root.setAttribute('data-lang',lang);
+    window.ftSetTheme=function(t){
+      root.setAttribute('data-theme',t);localStorage.setItem('ft-theme',t);
+      document.querySelectorAll('img[data-'+t+']').forEach(function(img){
+        if(img.dataset[t]&&img.src!==img.dataset[t]) img.src=img.dataset[t];
+      });
+      document.querySelectorAll('[data-theme-btn]').forEach(function(b){
+        b.classList.toggle('on',b.getAttribute('data-theme-btn')===t);
+      });
+    };
+    window.ftSetLang=function(l){
+      root.setAttribute('data-lang',l);root.setAttribute('lang',l);localStorage.setItem('ft-lang',l);
+      document.querySelectorAll('[data-lang-btn]').forEach(function(b){
+        b.classList.toggle('on',b.getAttribute('data-lang-btn')===l);
+      });
+    };
+    window.ftSetTheme(theme);window.ftSetLang(lang);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<script src="vendor/echarts.min.js"></script>
+<script>
+(function(){
+  var root=document.documentElement;
+  var data=null, metric='loss', charts={}, cells={};
+  var TXT={
+    en:{metric:'Metric',loss:'Final loss (nats)',params:'Parameters (M)',duration:'Training time (h)',
+        top5:'Held-out top-5 (%)',pair:'Pair',nopair:'no data',hint:'rows = first mixer (A), columns = second mixer (B)',
+        best:'Ten best pairs',worst:'Ten worst pairs',paramsShort:'Params (M)',timeShort:'Hours',top5Short:'Top-5 (%)'},
+    es:{metric:'Métrica',loss:'Pérdida final (nats)',params:'Parámetros (M)',duration:'Tiempo (h)',
+        top5:'Top-5 retenido (%)',pair:'Par',nopair:'sin datos',hint:'filas = primer mixer (A), columnas = segundo mixer (B)',
+        best:'Diez mejores pares',worst:'Diez peores pares',paramsShort:'Parám. (M)',timeShort:'Horas',top5Short:'Top-5 (%)'}
+  };
+  var METRICS={
+    loss:{key:'loss',good:'low',fmt:function(v){return v.toFixed(2);}},
+    params:{key:'params',good:'low',fmt:function(v){return v.toFixed(2);}},
+    duration:{key:'duration',good:'low',fmt:function(v){return v.toFixed(2);}},
+    top5:{key:'top5',good:'high',fmt:function(v){return (v*100).toFixed(1);}}
+  };
+  function lang(){return root.getAttribute('data-lang')||'en';}
+  function css(name){return getComputedStyle(root).getPropertyValue(name).trim();}
+  function txt(){return TXT[lang()];}
+  function themeColors(){
+    return {text:css('--text'),muted:css('--muted'),grid:css('--border-soft'),
+            surface:css('--surface'),accent:css('--accent')};
+  }
+  function renderAtlas(){
+    var t=txt(), m=METRICS[metric], c=themeColors();
+    var vals=data.cells.map(function(x){return x[2][m.key];}).filter(function(v){return v!==null&&isFinite(v);});
+    var min=Math.min.apply(null,vals), max=Math.max.apply(null,vals);
+    // ECharts heatmap points are [x, y, value]: x is the column (B) and y the
+    // row (A), so the stored (A, B) pair is swapped here.
+    var series=data.cells.filter(function(x){return x[2][m.key]!==null;}).map(function(x){return [x[1],x[0],x[2][m.key]];});
+    var colors=m.good==='high'?['#cf222e','#d2991d','#1a7f37']:['#1a7f37','#d2991d','#cf222e'];
+    charts.atlas.setOption({
+      backgroundColor:'transparent',
+      animation:false,
+      tooltip:{trigger:'item',backgroundColor:c.surface,borderColor:c.grid,textStyle:{color:c.text,fontSize:12},
+        formatter:function(p){
+          if(!p.data||p.data[2]==null)return '';
+          var meta=cells[p.data[0]+','+p.data[1]]; if(!meta)return '';
+          var out='<b>'+data.mixers[p.data[1]]+' + '+data.mixers[p.data[0]]+'</b><br>';
+          out+=t.loss+': '+(meta.loss==null?t.nopair:meta.loss.toFixed(3))+'<br>';
+          out+=t.params+': '+(meta.params==null?t.nopair:meta.params.toFixed(2))+'<br>';
+          out+=t.duration+': '+(meta.duration==null?t.nopair:meta.duration.toFixed(2))+'<br>';
+          out+=t.top5+': '+(meta.top5==null?t.nopair:(meta.top5*100).toFixed(1)+'%');
+          return out;
+        }},
+      grid:{left:110,right:96,top:18,bottom:150},
+      xAxis:{type:'category',data:data.mixers,splitArea:{show:false},
+        axisLabel:{rotate:90,fontSize:9,color:c.muted},axisLine:{lineStyle:{color:c.grid}},
+        axisTick:{show:false}},
+      yAxis:{type:'category',data:data.mixers,inverse:true,
+        axisLabel:{fontSize:9,color:c.muted},axisLine:{lineStyle:{color:c.grid}},
+        axisTick:{show:false}},
+      visualMap:{min:min,max:max,calculable:true,orient:'vertical',right:10,top:'middle',
+        itemWidth:16,itemHeight:200,textStyle:{color:c.muted,fontSize:11},
+        text:[m.fmt(max),m.fmt(min)],inRange:{color:colors}},
+      series:[{name:t[metric],type:'heatmap',data:series,
+        emphasis:{itemStyle:{borderColor:c.text,borderWidth:1}},
+        progressive:0}]
+    },true);
+    document.getElementById('atlas-hint').textContent=t.hint;
+    document.getElementById('atlas-label').textContent=t.metric;
+    Array.prototype.forEach.call(document.querySelectorAll('#atlas-metric option'),function(o){
+      o.textContent=o.getAttribute('data-'+lang());
+    });
+    document.getElementById('atlas-metric').value=metric;
+  }
+  function renderRoles(){
+    var t=txt(), c=themeColors(), R=data.roles;
+    var names=Object.keys(R.a).filter(function(k){return R.b[k]!=null;});
+    var pts=names.map(function(k){return [R.a[k],R.b[k],k];});
+    var lo=Math.min.apply(null,pts.map(function(p){return Math.min(p[0],p[1]);}))-0.05;
+    var hi=Math.max.apply(null,pts.map(function(p){return Math.max(p[0],p[1]);}))+0.05;
+    charts.roles.setOption({
+      backgroundColor:'transparent',
+      tooltip:{formatter:function(p){return '<b>'+p.data[2]+'</b><br>A: '+p.data[0].toFixed(3)+'<br>B: '+p.data[1].toFixed(3);},
+        backgroundColor:c.surface,borderColor:c.grid,textStyle:{color:c.text,fontSize:12}},
+      grid:{left:70,right:30,top:20,bottom:60},
+      xAxis:{name:'A',nameTextStyle:{color:c.muted},min:lo,max:hi,
+        axisLabel:{color:c.muted,fontSize:10,formatter:function(v){return v.toFixed(2);}},
+        splitLine:{lineStyle:{color:c.grid}}},
+      yAxis:{name:'B',nameTextStyle:{color:c.muted},min:lo,max:hi,
+        axisLabel:{fontSize:10,color:c.muted,formatter:function(v){return v.toFixed(2);}},
+        splitLine:{lineStyle:{color:c.grid}}},
+      series:[
+        {type:'scatter',data:pts,symbolSize:8,itemStyle:{color:c.accent,opacity:0.8}},
+        {type:'line',data:[[lo,lo],[hi,hi]],showSymbol:false,lineStyle:{color:c.muted,type:'dashed',width:1},silent:true}
+      ]
+    },true);
+  }
+  function renderRank(){
+    var c=themeColors();
+    var rows=data.ranking.slice().sort(function(a,b){return b.loss-a.loss;});
+    var lo=Math.min.apply(null,rows.map(function(r){return r.loss;}))-0.1;
+    charts.rank.setOption({
+      backgroundColor:'transparent',
+      tooltip:{trigger:'axis',axisPointer:{type:'shadow'},
+        formatter:function(ps){var p=ps[0];var r=rows[p.dataIndex];
+          return '<b>'+r.mixer+'</b><br>'+r.loss.toFixed(3)+' nats<br>'+r.params.toFixed(2)+' M params<br>n = '+r.n;},
+        backgroundColor:c.surface,borderColor:c.grid,textStyle:{color:c.text,fontSize:12}},
+      grid:{left:130,right:40,top:16,bottom:40},
+      xAxis:{type:'value',min:lo,axisLabel:{color:c.muted,fontSize:10,formatter:function(v){return v.toFixed(1);}},
+        splitLine:{lineStyle:{color:c.grid}}},
+      yAxis:{type:'category',data:rows.map(function(r){return r.mixer;}),
+        axisLabel:{color:c.muted,fontSize:9},axisTick:{show:false}},
+      series:[{type:'bar',data:rows.map(function(r){return r.loss;}),itemStyle:{color:c.accent,opacity:0.85}}]
+    },true);
+  }
+  function fmtDelta(v){return (v>=0?'+':'')+v.toFixed(1);}
+  function buildTables(){
+    var t=txt();
+    function rows(list){
+      var html='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t.pair+'</th><th>'+
+        t.loss+'</th><th>'+t.paramsShort+'</th><th>'+t.timeShort+'</th><th>'+t.top5Short+'</th></tr></thead><tbody>';
+      list.forEach(function(r){
+        html+='<tr><td><code>'+r.pair.replace(/ \+ /g,' + ')+'</code></td><td>'+r.loss.toFixed(3)+
+          '</td><td>'+r.params.toFixed(2)+'</td><td>'+r.duration.toFixed(2)+
+          '</td><td>'+(r.top5==null?'—':r.top5.toFixed(1))+'</td></tr>';
+      });
+      return html+'</tbody></table></div>';
+    }
+    document.getElementById('top-pairs').innerHTML=rows(data.top);
+    document.getElementById('bottom-pairs').innerHTML=rows(data.bottom);
+  }
+  function renderAll(){ if(!data)return; renderAtlas(); renderRoles(); renderRank(); }
+  function init(){
+    fetch('data/atlas.json').then(function(r){return r.json();}).then(function(j){
+      data=j;
+      j.cells.forEach(function(x){cells[x[1]+','+x[0]]=x[2];});
+      charts.atlas=echarts.init(document.getElementById('atlas-chart'));
+      charts.roles=echarts.init(document.getElementById('roles-chart'));
+      charts.rank=echarts.init(document.getElementById('ranking-chart'));
+      document.getElementById('atlas-metric').addEventListener('change',function(e){
+        metric=e.target.value; renderAtlas();
+      });
+      buildTables(); renderAll();
+      window.addEventListener('resize',function(){Object.keys(charts).forEach(function(k){charts[k].resize();});});
+      var baseLang=window.ftSetLang, baseTheme=window.ftSetTheme;
+      window.ftSetLang=function(l){baseLang(l); buildTables(); renderAll();};
+      window.ftSetTheme=function(th){baseTheme(th); renderAll();};
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+</body>
+</html>

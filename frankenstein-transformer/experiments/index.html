@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Experiments · Frankenstein Transformer</title>
-<meta name="description" content="Two experiment rounds of the Frankenstein Transformer: a smoke-scale pipeline rehearsal and the 868-configuration mixer atlas.">
+<meta name="description" content="Three experiment rounds of the Frankenstein Transformer: a smoke-scale pipeline rehearsal, the 868-configuration mixer atlas and the complete 1,431-pair atlas.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Experiments · Frankenstein Transformer">
-<meta property="og:description" content="Two rounds on one harness: the smoke-scale rehearsal and the 868-configuration mixer atlas.">
+<meta property="og:description" content="Three rounds on one harness: the smoke-scale rehearsal, the first mixer atlas and the complete 1,431-pair atlas.">
 <meta property="og:url" content="https://erickfmm.github.io/frankenstein-transformer/experiments/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0d1117">
@@ -46,6 +46,7 @@
   <nav>
     <a href="1/index.html"><span class="t-en">Experiment 1</span><span class="t-es">Experimento 1</span></a>
     <a href="2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a>
+    <a href="3/index.html"><span class="t-en">Experiment 3</span><span class="t-es">Experimento 3</span></a>
     <a href="2/chartmaker.html"><span class="t-en">Chart maker</span><span class="t-es">Constructor de gráficos</span></a>
     <a href="../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a>
   </nav>
@@ -59,19 +60,20 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <h1><span class="t-en">Two rounds, one harness</span><span class="t-es">Dos rondas, un mismo arnés</span></h1>
-    <p class="lede"><span class="t-en">Experiment 1 proved that the pipeline could run end to end at smoke scale. Experiment 2 used that same harness to train, deploy and evaluate 868 configurations and map the mixer landscape.</span><span class="t-es">El Experimento 1 demostró que el pipeline podía correr de extremo a extremo a escala smoke. El Experimento 2 usó ese mismo arnés para entrenar, desplegar y evaluar 868 configuraciones y mapear el paisaje de mixers.</span></p>
+    <h1><span class="t-en">Three rounds, one harness</span><span class="t-es">Tres rondas, un mismo arnés</span></h1>
+    <p class="lede"><span class="t-en">Experiment 1 proved that the pipeline could run end to end at smoke scale. Experiment 2 used that same harness to train, deploy and evaluate 868 configurations and map the mixer landscape. Experiment 3 closed the grid: all 1,431 hybrid pairs of the 54 registered mixers, 1,653 runs and 20.5 M training steps.</span><span class="t-es">El Experimento 1 demostró que el pipeline podía correr de extremo a extremo a escala smoke. El Experimento 2 usó ese mismo arnés para entrenar, desplegar y evaluar 868 configuraciones y mapear el paisaje de mixers. El Experimento 3 cerró la rejilla: los 1.431 pares híbridos de los 54 mixers registrados, 1.653 corridas y 20,5 M de pasos de entrenamiento.</span></p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="1/index.html"><span class="t-en">Experiment 1 · smoke round</span><span class="t-es">Experimento 1 · ronda smoke</span> →</a>
-      <a class="btn" href="2/index.html"><span class="t-en">Experiment 2 · mixer atlas</span><span class="t-es">Experimento 2 · atlas de mixers</span> →</a>
-      <a class="btn" href="../index.html"><span class="t-en">Open the Config Builder</span><span class="t-es">Abrir el Config Builder</span></a>
+      <a class="btn btn-primary" href="3/index.html"><span class="t-en">Experiment 3 · complete atlas</span><span class="t-es">Experimento 3 · atlas completo</span> →</a>
+      <a class="btn" href="2/index.html"><span class="t-en">Experiment 2 · first atlas</span><span class="t-es">Experimento 2 · primer atlas</span></a>
+      <a class="btn" href="1/index.html"><span class="t-en">Experiment 1 · smoke round</span><span class="t-es">Experimento 1 · ronda smoke</span></a>
+      <a class="btn" href="../index.html"><span class="t-en">Config Builder</span><span class="t-es">Config Builder</span></a>
     </div>
     <div class="hero-meta">
-      <span><span class="t-en">Two rounds</span><span class="t-es">Dos rondas</span></span>
+      <span><span class="t-en">Three rounds</span><span class="t-es">Tres rondas</span></span>
       <span>·</span>
-      <span><span class="t-en">10,400 stage records</span><span class="t-es">10.400 registros de etapas</span></span>
+      <span><span class="t-en">23,220 stage records</span><span class="t-es">23.220 registros de etapas</span></span>
       <span>·</span>
-      <span><span class="t-en">905 CPU-hours in the measurement round</span><span class="t-es">905 horas de CPU en la ronda de medición</span></span>
+      <span><span class="t-en">4,573 CPU-hours in the measurement rounds</span><span class="t-es">4.573 horas de CPU en las rondas de medición</span></span>
     </div>
   </div>
 </header>
@@ -81,12 +83,13 @@
   <div class="stat violet"><div class="stat-v">667</div><div class="stat-l"><span class="t-en">unique hybrid pairs</span><span class="t-es">pares híbridos únicos</span></div></div>
   <div class="stat green"><div class="stat-v">2.66 M</div><div class="stat-l"><span class="t-en">logged training steps</span><span class="t-es">pasos de entrenamiento registrados</span></div></div>
   <div class="stat orange"><div class="stat-v">5,129</div><div class="stat-l"><span class="t-en">stage records in the smoke round</span><span class="t-es">registros de etapas en la ronda smoke</span></div></div>
+  <div class="stat cyan"><div class="stat-v">1,431</div><div class="stat-l"><span class="t-en">complete hybrid pairs in Round 3</span><span class="t-es">pares híbridos completos en la ronda 3</span></div></div>
 </section>
 
 <main>
   <section class="section">
-    <h2><span class="t-en">The two rounds at a glance</span><span class="t-es">Las dos rondas de un vistazo</span></h2>
-    <p><span class="t-en">A round is one complete pass of the experiment harness: train, export, deploy, evaluate and package every configuration. The first round tested the machinery; the second produced the measurements.</span><span class="t-es">Una ronda es una pasada completa del arnés de experimentación: entrenar, exportar, desplegar, evaluar y empaquetar cada configuración. La primera ronda probó la maquinaria; la segunda produjo las mediciones.</span></p>
+    <h2><span class="t-en">The three rounds at a glance</span><span class="t-es">Las tres rondas de un vistazo</span></h2>
+    <p><span class="t-en">A round is one complete pass of the experiment harness: train, export, deploy, evaluate and package every configuration. The first round tested the machinery, the second produced the first mixer atlas, and the third completed the grid and extended the schedule.</span><span class="t-es">Una ronda es una pasada completa del arnés de experimentación: entrenar, exportar, desplegar, evaluar y empaquetar cada configuración. La primera ronda probó la maquinaria, la segunda produjo el primer atlas de mixers y la tercera completó la rejilla y extendió el calendario.</span></p>
     <div class="table-wrap">
       <table class="dt">
         <thead>
@@ -116,6 +119,14 @@
             <td><span class="t-en">56 figures, the A×B atlas, ablation sweeps, deployment measurements and downloadable datasets.</span><span class="t-es">56 figuras, el atlas A×B, barridas de ablaciones, mediciones de despliegue y datasets descargables.</span></td>
             <td><span class="t-en">Directional, not a final verdict. Curves are still descending at epoch 100.</span><span class="t-es">Direccional, no un veredicto final. Las curvas siguen bajando en la época 100.</span></td>
           </tr>
+          <tr>
+            <td><a href="3/index.html"><span class="t-en">Experiment 3</span><span class="t-es">Experimento 3</span></a><br><span class="t-en" style="color:var(--muted);font-weight:500">The complete atlas</span><span class="t-es" style="color:var(--muted);font-weight:500">El atlas completo</span></td>
+            <td><span class="t-en">What does the complete grid say?</span><span class="t-es">¿Qué dice la rejilla completa?</span></td>
+            <td><span class="t-en">1,653 configurations, 1,431 hybrid pairs, 500 epochs, one seed.</span><span class="t-es">1.653 configuraciones, 1.431 pares híbridos, 500 épocas, una semilla.</span></td>
+            <td class="num">20,536,466 <span class="t-en">training steps</span><span class="t-es">pasos de entrenamiento</span><br>12,820 <span class="t-en">stage records</span><span class="t-es">registros de etapas</span><br>3,668 CPU-h</td>
+            <td><span class="t-en">The complete A×B matrix, per-block gradients, normalised cost, quantization agreement and the interactive atlas.</span><span class="t-es">La matriz A×B completa, gradientes por bloque, coste normalizado, acuerdo de cuantización y el atlas interactivo.</span></td>
+            <td><span class="t-en">The strongest evidence of the project: complete coverage, longer schedule, fixed deploy bug excluded.</span><span class="t-es">La evidencia más fuerte del proyecto: cobertura completa, calendario más largo y el error de despliegue corregido y excluido.</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -127,15 +138,17 @@
     <ul class="mechanics">
       <li><b><a href="1/index.html"><span class="t-en">Experiment 1 · The smoke round</span><span class="t-es">Experimento 1 · La ronda smoke</span></a></b><span><span class="t-en">What the paper says about the pilot: 5,129 stage records, half-minute runs, and the four mechanics it validated.</span><span class="t-es">Lo que dice el paper sobre el piloto: 5.129 registros de etapas, corridas de medio minuto y las cuatro mecánicas que validó.</span></span></li>
       <li><b><a href="2/index.html"><span class="t-en">Experiment 2 · The mixer atlas</span><span class="t-es">Experimento 2 · El atlas de mixers</span></a></b><span><span class="t-en">The full measurement round: parameters, training, dynamics, the A×B atlas, ablations, deployment and reliability.</span><span class="t-es">La ronda de medición completa: parámetros, entrenamiento, dinámica, el atlas A×B, ablaciones, despliegue y fiabilidad.</span></span></li>
+      <li><b><a href="3/index.html"><span class="t-en">Experiment 3 · The complete atlas</span><span class="t-es">Experimento 3 · El atlas completo</span></a></b><span><span class="t-en">The closed grid: 1,431 pairs, per-block gradients, throughput and cost per Mparam, quantization agreement and an interactive matrix.</span><span class="t-es">La rejilla cerrada: 1.431 pares, gradientes por bloque, rendimiento y coste por Mparámetro, acuerdo de cuantización y una matriz interactiva.</span></span></li>
       <li><b><a href="2/chartmaker.html"><span class="t-en">Chart maker</span><span class="t-es">Constructor de gráficos</span></a></b><span><span class="t-en">Build your own view from the four published datasets.</span><span class="t-es">Construye tu propia vista desde los cuatro datasets publicados.</span></span></li>
     </ul>
   </section>
 
   <section class="cta">
-    <h2><span class="t-en">Start with the atlas</span><span class="t-es">Empieza por el atlas</span></h2>
-    <p><span class="t-en">The second round is where the mixer comparisons live. The first round explains why the harness could be trusted to produce them.</span><span class="t-es">La segunda ronda es donde viven las comparaciones de mixers. La primera explica por qué se podía confiar en que el arnés las produjera.</span></p>
+    <h2><span class="t-en">Start with the complete atlas</span><span class="t-es">Empieza por el atlas completo</span></h2>
+    <p><span class="t-en">The third round closes the matrix and adds the per-block gradient, cost and quantization analyses. The first two explain how the harness got there.</span><span class="t-es">La tercera ronda cierra la matriz y añade los análisis de gradiente por bloque, coste y cuantización. Las dos primeras explican cómo llegó ahí el arnés.</span></p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="2/index.html"><span class="t-en">Open Experiment 2</span><span class="t-es">Abrir el Experimento 2</span> →</a>
+      <a class="btn btn-primary" href="3/index.html"><span class="t-en">Open Experiment 3</span><span class="t-es">Abrir el Experimento 3</span> →</a>
+      <a class="btn" href="2/index.html"><span class="t-en">Compare with Experiment 2</span><span class="t-es">Comparar con el Experimento 2</span></a>
       <a class="btn" href="1/index.html"><span class="t-en">Read Experiment 1</span><span class="t-es">Leer el Experimento 1</span></a>
     </div>
   </section>
@@ -144,7 +157,8 @@
 <footer>
   <span class="t-en">Generated from the experiment rounds of Frankenstein Transformer</span><span class="t-es">Generado desde las rondas de experimentos de Frankenstein Transformer</span> ·
   <a href="../index.html"><span class="t-en">Config Builder</span><span class="t-es">Constructor de configs</span></a> ·
-  <a href="2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a>
+  <a href="2/index.html"><span class="t-en">Experiment 2</span><span class="t-es">Experimento 2</span></a> ·
+  <a href="3/index.html"><span class="t-en">Experiment 3</span><span class="t-es">Experimento 3</span></a>
 </footer>
 </body>
 </html>

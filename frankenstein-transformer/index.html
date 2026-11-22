@@ -863,6 +863,7 @@ pre {
   </a>
 
   <a href="experiments/2/index.html" class="btn btn-exp btn-sm" id="exp-side-btn" style="margin-top:10px"></a>
+  <a href="experiments/3/index.html" class="btn btn-sm" style="margin-top:6px">Experiment 3 →</a>
 
   <button type="button" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-pressed="false" aria-label="Toggle light/dark theme">
     <span class="tt-track" aria-hidden="true"><span class="tt-thumb" id="tt-thumb"></span></span>
@@ -1117,17 +1118,17 @@ const UI = {
   expNavHint: { en:'Two rounds · 868 configurations · chart maker', es:'Dos rondas · 868 configuraciones · constructor de gráficos' },
   expAtlasLink: { en:'Open the atlas →', es:'Abrir el atlas →' },
   expExp1Link: { en:'Experiment 1 · smoke round', es:'Experimento 1 · ronda smoke' },
-  expModalBadge: { en:'Experiments 1 + 2 · one harness', es:'Experimentos 1 + 2 · un mismo arnés' },
-  expModalTitle: { en:'Two rounds on one harness', es:'Dos rondas sobre un mismo arnés' },
+  expModalBadge: { en:'Experiments 1 + 2 + 3 · one harness', es:'Experimentos 1 + 2 + 3 · un mismo arnés' },
+  expModalTitle: { en:'Three rounds on one harness', es:'Tres rondas sobre un mismo arnés' },
   expModalLede: {
-    en:'Experiment 2 is the 868-configuration mixer atlas. Experiment 1 is the smoke-scale rehearsal that validated the pipeline before the campaign.',
-    es:'El Experimento 2 es el atlas de mixers con 868 configuraciones. El Experimento 1 es el ensayo a escala smoke que validó el pipeline antes de la campaña.'
+    en:'Experiment 3 closes the mixer grid with 1,431 hybrid pairs, 1,653 runs and 20.5 M steps. Experiments 1 and 2 are the smoke rehearsal and the first atlas.',
+    es:'El Experimento 3 cierra la rejilla de mixers con 1.431 pares híbridos, 1.653 corridas y 20,5 M de pasos. Los Experimentos 1 y 2 son el ensayo smoke y el primer atlas.'
   },
   expStatConfigs: { en:'configurations', es:'configuraciones' },
-  expStatPairs: { en:'unique hybrid pairs', es:'pares híbridos únicos' },
+  expStatPairs: { en:'hybrid pairs (complete grid)', es:'pares híbridos (rejilla completa)' },
   expStatSteps: { en:'training steps', es:'pasos de entrenamiento' },
-  expStatRecords: { en:'stage records in the smoke round', es:'registros de etapas en la ronda smoke' },
-  expModalCta: { en:'Open Experiment 2 atlas →', es:'Abrir el atlas del Experimento 2 →' },
+  expStatRecords: { en:'stage records in the complete round', es:'registros de etapas en la ronda completa' },
+  expModalCta: { en:'Open Experiment 3 atlas →', es:'Abrir el atlas del Experimento 3 →' },
   expModalExp1: { en:'Experiment 1 · smoke round', es:'Experimento 1 · ronda smoke' },
   expModalMaker: { en:'Open the chart maker', es:'Abrir el constructor de gráficos' },
   expModalLater: { en:'Maybe later', es:'Quizá después' },
@@ -4645,13 +4646,13 @@ document.addEventListener('DOMContentLoaded', function () {
     <h2 id="exp-modal-title">Two rounds on one harness</h2>
     <p class="exp-lede" id="exp-modal-lede"></p>
     <div class="exp-stats">
-      <div class="exp-stat"><b>868</b><span id="exp-stat-1">configurations</span></div>
-      <div class="exp-stat"><b>667</b><span id="exp-stat-2">unique hybrid pairs</span></div>
-      <div class="exp-stat"><b>2.66 M</b><span id="exp-stat-3">training steps</span></div>
-      <div class="exp-stat"><b>5,129</b><span id="exp-stat-4">stage records in the smoke round</span></div>
+      <div class="exp-stat"><b>1,653</b><span id="exp-stat-1">configurations</span></div>
+      <div class="exp-stat"><b>1,431</b><span id="exp-stat-2">hybrid pairs (complete grid)</span></div>
+      <div class="exp-stat"><b>20.5 M</b><span id="exp-stat-3">training steps</span></div>
+      <div class="exp-stat"><b>12,820</b><span id="exp-stat-4">stage records in the complete round</span></div>
     </div>
     <div class="exp-actions">
-      <a class="btn btn-primary" id="exp-modal-cta" href="experiments/2/index.html">Open Experiment 2 atlas →</a>
+      <a class="btn btn-primary" id="exp-modal-cta" href="experiments/3/index.html">Open Experiment 3 atlas →</a>
       <a class="btn" id="exp-modal-exp1" href="experiments/1/index.html">Experiment 1 · smoke round</a>
       <a class="btn" id="exp-modal-maker" href="experiments/2/chartmaker.html">Open the chart maker</a>
       <button type="button" class="exp-later" onclick="closeExperimentModal(true)" id="exp-modal-later">Maybe later</button>
